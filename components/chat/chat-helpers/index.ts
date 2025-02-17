@@ -214,7 +214,16 @@ export const fetchChatResponse = async (
     if (response.status === 429 && errorData && errorData.timeRemaining) {
       alertDispatch({
         type: "SHOW",
-        payload: { message: errorData.message, title: "Usage Cap Error" }
+        payload: {
+          message: errorData.message,
+          title: "Usage Cap Error",
+          ...(errorData.subscriptionType === "free" && {
+            action: {
+              label: "Upgrade Now",
+              onClick: () => (window.location.href = "/upgrade")
+            }
+          })
+        }
       })
     } else {
       const errorData = await response.json()

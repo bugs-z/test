@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog"
 import { useAlertContext } from "@/context/alert-context"
 import { IconX } from "@tabler/icons-react"
+import { Button } from "@/components/ui/button"
 
 export const GlobalAlertDialog = () => {
   const { state, dispatch } = useAlertContext()
@@ -18,7 +19,10 @@ export const GlobalAlertDialog = () => {
 
   return (
     <Dialog open={!!state.message} onOpenChange={handleOpenChange}>
-      <DialogContent className="xl:max-w-xl">
+      <DialogContent
+        className="xl:max-w-xl"
+        aria-describedby="alert-description"
+      >
         <DialogHeader>
           <div className="flex justify-between">
             <DialogTitle>{state.title || "Alert"}</DialogTitle>
@@ -31,7 +35,17 @@ export const GlobalAlertDialog = () => {
         </DialogHeader>
 
         <div className="mt-4">
-          <p className="whitespace-pre-wrap">{state.message}</p>
+          <p id="alert-description" className="whitespace-pre-wrap">
+            {state.message}
+          </p>
+
+          {state.action && (
+            <div className="mt-6 flex justify-center">
+              <Button onClick={state.action.onClick}>
+                {state.action.label}
+              </Button>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

@@ -9,11 +9,13 @@ export type RateLimitResult =
       allowed: true
       remaining: number
       timeRemaining: null
+      subscriptionType?: "free" | "premium" | "team"
     }
   | {
       allowed: false
       remaining: 0
       timeRemaining: number
+      subscriptionType?: "free" | "premium" | "team"
     }
 
 /**
@@ -50,11 +52,28 @@ export async function _ratelimit(
       model,
       subscriptionInfo
     )
+
+    const subscriptionType = subscriptionInfo.isTeam
+      ? "team"
+      : subscriptionInfo.isPremium
+        ? "premium"
+        : "free"
+
     if (remaining === 0) {
-      return { allowed: false, remaining, timeRemaining: timeRemaining! }
+      return {
+        allowed: false,
+        remaining,
+        timeRemaining: timeRemaining!,
+        subscriptionType
+      }
     }
     await _addRequest(storageKey)
-    return { allowed: true, remaining: remaining - 1, timeRemaining: null }
+    return {
+      allowed: true,
+      remaining: remaining - 1,
+      timeRemaining: null,
+      subscriptionType
+    }
   } catch (error) {
     console.error("Redis rate limiter error:", error)
     return { allowed: false, remaining: 0, timeRemaining: 60000 }
@@ -210,7 +229,7 @@ export function getRateLimitErrorMessage(
 - Higher usage limits
 - Access to PentestGPT-Large and PentestGPT-4o
 - Access to file uploads, vision, web search and browsing
-- Access to advanced plugins like SQLi Exploiter, XSS Exploiter, and more
+- Access to advanced plugins
 - Access to terminal`
   }
 
@@ -253,7 +272,8 @@ export async function checkRatelimitOnApi(
     JSON.stringify({
       message: message,
       remaining: result.remaining,
-      timeRemaining: result.timeRemaining
+      timeRemaining: result.timeRemaining,
+      subscriptionType: result.subscriptionType
     }),
     {
       status: 429

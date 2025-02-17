@@ -5,10 +5,21 @@ import { createContext, useContext, useReducer } from "react"
 interface AlertState {
   message: string
   title?: string
+  action?: {
+    label: string
+    onClick: () => void
+  }
 }
 
 export type AlertAction =
-  | { type: "SHOW"; payload: { message: string; title?: string } }
+  | {
+      type: "SHOW"
+      payload: {
+        message: string
+        title?: string
+        action?: { label: string; onClick: () => void }
+      }
+    }
   | { type: "HIDE" }
 
 const initialState: AlertState = {
@@ -29,10 +40,11 @@ const alertReducer = (state: AlertState, action: AlertAction): AlertState => {
       return {
         ...state,
         message: action.payload.message,
-        title: action.payload.title
+        title: action.payload.title,
+        action: action.payload.action
       }
     case "HIDE":
-      return { ...state, message: "", title: undefined }
+      return { ...state, message: "", title: undefined, action: undefined }
     default:
       return state
   }
