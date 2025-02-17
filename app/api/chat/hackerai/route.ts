@@ -24,6 +24,7 @@ import { createStreamResponse } from "@/lib/ai-helper"
 import { LargeModel } from "@/lib/models/llm/hackerai-llm-list"
 import { executeReasonLLMTool } from "@/lib/tools/llm/reason-llm"
 import { executeReasoningWebSearchTool } from "@/lib/tools/llm/reasoning-web-search"
+import { geolocation } from "@vercel/functions"
 
 export const runtime: ServerRuntime = "edge"
 export const preferredRegion = [
@@ -213,6 +214,13 @@ export async function POST(request: Request) {
 
     // Remove invalid message exchanges
     const validatedMessages = validateMessages(cleanedMessages)
+
+    if (!config.isLargeModel) {
+      const { region } = geolocation(request)
+      if (region === "bom1") {
+        selectedModel = "mistral-saba-2502"
+      }
+    }
 
     try {
       return createStreamResponse(dataStream => {
