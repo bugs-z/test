@@ -1,7 +1,4 @@
-import {
-  getTerminalResultInstructions,
-  RAG_SYSTEM_PROMPT
-} from "@/lib/backend-config"
+import { getTerminalResultInstructions } from "@/lib/backend-config"
 import {
   getPentestGPTInfo,
   systemPromptEnding,
@@ -36,8 +33,6 @@ const llmConfig = {
     pentestgptCurrentDateOnly: `${initialSystemPrompt}\n${currentDate}`,
     // For transforming user query into tool command
     openaiCurrentDateOnly: `${openaiInitialSystemPrompt}\n${currentDate}`,
-    // For Hacker RAG
-    RAG: `${initialSystemPrompt} ${RAG_SYSTEM_PROMPT}\n${currentDate}`,
     // For PGPT
     pentestGPTChat: `${getPentestGPTInfo(initialSystemPrompt, true)}\n${systemPromptEnding}`,
     // For PGPT-Small

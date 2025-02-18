@@ -45,7 +45,7 @@ export const availablePlugins: PluginSummary[] = [
       "Enhances the model with curated PentestGPT knowledge, including popular guides, techniques, and tools",
     githubRepoUrl: pluginUrls.PENTESTGPT,
     isInstalled: false,
-    isPremium: true,
+    isPremium: false,
     createdAt: "2024-07-26",
     starters: [
       // {

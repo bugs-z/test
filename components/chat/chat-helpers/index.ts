@@ -56,7 +56,7 @@ export const handleHostedChat = async (
     setToolInUse(PluginID.ARTIFACTS)
   } else {
     setToolInUse(
-      isRagEnabled && provider !== "openai"
+      isRagEnabled
         ? "Enhanced Search"
         : selectedPlugin && selectedPlugin !== PluginID.NONE
           ? selectedPlugin
@@ -69,27 +69,18 @@ export const handleHostedChat = async (
     chatImages,
     isRagEnabled
   )
-  const chatSettings = payload.chatSettings
 
-  let requestBody: any
-
-  if (provider === "openai" || isTerminalContinuation) {
-    requestBody = {
-      messages: formattedMessages,
-      chatSettings,
-      isTerminalContinuation,
-      selectedPlugin
-    }
-  } else {
-    requestBody = {
-      messages: formattedMessages,
-      chatSettings: chatSettings,
-      isRetrieval:
-        payload.messageFileItems && payload.messageFileItems.length > 0,
-      isContinuation,
-      isRagEnabled,
-      selectedPlugin
-    }
+  const requestBody = {
+    messages: formattedMessages,
+    chatSettings: payload.chatSettings,
+    isRetrieval:
+      payload.messageFileItems && payload.messageFileItems.length > 0,
+    isContinuation,
+    isRagEnabled,
+    selectedPlugin,
+    ...((provider === "openai" || isTerminalContinuation) && {
+      isTerminalContinuation
+    })
   }
 
   const chatResponse = await fetchChatResponse(

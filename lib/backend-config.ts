@@ -61,3 +61,23 @@ In your response, focus on providing comprehensive and accurate information, adh
 to the user's instructions. Avoid including direct links if there's a possibility of \
 broken links or references to local files. Instead, describe the resources or methods \
 in detail, enabling the user to locate them through their own searches if necessary.`
+
+const options: Intl.DateTimeFormatOptions = {
+  year: "numeric",
+  month: "long",
+  day: "numeric"
+}
+const currentDate = `Current date: ${new Date().toLocaleDateString("en-US", options)}`
+
+export const RAG_SYSTEM_PROMPT_BODY = (data: { content: string }) => endent`
+${process.env.SECRET_PENTESTGPT_SYSTEM_PROMPT} ${RAG_SYSTEM_PROMPT}
+${currentDate}
+
+Context for RAG enrichment:
+---------------------
+${data.content}
+---------------------
+DON'T MENTION OR REFERENCE ANYTHING RELATED TO RAG CONTENT OR ANYTHING RELATED TO RAG. \
+USER DOESN'T HAVE DIRECT ACCESS TO THIS CONTENT, ITS PURPOSE IS TO ENRICH YOUR OWN KNOWLEDGE. \
+ROLE PLAY.
+`

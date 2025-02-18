@@ -17,6 +17,7 @@ import { createStreamResponse } from "@/lib/ai-helper"
 import { executeTerminalTool } from "@/lib/tools/llm/terminal"
 import { executeReasonLLMTool } from "@/lib/tools/llm/reason-llm"
 import { executeReasoningWebSearchTool } from "@/lib/tools/llm/reasoning-web-search"
+import { processRag } from "@/lib/rag/rag-processor"
 
 export const runtime: ServerRuntime = "edge"
 export const preferredRegion = [
@@ -41,8 +42,15 @@ export const preferredRegion = [
 
 export async function POST(request: Request) {
   try {
-    const { chatSettings, messages, isTerminalContinuation, selectedPlugin } =
-      await request.json()
+    const {
+      messages,
+      chatSettings,
+      isRetrieval,
+      isContinuation,
+      isRagEnabled,
+      selectedPlugin,
+      isTerminalContinuation
+    } = await request.json()
 
     const profile = await getAIProfile()
     const rateLimitCheckResult = await checkRatelimitOnApi(
@@ -54,6 +62,30 @@ export async function POST(request: Request) {
     )
     if (rateLimitCheckResult !== null) {
       return rateLimitCheckResult.response
+    }
+
+    let systemPrompt = buildSystemPrompt(
+      llmConfig.systemPrompts.gpt4o,
+      profile.profile_context
+    )
+
+    // Process RAG
+    let ragUsed = false
+    let ragId: string | null = null
+    const shouldUseRAG = !isRetrieval && isRagEnabled
+
+    if (shouldUseRAG) {
+      const ragResult = await processRag({
+        messages,
+        isContinuation,
+        profile
+      })
+
+      ragUsed = ragResult.ragUsed
+      ragId = ragResult.ragId
+      if (ragResult.systemPrompt) {
+        systemPrompt = ragResult.systemPrompt
+      }
     }
 
     filterEmptyAssistantMessages(messages)
@@ -90,12 +122,9 @@ export async function POST(request: Request) {
         })
     }
 
-    const systemPrompt = buildSystemPrompt(
-      llmConfig.systemPrompts.gpt4o,
-      profile.profile_context
-    )
-
     return createStreamResponse(dataStream => {
+      dataStream.writeData({ ragUsed, ragId })
+
       const { getSelectedSchemas } = createToolSchemas({
         chatSettings,
         messages,

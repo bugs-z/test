@@ -61,16 +61,6 @@ const PluginSelector: React.FC<PluginSelectorProps> = ({ onPluginSelect }) => {
     if (foundPlugin) {
       setSelectedPluginName(foundPlugin.name)
     }
-
-    // Check if GPT-4 is selected and ENHANCE_SEARCH is active
-    if (
-      chatSettings?.model.includes("gpt-4-turbo-preview") &&
-      selectedPlugin === PluginID.ENHANCED_SEARCH
-    ) {
-      setSelectedPlugin(PluginID.NONE)
-      setSelectedPluginName(availablePlugins[0].name)
-      onPluginSelect(PluginID.NONE)
-    }
   }, [selectedPlugin, chatSettings?.model])
 
   const installedPlugins = getInstalledPlugins(pluginState.installedPluginIds)
@@ -81,12 +71,7 @@ const PluginSelector: React.FC<PluginSelectorProps> = ({ onPluginSelect }) => {
   }))
 
   const selectorPlugins = updatedAvailablePlugins.filter(
-    plugin =>
-      (plugin.isInstalled || defaultPluginIds.includes(plugin.id)) &&
-      !(
-        chatSettings?.model.includes("gpt-4-turbo-preview") &&
-        plugin.value === PluginID.ENHANCED_SEARCH
-      )
+    plugin => plugin.isInstalled || defaultPluginIds.includes(plugin.id)
   )
 
   const handleOpenGPTsStore = () => {

@@ -10,7 +10,6 @@ import {
 } from "@/lib/build-prompt"
 import { handleErrorResponse } from "@/lib/models/llm/api-error"
 import llmConfig from "@/lib/models/llm/llm-config"
-import { generateStandaloneQuestion } from "@/lib/models/question-generator"
 import { checkRatelimitOnApi } from "@/lib/server/ratelimiter"
 import { createOpenAI as createOpenRouterAI } from "@ai-sdk/openai"
 import { createMistral } from "@ai-sdk/mistral"
@@ -24,6 +23,7 @@ import { LargeModel } from "@/lib/models/llm/hackerai-llm-list"
 import { executeReasonLLMTool } from "@/lib/tools/llm/reason-llm"
 import { executeReasoningWebSearchTool } from "@/lib/tools/llm/reasoning-web-search"
 import { geolocation } from "@vercel/functions"
+import { processRag } from "@/lib/rag/rag-processor"
 
 export const runtime: ServerRuntime = "edge"
 export const preferredRegion = [
@@ -82,66 +82,22 @@ export async function POST(request: Request) {
     )
 
     // Process RAG
-    // On normal chat, the last user message is the target standalone message
-    // On continuation, the tartget is the last generated message by the system
-    const targetStandAloneMessage = messages[messages.length - 2].content
-    const filterTargetMessage = isContinuation
-      ? messages[messages.length - 3]
-      : messages[messages.length - 2]
-
     let ragUsed = false
     let ragId: string | null = null
     const shouldUseRAG = !isRetrieval && isRagEnabled
 
-    if (
-      shouldUseRAG &&
-      llmConfig.hackerRAG.enabled &&
-      llmConfig.hackerRAG.endpoint &&
-      llmConfig.hackerRAG.apiKey &&
-      messages.length > 0 &&
-      filterTargetMessage.role === "user" &&
-      filterTargetMessage.content.length > llmConfig.hackerRAG.messageLength.min
-    ) {
-      console.log("[EnhancedSearch] Executing enhanced search")
-      const { standaloneQuestion, atomicQuestions } =
-        await generateStandaloneQuestion(
-          messages,
-          targetStandAloneMessage,
-          llmConfig.systemPrompts.pentestgptCurrentDateOnly,
-          true,
-          config.similarityTopK,
-          llmConfig.models.standalone_question
-        )
-
-      const response = await fetch(llmConfig.hackerRAG.endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${llmConfig.hackerRAG.apiKey}`
-        },
-        body: JSON.stringify({
-          query: standaloneQuestion,
-          questions: atomicQuestions,
-          chunks: config.similarityTopK
-        })
+    if (shouldUseRAG) {
+      const ragResult = await processRag({
+        messages,
+        isContinuation,
+        profile
       })
 
-      const data = await response.json()
-
-      if (data && data.content) {
-        ragUsed = true
-        // Update system prompt with RAG content
-        const ragPrompt =
-          `${llmConfig.systemPrompts.RAG}\n` +
-          `Context for RAG enrichment:\n` +
-          `---------------------\n` +
-          `${data.content}\n` +
-          `---------------------\n` +
-          `DON'T MENTION OR REFERENCE ANYTHING RELATED TO RAG CONTENT OR ANYTHING RELATED TO RAG. USER DOESN'T HAVE DIRECT ACCESS TO THIS CONTENT, ITS PURPOSE IS TO ENRICH YOUR OWN KNOWLEDGE. ROLE PLAY.`
-
-        systemPrompt = buildSystemPrompt(ragPrompt, profile.profile_context)
+      ragUsed = ragResult.ragUsed
+      ragId = ragResult.ragId
+      if (ragResult.systemPrompt) {
+        systemPrompt = ragResult.systemPrompt
       }
-      ragId = data?.resultId
     }
 
     const includeImages = messagesIncludeImages(messages)
@@ -283,7 +239,6 @@ async function getProviderConfig(
     "X-Title": chatSettings.model
   }
 
-  const similarityTopK = 3
   const selectedModel = isLargeModel ? proModel : defaultModel
   const rateLimitCheckResult = await checkRatelimitOnApi(
     profile.user_id,
@@ -301,7 +256,6 @@ async function getProviderConfig(
     providerHeaders,
     selectedModel,
     rateLimitCheckResult,
-    similarityTopK,
     isLargeModel
   }
 }
