@@ -4,7 +4,7 @@ import {
 } from "@/lib/build-prompt"
 import { generateText } from "ai"
 import endent from "endent"
-import { createMistral } from "@ai-sdk/mistral"
+import { mistral } from "@ai-sdk/mistral"
 
 export async function generateStandaloneQuestion(
   messages: any[],
@@ -57,8 +57,6 @@ export async function generateStandaloneQuestion(
   }
 
   try {
-    const mistral = createMistral()
-
     const result = await generateText({
       model: mistral(`${selectedStandaloneQuestionModel}`),
       temperature: 0.5,

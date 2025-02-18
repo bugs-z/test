@@ -111,7 +111,7 @@ export async function POST(request: Request) {
           llmConfig.systemPrompts.pentestgptCurrentDateOnly,
           true,
           config.similarityTopK,
-          llmConfig.models.pentestgpt_standalone_question_openrouter
+          llmConfig.models.standalone_question
         )
 
       const response = await fetch(llmConfig.hackerRAG.endpoint, {
@@ -165,6 +165,7 @@ export async function POST(request: Request) {
     }
 
     if (
+      llmConfig.openai.apiKey &&
       !includeImages &&
       !isContinuation &&
       selectedPlugin !== PluginID.WEB_SEARCH &&
@@ -271,8 +272,8 @@ async function getProviderConfig(
 ) {
   const isLargeModel = chatSettings.model === LargeModel.modelId
 
-  const defaultModel = llmConfig.models.pentestgpt_small
-  const proModel = llmConfig.models.pentestgpt_large
+  const defaultModel = llmConfig.models.small
+  const proModel = llmConfig.models.large
 
   const providerUrl = llmConfig.openrouter.url
   const providerBaseUrl = llmConfig.openrouter.baseURL

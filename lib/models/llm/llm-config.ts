@@ -56,10 +56,9 @@ const llmConfig = {
     pentestGPTFragment: `${getPentestGPTInfo(initialSystemPrompt, true, false, "PentestGPT-4o")}}`
   },
   models: {
-    pentestgpt_small: process.env.OPENROUTER_PENTESTGPT_DEFAULT_MODEL,
-    pentestgpt_standalone_question_openrouter:
-      process.env.OPENROUTER_STANDALONE_QUESTION_MODEL,
-    pentestgpt_large: process.env.OPENROUTER_PENTESTGPT_PRO_MODEL,
+    small: process.env.OPENROUTER_PENTESTGPT_DEFAULT_MODEL,
+    standalone_question: process.env.OPENROUTER_STANDALONE_QUESTION_MODEL,
+    large: process.env.OPENROUTER_PENTESTGPT_PRO_MODEL,
     reasoning: process.env.REASONING_MODEL
   },
   hackerRAG: {

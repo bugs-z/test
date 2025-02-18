@@ -48,9 +48,7 @@ export async function POST(request: Request) {
     const {
       object: { title }
     } = await generateObject({
-      model: mistral(
-        llmConfig.models.pentestgpt_small || "mistral-small-latest"
-      ),
+      model: mistral(llmConfig.models.small || "mistral-small-latest"),
       schema: z.object({
         title: z.string().describe("The generated title (3-5 words)")
       }),
