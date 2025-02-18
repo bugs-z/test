@@ -20,6 +20,7 @@ const MONTHLY_TEAM_PRICE_ID =
   process.env.NEXT_PUBLIC_STRIPE_MONTHLY_TEAM_PRICE_ID
 const YEARLY_TEAM_PRICE_ID = process.env.NEXT_PUBLIC_STRIPE_YEARLY_TEAM_PRICE_ID
 const MAX_TEAM_NAME_LENGTH = 25
+const MAX_SEAT_QUANTITY = 100
 
 const NewTeamPage: FC = () => {
   const router = useRouter()
@@ -73,6 +74,11 @@ const NewTeamPage: FC = () => {
 
     if (seatQuantity < 1) {
       toast.error("Seat quantity must be at least 1")
+      return
+    }
+
+    if (seatQuantity > MAX_SEAT_QUANTITY) {
+      toast.error(`Seat quantity cannot exceed ${MAX_SEAT_QUANTITY}`)
       return
     }
 
@@ -179,6 +185,7 @@ const NewTeamPage: FC = () => {
                   setSeatQuantity(Math.max(1, parseInt(e.target.value) || 1))
                 }
                 min="1"
+                max={MAX_SEAT_QUANTITY}
               />
             </div>
 
