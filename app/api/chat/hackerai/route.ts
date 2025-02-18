@@ -104,6 +104,11 @@ export async function POST(request: Request) {
     let selectedModel = config.selectedModel
     let shouldUncensorResponse = false
 
+    const { region } = geolocation(request)
+    if (!config.isLargeModel && region === "bom1") {
+      selectedModel = "mistral-saba-2502"
+    }
+
     const handleMessages = (shouldUncensor: boolean) => {
       if (includeImages) {
         selectedModel = "pixtral-large-2411"
@@ -119,7 +124,6 @@ export async function POST(request: Request) {
       return filterEmptyAssistantMessages(messages)
     }
 
-    const { region } = geolocation(request)
     if (
       llmConfig.openai.apiKey &&
       !includeImages &&
@@ -172,10 +176,6 @@ export async function POST(request: Request) {
 
     // Remove invalid message exchanges
     const validatedMessages = validateMessages(cleanedMessages)
-
-    if (!config.isLargeModel && region === "bom1") {
-      selectedModel = "mistral-saba-2502"
-    }
 
     try {
       return createStreamResponse(dataStream => {
