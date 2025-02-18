@@ -14,7 +14,6 @@ import { generateStandaloneQuestion } from "@/lib/models/question-generator"
 import { checkRatelimitOnApi } from "@/lib/server/ratelimiter"
 import { createOpenAI as createOpenRouterAI } from "@ai-sdk/openai"
 import { createMistral } from "@ai-sdk/mistral"
-import { createDeepSeek } from "@ai-sdk/deepseek"
 import { smoothStream, streamText } from "ai"
 import { getModerationResult } from "@/lib/server/moderation"
 // import { createToolSchemas } from "@/lib/tools/llm/toolSchemas"
@@ -164,13 +163,15 @@ export async function POST(request: Request) {
       return filterEmptyAssistantMessages(messages)
     }
 
+    const { region } = geolocation(request)
     if (
       llmConfig.openai.apiKey &&
       !includeImages &&
       !isContinuation &&
       selectedPlugin !== PluginID.WEB_SEARCH &&
       selectedPlugin !== PluginID.REASONING &&
-      selectedPlugin !== PluginID.REASONING_WEB_SEARCH
+      selectedPlugin !== PluginID.REASONING_WEB_SEARCH &&
+      region !== "bom1"
     ) {
       const { shouldUncensorResponse: moderationResult } =
         await getModerationResult(
@@ -216,11 +217,8 @@ export async function POST(request: Request) {
     // Remove invalid message exchanges
     const validatedMessages = validateMessages(cleanedMessages)
 
-    if (!config.isLargeModel) {
-      const { region } = geolocation(request)
-      if (region === "bom1") {
-        selectedModel = "mistral-saba-2502"
-      }
+    if (!config.isLargeModel && region === "bom1") {
+      selectedModel = "mistral-saba-2502"
     }
 
     try {
@@ -315,9 +313,6 @@ function createProvider(selectedModel: string, config: any) {
     selectedModel.startsWith("codestral")
   ) {
     return createMistral()
-  }
-  if (selectedModel.startsWith("deepseek")) {
-    return createDeepSeek()
   }
   return createOpenRouterAI({
     baseURL: config.providerBaseUrl,
