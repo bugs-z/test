@@ -1,25 +1,19 @@
 import { buildSystemPrompt } from "@/lib/ai/prompts"
 import { toVercelChatMessages, removeLastSureMessage } from "@/lib/build-prompt"
-import { LargeModel } from "@/lib/models/llm/hackerai-llm-list"
 import llmConfig from "@/lib/models/llm/llm-config"
-import { GPT4o } from "@/lib/models/llm/openai-llm-list"
 
 interface WebSearchConfig {
-  chatSettings: any
   messages: any[]
   profile: any
   dataStream: any
+  isLargeModel: boolean
 }
 
-async function getProviderConfig(chatSettings: any, profile: any) {
-  const isProModel =
-    chatSettings.model === LargeModel.modelId ||
-    chatSettings.model === GPT4o.modelId
-
+async function getProviderConfig(isLargeModel: boolean, profile: any) {
   const defaultModel = "sonar"
   const proModel = "sonar-pro"
 
-  const selectedModel = isProModel ? proModel : defaultModel
+  const selectedModel = isLargeModel ? proModel : defaultModel
 
   const systemPrompt = buildSystemPrompt(
     llmConfig.systemPrompts.pentestGPTWebSearch,
@@ -41,10 +35,10 @@ export async function executeWebSearchTool({
     throw new Error("Perplexity API key is not set for web search")
   }
 
-  const { chatSettings, messages, profile, dataStream } = config
+  const { messages, profile, dataStream, isLargeModel } = config
 
   const { systemPrompt, selectedModel } = await getProviderConfig(
-    chatSettings,
+    isLargeModel,
     profile
   )
 

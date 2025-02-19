@@ -8,6 +8,7 @@ interface ReasoningWebSearchConfig {
   messages: any[]
   profile: any
   dataStream: any
+  isLargeModel: boolean
 }
 
 export async function executeReasoningWebSearchTool({
@@ -15,7 +16,7 @@ export async function executeReasoningWebSearchTool({
 }: {
   config: ReasoningWebSearchConfig
 }) {
-  const { messages, profile, dataStream } = config
+  const { messages, profile, dataStream, isLargeModel } = config
 
   if (!process.env.PERPLEXITY_API_KEY) {
     throw new Error("Perplexity API key is not set for reason LLM")
@@ -23,10 +24,16 @@ export async function executeReasoningWebSearchTool({
 
   console.log("Executing ReasoningWebSearch for user", profile.user_id)
 
+  const defaultModel = "sonar-reasoning"
+  const proModel = "sonar-reasoning-pro"
+
+  const selectedModel = isLargeModel ? proModel : defaultModel
+
   await processStream({
     messages,
     profile,
-    dataStream
+    dataStream,
+    selectedModel
   })
 
   return "[ReasoningWebSearch] Execution completed"
@@ -35,17 +42,19 @@ export async function executeReasoningWebSearchTool({
 async function processStream({
   messages,
   profile,
-  dataStream
+  dataStream,
+  selectedModel
 }: {
   messages: any
   profile: any
   dataStream: any
+  selectedModel: string
 }) {
   let thinkingStartTime = null
   let enteredThinking = false
 
   const result = streamText({
-    model: perplexity("sonar-reasoning"),
+    model: perplexity(selectedModel),
     temperature: 0.5,
     maxTokens: 2048,
     system: buildSystemPrompt(

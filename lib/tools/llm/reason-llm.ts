@@ -2,8 +2,7 @@ import { buildSystemPrompt } from "@/lib/ai/prompts"
 import { toVercelChatMessages } from "@/lib/build-prompt"
 import llmConfig from "@/lib/models/llm/llm-config"
 import { streamText } from "ai"
-import { createDeepSeek } from "@ai-sdk/deepseek"
-import { createOpenAI as createOpenRouter } from "@ai-sdk/openai"
+import { createOpenRouter } from "@openrouter/ai-sdk-provider"
 
 interface ReasonLLMConfig {
   messages: any[]
@@ -18,10 +17,7 @@ export async function executeReasonLLMTool({
 }) {
   const { messages, profile, dataStream } = config
 
-  const reasoningProvider =
-    llmConfig.models.reasoning === "deepseek-reasoner"
-      ? initializeDeepSeek()
-      : initializeOpenRouter()
+  const reasoningProvider = initializeOpenRouter()
 
   console.log("[ReasonLLM] Executing reasonLLM")
 
@@ -35,20 +31,12 @@ export async function executeReasonLLMTool({
   return "Reason LLM execution completed"
 }
 
-function initializeDeepSeek() {
-  if (!process.env.DEEPSEEK_API_KEY) {
-    throw new Error("DeepSeek API key is not set for reason LLM")
-  }
-  return createDeepSeek()
-}
-
 function initializeOpenRouter() {
   if (!process.env.OPENROUTER_API_KEY) {
     throw new Error("OpenRouter API key is not set for reason LLM")
   }
   return createOpenRouter({
-    baseURL: llmConfig.openrouter.baseURL,
-    apiKey: llmConfig.openrouter.apiKey
+    extraBody: { include_reasoning: true }
   })
 }
 
@@ -63,21 +51,12 @@ async function processStream({
   profile: any
   dataStream: any
 }) {
-  // if (llmConfig.models.reasoning === "deepseek-reasoner") {
-  //   dataStream.writeData({
-  //     type: "text-delta",
-  //     content:
-  //       "DeepSeek services are currently experiencing degraded performance due to large-scale malicious attacks. The service is partially available but may be unstable. We apologize for the inconvenience and recommend trying again later."
-  //   })
-  //   return
-  // }
-
   let thinkingStartTime = null
   let enteredReasoning = false
   let enteredText = false
 
   const result = streamText({
-    model: reasoningProvider(llmConfig.models.reasoning),
+    model: reasoningProvider(llmConfig.models.reasoning as string),
     temperature: 0.5,
     maxTokens: 2048,
     system: buildSystemPrompt(

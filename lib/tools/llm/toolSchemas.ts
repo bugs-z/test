@@ -37,7 +37,12 @@ export const createToolSchemas = ({
       }),
       execute: async () => {
         return executeWebSearchTool({
-          config: { chatSettings, messages, profile, dataStream }
+          config: {
+            messages,
+            profile,
+            dataStream,
+            isLargeModel: true
+          }
         })
       }
     },

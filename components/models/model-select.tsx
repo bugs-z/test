@@ -3,7 +3,8 @@ import { LLM, LLMID } from "@/types"
 import {
   IconCircle,
   IconCircleCheck,
-  IconMessageOff
+  IconGhost3,
+  IconGhost3Filled
 } from "@tabler/icons-react"
 import { FC, useContext, useEffect, useRef, useState, useCallback } from "react"
 import {
@@ -216,7 +217,11 @@ export const ModelSelect: FC<ModelSelectProps> = ({
           onClick={() => handleToggleTemporaryChat(!isTemporaryChat)}
         >
           <div className="flex items-center space-x-2">
-            <IconMessageOff size={24} />
+            {isTemporaryChat ? (
+              <IconGhost3Filled size={24} />
+            ) : (
+              <IconGhost3 size={24} />
+            )}
             <span className="text-sm">Temporary chat</span>
           </div>
           <Switch

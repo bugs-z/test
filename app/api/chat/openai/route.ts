@@ -96,7 +96,7 @@ export async function POST(request: Request) {
       case PluginID.WEB_SEARCH:
         return createStreamResponse(async dataStream => {
           await executeWebSearchTool({
-            config: { chatSettings, messages, profile, dataStream }
+            config: { messages, profile, dataStream, isLargeModel: true }
           })
         })
 
@@ -117,7 +117,7 @@ export async function POST(request: Request) {
       case PluginID.REASONING_WEB_SEARCH:
         return createStreamResponse(async dataStream => {
           await executeReasoningWebSearchTool({
-            config: { messages, profile, dataStream }
+            config: { messages, profile, dataStream, isLargeModel: true }
           })
         })
     }
