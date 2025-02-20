@@ -1,4 +1,7 @@
-import { getTerminalResultInstructions } from "@/lib/backend-config"
+import {
+  TERMINAL_OUTPUT_ANALYSIS_INSTRUCTIONS,
+  TERMINAL_TOOL_INSTRUCTIONS
+} from "@/lib/backend-config"
 import {
   getPentestGPTInfo,
   systemPromptEnding,
@@ -46,7 +49,7 @@ const llmConfig = {
     // For webSearch tool
     pentestGPTWebSearch: `${getPentestGPTInfo(initialSystemPrompt, false, true)}\n${systemPromptEnding}`,
     // For terminal tool
-    pentestGPTTerminal: `${getPentestGPTInfo(initialSystemPrompt, true, false, "PentestGPT-4o")}\n\n${getPentestGPTToolsInfo(false, false, true)}\n${getTerminalResultInstructions()}\n${systemPromptEnding}`,
+    pentestGPTTerminal: `${getPentestGPTInfo(initialSystemPrompt)}\n${TERMINAL_TOOL_INSTRUCTIONS}\n${TERMINAL_OUTPUT_ANALYSIS_INSTRUCTIONS}\n${systemPromptEnding}`,
     // For fragment tool
     pentestGPTFragment: `${getPentestGPTInfo(initialSystemPrompt, true, false, "PentestGPT-4o")}}`
   },
