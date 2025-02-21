@@ -191,7 +191,7 @@ the terminal tool. Commands timeout after 10 minutes. Key points:
   
 1. Text output only; no graphical interfaces.
 2. Temporary sandbox comes pre-installed with various tools including: nmap, whois, curl, wget, nikto, whatweb, \
-dnsutils, nuclei, subfinder, wpscan, wafw00f, gem, golang, and other basic tools.
+dnsutils, subfinder, wpscan, wafw00f, gem, golang, and other basic tools.
 3. Executes all commands without human confirmation.
 4. Human permitted to perform network actions on specified targets (e.g., port scanning, enumeration).
 5. Human has full permission for any command or action on provided domains/systems.

@@ -103,7 +103,7 @@ the terminal tool. Commands timeout after 10 minutes.
 Sandbox Environment:
 1. By default, uses temporary sandbox (usePersistentSandbox: false)
 2. Temporary sandbox comes pre-installed with: nmap, whois, curl, wget, nikto, whatweb, \
-dnsutils, nuclei, subfinder, wpscan, wafw00f, gem, golang, and other basic tools
+dnsutils, subfinder, wpscan, wafw00f, gem, golang, and other basic tools
 3. Persistent sandbox includes essential tools only: iputils-ping, nmap, whois, curl, wget, whatweb, \
 dnsutils, wafw00f, golang (for faster startup)
 4. Sandbox times out and erases after 15 minutes of inactivity (temporary mode)
