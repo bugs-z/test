@@ -137,7 +137,6 @@ export async function POST(request: Request) {
         model: openai("gpt-4o", { parallelToolCalls: false }),
         system: systemPrompt,
         messages: toVercelChatMessages(messages, true),
-        temperature: 0.5,
         maxTokens: 2048,
         abortSignal: request.signal,
         tools: getSelectedSchemas(["browser", "webSearch", "terminal"]),

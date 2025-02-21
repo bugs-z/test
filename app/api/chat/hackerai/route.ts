@@ -207,7 +207,6 @@ export async function POST(request: Request) {
           ),
           system: systemPrompt,
           messages: toVercelChatMessages(validatedMessages, includeImages),
-          temperature: 0.5,
           maxTokens: 2048,
           abortSignal: request.signal,
           // ...(!shouldUseRAG && !shouldUncensorResponse && config.isPentestGPTPro ? { tools } : null),

@@ -62,7 +62,6 @@ export async function executeTerminalTool({
 
     const { textStream, finishReason } = streamText({
       model: openai("gpt-4o", { parallelToolCalls: false }),
-      temperature: 0.5,
       maxTokens: 2048,
       system: buildSystemPrompt(
         llmConfig.systemPrompts.pentestGPTTerminal,

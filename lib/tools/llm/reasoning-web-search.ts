@@ -55,7 +55,6 @@ async function processStream({
 
   const result = streamText({
     model: perplexity(selectedModel),
-    temperature: 0.5,
     maxTokens: 2048,
     system: buildSystemPrompt(
       llmConfig.systemPrompts.pentestGPTWebSearch,

@@ -19,7 +19,7 @@ async function getProviderConfig(chatSettings: any) {
     chatSettings.model === GPT4o.modelId
 
   const defaultModel = "gpt-4o-mini"
-  const proModel = "gpt-4o"
+  const proModel = "chatgpt-4o-latest"
 
   const selectedModel = isProModel ? proModel : defaultModel
 
@@ -134,8 +134,7 @@ export async function executeBrowserTool({
       ...toVercelChatMessages(messages.slice(0, -1)),
       { role: "user", content: browserPrompt }
     ],
-    temperature: 0.5,
-    maxTokens: 1024,
+    maxTokens: 2048,
     experimental_transform: smoothStream()
   })
 

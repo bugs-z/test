@@ -59,7 +59,6 @@ export async function generateStandaloneQuestion(
   try {
     const result = await generateText({
       model: mistral(`${selectedStandaloneQuestionModel}`),
-      temperature: 0.5,
       maxTokens: 1024,
       messages: [
         { role: "system", content: systemMessageContent },

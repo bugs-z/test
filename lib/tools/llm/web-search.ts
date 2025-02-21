@@ -62,7 +62,6 @@ export async function executeWebSearchTool({
         ...toVercelChatMessages(cleanedMessages)
       ],
       max_tokens: 1024,
-      temperature: 0.5,
       stream: true
     })
   })
