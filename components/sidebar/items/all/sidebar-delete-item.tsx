@@ -25,7 +25,7 @@ export const SidebarDeleteItem: FC<SidebarDeleteItemProps> = ({
   item,
   contentType
 }) => {
-  const { setChats, setFiles } = useContext(PentestGPTContext)
+  const { setChats } = useContext(PentestGPTContext)
 
   const buttonRef = useRef<HTMLButtonElement>(null)
 
@@ -46,7 +46,6 @@ export const SidebarDeleteItem: FC<SidebarDeleteItemProps> = ({
 
   const stateUpdateFunctions = {
     chats: setChats,
-    files: setFiles,
     tools: setChats
   }
 

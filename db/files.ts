@@ -3,6 +3,7 @@ import { TablesInsert, TablesUpdate } from "@/supabase/types"
 import mammoth from "mammoth"
 import { toast } from "sonner"
 import { uploadFile } from "./storage/files"
+import path from "path"
 
 export const getFileById = async (fileId: string) => {
   const { data: file, error } = await supabase
@@ -30,33 +31,6 @@ export const getAllFilesCount = async () => {
   return count
 }
 
-export const getFileWorkspacesByWorkspaceId = async (workspaceId: string) => {
-  const { data: workspace, error } = await supabase
-    .from("workspaces")
-    .select(
-      `
-      id,
-      files (*)
-    `
-    )
-    .eq("id", workspaceId)
-    .single()
-
-  if (!workspace) {
-    throw new Error(error.message)
-  }
-
-  // Sort files by updated_at after fetching
-  workspace.files.sort((a, b) => {
-    return (
-      new Date(b.updated_at || "").getTime() -
-      new Date(a.updated_at || "").getTime()
-    )
-  })
-
-  return workspace
-}
-
 // export const getFileWorkspacesByFileId = async (fileId: string) => {
 //   const { data: file, error } = await supabase
 //     .from("files")
@@ -79,10 +53,11 @@ export const getFileWorkspacesByWorkspaceId = async (workspaceId: string) => {
 
 export const createFileBasedOnExtension = async (
   file: File,
-  fileRecord: TablesInsert<"files">,
-  workspace_id: string
+  fileRecord: TablesInsert<"files">
 ) => {
   const fileExtension = file.name.split(".").pop()
+
+  // console.log("fileExtension", fileExtension)
 
   if (fileExtension === "docx") {
     const arrayBuffer = await file.arrayBuffer()
@@ -90,17 +65,16 @@ export const createFileBasedOnExtension = async (
       arrayBuffer
     })
 
-    return createDocXFile(result.value, file, fileRecord, workspace_id)
+    return createDocXFile(result.value, file, fileRecord)
   } else {
-    return createFile(file, fileRecord, workspace_id)
+    return createFile(file, fileRecord)
   }
 }
 
 // For non-docx files
 export const createFile = async (
   file: File,
-  fileRecord: TablesInsert<"files">,
-  workspace_id: string
+  fileRecord: TablesInsert<"files">
 ) => {
   let validFilename = fileRecord.name.replace(/[^a-z0-9.]/gi, "_").toLowerCase()
   const extension = validFilename.split(".").pop()
@@ -127,12 +101,6 @@ export const createFile = async (
   if (error) {
     throw new Error(error.message)
   }
-
-  await createFileWorkspace({
-    user_id: createdFile.user_id,
-    file_id: createdFile.id,
-    workspace_id
-  })
 
   const filePath = await uploadFile(file, {
     name: createdFile.name,
@@ -173,8 +141,7 @@ export const createFile = async (
 export const createDocXFile = async (
   text: string,
   file: File,
-  fileRecord: TablesInsert<"files">,
-  workspace_id: string
+  fileRecord: TablesInsert<"files">
 ) => {
   const filesCounts = (await getAllFilesCount()) || 0
   const maxFiles = parseInt(
@@ -192,12 +159,6 @@ export const createDocXFile = async (
   if (error) {
     throw new Error(error.message)
   }
-
-  await createFileWorkspace({
-    user_id: createdFile.user_id,
-    file_id: createdFile.id,
-    workspace_id
-  })
 
   const filePath = await uploadFile(file, {
     name: createdFile.name,
@@ -263,36 +224,36 @@ export const createDocXFile = async (
 //   return createdFiles
 // }
 
-export const createFileWorkspace = async (item: {
-  user_id: string
-  file_id: string
-  workspace_id: string
-}) => {
-  const { data: createdFileWorkspace, error } = await supabase
-    .from("file_workspaces")
-    .insert([item])
-    .select("*")
-    .single()
+// export const createFileWorkspace = async (item: {
+//   user_id: string
+//   file_id: string
+//   workspace_id: string
+// }) => {
+//   const { data: createdFileWorkspace, error } = await supabase
+//     .from("file_workspaces")
+//     .insert([item])
+//     .select("*")
+//     .single()
+//
+//   if (error) {
+//     throw new Error(error.message)
+//   }
+//
+//   return createdFileWorkspace
+// }
 
-  if (error) {
-    throw new Error(error.message)
-  }
+// export const createFileWorkspaces = async (
+//   items: { user_id: string; file_id: string; workspace_id: string }[]
+// ) => {
+//   const { data: createdFileWorkspaces, error } = await supabase
+//     .from("file_workspaces")
+//     .insert(items)
+//     .select("*")
 
-  return createdFileWorkspace
-}
+//   if (error) throw new Error(error.message)
 
-export const createFileWorkspaces = async (
-  items: { user_id: string; file_id: string; workspace_id: string }[]
-) => {
-  const { data: createdFileWorkspaces, error } = await supabase
-    .from("file_workspaces")
-    .insert(items)
-    .select("*")
-
-  if (error) throw new Error(error.message)
-
-  return createdFileWorkspaces
-}
+//   return createdFileWorkspaces
+// }
 
 export const updateFile = async (
   fileId: string,
@@ -322,17 +283,17 @@ export const deleteFile = async (fileId: string) => {
   return true
 }
 
-export const deleteFileWorkspace = async (
-  fileId: string,
-  workspaceId: string
-) => {
-  const { error } = await supabase
-    .from("file_workspaces")
-    .delete()
-    .eq("file_id", fileId)
-    .eq("workspace_id", workspaceId)
+// export const deleteFileWorkspace = async (
+//   fileId: string,
+//   workspaceId: string
+// ) => {
+//   const { error } = await supabase
+//     .from("file_workspaces")
+//     .delete()
+//     .eq("file_id", fileId)
+//     .eq("workspace_id", workspaceId)
 
-  if (error) throw new Error(error.message)
+//   if (error) throw new Error(error.message)
 
-  return true
-}
+//   return true
+// }

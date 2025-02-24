@@ -106,6 +106,7 @@ export async function POST(req: Request) {
     const file_items = chunks.map((chunk, index) => ({
       file_id,
       user_id: profile.user_id,
+      sequence_number: index,
       content: chunk.content,
       tokens: chunk.tokens,
       name: fileMetadata.name,

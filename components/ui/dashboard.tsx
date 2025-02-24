@@ -23,7 +23,7 @@ import {
   useMemo,
   useEffect
 } from "react"
-import { useSelectFileHandler } from "../chat/chat-hooks/use-select-file-handler"
+import { useSelectFileHandler } from "@/components/chat/chat-hooks/use-select-file-handler"
 import {
   ActionTypes,
   getInstalledPlugins,
@@ -126,7 +126,6 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
           />
         )
       case "chats":
-      case "files":
       default:
         return children
     }

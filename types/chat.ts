@@ -9,7 +9,7 @@ export interface ChatSettings {
 export interface ChatPayload {
   chatSettings: ChatSettings
   chatMessages: ChatMessage[]
-  messageFileItems: Tables<"file_items">[]
+  retrievedFileItems: Tables<"file_items">[]
 }
 
 export interface ChatAPIPayload {

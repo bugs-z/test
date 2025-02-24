@@ -38,7 +38,7 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
   updateState,
   isTyping
 }) => {
-  const { setChats, setFiles } = useContext(PentestGPTContext)
+  const { setChats } = useContext(PentestGPTContext)
 
   const buttonRef = useRef<HTMLButtonElement>(null)
 
@@ -75,7 +75,6 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
     ((id: string) => Promise<void>) | null
   > = {
     chats: null,
-    files: null,
     tools: null
   }
 
@@ -173,7 +172,6 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
 
   const stateUpdateFunctions = {
     chats: setChats,
-    files: setFiles,
     tools: setChats
   }
 

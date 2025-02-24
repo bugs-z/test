@@ -17,7 +17,6 @@ import { supabase } from "@/lib/supabase/browser-client"
 import { ProcessedTeamMember } from "@/lib/team-utils"
 import { Tables } from "@/supabase/types"
 import {
-  ChatFile,
   ChatMessage,
   ChatSettings,
   ContentType,
@@ -62,7 +61,6 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
     useState<ProcessedTeamMember | null>(null)
   // ITEMS STORE
   const [chats, setChats] = useState<Tables<"chats">[]>([])
-  const [files, setFiles] = useState<Tables<"files">[]>([])
   // const [workspaces, setWorkspaces] = useState<Tables<"workspaces">[]>([])
 
   // WORKSPACE STORE
@@ -86,11 +84,10 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
     useState<AbortController | null>(null)
 
   // ATTACHMENTS STORE
-  const [chatFiles, setChatFiles] = useState<ChatFile[]>([])
+  const [chatFiles, setChatFiles] = useState<Tables<"files">[]>([])
   const [chatImages, setChatImages] = useState<MessageImage[]>([])
-  const [newMessageFiles, setNewMessageFiles] = useState<ChatFile[]>([])
+  const [newMessageFiles, setNewMessageFiles] = useState<Tables<"files">[]>([])
   const [newMessageImages, setNewMessageImages] = useState<MessageImage[]>([])
-  const [showFilesDisplay, setShowFilesDisplay] = useState<boolean>(false)
 
   // RETIEVAL STORE
   const [useRetrieval, setUseRetrieval] = useState<boolean>(false)
@@ -274,17 +271,9 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
       return
     }
 
-    setChatFiles(
-      chatFiles.files.map(file => ({
-        id: file.id,
-        name: file.name,
-        type: file.type,
-        file: null
-      }))
-    )
+    setChatFiles(chatFiles.files)
 
     setUseRetrieval(chatFiles.files.length > 0)
-    setShowFilesDisplay(chatFiles.files.length > 0)
     setAllMessagesLoaded(false)
     setIsLoadingMore(false)
 
@@ -387,8 +376,7 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
         // ITEMS STORE
         chats,
         setChats,
-        files,
-        setFiles,
+
         // workspaces,
         // setWorkspaces,
 
@@ -421,8 +409,6 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
         setNewMessageFiles,
         newMessageImages,
         setNewMessageImages,
-        showFilesDisplay,
-        setShowFilesDisplay,
 
         // RETRIEVAL STORE
         useRetrieval,

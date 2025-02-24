@@ -1,4 +1,6 @@
 import { ChatMessage } from "@/types"
+import { useContext } from "react"
+import { PentestGPTContext } from "@/context/context"
 
 interface UseMessageHandlerProps {
   isGenerating: boolean
@@ -20,6 +22,8 @@ export const useMessageHandler = ({
   handleSendMessage,
   handleStopMessage
 }: UseMessageHandlerProps) => {
+  const { newMessageFiles } = useContext(PentestGPTContext)
+
   const sendMessage = () => {
     if (!userInput || isGenerating) return
     handleSendMessage(userInput, chatMessages, false, false)
@@ -30,9 +34,13 @@ export const useMessageHandler = ({
     handleStopMessage()
   }
 
+  const fileLoading = newMessageFiles.some(file =>
+    file.id.startsWith("loading")
+  )
+
   return {
     sendMessage,
     stopMessage,
-    canSend: !!userInput && !isGenerating
+    canSend: !!userInput && !isGenerating && !fileLoading
   }
 }

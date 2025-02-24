@@ -24,6 +24,7 @@ import { MessageFragment } from "./message-fragment"
 import { LoadingState } from "./loading-states"
 import dynamic from "next/dynamic"
 import { useUIContext } from "@/context/ui-context"
+import { ChatFileItem } from "../chat/chat-file-item"
 
 const DynamicFilePreview = dynamic(() => import("../ui/file-preview"), {
   ssr: false
@@ -61,7 +62,7 @@ export const Message: FC<MessageProps> = ({
     temporaryChatMessages,
     isTemporaryChat,
     chatImages,
-    files
+    chatFiles
   } = useContext(PentestGPTContext)
 
   const {
@@ -106,6 +107,8 @@ export const Message: FC<MessageProps> = ({
   const [sendReportQuery, setSendReportQuery] = useState(false)
 
   const [isFeedbackDialogOpen, setIsFeedbackDialogOpen] = useState(false)
+
+  const files = chatFiles.filter(file => file.message_id === message.id)
 
   const handleCopy = () => {
     if (navigator.clipboard) {
@@ -237,16 +240,37 @@ export const Message: FC<MessageProps> = ({
               )}
 
             {isEditing ? (
-              <TextareaAutosize
-                textareaRef={editInputRef as RefObject<HTMLTextAreaElement>}
-                className="text-md"
-                value={editedMessage}
-                onValueChange={setEditedMessage}
-                maxRows={isMobile ? 6 : 12}
-              />
+              <div className="flex h-auto w-full flex-col gap-2">
+                <div className="flex flex-wrap gap-2">
+                  {files.map((file, index) => (
+                    <ChatFileItem
+                      key={index}
+                      file={file}
+                      showRemoveButton={false}
+                    />
+                  ))}
+                </div>
+
+                <TextareaAutosize
+                  textareaRef={editInputRef as RefObject<HTMLTextAreaElement>}
+                  className="text-md w-full"
+                  value={editedMessage}
+                  onValueChange={setEditedMessage}
+                />
+              </div>
             ) : (
               <div>
-                <div className={`flex-wrap gap-2`}>
+                <div className="mb-2 flex flex-col items-end gap-2">
+                  {files.map((file, index) => (
+                    <ChatFileItem
+                      key={index}
+                      file={file}
+                      showRemoveButton={false}
+                    />
+                  ))}
+                </div>
+
+                <div className="flex flex-wrap gap-2">
                   {message.image_paths.map((path, index) => {
                     const item = chatImages.find(image => image.path === path)
                     const src = path.startsWith("data") ? path : item?.base64
@@ -267,7 +291,6 @@ export const Message: FC<MessageProps> = ({
                             url: path.startsWith("data") ? "" : item?.url || "",
                             file: null
                           })
-
                           setShowImagePreview(true)
                         }}
                         loading="lazy"
@@ -275,6 +298,7 @@ export const Message: FC<MessageProps> = ({
                     )
                   })}
                 </div>
+
                 <MessageTypeResolver
                   previousMessage={previousMessage}
                   message={message}
@@ -312,7 +336,7 @@ export const Message: FC<MessageProps> = ({
 
                 <div className="mt-2 grid grid-cols-2 gap-2">
                   {fileItems.map((fileItem, index) => {
-                    const parentFile = files.find(
+                    const parentFile = chatFiles.find(
                       file => file.id === fileItem.file_id
                     )
 

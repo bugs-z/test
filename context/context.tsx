@@ -1,17 +1,14 @@
+import { ProcessedTeamMember } from "@/lib/team-utils"
 import { Tables } from "@/supabase/types"
 import {
-  ChatFile,
   ChatMessage,
   ChatSettings,
-  LLM,
+  ContentType,
   MessageImage,
   SubscriptionStatus
 } from "@/types"
-import { PluginID } from "@/types/plugins"
-import { Dispatch, SetStateAction, createContext, useContext } from "react"
-import { ContentType } from "@/types"
-import { ProcessedTeamMember } from "@/lib/team-utils"
 import { User } from "@supabase/supabase-js"
+import { Dispatch, SetStateAction, createContext, useContext } from "react"
 
 interface PentestGPTContextType {
   // USER STORE
@@ -39,8 +36,6 @@ interface PentestGPTContextType {
   // ITEMS STORE
   chats: Tables<"chats">[]
   setChats: Dispatch<SetStateAction<Tables<"chats">[]>>
-  files: Tables<"files">[]
-  setFiles: Dispatch<SetStateAction<Tables<"files">[]>>
   // workspaces: Tables<"workspaces">[]
   // setWorkspaces: Dispatch<SetStateAction<Tables<"workspaces">[]>>
 
@@ -65,16 +60,14 @@ interface PentestGPTContextType {
   setAbortController: Dispatch<SetStateAction<AbortController | null>>
 
   // ATTACHMENTS STORE
-  chatFiles: ChatFile[]
-  setChatFiles: Dispatch<SetStateAction<ChatFile[]>>
+  chatFiles: Tables<"files">[]
+  setChatFiles: Dispatch<SetStateAction<Tables<"files">[]>>
   chatImages: MessageImage[]
   setChatImages: Dispatch<SetStateAction<MessageImage[]>>
-  newMessageFiles: ChatFile[]
-  setNewMessageFiles: Dispatch<SetStateAction<ChatFile[]>>
+  newMessageFiles: Tables<"files">[]
+  setNewMessageFiles: Dispatch<SetStateAction<Tables<"files">[]>>
   newMessageImages: MessageImage[]
   setNewMessageImages: Dispatch<SetStateAction<MessageImage[]>>
-  showFilesDisplay: boolean
-  setShowFilesDisplay: Dispatch<SetStateAction<boolean>>
 
   // RETRIEVAL STORE
   useRetrieval: boolean
@@ -131,8 +124,6 @@ export const PentestGPTContext = createContext<PentestGPTContextType>({
   // ITEMS STORE
   chats: [],
   setChats: () => {},
-  files: [],
-  setFiles: () => {},
   // workspaces: [],
   // setWorkspaces: () => {},
 
@@ -165,8 +156,6 @@ export const PentestGPTContext = createContext<PentestGPTContextType>({
   setNewMessageFiles: () => {},
   newMessageImages: [],
   setNewMessageImages: () => {},
-  showFilesDisplay: false,
-  setShowFilesDisplay: () => {},
 
   // RETRIEVAL STORE
   useRetrieval: false,

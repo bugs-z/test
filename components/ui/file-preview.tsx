@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils"
 import { Tables } from "@/supabase/types"
-import { ChatFile, MessageImage } from "@/types"
+import { MessageImage } from "@/types"
 import { IconFileFilled } from "@tabler/icons-react"
 import Image from "next/image"
 import { Dialog, DialogContent } from "./dialog"
@@ -8,7 +8,7 @@ import { DialogTitle } from "@radix-ui/react-dialog"
 
 interface FilePreviewProps {
   type: "image" | "file" | "file_item"
-  item: ChatFile | MessageImage | Tables<"file_items">
+  item: Tables<"files"> | MessageImage | Tables<"file_items">
   isOpen: boolean
   onOpenChange: (isOpen: boolean) => void
 }

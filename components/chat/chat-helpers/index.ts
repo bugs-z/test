@@ -1,11 +1,11 @@
 // Only used in use-chat-handler.tsx to keep it clean
 
 import { AlertAction } from "@/context/alert-context"
-import { createChatFiles } from "@/db/chat-files"
 import { createChat } from "@/db/chats"
+import { buildFinalMessages } from "@/lib/build-prompt"
+import { Fragment } from "@/lib/tools/e2b/fragments/types"
 import { Tables } from "@/supabase/types"
 import {
-  ChatFile,
   ChatMessage,
   ChatPayload,
   ChatSettings,
@@ -15,15 +15,13 @@ import {
 } from "@/types"
 import React from "react"
 import { toast } from "sonner"
-import { buildFinalMessages } from "@/lib/build-prompt"
-import { Fragment } from "@/lib/tools/e2b/fragments/types"
 import { processResponse } from "./stream-processor"
 
-export * from "./validation"
-export * from "./image-handlers"
-export * from "./retrieval"
 export * from "./create-messages"
 export * from "./create-temp-messages"
+export * from "./image-handlers"
+export * from "./retrieval"
+export * from "./validation"
 
 export const handleHostedChat = async (
   payload: ChatPayload,
@@ -74,7 +72,7 @@ export const handleHostedChat = async (
     messages: formattedMessages,
     chatSettings: payload.chatSettings,
     isRetrieval:
-      payload.messageFileItems && payload.messageFileItems.length > 0,
+      payload.retrievedFileItems && payload.retrievedFileItems.length > 0,
     isContinuation,
     isRagEnabled,
     selectedPlugin,
@@ -233,11 +231,9 @@ export const handleCreateChat = async (
   profile: Tables<"profiles">,
   selectedWorkspace: Tables<"workspaces">,
   messageContent: string,
-  newMessageFiles: ChatFile[],
   finishReason: string,
   setSelectedChat: React.Dispatch<React.SetStateAction<Tables<"chats"> | null>>,
-  setChats: React.Dispatch<React.SetStateAction<Tables<"chats">[]>>,
-  setChatFiles: React.Dispatch<React.SetStateAction<ChatFile[]>>
+  setChats: React.Dispatch<React.SetStateAction<Tables<"chats">[]>>
 ) => {
   // Create chat first with a temporary chat name
   const createdChat = await createChat({
@@ -251,17 +247,6 @@ export const handleCreateChat = async (
 
   setSelectedChat(createdChat)
   setChats(chats => [createdChat, ...chats])
-
-  // Handle file creation
-  await createChatFiles(
-    newMessageFiles.map(file => ({
-      user_id: profile.user_id,
-      chat_id: createdChat.id,
-      file_id: file.id
-    }))
-  )
-
-  setChatFiles(prev => [...prev, ...newMessageFiles])
 
   return createdChat
 }

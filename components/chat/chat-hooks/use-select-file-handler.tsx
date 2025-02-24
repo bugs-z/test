@@ -1,5 +1,5 @@
 import { PentestGPTContext } from "@/context/context"
-import { createDocXFile, createFile } from "@/db/files"
+import { createFileBasedOnExtension } from "@/db/files"
 import { LLM_LIST } from "@/lib/models/llm/llm-list"
 import mammoth from "mammoth"
 import { useContext, useEffect, useState } from "react"
@@ -90,8 +90,6 @@ export const useSelectFileHandler = () => {
     chatSettings,
     setNewMessageImages,
     setNewMessageFiles,
-    setShowFilesDisplay,
-    setFiles,
     setUseRetrieval
   } = useContext(PentestGPTContext)
 
@@ -134,7 +132,6 @@ export const useSelectFileHandler = () => {
     if (!profile || !selectedWorkspace || !chatSettings) return
     if (!validateFile(file)) return
 
-    setShowFilesDisplay(true)
     const loadingId = "loading-" + crypto.randomUUID()
     const processor = getFileProcessor(file)
 
@@ -164,7 +161,17 @@ export const useSelectFileHandler = () => {
           id: loadingId,
           name: file.name,
           type: simplifiedType,
-          file
+          file,
+          created_at: "",
+          description: "",
+          file_path: "",
+          sharing: "",
+          size: file.size,
+          tokens: 0,
+          updated_at: "",
+          user_id: profile.user_id,
+          message_id: null,
+          chat_id: null
         }
       ])
 
@@ -178,15 +185,7 @@ export const useSelectFileHandler = () => {
         type: simplifiedType
       }
 
-      const createdFile =
-        type === "docx"
-          ? await createDocXFile(
-              content as string,
-              file,
-              fileData,
-              selectedWorkspace.id
-            )
-          : await createFile(file, fileData, selectedWorkspace.id)
+      const createdFile = await createFileBasedOnExtension(file, fileData)
 
       if (!createdFile) {
         toast.error(
@@ -196,18 +195,8 @@ export const useSelectFileHandler = () => {
         return
       }
 
-      setFiles(prev => [...prev, createdFile])
       setNewMessageFiles(prev =>
-        prev.map(item =>
-          item.id === loadingId
-            ? {
-                id: createdFile.id,
-                name: createdFile.name,
-                type: createdFile.type,
-                file
-              }
-            : item
-        )
+        prev.map(item => (item.id === loadingId ? createdFile : item))
       )
       setUseRetrieval(true)
     } catch (error: any) {

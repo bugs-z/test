@@ -1,17 +1,18 @@
-import { ChatMessage, MessageImage, PluginID, LLM } from "@/types"
-import { Tables, TablesInsert } from "@/supabase/types"
-import { Fragment } from "@/lib/tools/e2b/fragments/types"
-import { v4 as uuidv4 } from "uuid"
-import { lastSequenceNumber } from "@/lib/utils"
-import {
-  deleteMessagesIncludingAndAfter,
-  updateMessage,
-  deleteMessage,
-  createMessages
-} from "@/db/messages"
-import { fetchImageData } from "./image-handlers"
-import { uploadMessageImage } from "@/db/storage/message-images"
 import { createMessageFileItems } from "@/db/message-file-items"
+import {
+  createMessages,
+  deleteMessage,
+  deleteMessagesIncludingAndAfter,
+  updateMessage
+} from "@/db/messages"
+import { uploadMessageImage } from "@/db/storage/message-images"
+import { Fragment } from "@/lib/tools/e2b/fragments/types"
+import { lastSequenceNumber } from "@/lib/utils"
+import { Tables, TablesInsert } from "@/supabase/types"
+import { ChatMessage, LLM, MessageImage, PluginID } from "@/types"
+import { toast } from "sonner"
+import { v4 as uuidv4 } from "uuid"
+import { fetchImageData } from "./image-handlers"
 
 export const handleCreateMessages = async (
   chatMessages: ChatMessage[],
@@ -36,7 +37,9 @@ export const handleCreateMessages = async (
   fragment?: Fragment | null,
   setFragment?: (fragment: Fragment | null, chatMessage?: ChatMessage) => void,
   thinkingText?: string,
-  thinkingElapsedSecs?: number | null
+  thinkingElapsedSecs?: number | null,
+  newChatFiles?: { id: string }[],
+  setChatFiles?: React.Dispatch<React.SetStateAction<Tables<"files">[]>>
 ) => {
   const isEdit = editSequenceNumber !== undefined
 
@@ -136,18 +139,34 @@ export const handleCreateMessages = async (
 
   // If the user is editing a message, delete all messages after the edited message
   if (isEdit) {
-    await deleteMessagesIncludingAndAfter(
+    const { files, error } = await deleteMessagesIncludingAndAfter(
       profile.user_id,
       currentChat.id,
-      editSequenceNumber
+      editSequenceNumber,
+      true
     )
+
+    newChatFiles = files.map(file => ({
+      id: file.id
+    }))
+
+    if (error) {
+      toast.error("Error deleting messages:", {
+        description: error
+      })
+    }
   }
 
   if (isRegeneration) {
     const lastMessageId = chatMessages[chatMessages.length - 1].message.id
     await deleteMessage(lastMessageId)
 
-    const createdMessages = await createMessages([finalAssistantMessage])
+    const createdMessages = await createMessages(
+      [finalAssistantMessage],
+      [],
+      currentChat?.id,
+      setChatFiles
+    )
 
     const chatImagesWithUrls = await Promise.all(
       assistantGeneratedImages.map(async url => {
@@ -158,6 +177,16 @@ export const handleCreateMessages = async (
           base64: base64,
           url: base64 || url,
           file: null
+        }
+      })
+    )
+
+    await createMessageFileItems(
+      retrievedFileItems.map(fileItem => {
+        return {
+          user_id: profile.user_id,
+          message_id: createdMessages[0].id,
+          file_item_id: fileItem.id
         }
       })
     )
@@ -186,10 +215,12 @@ export const handleCreateMessages = async (
 
     setMessages(finalChatMessages)
   } else {
-    const createdMessages = await createMessages([
-      finalUserMessage,
-      finalAssistantMessage
-    ])
+    const createdMessages = await createMessages(
+      [finalUserMessage, finalAssistantMessage],
+      newChatFiles || [],
+      currentChat?.id,
+      setChatFiles
+    )
 
     // Upload each image (stored in newMessageImages) for the user message to message_images bucket
     const uploadPromises = newMessageImages

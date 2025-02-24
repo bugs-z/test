@@ -63,15 +63,6 @@ export const deleteAllChats = async (userId: string) => {
     throw new Error(chatDeleteError.message)
   }
 
-  const { error: chatMessageDeleteError } = await supabase
-    .from("chat_files")
-    .delete()
-    .eq("user_id", userId)
-
-  if (chatMessageDeleteError) {
-    throw new Error(chatMessageDeleteError.message)
-  }
-
   return true
 }
 

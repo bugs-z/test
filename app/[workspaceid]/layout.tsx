@@ -3,7 +3,6 @@
 import { Dashboard } from "@/components/ui/dashboard"
 import { PentestGPTContext } from "@/context/context"
 import { getChatsByUserId } from "@/db/chats"
-import { getFileWorkspacesByWorkspaceId } from "@/db/files"
 import { getWorkspaceById } from "@/db/workspaces"
 import { supabase } from "@/lib/supabase/browser-client"
 import { useParams, useRouter } from "next/navigation"
@@ -25,7 +24,6 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
   const {
     setChatSettings,
     setChats,
-    setFiles,
     setSelectedWorkspace,
     setSelectedChat,
     setChatMessages,
@@ -33,8 +31,7 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     setChatFiles,
     setChatImages,
     setNewMessageFiles,
-    setNewMessageImages,
-    setShowFilesDisplay
+    setNewMessageImages
   } = useContext(PentestGPTContext)
 
   const { setIsGenerating, setFirstTokenReceived } = useUIContext()
@@ -73,7 +70,6 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
       setChatImages([])
       setNewMessageFiles([])
       setNewMessageImages([])
-      setShowFilesDisplay(false)
     }
 
     initializeWorkspace()
@@ -91,13 +87,9 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
       }
       setSelectedWorkspace(workspace)
 
-      const [chats, fileData] = await Promise.all([
-        getChatsByUserId(userId),
-        getFileWorkspacesByWorkspaceId(workspaceId)
-      ])
+      const [chats] = await Promise.all([getChatsByUserId(userId)])
 
       setChats(chats)
-      setFiles(fileData.files)
     } catch (error) {
       console.error("Error fetching workspace data:", error)
       router.push("/")

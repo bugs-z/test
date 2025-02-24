@@ -23,7 +23,7 @@ export async function buildFinalMessages(
   chatImages: MessageImage[],
   shouldUseRAG?: boolean
 ): Promise<BuiltChatMessage[]> {
-  const { chatSettings, chatMessages, messageFileItems } = payload
+  const { chatSettings, chatMessages, retrievedFileItems } = payload
 
   let CHUNK_SIZE = 12000
   if (chatSettings.model === GPT4o.modelId) {
@@ -161,16 +161,14 @@ export async function buildFinalMessages(
     }
   })
 
-  if (messageFileItems.length > 0) {
-    const retrievalText = buildRetrievalText(messageFileItems)
-
+  if (retrievedFileItems.length > 0) {
     finalMessages[finalMessages.length - 2] = {
       ...finalMessages[finalMessages.length - 2],
       content: endent`Assist with the user's query: '${finalMessages[finalMessages.length - 2].content}' using uploaded files. 
       Each <doc> tag contains a section of a file. The id attribute is for internal reference only - do not expose these IDs to users.
       When discussing files, use only their names (shown in the name attribute) to reference them.
       
-      \n\n${retrievalText}\n\n
+      \n\n${buildRetrievalText(retrievedFileItems)}\n\n
 
       Guidelines for your response:
       - If uncertain, ask the user for clarification.

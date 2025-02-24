@@ -1,5 +1,4 @@
 export * from "./chat"
-export * from "./chat-file"
 export * from "./chat-message"
 export * from "./content-type"
 export * from "./file-item-chunk"
