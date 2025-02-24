@@ -8,7 +8,7 @@ import llmConfig from "@/lib/models/llm/llm-config"
 import { checkRatelimitOnApi } from "@/lib/server/ratelimiter"
 import { getAIProfile } from "@/lib/server/server-chat-helpers"
 import { openai } from "@ai-sdk/openai"
-import { smoothStream, streamText } from "ai"
+import { streamText } from "ai"
 import { ServerRuntime } from "next"
 import { createToolSchemas } from "@/lib/tools/llm/toolSchemas"
 import { PluginID } from "@/types/plugins"
@@ -139,8 +139,7 @@ export async function POST(request: Request) {
         messages: toVercelChatMessages(messages, true),
         maxTokens: 2048,
         abortSignal: request.signal,
-        tools: getSelectedSchemas(["browser", "webSearch", "terminal"]),
-        experimental_transform: smoothStream()
+        tools: getSelectedSchemas(["browser", "webSearch", "terminal"])
       })
 
       result.mergeIntoDataStream(dataStream)

@@ -4,7 +4,6 @@ import { ChatHelp } from "@/components/chat/chat-help"
 import { useChatHandler } from "@/components/chat/chat-hooks/use-chat-handler"
 import { ChatInput } from "@/components/chat/chat-input"
 import { ChatSettings } from "@/components/chat/chat-settings"
-import ChatStarters from "@/components/chat/chat-starters"
 import { ChatUI } from "@/components/chat/chat-ui"
 import { PentestGPTContext } from "@/context/context"
 import useHotkey from "@/lib/hooks/use-hotkey"
@@ -76,11 +75,6 @@ export default function ChatPage() {
           <ChatSettings />
 
           <div className="flex grow flex-col items-center justify-center" />
-
-          <ChatStarters
-            selectedPlugin={selectedPlugin}
-            chatMessages={chatMessages}
-          />
 
           <ChatInput />
 

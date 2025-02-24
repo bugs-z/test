@@ -101,8 +101,7 @@ export async function createOrConnectPersistentTerminal(
           // Try to resume the sandbox if it's stuck in pausing state
           try {
             const sandbox = await Sandbox.resume(existingSandbox.sandbox_id, {
-              timeoutMs,
-              domain: "e2b-foxtrot.dev"
+              timeoutMs
             })
 
             await supabaseAdmin
@@ -126,8 +125,7 @@ export async function createOrConnectPersistentTerminal(
       if (currentStatus === "active" || currentStatus === "paused") {
         try {
           const sandbox = await Sandbox.resume(existingSandbox.sandbox_id, {
-            timeoutMs,
-            domain: "e2b-foxtrot.dev"
+            timeoutMs
           })
 
           await supabaseAdmin
@@ -159,8 +157,7 @@ export async function createOrConnectPersistentTerminal(
 
     // Create new persistent sandbox
     const sandbox = await Sandbox.create(template, {
-      timeoutMs,
-      domain: "e2b-foxtrot.dev"
+      timeoutMs
     })
 
     await supabaseAdmin.from("e2b_sandboxes").upsert(

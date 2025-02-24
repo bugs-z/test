@@ -49,10 +49,10 @@ const ChatStarters: React.FC<ChatStartersProps> = ({
 
   return (
     <div className="flex w-full justify-center">
-      <div className="w-full max-w-[800px] px-4 pb-1 md:px-8">
+      <div className="w-full max-w-[800px]">
         <div
           className={cn(
-            "scrollbar-hide flex w-[calc(100vw-2rem)] gap-2 overflow-x-auto pb-1 pt-2",
+            "scrollbar-hide flex w-[calc(100vw-2rem)] gap-2 overflow-x-auto pt-2",
             "sm:scrollbar-show sm:w-full sm:max-w-[800px]",
             "lg:grid lg:grid-cols-2"
           )}

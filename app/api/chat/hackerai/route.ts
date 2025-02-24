@@ -13,7 +13,7 @@ import llmConfig from "@/lib/models/llm/llm-config"
 import { checkRatelimitOnApi } from "@/lib/server/ratelimiter"
 import { createOpenAI as createOpenRouterAI } from "@ai-sdk/openai"
 import { createMistral } from "@ai-sdk/mistral"
-import { smoothStream, streamText } from "ai"
+import { streamText } from "ai"
 import { getModerationResult } from "@/lib/server/moderation"
 // import { createToolSchemas } from "@/lib/tools/llm/toolSchemas"
 import { PluginID } from "@/types/plugins"
@@ -208,9 +208,8 @@ export async function POST(request: Request) {
           system: systemPrompt,
           messages: toVercelChatMessages(validatedMessages, includeImages),
           maxTokens: 2048,
-          abortSignal: request.signal,
-          // ...(!shouldUseRAG && !shouldUncensorResponse && config.isPentestGPTPro ? { tools } : null),
-          experimental_transform: smoothStream()
+          abortSignal: request.signal
+          // ...(!shouldUseRAG && !shouldUncensorResponse && config.isPentestGPTPro ? { tools } : null)
         })
 
         result.mergeIntoDataStream(dataStream)

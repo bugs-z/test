@@ -21,6 +21,7 @@ import { useMessageHandler } from "./chat-hooks/use-message-handler"
 import { ChatMicButton } from "./chat-mic-button"
 import useVoiceRecording from "./chat-hooks/use-voice-recorder"
 import VoiceStatusBar from "@/components/ui/voice-status-bar"
+import ChatStarters from "./chat-starters"
 
 export const ChatInput: FC = () => {
   useHotkey("l", () => {
@@ -39,7 +40,6 @@ export const ChatInput: FC = () => {
   const {
     userInput,
     chatMessages,
-    newMessageFiles,
     newMessageImages,
     isPremiumSubscription,
     isMicSupported,
@@ -143,19 +143,17 @@ export const ChatInput: FC = () => {
 
         {/* Files and Enhanced Menu Container */}
         <div
-          className={cn(
-            "flex flex-col flex-wrap justify-center gap-2",
-            isEnhancedMenuOpen &&
-              !newMessageFiles.length &&
-              !newMessageImages.length
-              ? "mb-2"
-              : "",
-            newMessageFiles.length > 0 || newMessageImages.length > 0
-              ? "my-2"
-              : ""
-          )}
+          className={cn("mb-2 flex flex-col flex-wrap justify-center gap-2")}
         >
           <ChatFilesDisplay />
+
+          {chatMessages.length === 0 && (
+            <ChatStarters
+              selectedPlugin={selectedPlugin}
+              chatMessages={chatMessages}
+            />
+          )}
+
           {isEnhancedMenuOpen && <EnhancedMenuPicker />}
         </div>
 

@@ -2,7 +2,7 @@ import { buildSystemPrompt } from "@/lib/ai/prompts"
 import { toVercelChatMessages } from "@/lib/build-prompt"
 import llmConfig from "@/lib/models/llm/llm-config"
 import { createOpenAI } from "@ai-sdk/openai"
-import { smoothStream, streamText } from "ai"
+import { streamText } from "ai"
 import { GPT4o } from "@/lib/models/llm/openai-llm-list"
 import { LargeModel } from "@/lib/models/llm/hackerai-llm-list"
 
@@ -134,8 +134,7 @@ export async function executeBrowserTool({
       ...toVercelChatMessages(messages.slice(0, -1)),
       { role: "user", content: browserPrompt }
     ],
-    maxTokens: 2048,
-    experimental_transform: smoothStream()
+    maxTokens: 2048
   })
 
   for await (const delta of fullStream) {
