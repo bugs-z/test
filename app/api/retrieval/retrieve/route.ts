@@ -220,10 +220,13 @@ export async function POST(request: Request) {
     const messages: ChatCompletionMessageParam[] = [
       {
         role: "system",
-        content: `You are a helpful researcher that will select the most relevant chunks of text from the files to answer the question. \n
-          Here are the files you can answer questions about: <files>\n${userFiles
+        content: `You are a helpful researcher that will determine if the user's question is related to the files they've uploaded. Only retrieve file chunks if the question is directly asking about file content or requires information from the files to answer properly.
+
+          Here are the files available: <files>\n${userFiles
             .map(file => `File ID: ${file.id} - Name: ${file.name}`)
-            .join("\n")}\n</files>`
+            .join("\n")}\n</files>
+          
+          If the user's question doesn't specifically mention files or doesn't require file content to answer, return an empty array of chunk_ids.`
       }
     ]
 
@@ -243,7 +246,7 @@ export async function POST(request: Request) {
 
     messages.push({
       role: "user",
-      content: `Take a time to think about the question and the files. Output a list of the most relevant chunk_id's from that will help you answer the question. If the question is not related to the files, return an empty array.`
+      content: `Analyze the conversation and determine if the user's latest question is related to the files. If it is, use the queryFiles tool to find relevant chunks. If the question is not related to the files or doesn't require file content to answer, return an empty array for chunk_ids.`
     })
 
     const runner = openai.beta.chat.completions.runTools({
@@ -255,12 +258,12 @@ export async function POST(request: Request) {
           reasoning: z
             .string()
             .describe(
-              "A brief and concise reasoning for the chunk_ids. This should be a single sentence."
+              "A brief and concise reasoning for whether the query is related to files and why specific chunk_ids were selected or not."
             ),
           chunk_ids: z
             .array(z.string())
             .describe(
-              `A list of the most relevant chunk_ids. Maximum ${MAXIMUM_OUTPUT_CHUNKS} chunk_ids.`
+              `A list of the most relevant chunk_ids. Maximum ${MAXIMUM_OUTPUT_CHUNKS} chunk_ids. Return an empty array if the query is not related to files.`
             )
         }),
         "chunkIds"

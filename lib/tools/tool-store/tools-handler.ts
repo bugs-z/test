@@ -43,10 +43,7 @@ export async function commandGeneratorHandler({
   isTerminalContinuation,
   isPremium
 }: CommandGeneratorHandlerOptions) {
-  const customPrompt = getToolsWithAnswerPrompt(
-    process.env.SECRET_PENTESTGPT_SYSTEM_PROMPT || "",
-    pluginID
-  )
+  const customPrompt = getToolsWithAnswerPrompt(pluginID)
   updateSystemMessage(messages, customPrompt, profile_context)
   filterEmptyAssistantMessages(messages)
   replaceWordsInLastUserMessage(messages)

@@ -25,7 +25,7 @@ import { useFragments } from "./use-fragments"
 import { supabase } from "../../../lib/supabase/browser-client"
 import { getMessageFileItemsByMessageId } from "@/db/message-file-items"
 
-const MAX_FILE_CONTENT_TOKENS = 30000
+const MAX_FILE_CONTENT_TOKENS = 12000
 
 export const useChatHandler = () => {
   const router = useRouter()
@@ -459,7 +459,7 @@ export const useChatHandler = () => {
       ) {
         setToolInUse("retrieval")
 
-        if (!isContinuation && !isRegeneration) {
+        if (!isContinuation) {
           retrievedFileItems = await retrievalLogic(
             sentChatMessages,
             editedMessageFiles,

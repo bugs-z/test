@@ -84,17 +84,13 @@ with access to any tools and the ability to edit any files.
 }
 
 export const getToolsPrompt = (
-  initialSystemPrompt: string,
   pluginID: PluginID,
   includePromptEnding: boolean = true
 ): string => {
-  return `${getPentestGPTInfo(initialSystemPrompt, true, true)}\n${getPluginSpecificInstructions(pluginID)}\n${includePromptEnding ? systemPromptEnding : ""}`
+  return `${getPentestGPTInfo(true, true)}\n${getPluginSpecificInstructions(pluginID)}\n${includePromptEnding ? systemPromptEnding : ""}`
 }
 
-export const getToolsWithAnswerPrompt = (
-  initialSystemPrompt: string,
-  pluginID: PluginID
-): string => {
-  const basePrompt = getToolsPrompt(initialSystemPrompt, pluginID, false)
+export const getToolsWithAnswerPrompt = (pluginID: PluginID): string => {
+  const basePrompt = getToolsPrompt(pluginID, false)
   return `${basePrompt}\n${TERMINAL_OUTPUT_ANALYSIS_INSTRUCTIONS}\n${systemPromptEnding}`
 }

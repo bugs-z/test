@@ -3,8 +3,8 @@ import { toVercelChatMessages } from "@/lib/build-prompt"
 import llmConfig from "@/lib/models/llm/llm-config"
 import { createOpenAI } from "@ai-sdk/openai"
 import { streamText } from "ai"
-import { GPT4o } from "@/lib/models/llm/openai-llm-list"
-import { LargeModel } from "@/lib/models/llm/hackerai-llm-list"
+// import { GPT4o } from "@/lib/models/llm/openai-llm-list"
+// import { LargeModel } from "@/lib/models/llm/hackerai-llm-list"
 
 interface BrowserToolConfig {
   chatSettings: any
@@ -13,21 +13,20 @@ interface BrowserToolConfig {
   dataStream: any
 }
 
-async function getProviderConfig(chatSettings: any) {
-  const isProModel =
-    chatSettings.model === LargeModel.modelId ||
-    chatSettings.model === GPT4o.modelId
+// async function getProviderConfig(chatSettings: any) {
+//   const isProModel =
+//     chatSettings.model === LargeModel.modelId ||
+//     chatSettings.model === GPT4o.modelId
 
-  const defaultModel = "gpt-4o-mini"
-  const proModel = "chatgpt-4o-latest"
+//   const defaultModel = "gpt-4o-mini"
+//   const proModel = "chatgpt-4o-latest"
 
-  const selectedModel = isProModel ? proModel : defaultModel
+//   const selectedModel = isProModel ? proModel : defaultModel
 
-  return {
-    selectedModel,
-    isProModel
-  }
-}
+//   return {
+//     selectedModel
+//   }
+// }
 
 export function getLastUserMessage(messages: any[]): string {
   return (
@@ -114,8 +113,9 @@ export async function executeBrowserTool({
     throw new Error("JINA_API_TOKEN environment variable is not set")
   }
 
-  const { chatSettings, profile, messages, dataStream } = config
-  const { selectedModel } = await getProviderConfig(chatSettings)
+  const { profile, messages, dataStream } = config
+  // const { selectedModel } = await getProviderConfig(chatSettings)
+  const selectedModel = "gpt-4o-mini"
   const browserResult = await browsePage(open_url)
   const lastUserMessage = getLastUserMessage(messages)
   const browserPrompt = createBrowserPrompt(browserResult, lastUserMessage)

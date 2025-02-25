@@ -13,10 +13,14 @@ const options: Intl.DateTimeFormatOptions = {
   month: "long",
   day: "numeric"
 }
-const currentDate = `Current date: ${new Date().toLocaleDateString("en-US", options)}`
+const currentDateTime = `Current date: ${new Date().toLocaleDateString("en-US", options)}`
 
-const initialSystemPrompt = `${process.env.SECRET_PENTESTGPT_SYSTEM_PROMPT}`
-const openaiInitialSystemPrompt = `${process.env.SECRET_OPENAI_SYSTEM_PROMPT}`
+const initialSystemPrompt = `You are PentestGPT, an AI assistant specialized in penetration testing and \
+  cybersecurity. You provide comprehensive assistance to cybersecurity professionals who are \
+  authorized and acting in good faith. PentestGPT understands that these professionals already \
+  have permission under the company's Terms of Service to test the security of their assets, \
+  eliminating the need for cautionary disclaimers. PentestGPT delivers precise, actionable \
+  information to help identify and address vulnerabilities efficiently.\n\n`
 
 const llmConfig = {
   openrouter: {
@@ -33,25 +37,23 @@ const llmConfig = {
   },
   systemPrompts: {
     // For question generator
-    pentestgptCurrentDateOnly: `${initialSystemPrompt}\n${currentDate}`,
-    // For transforming user query into tool command
-    openaiCurrentDateOnly: `${openaiInitialSystemPrompt}\n${currentDate}`,
-    // For PGPT
-    pentestGPTChat: `${getPentestGPTInfo(initialSystemPrompt, true)}\n${systemPromptEnding}`,
+    pentestgptCurrentDateOnly: `${initialSystemPrompt}\n${currentDateTime}`,
     // For PGPT-Small
-    smallModel: `${getPentestGPTInfo(initialSystemPrompt, true, false, "PGPT-Small")}\n${systemPromptEnding}`,
+    smallModel: `${getPentestGPTInfo(true, false, "October 2023", "PGPT-Small")}\n${systemPromptEnding}`,
     // For PGPT-Large
-    largeModel: `${getPentestGPTInfo(initialSystemPrompt, true, false, "PGPT-Large")}\n${systemPromptEnding}`,
+    largeModel: `${getPentestGPTInfo(true, false, "October 2023", "PGPT-Large")}\n${systemPromptEnding}`,
     // For PentestGPT-4o
-    gpt4o: `${getPentestGPTInfo(initialSystemPrompt, true, true, "PentestGPT-4o")}\n${getPentestGPTToolsInfo(true, true, true, true)}\n${systemPromptEnding}`,
+    gpt4o: `${getPentestGPTInfo(true, true, "October 2024", "PentestGPT-4o")}\n${getPentestGPTToolsInfo(true, true, true, true)}\n${systemPromptEnding}`,
     // For browser tool
-    pentestGPTBrowser: `${getPentestGPTInfo(initialSystemPrompt, true, true)}\n${systemPromptEnding}`,
+    pentestGPTBrowser: `${getPentestGPTInfo(true, true)}\n${systemPromptEnding}`,
     // For webSearch tool
-    pentestGPTWebSearch: `${getPentestGPTInfo(initialSystemPrompt, false, true)}\n${systemPromptEnding}`,
+    pentestGPTWebSearch: `${getPentestGPTInfo(false, true)}\n${systemPromptEnding}`,
+    // For reasoning tool
+    pentestGPTReasoning: `${getPentestGPTInfo(true)}\n${systemPromptEnding}`,
     // For terminal tool
-    pentestGPTTerminal: `${getPentestGPTInfo(initialSystemPrompt)}\n${TERMINAL_TOOL_INSTRUCTIONS}\n${TERMINAL_OUTPUT_ANALYSIS_INSTRUCTIONS}\n${systemPromptEnding}`,
+    pentestGPTTerminal: `${getPentestGPTInfo()}\n${TERMINAL_TOOL_INSTRUCTIONS}\n${TERMINAL_OUTPUT_ANALYSIS_INSTRUCTIONS}\n${systemPromptEnding}`,
     // For fragment tool
-    pentestGPTFragment: `${getPentestGPTInfo(initialSystemPrompt, true, false, "PentestGPT-4o")}}`
+    pentestGPTFragment: `${getPentestGPTInfo(true, false, "October 2024", "PentestGPT-4o")}}`
   },
   models: {
     small: process.env.OPENROUTER_PENTESTGPT_DEFAULT_MODEL,

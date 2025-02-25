@@ -59,7 +59,7 @@ async function processStream({
     model: reasoningProvider(llmConfig.models.reasoning as string),
     maxTokens: 2048,
     system: buildSystemPrompt(
-      llmConfig.systemPrompts.pentestGPTChat,
+      llmConfig.systemPrompts.pentestGPTReasoning,
       profile.profile_context
     ),
     messages: toVercelChatMessages(messages)
