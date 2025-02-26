@@ -18,14 +18,11 @@ import {
   handleCreateMessages,
   handleHostedChat,
   handleHostedPluginsChat,
-  handleRetrieval,
   validateChatSettings
 } from "../chat-helpers"
 import { useFragments } from "./use-fragments"
-import { supabase } from "../../../lib/supabase/browser-client"
 import { getMessageFileItemsByMessageId } from "@/db/message-file-items"
-
-const MAX_FILE_CONTENT_TOKENS = 12000
+import { useRetrievalLogic } from "./retrieval-logic"
 
 export const useChatHandler = () => {
   const router = useRouter()
@@ -74,6 +71,8 @@ export const useChatHandler = () => {
   const { setFragment } = useFragments()
 
   const isGeneratingRef = useRef(isGenerating)
+
+  const { retrievalLogic } = useRetrievalLogic()
 
   useEffect(() => {
     isGeneratingRef.current = isGenerating
@@ -198,132 +197,6 @@ export const useChatHandler = () => {
       undefined,
       true
     )
-  }
-
-  const rehydrateRetrievedFileItems = async (
-    retrievedFileItemsData: Tables<"file_items">[] | null
-  ) => {
-    let retrievedFileItems = retrievedFileItemsData ?? []
-
-    const retrievedChatFiles = chatFiles.filter(file =>
-      retrievedFileItems.some(item => item.file_id === file.id)
-    )
-
-    const retrievedNewMessageFiles = newMessageFiles.filter(file =>
-      retrievedFileItems.some(item => item.file_id === file.id)
-    )
-
-    const sumOfNewMessageFilesTokens = retrievedNewMessageFiles.reduce(
-      (acc, file) => acc + file.tokens,
-      0
-    )
-
-    const sumOfChatFilesTokens = retrievedChatFiles.reduce(
-      (acc, file) => acc + file.tokens,
-      0
-    )
-
-    const sumOfTokens = sumOfNewMessageFilesTokens + sumOfChatFilesTokens
-
-    // console.log("Token Sums: ", {
-    //   sumOfNewMessageFilesTokens,
-    //   sumOfChatFilesTokens,
-    //   sumOfTokens
-    // })
-
-    if (sumOfTokens > MAX_FILE_CONTENT_TOKENS) {
-      if (
-        sumOfNewMessageFilesTokens > 0 &&
-        sumOfNewMessageFilesTokens < MAX_FILE_CONTENT_TOKENS
-      ) {
-        // console.log("Strategy: Fitting all new message files items")
-        const { data: allNewMessageFileItems } = await supabase
-          .from("file_items")
-          .select("*")
-          .in(
-            "file_id",
-            retrievedNewMessageFiles.map(file => file.id)
-          )
-        retrievedFileItems.push(...(allNewMessageFileItems ?? []))
-      } else {
-        // console.log("Strategy: Fitting only what the agent selected")
-      }
-    } else {
-      // console.log("Strategy: Fitting all files items")
-      const { data: allNewMessageFileItems } = await supabase
-        .from("file_items")
-        .select("*")
-        .in("file_id", [
-          ...retrievedNewMessageFiles.map(file => file.id),
-          ...retrievedChatFiles.map(file => file.id)
-        ])
-      retrievedFileItems.push(...(allNewMessageFileItems ?? []))
-    }
-
-    // remove duplicates
-    retrievedFileItems = retrievedFileItems.filter(
-      (item, index, self) => index === self.findIndex(t => t.id === item.id)
-    )
-
-    // sort by file_id and sequence_number
-    return retrievedFileItems.sort((a, b) => {
-      if (a.file_id !== b.file_id) {
-        return a.file_id < b.file_id ? -1 : 1
-      }
-      return a.sequence_number - b.sequence_number
-    })
-  }
-
-  const retrievalLogic = async (
-    messages: ChatMessage[],
-    editedMessageFiles: Tables<"files">[] | null,
-    existingFiles: Tables<"files">[],
-    sourceCount: number
-  ) => {
-    const lastMessages = messages.slice(-4, -1)
-    const userInputForRetrieval = lastMessages
-      .map(msg => {
-        const attachedFiles = existingFiles.filter(
-          file => file.message_id === msg.message.id
-        )
-        const filesStr =
-          attachedFiles.length > 0
-            ? `\nAttached files: ${attachedFiles.map(f => f.id).join(", ")}`
-            : ""
-        return `<${msg.message.role}>\n${msg.message.content}\n${filesStr}</${msg.message.role}>`
-      })
-      .join("\n\n")
-
-    const { chunks } = await handleRetrieval(
-      userInputForRetrieval,
-      editedMessageFiles || newMessageFiles,
-      existingFiles,
-      sourceCount
-    )
-
-    const { data: retrievedFileItemsData, error: retrievedFileItemsError } =
-      await supabase.from("file_items").select("*").in("id", chunks)
-
-    if (retrievedFileItemsError) {
-      console.error(retrievedFileItemsError)
-      return []
-    }
-
-    const retrievedItems = await rehydrateRetrievedFileItems(
-      retrievedFileItemsData || []
-    )
-
-    setChatFiles([
-      ...existingFiles,
-      ...newMessageFiles.map(file => ({
-        ...file,
-        chat_id: selectedChat?.id ?? null,
-        message_id: messages[messages.length - 2].message.id
-      }))
-    ])
-    setNewMessageFiles([])
-
-    return retrievedItems
   }
 
   const handleSendMessage = async (

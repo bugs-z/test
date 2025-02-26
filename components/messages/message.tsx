@@ -3,12 +3,12 @@ import { PentestGPTContext } from "@/context/context"
 import { cn } from "@/lib/utils"
 import { Tables } from "@/supabase/types"
 import { ChatMessage, LLMID, MessageImage } from "@/types"
-import {
-  IconCaretDownFilled,
-  IconCaretRightFilled,
-  IconFileFilled,
-  IconFileTypePdf
-} from "@tabler/icons-react"
+// import {
+//   IconCaretDownFilled,
+//   IconCaretRightFilled,
+//   IconFileFilled,
+//   IconFileTypePdf
+// } from "@tabler/icons-react"
 import Image from "next/image"
 import { FC, RefObject, useContext, useEffect, useRef, useState } from "react"
 import { Button } from "../ui/button"
@@ -73,7 +73,7 @@ export const Message: FC<MessageProps> = ({
     isMobile
   } = useUIContext()
 
-  const { message, fileItems, feedback } = chatMessage
+  const { message, feedback } = chatMessage
 
   const fragment = (
     message.fragment ? JSON.parse(message.fragment as string) : null
@@ -101,7 +101,7 @@ export const Message: FC<MessageProps> = ({
   const [selectedFileItem, setSelectedFileItem] =
     useState<Tables<"file_items"> | null>(null)
 
-  const [viewSources, setViewSources] = useState(false)
+  // const [viewSources, setViewSources] = useState(false)
 
   const [quickFeedback, setQuickFeedback] = useState(false)
   const [sendReportQuery, setSendReportQuery] = useState(false)
@@ -315,7 +315,7 @@ export const Message: FC<MessageProps> = ({
           <MessageFragment fragment={fragment} chatMessage={chatMessage} />
         )}
 
-        {fileItems.length > 0 && (
+        {/* {fileItems.length > 0 && (
           <div className="my-2 text-lg font-bold">
             {!viewSources ? (
               <div
@@ -378,7 +378,7 @@ export const Message: FC<MessageProps> = ({
               </>
             )}
           </div>
-        )}
+        )} */}
 
         <div className="mt-3 flex flex-wrap gap-2"></div>
 

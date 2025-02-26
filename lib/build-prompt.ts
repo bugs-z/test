@@ -14,7 +14,6 @@ import { Tables } from "@/supabase/types"
 import { countTokens } from "gpt-tokenizer"
 import { GPT4o } from "./models/llm/openai-llm-list"
 import { SmallModel, LargeModel } from "./models/llm/hackerai-llm-list"
-import endent from "endent"
 import { toast } from "sonner"
 import { Fragment } from "./tools/e2b/fragments/types"
 
@@ -67,13 +66,16 @@ export async function buildFinalMessages(
       ...chatMessage
     }
 
-    if (chatMessage.fileItems.length > 0) {
-      const retrievalText = buildRetrievalText(chatMessage.fileItems)
+    if (
+      chatMessage.fileItems.length > 0 &&
+      chatMessage.message.role === "user"
+    ) {
+      // Create a structured document format for file content
+      const documentsText = buildDocumentsText(chatMessage.fileItems)
 
       returnMessage.message = {
         ...returnMessage.message,
-        content:
-          `User Query: "${chatMessage.message.content}"\n\nFile Content:\n${retrievalText}` as string
+        content: `${documentsText}\n\n${chatMessage.message.content}`
       }
       returnMessage.fileItems = []
     }
@@ -162,42 +164,15 @@ export async function buildFinalMessages(
   })
 
   if (retrievedFileItems.length > 0) {
+    const documentsText = buildDocumentsText(retrievedFileItems)
+
     finalMessages[finalMessages.length - 2] = {
       ...finalMessages[finalMessages.length - 2],
-      content: endent`Assist with the user's query: '${finalMessages[finalMessages.length - 2].content}' using uploaded files. 
-      Each <doc> tag contains a section of a file. The id attribute is for internal reference only - do not expose these IDs to users.
-      When discussing files, use only their names (shown in the name attribute) to reference them.
-      
-      \n\n${buildRetrievalText(retrievedFileItems)}\n\n
-
-      Guidelines for your response:
-      - If uncertain, ask the user for clarification.
-      - If the context is unreadable or of poor quality, inform the user and provide the best possible answer.
-      - If the answer isn't present in the context but you possess the knowledge, explain this to the user and provide the answer using your own understanding.
-      - Draw insights directly from file content to provide specific guidance
-      - Always reference files by their names, never by their IDs
-      - Ensure answers are actionable, focusing on practical relevance
-      - Highlight or address any ambiguities found in the content
-      - When referencing file content, use the filename for clarity (e.g., "In config.json, I found...")
-      - State clearly if information related to the query is not available`
+      content: `${documentsText}\n\n${finalMessages[finalMessages.length - 2].content}`
     }
   }
 
   return finalMessages
-}
-
-function buildRetrievalText(fileItems: Tables<"file_items">[]) {
-  const retrievalText = fileItems
-    .map(item => {
-      // Add file metadata to the doc tag
-      const docHeader = `<doc id="${item.file_id}" ${
-        item.name ? `name="${item.name}"` : ""
-      }>`
-      return `${docHeader}\n${item.content}\n</doc>`
-    })
-    .join("\n\n")
-
-  return `${retrievalText}`
 }
 
 export function filterEmptyAssistantMessages(messages: any[]) {
@@ -378,4 +353,38 @@ export function removeLastSureMessage(messages: any[]) {
   }
 
   return messages
+}
+
+function buildDocumentsText(fileItems: Tables<"file_items">[]) {
+  const fileGroups: Record<
+    string,
+    { id: string; name: string; content: string[] }
+  > = fileItems.reduce(
+    (
+      acc: Record<string, { id: string; name: string; content: string[] }>,
+      item: Tables<"file_items">
+    ) => {
+      if (!acc[item.file_id]) {
+        acc[item.file_id] = {
+          id: item.file_id,
+          name: item.name || "unnamed file",
+          content: []
+        }
+      }
+      acc[item.file_id].content.push(item.content)
+      return acc
+    },
+    {}
+  )
+
+  const documents = Object.values(fileGroups)
+    .map((file: any) => {
+      return `<document id="${file.id}">
+<source>${file.name}</source>
+<document_content>${file.content.join("\n\n")}</document_content>
+</document>`
+    })
+    .join("\n\n")
+
+  return `<documents>\n${documents}\n</documents>`
 }

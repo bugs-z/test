@@ -113,13 +113,13 @@ export const UpgradePlan: FC = () => {
   }
 
   const planPrices = {
-    pro: { monthly: "$20", yearly: "$15" },
-    team: { monthly: "$30", yearly: "$25" }
+    pro: { monthly: "$25", yearly: "$20" },
+    team: { monthly: "$40", yearly: "$32" }
   }
 
   const getYearlySavingsNote = (plan: "pro" | "team") => {
     if (selectedPlan === "yearly") {
-      return plan === "pro" ? "Save $60" : "Save $60"
+      return plan === "pro" ? "Save $60" : "Save $96"
     }
     return ""
   }

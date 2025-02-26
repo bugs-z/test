@@ -220,13 +220,17 @@ export async function POST(request: Request) {
     const messages: ChatCompletionMessageParam[] = [
       {
         role: "system",
-        content: `You are a helpful researcher that will determine if the user's question is related to the files they've uploaded. Only retrieve file chunks if the question is directly asking about file content or requires information from the files to answer properly.
+        content: `You are a helpful researcher that will determine if the user's question is related to the files they've uploaded. Retrieve file chunks if:
+          1. The question is directly asking about file content
+          2. The question requires information from the files to answer properly
+          3. The user wants to use the files with terminal commands or tools/plugins
+          4. The user mentions uploading or processing files
 
           Here are the files available: <files>\n${userFiles
             .map(file => `File ID: ${file.id} - Name: ${file.name}`)
             .join("\n")}\n</files>
           
-          If the user's question doesn't specifically mention files or doesn't require file content to answer, return an empty array of chunk_ids.`
+          If the user's question involves using files with terminal commands, tools, or plugins, you should return relevant chunk_ids to make the file content available to those tools.`
       }
     ]
 
@@ -246,7 +250,11 @@ export async function POST(request: Request) {
 
     messages.push({
       role: "user",
-      content: `Analyze the conversation and determine if the user's latest question is related to the files. If it is, use the queryFiles tool to find relevant chunks. If the question is not related to the files or doesn't require file content to answer, return an empty array for chunk_ids.`
+      content: `Analyze the conversation and determine if the user's latest question is related to the files. If it is, use the queryFiles tool to find relevant chunks. 
+      
+      IMPORTANT: If the user wants to upload, process, or use files with terminal commands or plugins, consider this as requiring file content and return the relevant chunk_ids. 
+      
+      Only return an empty array for chunk_ids if the question has absolutely no relation to files.`
     })
 
     const runner = openai.beta.chat.completions.runTools({

@@ -1,7 +1,7 @@
 import { buildSystemPrompt } from "@/lib/ai/prompts"
 import { toVercelChatMessages } from "@/lib/build-prompt"
 import llmConfig from "@/lib/models/llm/llm-config"
-import { createOpenAI } from "@ai-sdk/openai"
+import { openai } from "@ai-sdk/openai"
 import { streamText, tool } from "ai"
 import { z } from "zod"
 import { executeTerminalCommand } from "./terminal-executor"
@@ -57,8 +57,6 @@ export async function executeTerminalTool({
     const cleanedMessages = isTerminalContinuation
       ? messages.slice(0, -1)
       : messages
-
-    const openai = createOpenAI()
 
     const { textStream, finishReason } = streamText({
       model: openai("gpt-4o", { parallelToolCalls: false }),

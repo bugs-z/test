@@ -110,14 +110,12 @@ export async function POST(request: Request) {
     }
 
     const handleMessages = (shouldUncensor: boolean) => {
-      if (includeImages) {
+      if (!config.isLargeModel && includeImages) {
         selectedModel = "pixtral-large-2411"
         return filterEmptyAssistantMessages(messages)
       }
 
       if (shouldUncensor) {
-        config.isLargeModel &&
-          console.log("[Premium User] Uncensored mode activated")
         return handleAssistantMessages(messages)
       }
 

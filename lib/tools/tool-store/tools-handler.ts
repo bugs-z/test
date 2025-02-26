@@ -85,7 +85,6 @@ export async function commandGeneratorHandler({
                   )
               }),
               execute: async ({ command, files = [] }) => {
-                console.log("files", files)
                 const expectedCommands: Partial<Record<PluginID, string>> = {
                   [PluginID.SQLI_EXPLOITER]: "sqlmap",
                   [PluginID.SSL_SCANNER]: "testssl.sh",

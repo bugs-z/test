@@ -276,7 +276,7 @@ export const handleCreateMessages = async (
       retrievedFileItems.map(fileItem => {
         return {
           user_id: profile.user_id,
-          message_id: createdMessages[1].id,
+          message_id: createdMessages[0].id,
           file_item_id: fileItem.id
         }
       })
@@ -291,12 +291,12 @@ export const handleCreateMessages = async (
         : chatMessages),
       {
         message: messageWithPaths,
-        fileItems: [],
+        fileItems: retrievedFileItems,
         isFinal: true
       },
       {
         message: createdMessages[1],
-        fileItems: retrievedFileItems,
+        fileItems: [],
         isFinal: true
       }
     ]
