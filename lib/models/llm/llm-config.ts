@@ -2,11 +2,7 @@ import {
   TERMINAL_OUTPUT_ANALYSIS_INSTRUCTIONS,
   TERMINAL_TOOL_INSTRUCTIONS
 } from "@/lib/backend-config"
-import {
-  getPentestGPTInfo,
-  systemPromptEnding,
-  getPentestGPTToolsInfo
-} from "./llm-prompting"
+import { getPentestGPTInfo, systemPromptEnding } from "./llm-prompting"
 
 const options: Intl.DateTimeFormatOptions = {
   year: "numeric",
@@ -41,9 +37,9 @@ const llmConfig = {
     // For PGPT-Small
     smallModel: `${getPentestGPTInfo(true, false, "October 2023", "PGPT-Small")}\n${systemPromptEnding}`,
     // For PGPT-Large
-    largeModel: `${getPentestGPTInfo(true, false, "October 2023", "PGPT-Large")}\n${systemPromptEnding}`,
+    largeModel: `${getPentestGPTInfo(true, false, "October 2023", "PGPT-Large")}${systemPromptEnding}`,
     // For PentestGPT-4o
-    gpt4o: `${getPentestGPTInfo(true, true, "October 2024", "PentestGPT-4o")}\n${getPentestGPTToolsInfo(true, true, true, true)}\n${systemPromptEnding}`,
+    gpt4o: `${getPentestGPTInfo(true, true, "October 2024", "PentestGPT-4o")}\n${systemPromptEnding}`,
     // For browser tool
     pentestGPTBrowser: `${getPentestGPTInfo(true, true)}\n${systemPromptEnding}`,
     // For webSearch tool
