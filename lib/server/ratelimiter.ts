@@ -132,28 +132,29 @@ function _getLimit(model: string, subscriptionInfo: SubscriptionInfo): number {
       }
       return chatNameLimit
     }
-    return Number(process.env.RATELIMITER_LIMIT_PENTESTGPT_FREE) || 3 // Free tier limit using env var
+    return Number(process.env.RATELIMITER_LIMIT_PENTESTGPT_FREE) || 15
   }
 
   const fixedModelName = _getFixedModelName(model)
   const baseKey = `RATELIMITER_LIMIT_${fixedModelName}`
 
-  const suffix = subscriptionInfo.isTeam
-    ? "_TEAM"
-    : subscriptionInfo.isPremium
-      ? "_PREMIUM"
-      : "_FREE"
+  // Use premium suffix for both premium and team, but apply multiplier for team
+  const suffix =
+    subscriptionInfo.isPremium || subscriptionInfo.isTeam ? "_PREMIUM" : "_FREE"
 
   const limitKey = baseKey + suffix
 
-  const limit =
+  let limit =
     process.env[limitKey] === undefined
-      ? subscriptionInfo.isTeam
-        ? 50
-        : subscriptionInfo.isPremium
-          ? 30
-          : 0
+      ? subscriptionInfo.isTeam || subscriptionInfo.isPremium
+        ? 30
+        : 0
       : Number(process.env[limitKey])
+
+  if (subscriptionInfo.isTeam) {
+    const teamMultiplier = Number(process.env.TEAM_LIMIT_MULTIPLIER) || 1.5
+    limit = Math.floor(limit * teamMultiplier)
+  }
 
   if (isNaN(limit) || limit < 0) {
     throw new Error("Invalid limit configuration")
