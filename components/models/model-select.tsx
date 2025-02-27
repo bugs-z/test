@@ -129,7 +129,7 @@ export const ModelSelect: FC<ModelSelectProps> = ({
 
   const modelDescriptions: Record<string, string> = {
     [GPT4o.modelId]: "Advanced model with tools",
-    [LargeModel.modelId]: "Uncensored, handles complex tasks",
+    [LargeModel.modelId]: "Advanced model for complex tasks",
     [SmallModel.modelId]: "Great for everyday tasks"
   }
 
