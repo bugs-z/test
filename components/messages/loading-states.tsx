@@ -4,7 +4,8 @@ import {
   IconPuzzle,
   IconTerminal2,
   IconWorld,
-  IconAtom
+  IconAtom,
+  IconSearch
 } from "@tabler/icons-react"
 import { PluginID } from "@/types/plugins"
 
@@ -32,6 +33,10 @@ export const loadingStates = {
   [PluginID.REASONING_WEB_SEARCH]: {
     icon: <IconAtom size={20} />,
     text: "Thinking..."
+  },
+  [PluginID.DEEP_RESEARCH]: {
+    icon: <IconSearch size={20} />,
+    text: "Researching... (takes 1-2 minutes)"
   },
   ["temporary-sandbox"]: {
     icon: <IconTerminal2 size={20} />,

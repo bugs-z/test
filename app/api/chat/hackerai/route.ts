@@ -24,6 +24,7 @@ import { executeReasonLLMTool } from "@/lib/tools/llm/reason-llm"
 import { executeReasoningWebSearchTool } from "@/lib/tools/llm/reasoning-web-search"
 import { geolocation } from "@vercel/functions"
 import { processRag } from "@/lib/rag/rag-processor"
+import { executeDeepResearchTool } from "@/lib/tools/llm/deep-research"
 
 export const runtime: ServerRuntime = "edge"
 export const preferredRegion = [
@@ -175,6 +176,17 @@ export async function POST(request: Request) {
             }
           })
         })
+
+      case PluginID.DEEP_RESEARCH:
+        return createStreamResponse(async dataStream => {
+          await executeDeepResearchTool({
+            config: {
+              messages,
+              profile,
+              dataStream
+            }
+          })
+        })
     }
 
     const provider = createProvider(selectedModel, config)
@@ -251,9 +263,11 @@ async function getProviderConfig(
     selectedPlugin === PluginID.REASONING ||
       selectedPlugin === PluginID.REASONING_WEB_SEARCH
       ? "reasoning"
-      : isLargeModel
-        ? "pentestgpt-pro"
-        : "pentestgpt"
+      : selectedPlugin === PluginID.DEEP_RESEARCH
+        ? "deep-research"
+        : isLargeModel
+          ? "pentestgpt-pro"
+          : "pentestgpt"
   )
 
   return {

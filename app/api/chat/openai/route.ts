@@ -18,6 +18,7 @@ import { executeTerminalTool } from "@/lib/tools/llm/terminal"
 import { executeReasonLLMTool } from "@/lib/tools/llm/reason-llm"
 import { executeReasoningWebSearchTool } from "@/lib/tools/llm/reasoning-web-search"
 import { processRag } from "@/lib/rag/rag-processor"
+import { executeDeepResearchTool } from "@/lib/tools/llm/deep-research"
 
 export const runtime: ServerRuntime = "edge"
 export const preferredRegion = [
@@ -58,7 +59,9 @@ export async function POST(request: Request) {
       selectedPlugin === PluginID.REASONING ||
         selectedPlugin === PluginID.REASONING_WEB_SEARCH
         ? "reasoning"
-        : "gpt-4"
+        : selectedPlugin === PluginID.DEEP_RESEARCH
+          ? "deep-research"
+          : "gpt-4"
     )
     if (rateLimitCheckResult !== null) {
       return rateLimitCheckResult.response
@@ -118,6 +121,13 @@ export async function POST(request: Request) {
         return createStreamResponse(async dataStream => {
           await executeReasoningWebSearchTool({
             config: { messages, profile, dataStream, isLargeModel: true }
+          })
+        })
+
+      case PluginID.DEEP_RESEARCH:
+        return createStreamResponse(async dataStream => {
+          await executeDeepResearchTool({
+            config: { messages, profile, dataStream }
           })
         })
     }

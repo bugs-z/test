@@ -92,6 +92,7 @@ export const MessageTypeResolver: FC<MessageTypeResolverProps> = ({
   if (
     toolInUse === PluginID.REASONING ||
     toolInUse === PluginID.REASONING_WEB_SEARCH ||
+    toolInUse === PluginID.DEEP_RESEARCH ||
     message.thinking_content
   ) {
     return (

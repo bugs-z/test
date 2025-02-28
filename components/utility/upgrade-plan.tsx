@@ -191,7 +191,8 @@ export const UpgradePlan: FC = () => {
               Access to PGPT-Large, PentestGPT-4o, PGPT-Small
             </PlanStatement>
             <PlanStatement>
-              Access to file uploads, vision, web search and browsing
+              Access to file uploads, vision, web search, browsing and deep
+              research
             </PlanStatement>
             <PlanStatement>Access to advanced plugins</PlanStatement>
             <PlanStatement>Access to terminal</PlanStatement>

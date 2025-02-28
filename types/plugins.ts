@@ -33,7 +33,7 @@ export enum PluginID {
   TERMINAL = "terminal",
   REASONING = "reasoning",
   REASONING_WEB_SEARCH = "reasoning-web-search",
-
+  DEEP_RESEARCH = "deep-research",
   // Pentest tools
   SSL_SCANNER = "ssl-scanner",
   DNS_SCANNER = "dns-scanner",
