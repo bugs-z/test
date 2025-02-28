@@ -18,7 +18,7 @@ export const createToolSchemas = ({
 }) => {
   const allSchemas = {
     browser: {
-      description: `Browse a webpage and extract its text content. For HTML retrieval or more complex web scraping, use the Python tool. \
+      description: `Browse one or more webpages (up to 3) and extract their text content. For HTML retrieval or more complex web scraping, use the Python tool. \
 This tool can extract text content from webpages but cannot retrieve HTML, images, or other non-text elements directly. \
 When specific webpage information is needed, it fetches the most current text data, then analyzes and answers the query. \
 This tool can only visit HTTPS websites and cannot access HTTP-only sites. \
@@ -26,9 +26,17 @@ Use this tool when: \
 - The human explicitly requests webpage browsing or reference links. \
 - Current information from a specific website is required for answering human queries.`,
       parameters: z.object({
-        open_url: z.string().url().describe("The URL of the webpage to browse")
+        open_url: z
+          .union([
+            z.string().url().describe("The URL of the webpage to browse"),
+            z
+              .array(z.string().url())
+              .max(3)
+              .describe("Up to 3 URLs to browse simultaneously")
+          ])
+          .describe("One URL as a string or an array of up to 3 URLs to browse")
       }),
-      execute: async ({ open_url }: { open_url: string }) => {
+      execute: async ({ open_url }: { open_url: string | string[] }) => {
         return executeBrowserTool({
           open_url,
           config: { chatSettings, profile, messages, dataStream }
