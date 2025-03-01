@@ -65,7 +65,6 @@ export async function POST(request: Request) {
       selectedPlugin
     )
 
-    // Early validation
     if (!config.selectedModel) {
       throw new Error("Selected model is undefined")
     }
@@ -145,7 +144,6 @@ export async function POST(request: Request) {
 
     handleMessages(shouldUncensorResponse)
 
-    // Handle web search plugin
     switch (selectedPlugin) {
       case PluginID.WEB_SEARCH:
         return createStreamResponse(async dataStream => {
@@ -190,7 +188,7 @@ export async function POST(request: Request) {
         })
     }
 
-    if (messages.length <= 1) {
+    if (config.isLargeModel && messages.length <= 1) {
       selectedModel = "claude-3-7-sonnet-20250219"
     }
 
