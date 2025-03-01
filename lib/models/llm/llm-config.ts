@@ -54,8 +54,7 @@ const llmConfig = {
   models: {
     small: process.env.OPENROUTER_PENTESTGPT_DEFAULT_MODEL,
     standalone_question: process.env.OPENROUTER_STANDALONE_QUESTION_MODEL,
-    large: process.env.OPENROUTER_PENTESTGPT_PRO_MODEL,
-    reasoning: process.env.REASONING_MODEL
+    large: process.env.OPENROUTER_PENTESTGPT_PRO_MODEL
   },
   hackerRAG: {
     enabled:

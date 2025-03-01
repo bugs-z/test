@@ -2,7 +2,7 @@ import { buildSystemPrompt } from "@/lib/ai/prompts"
 import { toVercelChatMessages } from "@/lib/build-prompt"
 import llmConfig from "@/lib/models/llm/llm-config"
 import { streamText } from "ai"
-import { createOpenRouter } from "@openrouter/ai-sdk-provider"
+import { perplexity } from "@ai-sdk/perplexity"
 
 interface ReasonLLMConfig {
   messages: any[]
@@ -17,12 +17,9 @@ export async function executeReasonLLMTool({
 }) {
   const { messages, profile, dataStream } = config
 
-  const reasoningProvider = initializeOpenRouter()
-
   console.log("[ReasonLLM] Executing reasonLLM")
 
   await processStream({
-    reasoningProvider,
     messages,
     profile,
     dataStream
@@ -31,32 +28,20 @@ export async function executeReasonLLMTool({
   return "Reason LLM execution completed"
 }
 
-function initializeOpenRouter() {
-  if (!process.env.OPENROUTER_API_KEY) {
-    throw new Error("OpenRouter API key is not set for reason LLM")
-  }
-  return createOpenRouter({
-    extraBody: { include_reasoning: true }
-  })
-}
-
 async function processStream({
-  reasoningProvider,
   messages,
   profile,
   dataStream
 }: {
-  reasoningProvider: any
   messages: any
   profile: any
   dataStream: any
 }) {
   let thinkingStartTime = null
-  let enteredReasoning = false
-  let enteredText = false
+  let enteredThinking = false
 
   const result = streamText({
-    model: reasoningProvider(llmConfig.models.reasoning as string),
+    model: perplexity("r1-1776" as string),
     maxTokens: 2048,
     system: buildSystemPrompt(
       llmConfig.systemPrompts.pentestGPTReasoning,
@@ -66,29 +51,99 @@ async function processStream({
   })
 
   for await (const part of result.fullStream) {
-    if (part.type === "reasoning" && !enteredReasoning) {
-      enteredReasoning = true
-      thinkingStartTime = Date.now()
-      dataStream.writeData({ type: "reasoning", content: part.textDelta })
-    } else if (part.type === "text-delta" && !enteredText) {
-      enteredText = true
-      if (thinkingStartTime) {
-        const thinkingElapsedSecs = Math.round(
-          (Date.now() - thinkingStartTime) / 1000
-        )
+    if (part.type === "text-delta") {
+      const text = part.textDelta
+
+      if (text.includes("<think>")) {
+        enteredThinking = true
+        thinkingStartTime = Date.now()
+        // Send text before <think> if any
+        const beforeThink = text.split("<think>")[0]
+        if (beforeThink) {
+          dataStream.writeData({
+            type: "text-delta",
+            content: beforeThink
+          })
+        }
+        // Send thinking content immediately
+        const thinkingContent = text.split("<think>")[1] || ""
+        if (thinkingContent) {
+          dataStream.writeData({
+            type: "reasoning",
+            content: thinkingContent
+          })
+        }
+        continue
+      }
+
+      if (enteredThinking) {
+        if (text.includes("</think>")) {
+          // Handle end of thinking block
+          enteredThinking = false
+          const thinkingElapsedSecs = thinkingStartTime
+            ? Math.round((Date.now() - thinkingStartTime) / 1000)
+            : null
+
+          // Send thinking content before </think>
+          const finalThinking = text.split("</think>")[0]
+          if (finalThinking) {
+            dataStream.writeData({
+              type: "reasoning",
+              content: finalThinking
+            })
+          }
+
+          // Send thinking time
+          dataStream.writeData({
+            type: "thinking-time",
+            elapsed_secs: thinkingElapsedSecs
+          })
+
+          // Send remaining text after </think> if any
+          const afterThink = text.split("</think>")[1]
+          if (afterThink) {
+            dataStream.writeData({
+              type: "text-delta",
+              content: afterThink
+            })
+          }
+        } else {
+          // Send thinking content immediately
+          dataStream.writeData({
+            type: "reasoning",
+            content: text
+          })
+        }
+      } else {
+        // Immediately send non-thinking text
         dataStream.writeData({
-          type: "thinking-time",
-          elapsed_secs: thinkingElapsedSecs
+          type: "text-delta",
+          content: text
         })
       }
-      dataStream.writeData({ type: "text-delta", content: part.textDelta })
-    } else {
-      if (part.type === "text-delta" || part.type === "reasoning") {
-        dataStream.writeData({
-          type: part.type,
-          content: part.textDelta
-        })
+    } else if (part.type === "reasoning") {
+      // Handle native reasoning type from the model
+      if (!enteredThinking) {
+        enteredThinking = true
+        thinkingStartTime = Date.now()
       }
+
+      dataStream.writeData({
+        type: "reasoning",
+        content: part.textDelta
+      })
     }
+  }
+
+  // If we're still in thinking mode at the end, close it and send thinking time
+  if (enteredThinking && thinkingStartTime) {
+    enteredThinking = false
+    const thinkingElapsedSecs = Math.round(
+      (Date.now() - thinkingStartTime) / 1000
+    )
+    dataStream.writeData({
+      type: "thinking-time",
+      elapsed_secs: thinkingElapsedSecs
+    })
   }
 }
