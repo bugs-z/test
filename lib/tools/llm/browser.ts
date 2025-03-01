@@ -167,7 +167,11 @@ export async function executeBrowserTool({
   // Handle single URL or multiple URLs
   if (typeof open_url === "string") {
     const browserResult = await browsePage(open_url)
-    browserPrompt = createBrowserPrompt(browserResult, lastUserMessage, open_url)
+    browserPrompt = createBrowserPrompt(
+      browserResult,
+      lastUserMessage,
+      open_url
+    )
   } else {
     const browserResults = await browseMultiplePages(open_url)
     browserPrompt = createMultiBrowserPrompt(browserResults, lastUserMessage)

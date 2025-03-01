@@ -125,6 +125,7 @@ export async function POST(request: Request) {
 
     if (
       llmConfig.openai.apiKey &&
+      !config.isLargeModel &&
       !includeImages &&
       !isContinuation &&
       selectedPlugin !== PluginID.WEB_SEARCH &&
