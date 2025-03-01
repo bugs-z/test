@@ -120,7 +120,7 @@ export default async function Login({
       return redirect(`/login?message=captcha_required`)
     }
 
-    if (process.env.RATELIMITER_ENABLED === "true") {
+    if (process.env.RATELIMITER_ENABLED?.toLowerCase() !== "false") {
       const { success } = await checkAuthRateLimit(email, ip, "login")
       if (!success) return redirect("/login?message=13")
     }
@@ -185,7 +185,7 @@ export default async function Login({
       return redirect(`/login?message=captcha_required`)
     }
 
-    if (process.env.RATELIMITER_ENABLED === "true") {
+    if (process.env.RATELIMITER_ENABLED?.toLowerCase() !== "false") {
       const { success } = await checkAuthRateLimit(email, ip, "signup")
       if (!success) return redirect("/login?message=14")
     }
@@ -278,7 +278,7 @@ export default async function Login({
       return redirect(`/login?message=captcha_required`)
     }
 
-    if (process.env.RATELIMITER_ENABLED === "true") {
+    if (process.env.RATELIMITER_ENABLED?.toLowerCase() !== "false") {
       const { success } = await checkAuthRateLimit(email, ip, "password-reset")
       if (!success) return redirect("/login?message=password_reset_limit")
     }
