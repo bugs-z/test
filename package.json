@@ -30,6 +30,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^1.1.12",
     "@ai-sdk/mistral": "^1.1.12",
     "@ai-sdk/openai": "^1.1.13",
     "@ai-sdk/perplexity": "^1.0.1",

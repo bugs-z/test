@@ -13,7 +13,8 @@ import llmConfig from "@/lib/models/llm/llm-config"
 import { checkRatelimitOnApi } from "@/lib/server/ratelimiter"
 import { createOpenAI as createOpenRouterAI } from "@ai-sdk/openai"
 import { createMistral } from "@ai-sdk/mistral"
-import { streamText } from "ai"
+import { createAnthropic } from "@ai-sdk/anthropic"
+import { LanguageModelV1, streamText } from "ai"
 import { getModerationResult } from "@/lib/server/moderation"
 // import { createToolSchemas } from "@/lib/tools/llm/toolSchemas"
 import { PluginID } from "@/types/plugins"
@@ -190,6 +191,10 @@ export async function POST(request: Request) {
         })
     }
 
+    if (messages.length <= 1) {
+      selectedModel = "claude-3-7-sonnet-20250219"
+    }
+
     const provider = createProvider(selectedModel, config)
 
     // Remove last message if it's a continuation to remove the continue prompt
@@ -202,25 +207,12 @@ export async function POST(request: Request) {
       return createStreamResponse(dataStream => {
         dataStream.writeData({ ragUsed, ragId })
 
-        // const tools = config.isPentestGPTPro
-        //   ? createToolSchemas({
-        //       chatSettings,
-        //       messages: cleanedMessages,
-        //       profile,
-        //       dataStream
-        //     }).getSelectedSchemas(["webSearch", "browser"])
-        //   : undefined
-
         const result = streamText({
-          model: provider(
-            selectedModel || "",
-            config.isLargeModel ? { parallelToolCalls: false } : {}
-          ),
+          model: provider(selectedModel) as LanguageModelV1,
           system: systemPrompt,
           messages: toVercelChatMessages(validatedMessages, includeImages),
           maxTokens: 2048,
           abortSignal: request.signal
-          // ...(!shouldUseRAG && !shouldUncensorResponse && config.isPentestGPTPro ? { tools } : null)
         })
 
         result.mergeIntoDataStream(dataStream)
@@ -288,6 +280,9 @@ function createProvider(selectedModel: string, config: any) {
     selectedModel.startsWith("codestral")
   ) {
     return createMistral()
+  }
+  if (selectedModel.startsWith("claude-")) {
+    return createAnthropic()
   }
   return createOpenRouterAI({
     baseURL: config.providerBaseUrl,
