@@ -67,3 +67,80 @@ export const lastSequenceNumber = (chatMessages: ChatMessage[]) =>
     (max, msg) => Math.max(max, msg.message.sequence_number),
     0
   )
+
+export const getRelevantSnippet = (
+  content: string,
+  query: string,
+  maxLength = 150
+) => {
+  const lowerContent = content.toLowerCase()
+  const terms = query.toLowerCase().split(" ")
+  const startIndex = terms.reduce((index, term) => {
+    const pos = lowerContent.indexOf(term)
+    return pos !== -1 && (index === -1 || pos < index) ? pos : index
+  }, -1)
+
+  if (startIndex === -1) return content.slice(0, maxLength) + "..."
+
+  const contextStart = Math.max(0, startIndex - 50)
+  const contextEnd = Math.min(content.length, contextStart + maxLength)
+  return (
+    (contextStart > 0 ? "..." : "") +
+    content.slice(contextStart, contextEnd) +
+    (contextEnd < content.length ? "..." : "")
+  )
+}
+
+// Add these types if not already defined
+export type DateCategory =
+  | "Today"
+  | "Yesterday"
+  | "Previous 7 Days"
+  | "Previous 30 Days"
+  | "Older"
+
+interface DateSortable {
+  updated_at: string | null
+  created_at: string
+}
+
+export const getDateBoundaries = () => {
+  const now = new Date()
+  const todayStart = new Date(now.setHours(0, 0, 0, 0))
+
+  return {
+    todayStart,
+    yesterdayStart: new Date(new Date().setDate(todayStart.getDate() - 1)),
+    weekStart: new Date(new Date().setDate(todayStart.getDate() - 7)),
+    monthStart: new Date(new Date().setDate(todayStart.getDate() - 30))
+  }
+}
+
+export const sortByDateCategory = <T extends DateSortable>(
+  items: T[],
+  category: DateCategory
+) => {
+  const bounds = getDateBoundaries()
+
+  return items
+    .filter(item => {
+      const date = new Date(item.updated_at || item.created_at)
+      switch (category) {
+        case "Today":
+          return date >= bounds.todayStart
+        case "Yesterday":
+          return date >= bounds.yesterdayStart && date < bounds.todayStart
+        case "Previous 7 Days":
+          return date >= bounds.weekStart && date < bounds.yesterdayStart
+        case "Previous 30 Days":
+          return date >= bounds.monthStart && date < bounds.weekStart
+        case "Older":
+          return date < bounds.monthStart
+      }
+    })
+    .sort(
+      (a, b) =>
+        new Date(b.updated_at || b.created_at).getTime() -
+        new Date(a.updated_at || a.created_at).getTime()
+    )
+}
