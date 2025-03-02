@@ -3,7 +3,6 @@ import { getAIProfile } from "@/lib/server/server-chat-helpers"
 import { mistral } from "@ai-sdk/mistral"
 import { generateObject } from "ai"
 import { DEFAULT_TITLE_GENERATION_PROMPT_TEMPLATE } from "@/lib/backend-config"
-import llmConfig from "@/lib/models/llm/llm-config"
 import { z } from "zod"
 
 export const runtime = "edge"
@@ -48,7 +47,7 @@ export async function POST(request: Request) {
     const {
       object: { title }
     } = await generateObject({
-      model: mistral(llmConfig.models.small || "mistral-small-latest"),
+      model: mistral("mistral-small-latest"),
       schema: z.object({
         title: z.string().describe("The generated title (3-5 words)")
       }),
