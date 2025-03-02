@@ -15,7 +15,7 @@ import { createOpenAI as createOpenRouterAI } from "@ai-sdk/openai"
 import { createMistral } from "@ai-sdk/mistral"
 import { createAnthropic } from "@ai-sdk/anthropic"
 import { LanguageModelV1, streamText } from "ai"
-import { getModerationResult } from "@/lib/server/moderation"
+// import { getModerationResult } from "@/lib/server/moderation"
 import { PluginID } from "@/types/plugins"
 import { executeWebSearchTool } from "@/lib/tools/llm/web-search"
 import { createStreamResponse } from "@/lib/ai-helper"
@@ -102,7 +102,7 @@ export async function POST(request: Request) {
 
     const includeImages = messagesIncludeImages(messages)
     let selectedModel = config.selectedModel
-    let shouldUncensorResponse = false
+    const shouldUncensorResponse = false
 
     const { region } = geolocation(request)
     if (!config.isLargeModel && region === "bom1") {
@@ -122,25 +122,25 @@ export async function POST(request: Request) {
       return filterEmptyAssistantMessages(messages)
     }
 
-    if (
-      llmConfig.openai.apiKey &&
-      !config.isLargeModel &&
-      !includeImages &&
-      !isContinuation &&
-      selectedPlugin !== PluginID.WEB_SEARCH &&
-      selectedPlugin !== PluginID.REASONING &&
-      selectedPlugin !== PluginID.REASONING_WEB_SEARCH &&
-      region !== "bom1"
-    ) {
-      const { shouldUncensorResponse: moderationResult } =
-        await getModerationResult(
-          messages,
-          llmConfig.openai.apiKey || "",
-          10,
-          config.isLargeModel
-        )
-      shouldUncensorResponse = moderationResult
-    }
+    // if (
+    //   llmConfig.openai.apiKey &&
+    //   !config.isLargeModel &&
+    //   !includeImages &&
+    //   !isContinuation &&
+    //   selectedPlugin !== PluginID.WEB_SEARCH &&
+    //   selectedPlugin !== PluginID.REASONING &&
+    //   selectedPlugin !== PluginID.REASONING_WEB_SEARCH &&
+    //   region !== "bom1"
+    // ) {
+    //   const { shouldUncensorResponse: moderationResult } =
+    //     await getModerationResult(
+    //       messages,
+    //       llmConfig.openai.apiKey || "",
+    //       10,
+    //       config.isLargeModel
+    //     )
+    //   shouldUncensorResponse = moderationResult
+    // }
 
     handleMessages(shouldUncensorResponse)
 
