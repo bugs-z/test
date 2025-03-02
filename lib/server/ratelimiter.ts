@@ -219,16 +219,16 @@ export function getRateLimitErrorMessage(
 
   if (premium) {
     if (model === "pentestgpt") {
-      message += `\n\nIn the meantime, you can use PentestGPT-Large or PentestGPT-4o`
+      message += `\n\nIn the meantime, you can use PentestGPT-Large or GPT-4o`
     } else if (model === "pentestgpt-pro") {
-      message += `\n\nIn the meantime, you can use PentestGPT-4o or PentestGPT-Small`
+      message += `\n\nIn the meantime, you can use GPT-4o or PentestGPT-Small`
     } else if (model === "gpt-4") {
       message += `\n\nIn the meantime, you can use PentestGPT-Large or PentestGPT-Small`
     }
   } else {
     message += `\n\n🔓 Want more? Upgrade to Pro or Team and unlock a world of features:
 - Higher usage limits
-- Access to PentestGPT-Large and PentestGPT-4o
+- Access to PentestGPT-Large and GPT-4o
 - Access to file uploads, vision, web search and browsing
 - Access to advanced plugins
 - Access to terminal`

@@ -7,7 +7,7 @@ import {
   IconPuzzleOff,
   IconWorld,
   IconAtom,
-  IconSearch
+  IconTelescope
 } from "@tabler/icons-react"
 import { useContext } from "react"
 import { WithTooltip } from "../../ui/with-tooltip"
@@ -334,7 +334,7 @@ export const ToolOptions = ({
               )}
               onClick={handleDeepSearchToggle}
             >
-              <IconSearch
+              <IconTelescope
                 className={cn(
                   "cursor-pointer rounded-lg rounded-bl-xl p-1 focus-visible:outline-black dark:focus-visible:outline-white",
                   selectedPlugin === PluginID.DEEP_RESEARCH

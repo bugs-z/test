@@ -15,7 +15,7 @@ import { createOpenAI as createOpenRouterAI } from "@ai-sdk/openai"
 import { createMistral } from "@ai-sdk/mistral"
 import { createAnthropic } from "@ai-sdk/anthropic"
 import { LanguageModelV1, streamText } from "ai"
-// import { getModerationResult } from "@/lib/server/moderation"
+import { getModerationResult } from "@/lib/server/moderation"
 import { PluginID } from "@/types/plugins"
 import { executeWebSearchTool } from "@/lib/tools/llm/web-search"
 import { createStreamResponse } from "@/lib/ai-helper"
@@ -25,7 +25,6 @@ import { executeReasoningWebSearchTool } from "@/lib/tools/llm/reasoning-web-sea
 import { geolocation } from "@vercel/functions"
 import { processRag } from "@/lib/rag/rag-processor"
 import { executeDeepResearchTool } from "@/lib/tools/llm/deep-research"
-import { getSubscriptionInfo } from "@/lib/server/subscription-utils"
 
 export const runtime: ServerRuntime = "edge"
 export const preferredRegion = [
@@ -103,7 +102,7 @@ export async function POST(request: Request) {
 
     const includeImages = messagesIncludeImages(messages)
     let selectedModel = config.selectedModel
-    const shouldUncensorResponse = false
+    let shouldUncensorResponse = false
 
     const { region } = geolocation(request)
     if (!config.isLargeModel && region === "bom1") {
@@ -123,25 +122,25 @@ export async function POST(request: Request) {
       return filterEmptyAssistantMessages(messages)
     }
 
-    // if (
-    //   llmConfig.openai.apiKey &&
-    //   !config.isLargeModel &&
-    //   !includeImages &&
-    //   !isContinuation &&
-    //   selectedPlugin !== PluginID.WEB_SEARCH &&
-    //   selectedPlugin !== PluginID.REASONING &&
-    //   selectedPlugin !== PluginID.REASONING_WEB_SEARCH &&
-    //   region !== "bom1"
-    // ) {
-    //   const { shouldUncensorResponse: moderationResult } =
-    //     await getModerationResult(
-    //       messages,
-    //       llmConfig.openai.apiKey || "",
-    //       10,
-    //       config.isLargeModel
-    //     )
-    //   shouldUncensorResponse = moderationResult
-    // }
+    if (
+      llmConfig.openai.apiKey &&
+      !config.isLargeModel &&
+      !includeImages &&
+      !isContinuation &&
+      selectedPlugin !== PluginID.WEB_SEARCH &&
+      selectedPlugin !== PluginID.REASONING &&
+      selectedPlugin !== PluginID.REASONING_WEB_SEARCH &&
+      region !== "bom1"
+    ) {
+      const { shouldUncensorResponse: moderationResult } =
+        await getModerationResult(
+          messages,
+          llmConfig.openai.apiKey || "",
+          10,
+          config.isLargeModel
+        )
+      shouldUncensorResponse = moderationResult
+    }
 
     handleMessages(shouldUncensorResponse)
 
@@ -189,13 +188,8 @@ export async function POST(request: Request) {
         })
     }
 
-    if (config.isLargeModel && messages.length <= 1) {
+    if (config.isLargeModel && messages.length <= 3) {
       selectedModel = "claude-3-7-sonnet-20250219"
-    }
-
-    const subscriptionInfo = await getSubscriptionInfo(profile.user_id)
-    if (!config.isLargeModel && !subscriptionInfo.isPremium) {
-      selectedModel = "anthropic/claude-3.7-sonnet"
     }
 
     const provider = createProvider(selectedModel, config)
@@ -212,8 +206,17 @@ export async function POST(request: Request) {
 
         const result = streamText({
           model: provider(selectedModel) as LanguageModelV1,
-          system: systemPrompt,
-          messages: toVercelChatMessages(validatedMessages, includeImages),
+          system:
+            selectedModel == "claude-3-7-sonnet-20250219"
+              ? undefined
+              : systemPrompt,
+          messages: toVercelChatMessages(
+            validatedMessages,
+            includeImages,
+            selectedModel == "claude-3-7-sonnet-20250219"
+              ? systemPrompt
+              : undefined
+          ),
           maxTokens: 2048,
           abortSignal: request.signal
         })

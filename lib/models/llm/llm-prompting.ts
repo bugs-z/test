@@ -67,7 +67,7 @@ for enhanced mathematical notation and more.\n\n`
 Here is some information about PentestGPT in case the human asks:
 
 The version of PentestGPT in this chat is ${currentModel}. Tool availability varies by model:
-- Browser & Web Search & Terminal: Exclusive to PentestGPT-4o
+- Browser & Web Search & Terminal: Exclusive to GPT-4o
 PentestGPT notifies humans when they request a tool unsupported by the current model, \
 specifying compatible models and suggesting alternatives when applicable.
 

@@ -28,7 +28,7 @@ export async function buildFinalMessages(
   if (chatSettings.model === GPT4o.modelId) {
     CHUNK_SIZE = 32000 - 4000 // -4000 for the system prompt, custom instructions, and more
   } else if (chatSettings.model === LargeModel.modelId) {
-    CHUNK_SIZE = 32000 - 4000 // -4000 for the system prompt, custom instructions, and more
+    CHUNK_SIZE = 24000 - 4000 // -4000 for the system prompt, custom instructions, and more
   } else if (chatSettings.model === SmallModel.modelId) {
     CHUNK_SIZE = 12000 - 4000 // -4000 for the system prompt, custom instructions, and more
   }
@@ -186,17 +186,69 @@ export function filterEmptyAssistantMessages(messages: any[]) {
 
 export const toVercelChatMessages = (
   messages: BuiltChatMessage[],
-  supportsImages: boolean = false
+  supportsImages: boolean = false,
+  systemPrompt?: string
 ): CoreMessage[] => {
-  return messages
-    .map(message => {
-      switch (message.role) {
-        case "assistant":
-          return {
-            role: "assistant",
-            content: Array.isArray(message.content)
-              ? message.content.map(content => {
-                  if (typeof content === "object" && content.type === "text") {
+  const result: CoreMessage[] = []
+
+  // Add system message if provided
+  if (systemPrompt) {
+    result.push({
+      role: "system",
+      content: systemPrompt,
+      providerOptions: {
+        anthropic: { cacheControl: { type: "ephemeral" } }
+      }
+    } as CoreSystemMessage)
+  }
+
+  // Add the rest of the messages
+  messages.forEach(message => {
+    let formattedMessage: CoreMessage | null = null
+
+    switch (message.role) {
+      case "assistant":
+        formattedMessage = {
+          role: "assistant",
+          content: Array.isArray(message.content)
+            ? message.content.map(content => {
+                if (typeof content === "object" && content.type === "text") {
+                  return {
+                    type: "text",
+                    text: content.text
+                  }
+                } else {
+                  return {
+                    type: "text",
+                    text: content
+                  }
+                }
+              })
+            : [{ type: "text", text: message.content as string }]
+        } as CoreAssistantMessage
+        break
+      case "user":
+        formattedMessage = {
+          role: "user",
+          content: Array.isArray(message.content)
+            ? message.content
+                .map(content => {
+                  if (
+                    typeof content === "object" &&
+                    content.type === "image_url"
+                  ) {
+                    if (supportsImages) {
+                      return {
+                        type: "image",
+                        image: new URL(content.image_url.url)
+                      }
+                    } else {
+                      return null
+                    }
+                  } else if (
+                    typeof content === "object" &&
+                    content.type === "text"
+                  ) {
                     return {
                       type: "text",
                       text: content.text
@@ -208,54 +260,29 @@ export const toVercelChatMessages = (
                     }
                   }
                 })
-              : [{ type: "text", text: message.content as string }]
-          } as CoreAssistantMessage
-        case "user":
-          return {
-            role: message.role,
-            content: Array.isArray(message.content)
-              ? message.content
-                  .map(content => {
-                    if (
-                      typeof content === "object" &&
-                      content.type === "image_url"
-                    ) {
-                      if (supportsImages) {
-                        return {
-                          type: "image",
-                          image: new URL(content.image_url.url)
-                        }
-                      } else {
-                        return null
-                      }
-                    } else if (
-                      typeof content === "object" &&
-                      content.type === "text"
-                    ) {
-                      return {
-                        type: "text",
-                        text: content.text
-                      }
-                    } else {
-                      return {
-                        type: "text",
-                        text: content
-                      }
-                    }
-                  })
-                  .filter(Boolean)
-              : [{ type: "text", text: message.content as string }]
-          } as CoreUserMessage
-        case "system":
-          return {
+                .filter(Boolean)
+            : [{ type: "text", text: message.content as string }]
+        } as CoreUserMessage
+        break
+      case "system":
+        // Skip system messages from the array if we already added a systemPrompt
+        if (!systemPrompt) {
+          formattedMessage = {
             role: "system",
             content: message.content
           } as CoreSystemMessage
-        default:
-          return null
-      }
-    })
-    .filter(message => message !== null)
+        }
+        break
+      default:
+        formattedMessage = null
+    }
+
+    if (formattedMessage !== null) {
+      result.push(formattedMessage)
+    }
+  })
+
+  return result
 }
 
 export function handleAssistantMessages(

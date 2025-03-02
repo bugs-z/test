@@ -38,8 +38,8 @@ const llmConfig = {
     smallModel: `${getPentestGPTInfo(true, false, "October 2023", "PGPT-Small")}\n${systemPromptEnding}`,
     // For PGPT-Large
     largeModel: `${getPentestGPTInfo(true, false, "October 2023", "PGPT-Large")}${systemPromptEnding}`,
-    // For PentestGPT-4o
-    gpt4o: `${getPentestGPTInfo(true, true, "October 2024", "PentestGPT-4o")}\n${systemPromptEnding}`,
+    // For GPT-4o
+    gpt4o: `${getPentestGPTInfo(true, true, "October 2024", "GPT-4o")}\n${systemPromptEnding}`,
     // For browser tool
     pentestGPTBrowser: `${getPentestGPTInfo(true, true)}\n${systemPromptEnding}`,
     // For webSearch tool
@@ -49,7 +49,7 @@ const llmConfig = {
     // For terminal tool
     pentestGPTTerminal: `${getPentestGPTInfo()}\n${TERMINAL_TOOL_INSTRUCTIONS}\n${TERMINAL_OUTPUT_ANALYSIS_INSTRUCTIONS}\n${systemPromptEnding}`,
     // For fragment tool
-    pentestGPTFragment: `${getPentestGPTInfo(true, false, "October 2024", "PentestGPT-4o")}}`
+    pentestGPTFragment: `${getPentestGPTInfo(true, false, "October 2024", "GPT-4o")}}`
   },
   models: {
     small: process.env.OPENROUTER_PENTESTGPT_DEFAULT_MODEL,
