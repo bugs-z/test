@@ -188,10 +188,6 @@ export async function POST(request: Request) {
         })
     }
 
-    if (config.isLargeModel && messages.length <= 3) {
-      selectedModel = "claude-3-7-sonnet-20250219"
-    }
-
     const provider = createProvider(selectedModel, config)
 
     // Remove last message if it's a continuation to remove the continue prompt
