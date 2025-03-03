@@ -113,15 +113,19 @@ const NonMemoizedMarkdown: FC<{
   }
 
   return (
-    <ReactMarkdown
-      className="prose dark:prose-invert prose-p:leading-relaxed prose-pre:p-0 w-[80vw] min-w-full space-y-6 break-words sm:w-full [&_mjx-container]:flex [&_mjx-container]:max-w-full [&_mjx-container]:overflow-x-auto [&_mjx-math]:p-2"
-      remarkPlugins={[remarkGfm, [remarkMath, { singleDollarTextMath: false }]]}
-      rehypePlugins={[rehypeMathjax]}
-      urlTransform={urlTransform}
-      components={components}
-    >
-      {content}
-    </ReactMarkdown>
+    <div className="prose dark:prose-invert prose-p:leading-relaxed prose-pre:p-0 w-[80vw] min-w-full space-y-6 break-words sm:w-full [&_mjx-container]:flex [&_mjx-container]:max-w-full [&_mjx-container]:overflow-x-auto [&_mjx-math]:p-2">
+      <ReactMarkdown
+        remarkPlugins={[
+          remarkGfm,
+          [remarkMath, { singleDollarTextMath: false }]
+        ]}
+        rehypePlugins={[rehypeMathjax]}
+        urlTransform={urlTransform}
+        components={components}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
   )
 }
 

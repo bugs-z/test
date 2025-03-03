@@ -28,11 +28,8 @@ export const ReasoningMarkdown: React.FC<{ content: string }> = ({
   content
 }) => {
   return (
-    <ReactMarkdown
-      className="prose dark:prose-invert prose-p:leading-relaxed prose-pre:p-0 w-[60vw] min-w-full space-y-6 break-words text-sm md:w-full"
-      components={components}
-    >
-      {content}
-    </ReactMarkdown>
+    <div className="prose dark:prose-invert prose-p:leading-relaxed prose-pre:p-0 w-[60vw] min-w-full space-y-6 break-words text-sm md:w-full">
+      <ReactMarkdown components={components}>{content}</ReactMarkdown>
+    </div>
   )
 }
