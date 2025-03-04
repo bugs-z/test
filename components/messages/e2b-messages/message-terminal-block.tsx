@@ -46,8 +46,7 @@ export const MessageTerminalBlock: FC<MessageTerminalBlockProps> = memo(
     }, [value])
 
     const formattedValue = useMemo(() => {
-      const styledValue = chalk
-        .green(value)
+      const styledValue = value
         .replace(/\[(\w+)\]/g, (_, word) => chalk.blue.bold(`[${word}]`))
         .replace(/\b(error|warning)\b/gi, match =>
           match.toLowerCase() === "error"

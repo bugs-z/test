@@ -116,6 +116,7 @@ export async function POST(request: Request) {
       }
 
       if (shouldUncensor) {
+        config.isLargeModel && (selectedModel = "mistral-large-latest")
         return handleAssistantMessages(messages)
       }
 
