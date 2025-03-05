@@ -4,7 +4,6 @@ import {
 } from "@/lib/models/llm/llm-prompting"
 import { PluginID } from "@/types/plugins"
 import { getPluginPrompt } from "./tools-prompts"
-import { TERMINAL_OUTPUT_ANALYSIS_INSTRUCTIONS } from "@/lib/backend-config"
 import endent from "endent"
 
 const getPluginSpecificInstructions = (pluginID: PluginID): string => {
@@ -92,5 +91,5 @@ export const getToolsPrompt = (
 
 export const getToolsWithAnswerPrompt = (pluginID: PluginID): string => {
   const basePrompt = getToolsPrompt(pluginID, false)
-  return `${basePrompt}\n${TERMINAL_OUTPUT_ANALYSIS_INSTRUCTIONS}\n${systemPromptEnding}`
+  return `${basePrompt}\n${systemPromptEnding}`
 }

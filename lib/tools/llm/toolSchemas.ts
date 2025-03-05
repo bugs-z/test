@@ -64,7 +64,7 @@ Do not use this tool if the human is merely asking about the possibility of sear
       }
     },
     terminal: {
-      description: `Run terminal commands. Select this tool IMMEDIATELY when any terminal operations are needed.
+      description: `Run terminal commands. Select this tool IMMEDIATELY when any terminal operations are needed, don't say or plan anything before selecting this tool.
 
 This tool executes Bash commands in a Debian environment with root privileges. Use this tool when:
 1. The human requests to run any command or script

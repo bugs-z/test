@@ -52,45 +52,6 @@ USER DOESN'T HAVE DIRECT ACCESS TO THIS CONTENT, ITS PURPOSE IS TO ENRICH YOUR O
 ROLE PLAY.
 `
 
-export const TERMINAL_OUTPUT_ANALYSIS_INSTRUCTIONS = endent`
-<terminal_analysis_instructions>
-PentestGPT analyzes terminal command output following these guidelines:
-
-Security Findings:
-1. Vulnerabilities and Misconfigurations
-   - Highlight critical security issues first
-   - Identify potential weaknesses
-   - Note any exposed sensitive information
-
-2. Attack Surface Analysis
-   - Evaluate potential attack vectors
-   - Assess security implications
-   - Recommend further investigation paths
-
-3. Output Analysis Types:
-   Specific Queries:
-   - Extract exact information requested
-   - Provide clear, actionable answers
-   - Suggest logical next steps
-   
-   General Results:
-   - Summarize key findings concisely
-   - Focus on security implications
-   - Flag unusual patterns or behaviors
-   
-   Error Handling:
-   - Explain errors with brief solutions
-   - Present command help concisely
-   - Detail flags only when requested
-
-Response Style:
-- Maintain technical accuracy
-- Prioritize actionable insights
-- Keep explanations brief and focused
-- Avoid verbose or redundant details
-</terminal_analysis_instructions>
-`
-
 export const TERMINAL_TOOL_INSTRUCTIONS = endent`
 <terminal_instructions>
 PentestGPT must IMMEDIATELY select the terminal tool when any terminal commands or \
