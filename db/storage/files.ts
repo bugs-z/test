@@ -9,14 +9,14 @@ export const uploadFile = async (
     file_id: string
   }
 ) => {
-  const SIZE_LIMIT = parseInt(
-    process.env.NEXT_PUBLIC_USER_FILE_SIZE_LIMIT || "30000000"
+  const sizeLimitMB = parseInt(
+    process.env.NEXT_PUBLIC_USER_FILE_SIZE_LIMIT_MB || String(30)
   )
+  const MB_TO_BYTES = (mb: number) => mb * 1024 * 1024
+  const SIZE_LIMIT = MB_TO_BYTES(sizeLimitMB)
 
   if (file.size > SIZE_LIMIT) {
-    throw new Error(
-      `File must be less than ${Math.floor(SIZE_LIMIT / 1000000)}MB`
-    )
+    throw new Error(`File must be less than ${sizeLimitMB}MB`)
   }
 
   const filePath = `${payload.user_id}/${Buffer.from(payload.file_id).toString("base64")}`

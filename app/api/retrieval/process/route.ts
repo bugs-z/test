@@ -82,26 +82,37 @@ export async function POST(req: Request) {
         break
     }
 
-    chunks = chunks.filter(chunk => chunk.content.trim() !== "")
+    if (fileExtension !== "pdf") {
+      chunks = chunks.filter(chunk => chunk.content.trim() !== "")
+    }
 
-    if (chunks.length === 0) {
+    if (chunks.length === 0 && fileExtension !== "pdf") {
       throw new Error("Empty file. Please check the file format and content.")
+    }
+
+    if (chunks.length >= 16) {
+      throw new Error("File is too large.")
     }
 
     let embeddings: any = []
 
-    const openai = new OpenAI({
-      apiKey: llmConfig.openai.apiKey
-    })
+    // Check if we have content to embed (not an empty PDF chunk)
+    const hasContentToEmbed = chunks.length > 0 && !chunks[0].isEmptyPdfChunk
 
-    const response = await openai.embeddings.create({
-      model: "text-embedding-3-small",
-      input: chunks.map(chunk => chunk.content)
-    })
+    if (hasContentToEmbed) {
+      const openai = new OpenAI({
+        apiKey: llmConfig.openai.apiKey
+      })
 
-    embeddings = response.data.map((item: any) => {
-      return item.embedding
-    })
+      const response = await openai.embeddings.create({
+        model: "text-embedding-3-small",
+        input: chunks.map(chunk => chunk.content)
+      })
+
+      embeddings = response.data.map((item: any) => {
+        return item.embedding
+      })
+    }
 
     const file_items = chunks.map((chunk, index) => ({
       file_id,
@@ -110,7 +121,7 @@ export async function POST(req: Request) {
       content: chunk.content,
       tokens: chunk.tokens,
       name: fileMetadata.name,
-      openai_embedding: embeddings[index]
+      openai_embedding: hasContentToEmbed ? embeddings[index] : null
     }))
 
     await supabaseAdmin.from("file_items").upsert(file_items)

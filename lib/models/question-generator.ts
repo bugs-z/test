@@ -1,7 +1,7 @@
 import {
   filterEmptyAssistantMessages,
   validateMessages
-} from "@/lib/build-prompt"
+} from "@/lib/ai/message-utils"
 import { generateText } from "ai"
 import endent from "endent"
 import { mistral } from "@ai-sdk/mistral"

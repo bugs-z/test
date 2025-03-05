@@ -1,4 +1,4 @@
-import { toVercelChatMessages } from "@/lib/build-prompt"
+import { toVercelChatMessages } from "@/lib/ai/message-utils"
 import { createOpenAI } from "@ai-sdk/openai"
 import { streamObject } from "ai"
 import { fragmentSchema } from "./fragment-schema"

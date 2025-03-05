@@ -2,14 +2,9 @@ import {
   BuiltChatMessage,
   ChatMessage,
   ChatPayload,
-  MessageImage
+  MessageImage,
+  MessageContent
 } from "@/types"
-import {
-  CoreAssistantMessage,
-  CoreMessage,
-  CoreSystemMessage,
-  CoreUserMessage
-} from "ai"
 import { Tables } from "@/supabase/types"
 import { countTokens } from "gpt-tokenizer"
 import { GPT4o } from "./models/llm/openai-llm-list"
@@ -163,223 +158,93 @@ export async function buildFinalMessages(
     }
   })
 
-  if (retrievedFileItems.length > 0) {
-    const documentsText = buildDocumentsText(retrievedFileItems)
+  const isPdfFile = (item: { name?: string | null }) =>
+    item.name?.toLowerCase().endsWith(".pdf") ?? false
 
-    finalMessages[finalMessages.length - 2] = {
-      ...finalMessages[finalMessages.length - 2],
-      content: `${documentsText}\n\n${finalMessages[finalMessages.length - 2].content}`
+  const hasAttachedFiles =
+    retrievedFileItems.length > 0 ||
+    chatMessages.some(msg => msg.fileItems?.length > 0)
+
+  if (!hasAttachedFiles) {
+    return finalMessages
+  }
+
+  // Gather all PDF files from both sources
+  const pdfFilesFromRetrieved = retrievedFileItems.filter(isPdfFile)
+  const pdfFilesFromMessages = chatMessages.flatMap(
+    msg => msg.fileItems?.filter(isPdfFile) ?? []
+  )
+
+  // Deduplicate PDF files based on file_id
+  const uniquePdfFiles = Array.from(
+    new Map(
+      [...pdfFilesFromRetrieved, ...pdfFilesFromMessages].map(file => [
+        file.file_id,
+        file
+      ])
+    ).values()
+  )
+
+  if (
+    chatSettings.model !== LargeModel.modelId ||
+    uniquePdfFiles.length === 0
+  ) {
+    return finalMessages
+  }
+
+  // Handle PDF files
+  const userMessageIndex = finalMessages.length - 2
+  const userMessage = finalMessages[userMessageIndex]
+  const newContent: MessageContent[] = []
+
+  // Process unique PDF files
+  for (const pdfFile of uniquePdfFiles) {
+    try {
+      const response = await fetch("/api/retrieval/pdf-base64", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ file_id: pdfFile.file_id })
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch PDF: ${response.statusText}`)
+      }
+
+      const { base64 } = await response.json()
+      newContent.push({
+        type: "file",
+        data: base64,
+        mimeType: "application/pdf"
+      })
+    } catch (error) {
+      console.error("Error fetching PDF base64:", error)
+      newContent.push({
+        type: "text",
+        text: `[Error loading PDF: ${pdfFile.name}]`
+      })
     }
+  }
+
+  // Add original message content
+  const originalText =
+    typeof userMessage.content === "string"
+      ? userMessage.content
+      : Array.isArray(userMessage.content)
+        ? userMessage.content
+            .filter(c => typeof c === "object" && c.type === "text")
+            .map(c => (c as { text: string }).text)
+            .join("\n")
+        : ""
+
+  newContent.push({ type: "text", text: originalText })
+
+  // Update the user message
+  finalMessages[userMessageIndex] = {
+    ...userMessage,
+    content: newContent
   }
 
   return finalMessages
-}
-
-export function filterEmptyAssistantMessages(messages: any[]) {
-  for (let i = messages.length - 1; i >= 0; i--) {
-    if (messages[i].role === "assistant" && messages[i].content.trim() === "") {
-      messages.splice(i, 1)
-      break
-    }
-  }
-}
-
-export const toVercelChatMessages = (
-  messages: BuiltChatMessage[],
-  supportsImages: boolean = false,
-  systemPrompt?: string
-): CoreMessage[] => {
-  const result: CoreMessage[] = []
-
-  // Add system message if provided
-  if (systemPrompt) {
-    result.push({
-      role: "system",
-      content: systemPrompt,
-      providerOptions: {
-        anthropic: { cacheControl: { type: "ephemeral" } }
-      }
-    } as CoreSystemMessage)
-  }
-
-  // Add the rest of the messages
-  messages.forEach(message => {
-    let formattedMessage: CoreMessage | null = null
-
-    switch (message.role) {
-      case "assistant":
-        formattedMessage = {
-          role: "assistant",
-          content: Array.isArray(message.content)
-            ? message.content.map(content => {
-                if (typeof content === "object" && content.type === "text") {
-                  return {
-                    type: "text",
-                    text: content.text
-                  }
-                } else {
-                  return {
-                    type: "text",
-                    text: content
-                  }
-                }
-              })
-            : [{ type: "text", text: message.content as string }]
-        } as CoreAssistantMessage
-        break
-      case "user":
-        formattedMessage = {
-          role: "user",
-          content: Array.isArray(message.content)
-            ? message.content
-                .map(content => {
-                  if (
-                    typeof content === "object" &&
-                    content.type === "image_url"
-                  ) {
-                    if (supportsImages) {
-                      return {
-                        type: "image",
-                        image: new URL(content.image_url.url)
-                      }
-                    } else {
-                      return null
-                    }
-                  } else if (
-                    typeof content === "object" &&
-                    content.type === "text"
-                  ) {
-                    return {
-                      type: "text",
-                      text: content.text
-                    }
-                  } else {
-                    return {
-                      type: "text",
-                      text: content
-                    }
-                  }
-                })
-                .filter(Boolean)
-            : [{ type: "text", text: message.content as string }]
-        } as CoreUserMessage
-        break
-      case "system":
-        // Skip system messages from the array if we already added a systemPrompt
-        if (!systemPrompt) {
-          formattedMessage = {
-            role: "system",
-            content: message.content
-          } as CoreSystemMessage
-        }
-        break
-      default:
-        formattedMessage = null
-    }
-
-    if (formattedMessage !== null) {
-      result.push(formattedMessage)
-    }
-  })
-
-  return result
-}
-
-export function handleAssistantMessages(
-  messages: any[],
-  onlyLast: boolean = false
-) {
-  let foundAssistant = false
-  for (let i = messages.length - 1; i >= 0; i--) {
-    if (messages[i].role === "assistant") {
-      foundAssistant = true
-      if (messages[i].content.trim() === "") {
-        messages[i].content = "Sure, "
-      }
-      if (onlyLast) break
-    }
-  }
-
-  if (!foundAssistant) {
-    messages.push({ role: "assistant", content: "Sure, " })
-  }
-}
-
-/**
- * Checks if any messages in the conversation include images.
- * This function is used to determine if image processing capabilities are needed
- * for the current context of the conversation.
- *
- * @param messages - The array of all messages in the conversation
- * @returns boolean - True if any messages contain an image, false otherwise
- */
-export function messagesIncludeImages(messages: BuiltChatMessage[]): boolean {
-  const recentMessages = messages.slice(-6)
-
-  return recentMessages.some(
-    message =>
-      Array.isArray(message.content) &&
-      message.content.some(
-        item =>
-          typeof item === "object" &&
-          "type" in item &&
-          item.type === "image_url"
-      )
-  )
-}
-
-/**
- * Filters out empty assistant messages and their preceding user messages.
- * Specifically handles Mistral API's edge case of empty responses.
- * Used in both chat and question generation flows.
- *
- * @param messages - Array of chat messages
- * @returns Filtered array with valid messages only
- */
-export function validateMessages(messages: any[]) {
-  const validMessages = []
-
-  for (let i = 0; i < messages.length; i++) {
-    const currentMessage = messages[i]
-    const nextMessage = messages[i + 1]
-
-    // Skip empty assistant responses (Mistral-specific)
-    const isInvalidExchange =
-      currentMessage.role === "user" &&
-      nextMessage?.role === "assistant" &&
-      !nextMessage.content
-
-    if (isInvalidExchange) {
-      i++ // Skip next message
-      continue
-    }
-
-    // Keep valid messages
-    if (currentMessage.role !== "assistant" || currentMessage.content) {
-      validMessages.push(currentMessage)
-    }
-  }
-
-  return validMessages
-}
-
-/**
- * Removes the last assistant message if it only contains "Sure, "
- * @param messages - Array of chat messages
- * @returns Filtered array without the "Sure, " message
- */
-export function removeLastSureMessage(messages: any[]) {
-  if (messages.length === 0) return messages
-
-  const lastMessage = messages[messages.length - 1]
-  if (
-    lastMessage.role === "assistant" &&
-    lastMessage.content.trim().toLowerCase() === "sure,"
-  ) {
-    return messages.slice(0, -1)
-  }
-
-  return messages
 }
 
 function buildDocumentsText(fileItems: Tables<"file_items">[]) {

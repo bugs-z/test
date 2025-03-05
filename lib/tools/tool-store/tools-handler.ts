@@ -4,7 +4,7 @@ import { streamText } from "ai"
 import {
   filterEmptyAssistantMessages,
   toVercelChatMessages
-} from "@/lib/build-prompt"
+} from "@/lib/ai/message-utils"
 import { terminalExecutor } from "./tools-terminal"
 import { z } from "zod"
 import { APIError } from "@/lib/models/llm/api-error"

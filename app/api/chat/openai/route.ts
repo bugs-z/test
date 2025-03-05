@@ -3,7 +3,7 @@ import { buildSystemPrompt } from "@/lib/ai/prompts"
 import {
   filterEmptyAssistantMessages,
   toVercelChatMessages
-} from "@/lib/build-prompt"
+} from "@/lib/ai/message-utils"
 import llmConfig from "@/lib/models/llm/llm-config"
 import { checkRatelimitOnApi } from "@/lib/server/ratelimiter"
 import { getAIProfile } from "@/lib/server/server-chat-helpers"

@@ -7,7 +7,7 @@ import {
   messagesIncludeImages,
   toVercelChatMessages,
   validateMessages
-} from "@/lib/build-prompt"
+} from "@/lib/ai/message-utils"
 import { handleErrorResponse } from "@/lib/models/llm/api-error"
 import llmConfig from "@/lib/models/llm/llm-config"
 import { checkRatelimitOnApi } from "@/lib/server/ratelimiter"
@@ -129,9 +129,7 @@ export async function POST(request: Request) {
       !isContinuation &&
       selectedPlugin !== PluginID.WEB_SEARCH &&
       selectedPlugin !== PluginID.REASONING &&
-      selectedPlugin !== PluginID.REASONING_WEB_SEARCH &&
-      region !== "bom1" &&
-      region !== "cpt1"
+      selectedPlugin !== PluginID.REASONING_WEB_SEARCH
     ) {
       const { shouldUncensorResponse: moderationResult } =
         await getModerationResult(

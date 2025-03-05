@@ -1,5 +1,5 @@
 import { buildSystemPrompt } from "@/lib/ai/prompts"
-import { toVercelChatMessages } from "@/lib/build-prompt"
+import { toVercelChatMessages } from "@/lib/ai/message-utils"
 import llmConfig from "@/lib/models/llm/llm-config"
 import { anthropic } from "@ai-sdk/anthropic"
 import { streamText, tool } from "ai"

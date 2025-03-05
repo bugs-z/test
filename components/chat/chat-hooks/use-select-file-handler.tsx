@@ -27,8 +27,6 @@ export const ACCEPTED_FILE_TYPES = [
   "text/html"
 ].join(",")
 
-const FILE_SIZE_LIMIT = 10 * 1024 * 1024 // 10MB
-
 const fileProcessors: Record<string, FileProcessor> = {
   image: {
     type: "image",
@@ -121,8 +119,14 @@ export const useSelectFileHandler = () => {
   }
 
   const validateFile = (file: File): boolean => {
-    if (file.size > FILE_SIZE_LIMIT) {
-      toast.error(`File must be less than ${FILE_SIZE_LIMIT / 1024 / 1024}MB`)
+    const sizeLimitMB = parseInt(
+      process.env.NEXT_PUBLIC_USER_FILE_SIZE_LIMIT_MB || String(30)
+    )
+    const MB_TO_BYTES = (mb: number) => mb * 1024 * 1024
+    const SIZE_LIMIT = MB_TO_BYTES(sizeLimitMB)
+
+    if (file.size > SIZE_LIMIT) {
+      toast.error(`File must be less than ${sizeLimitMB}MB`)
       return false
     }
     return true
@@ -189,7 +193,7 @@ export const useSelectFileHandler = () => {
 
       if (!createdFile) {
         toast.error(
-          "You reached the maximum amount of files! Please delete some in the files tab."
+          "File limit reached. Please delete some chats containing files."
         )
         setNewMessageFiles(prev => prev.filter(f => f.id !== loadingId))
         return

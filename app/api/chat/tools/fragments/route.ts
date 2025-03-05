@@ -2,7 +2,7 @@ import { replaceWordsInLastUserMessage } from "@/lib/ai-helper"
 import {
   filterEmptyAssistantMessages,
   toVercelChatMessages
-} from "@/lib/build-prompt"
+} from "@/lib/ai/message-utils"
 import { checkRatelimitOnApi } from "@/lib/server/ratelimiter"
 import { getAIProfile } from "@/lib/server/server-chat-helpers"
 import { getSubscriptionInfo } from "@/lib/server/subscription-utils"

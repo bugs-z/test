@@ -15,6 +15,25 @@ export const processPdf = async (pdf: Blob): Promise<FileItemChunk[]> => {
   })
   const splitDocs = await splitter.createDocuments([completeText])
 
+  if (splitDocs.length > 8) {
+    const totalTokens = splitDocs.reduce(
+      (acc, doc) => acc + encode(doc.pageContent).length,
+      0
+    )
+
+    if (totalTokens > 16000) {
+      throw new Error("PDF file is too large.")
+    }
+
+    return [
+      {
+        content: "",
+        tokens: 0,
+        isEmptyPdfChunk: true
+      }
+    ]
+  }
+
   const chunks: FileItemChunk[] = []
 
   for (let i = 0; i < splitDocs.length; i++) {
@@ -22,7 +41,8 @@ export const processPdf = async (pdf: Blob): Promise<FileItemChunk[]> => {
 
     chunks.push({
       content: doc.pageContent,
-      tokens: encode(doc.pageContent).length
+      tokens: encode(doc.pageContent).length,
+      isEmptyPdfChunk: false
     })
   }
 

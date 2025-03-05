@@ -1,5 +1,8 @@
 import { buildSystemPrompt } from "@/lib/ai/prompts"
-import { toVercelChatMessages, removeLastSureMessage } from "@/lib/build-prompt"
+import {
+  toVercelChatMessages,
+  removeLastSureMessage
+} from "@/lib/ai/message-utils"
 import llmConfig from "@/lib/models/llm/llm-config"
 
 interface WebSearchConfig {
