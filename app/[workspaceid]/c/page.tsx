@@ -14,6 +14,7 @@ import { TemporaryChatInfo } from "@/components/chat/temporary-chat-info"
 import { Settings } from "@/components/utility/settings"
 import { WithTooltip } from "@/components/ui/with-tooltip"
 import { useUIContext } from "@/context/ui-context"
+import { TemporaryChatToggle } from "@/components/chat/temporary-chat-toggle"
 
 export default function ChatPage() {
   useHotkey("o", () => handleNewChat())
@@ -45,9 +46,13 @@ export default function ChatPage() {
             className={`absolute left-1/2 -translate-x-1/2 ${isMobile && (selectedPluginInfo || isTemporaryChat) ? "-translate-y-2/4" : "-translate-y-3/4"}`}
           >
             {selectedPluginInfo ? (
-              <ChatPluginInfo pluginInfo={selectedPluginInfo} />
+              <div className="-mx-16">
+                <ChatPluginInfo pluginInfo={selectedPluginInfo} />
+              </div>
             ) : isTemporaryChat ? (
-              <TemporaryChatInfo />
+              <div className="-mx-16">
+                <TemporaryChatInfo />
+              </div>
             ) : isMobile ? (
               <div className="-mx-24 mb-12">
                 <h1 className="text-2xl font-semibold">
@@ -63,7 +68,8 @@ export default function ChatPage() {
             )}
           </div>
 
-          <div className="absolute right-[22px] top-1 flex h-[40px] items-center space-x-2">
+          <div className="absolute right-[22px] top-2 flex h-[40px] items-center space-x-2">
+            <TemporaryChatToggle />
             {!isMobile && (
               <WithTooltip
                 display={<div>Settings</div>}

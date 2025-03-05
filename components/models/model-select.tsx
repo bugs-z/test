@@ -1,22 +1,10 @@
 import { PentestGPTContext } from "@/context/context"
 import { LLM, LLMID } from "@/types"
-import {
-  IconCircle,
-  IconCircleCheck,
-  IconGhost3,
-  IconGhost3Filled
-} from "@tabler/icons-react"
-import { FC, useContext, useEffect, useRef, useState, useCallback } from "react"
-import {
-  useRouter,
-  useSearchParams,
-  useParams,
-  usePathname
-} from "next/navigation"
+import { IconCircle, IconCircleCheck } from "@tabler/icons-react"
+import { FC, useContext, useEffect, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
 import { ModelIcon } from "./model-icon"
 import { Button } from "../ui/button"
-import { Switch } from "../ui/switch"
-import { useChatHandler } from "@/components/chat/chat-hooks/use-chat-handler"
 import { LLM_LIST } from "@/lib/models/llm/llm-list"
 import { LargeModel, SmallModel } from "@/lib/models/llm/hackerai-llm-list"
 import { GPT4o } from "@/lib/models/llm/openai-llm-list"
@@ -24,47 +12,16 @@ import { GPT4o } from "@/lib/models/llm/openai-llm-list"
 interface ModelSelectProps {
   selectedModelId: LLMID
   onSelectModel: (modelId: LLMID) => void
-  onClose?: () => void
 }
 
 export const ModelSelect: FC<ModelSelectProps> = ({
   selectedModelId,
-  onSelectModel,
-  onClose
+  onSelectModel
 }) => {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const params = useParams()
-  const pathname = usePathname()
-  const { isPremiumSubscription, profile, isTemporaryChat } =
-    useContext(PentestGPTContext)
-
-  const { handleNewChat } = useChatHandler()
-
-  const handleToggleTemporaryChat = useCallback(
-    (isTemporary: boolean) => {
-      const newSearchParams = new URLSearchParams(searchParams)
-      if (isTemporary) {
-        if (pathname.includes("/c/")) {
-          const baseURL = `/${params.workspaceid}/c`
-          newSearchParams.set("temporary-chat", "true")
-          router.push(`${baseURL}?${newSearchParams.toString()}`)
-        } else {
-          newSearchParams.set("temporary-chat", "true")
-          router.push(`?${newSearchParams.toString()}`)
-        }
-      } else {
-        newSearchParams.delete("temporary-chat")
-        router.push(`?${newSearchParams.toString()}`)
-        handleNewChat()
-      }
-      onClose?.()
-    },
-    [handleNewChat, searchParams, router, params, pathname, onClose]
-  )
+  const { isPremiumSubscription, profile } = useContext(PentestGPTContext)
 
   const inputRef = useRef<HTMLInputElement>(null)
-
   const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
@@ -209,28 +166,6 @@ export const ModelSelect: FC<ModelSelectProps> = ({
                 </div>
               )
             })}
-
-        <div className="border-muted-foreground mx-2 my-4 border-t" />
-
-        <div
-          className="hover:bg-accent flex cursor-pointer items-center justify-between rounded-md p-2"
-          onClick={() => handleToggleTemporaryChat(!isTemporaryChat)}
-        >
-          <div className="flex items-center space-x-2">
-            {isTemporaryChat ? (
-              <IconGhost3Filled size={24} />
-            ) : (
-              <IconGhost3 size={24} />
-            )}
-            <span className="text-sm">Temporary chat</span>
-          </div>
-          <Switch
-            checked={isTemporaryChat}
-            onCheckedChange={handleToggleTemporaryChat}
-            variant={"green"}
-            onClick={e => e.stopPropagation()}
-          />
-        </div>
       </div>
     </div>
   )

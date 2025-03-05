@@ -86,7 +86,6 @@ export const ChatSettings: FC<ChatSettingsProps> = ({ handleCleanChat }) => {
                   setChatSettings({ ...chatSettings, model })
                   setIsOpen(false)
                 }}
-                onClose={() => setIsOpen(false)}
               />
             </PopoverContent>
           </Popover>
