@@ -62,11 +62,7 @@ export const handleHostedChat = async (
     )
   }
 
-  const formattedMessages = await buildFinalMessages(
-    payload,
-    chatImages,
-    isRagEnabled
-  )
+  const formattedMessages = await buildFinalMessages(payload, chatImages)
 
   const requestBody = {
     messages: formattedMessages,

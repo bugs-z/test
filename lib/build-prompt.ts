@@ -2,8 +2,7 @@ import {
   BuiltChatMessage,
   ChatMessage,
   ChatPayload,
-  MessageImage,
-  MessageContent
+  MessageImage
 } from "@/types"
 import { Tables } from "@/supabase/types"
 import { countTokens } from "gpt-tokenizer"
@@ -14,8 +13,7 @@ import { Fragment } from "./tools/e2b/fragments/types"
 
 export async function buildFinalMessages(
   payload: ChatPayload,
-  chatImages: MessageImage[],
-  shouldUseRAG?: boolean
+  chatImages: MessageImage[]
 ): Promise<BuiltChatMessage[]> {
   const { chatSettings, chatMessages, retrievedFileItems } = payload
 
@@ -23,14 +21,9 @@ export async function buildFinalMessages(
   if (chatSettings.model === GPT4o.modelId) {
     CHUNK_SIZE = 32000 - 4000 // -4000 for the system prompt, custom instructions, and more
   } else if (chatSettings.model === LargeModel.modelId) {
-    CHUNK_SIZE = 24000 - 4000 // -4000 for the system prompt, custom instructions, and more
+    CHUNK_SIZE = 22000 - 4000 // -4000 for the system prompt, custom instructions, and more
   } else if (chatSettings.model === SmallModel.modelId) {
     CHUNK_SIZE = 12000 - 4000 // -4000 for the system prompt, custom instructions, and more
-  }
-
-  // Adjusting the chunk size for RAG
-  if (shouldUseRAG) {
-    CHUNK_SIZE = 12000
   }
 
   let remainingTokens = CHUNK_SIZE
@@ -158,90 +151,13 @@ export async function buildFinalMessages(
     }
   })
 
-  const isPdfFile = (item: { name?: string | null }) =>
-    item.name?.toLowerCase().endsWith(".pdf") ?? false
+  if (retrievedFileItems.length > 0) {
+    const documentsText = buildDocumentsText(retrievedFileItems)
 
-  const hasAttachedFiles =
-    retrievedFileItems.length > 0 ||
-    chatMessages.some(msg => msg.fileItems?.length > 0)
-
-  if (!hasAttachedFiles) {
-    return finalMessages
-  }
-
-  // Gather all PDF files from both sources
-  const pdfFilesFromRetrieved = retrievedFileItems.filter(isPdfFile)
-  const pdfFilesFromMessages = chatMessages.flatMap(
-    msg => msg.fileItems?.filter(isPdfFile) ?? []
-  )
-
-  // Deduplicate PDF files based on file_id
-  const uniquePdfFiles = Array.from(
-    new Map(
-      [...pdfFilesFromRetrieved, ...pdfFilesFromMessages].map(file => [
-        file.file_id,
-        file
-      ])
-    ).values()
-  )
-
-  if (
-    chatSettings.model !== LargeModel.modelId ||
-    uniquePdfFiles.length === 0
-  ) {
-    return finalMessages
-  }
-
-  // Handle PDF files
-  const userMessageIndex = finalMessages.length - 2
-  const userMessage = finalMessages[userMessageIndex]
-  const newContent: MessageContent[] = []
-
-  // Process unique PDF files
-  for (const pdfFile of uniquePdfFiles) {
-    try {
-      const response = await fetch("/api/retrieval/pdf-base64", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ file_id: pdfFile.file_id })
-      })
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch PDF: ${response.statusText}`)
-      }
-
-      const { base64 } = await response.json()
-      newContent.push({
-        type: "file",
-        data: base64,
-        mimeType: "application/pdf"
-      })
-    } catch (error) {
-      console.error("Error fetching PDF base64:", error)
-      newContent.push({
-        type: "text",
-        text: `[Error loading PDF: ${pdfFile.name}]`
-      })
+    finalMessages[finalMessages.length - 2] = {
+      ...finalMessages[finalMessages.length - 2],
+      content: `${documentsText}\n\n${finalMessages[finalMessages.length - 2].content}`
     }
-  }
-
-  // Add original message content
-  const originalText =
-    typeof userMessage.content === "string"
-      ? userMessage.content
-      : Array.isArray(userMessage.content)
-        ? userMessage.content
-            .filter(c => typeof c === "object" && c.type === "text")
-            .map(c => (c as { text: string }).text)
-            .join("\n")
-        : ""
-
-  newContent.push({ type: "text", text: originalText })
-
-  // Update the user message
-  finalMessages[userMessageIndex] = {
-    ...userMessage,
-    content: newContent
   }
 
   return finalMessages

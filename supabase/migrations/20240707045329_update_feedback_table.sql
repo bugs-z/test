@@ -13,11 +13,3 @@ CREATE INDEX idx_feedback_plugin ON feedback(plugin);
 -- Create index on rag_used column
 CREATE INDEX idx_feedback_rag_used ON feedback(rag_used);
 
-
--- Create policies to allow moderators to view and update feedback
-CREATE POLICY "Allow moderators full access to feedback"
-    ON feedback
-    USING (is_moderator(auth.uid()))
-    WITH CHECK (is_moderator(auth.uid()));
-
-

@@ -167,7 +167,6 @@ export const useSelectFileHandler = () => {
           type: simplifiedType,
           file,
           created_at: "",
-          description: "",
           file_path: "",
           sharing: "",
           size: file.size,
@@ -181,7 +180,6 @@ export const useSelectFileHandler = () => {
 
       const fileData = {
         user_id: profile.user_id,
-        description: "",
         file_path: "",
         name: file.name,
         size: file.size,
@@ -204,7 +202,7 @@ export const useSelectFileHandler = () => {
       )
       setUseRetrieval(true)
     } catch (error: any) {
-      toast.error(`Failed to upload ${file.name}: ${error?.message}`, {
+      toast.error(`${error?.message}`, {
         duration: 10000
       })
       setNewMessageImages(prev => prev.filter(img => img.messageId !== "temp"))

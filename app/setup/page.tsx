@@ -1,10 +1,11 @@
 "use client"
 
 import { PentestGPTContext } from "@/context/context"
-import { getProfileByUserId, updateProfile } from "@/db/profile"
+import { getProfileByUserId } from "@/db/profile"
 import { getHomeWorkspaceByUserId } from "@/db/workspaces"
 import { supabase } from "@/lib/supabase/browser-client"
-import { TablesUpdate } from "@/supabase/types"
+// import { TablesUpdate } from "@/supabase/types"
+// import { updateProfile } from "@/db/profile"
 import { useRouter } from "next/navigation"
 import { useContext, useEffect } from "react"
 
@@ -30,13 +31,13 @@ export default function SetupPage() {
         throw new Error("Profile not found")
       }
 
-      if (!profile.has_onboarded) {
-        const updateProfilePayload: TablesUpdate<"profiles"> = {
-          ...profile,
-          has_onboarded: true
-        }
-        await updateProfile(profile.id, updateProfilePayload)
-      }
+      // if (!profile.has_onboarded) {
+      //   const updateProfilePayload: TablesUpdate<"profiles"> = {
+      //     ...profile,
+      //     has_onboarded: true
+      //   }
+      //   await updateProfile(profile.id, updateProfilePayload)
+      // }
 
       await fetchStartingData()
 

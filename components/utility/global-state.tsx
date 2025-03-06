@@ -147,9 +147,9 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
 
       setProfile(profile)
 
-      if (!profile.has_onboarded) {
-        return router.push("/setup")
-      }
+      // if (!profile.has_onboarded) {
+      //   return router.push("/setup")
+      // }
 
       const subscription = await getSubscriptionByUserId(userFromAuth.id)
       updateSubscription(subscription)

@@ -1,18 +1,17 @@
-import llmConfig from "@/lib/models/llm/llm-config"
 import {
   processCSV,
   processJSON,
   processMarkdown,
   processPdf,
   processTxt,
-  convert
+  convert,
+  TOKEN_LIMIT
 } from "@/lib/retrieval/processing"
 import { getServerProfile } from "@/lib/server/server-chat-helpers"
 import { Database } from "@/supabase/types"
 import { FileItemChunk } from "@/types"
 import { createClient } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
-import OpenAI from "openai"
 
 export async function POST(req: Request) {
   try {
@@ -86,54 +85,33 @@ export async function POST(req: Request) {
       chunks = chunks.filter(chunk => chunk.content.trim() !== "")
     }
 
-    if (chunks.length === 0 && fileExtension !== "pdf") {
+    if (chunks.length === 0) {
       throw new Error("Empty file. Please check the file format and content.")
     }
 
-    if (chunks.length >= 16) {
-      throw new Error("File is too large.")
+    const totalTokens = chunks.reduce((acc, chunk) => acc + chunk.tokens, 0)
+    if (totalTokens > TOKEN_LIMIT) {
+      throw new Error(`File content exceeds token limit of ${TOKEN_LIMIT}`)
     }
 
-    let embeddings: any = []
-
-    // Check if we have content to embed (not an empty PDF chunk)
-    const hasContentToEmbed = chunks.length > 0 && !chunks[0].isEmptyPdfChunk
-
-    if (hasContentToEmbed) {
-      const openai = new OpenAI({
-        apiKey: llmConfig.openai.apiKey
-      })
-
-      const response = await openai.embeddings.create({
-        model: "text-embedding-3-small",
-        input: chunks.map(chunk => chunk.content)
-      })
-
-      embeddings = response.data.map((item: any) => {
-        return item.embedding
-      })
-    }
-
-    const file_items = chunks.map((chunk, index) => ({
+    const file_items = chunks.map(chunk => ({
       file_id,
       user_id: profile.user_id,
-      sequence_number: index,
+      sequence_number: 0,
       content: chunk.content,
       tokens: chunk.tokens,
       name: fileMetadata.name,
-      openai_embedding: hasContentToEmbed ? embeddings[index] : null
+      openai_embedding: null
     }))
 
     await supabaseAdmin.from("file_items").upsert(file_items)
-
-    const totalTokens = file_items.reduce((acc, item) => acc + item.tokens, 0)
 
     await supabaseAdmin
       .from("files")
       .update({ tokens: totalTokens })
       .eq("id", file_id)
 
-    return new NextResponse("Embed Successful", {
+    return new NextResponse("File processing successful", {
       status: 200
     })
   } catch (error: any) {

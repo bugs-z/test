@@ -41,33 +41,6 @@ CREATE POLICY "Allow full access to own profiles"
     USING (user_id = auth.uid())
     WITH CHECK (user_id = auth.uid());
 
--- FUNCTIONS --
-
-CREATE OR REPLACE FUNCTION delete_old_profile_image()
-RETURNS TRIGGER
-LANGUAGE 'plpgsql'
-SECURITY DEFINER
-AS $$
-DECLARE
-  status INT;
-  content TEXT;
-BEGIN
-  IF TG_OP = 'DELETE' THEN
-    SELECT
-      INTO status, content
-      result.status, result.content
-      FROM public.delete_storage_object_from_bucket('profile_images', OLD.image_path) AS result;
-    IF status <> 200 THEN
-      RAISE WARNING 'Could not delete profile image: % %', status, content;
-    END IF;
-  END IF;
-  IF TG_OP = 'DELETE' THEN
-    RETURN OLD;
-  END IF;
-  RETURN NEW;
-END;
-$$;
-
 -- TRIGGERS --
 
 CREATE TRIGGER update_profiles_updated_at
@@ -124,11 +97,6 @@ CREATE TRIGGER create_profile_and_workspace_trigger
 AFTER INSERT ON auth.users
 FOR EACH ROW
 EXECUTE PROCEDURE public.create_profile_and_workspace();
-
-CREATE TRIGGER delete_old_profile_image
-AFTER DELETE ON profiles
-FOR EACH ROW
-EXECUTE PROCEDURE delete_old_profile_image();
 
 -- STORAGE --
 

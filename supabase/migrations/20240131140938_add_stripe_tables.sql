@@ -30,7 +30,7 @@ CREATE INDEX subscriptions_customer_id_idx ON subscriptions(customer_id);
 
 ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow full access to own subscriptions"
+CREATE POLICY "Allow readonly access to own subscriptions"
     ON subscriptions
-    USING (user_id = auth.uid())
-    WITH CHECK (user_id = auth.uid());
+    FOR SELECT
+    USING (user_id = auth.uid());
