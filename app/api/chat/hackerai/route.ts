@@ -159,7 +159,12 @@ export async function POST(request: Request) {
       case PluginID.REASONING:
         return createStreamResponse(async dataStream => {
           await executeReasonLLMTool({
-            config: { messages, profile, dataStream }
+            config: {
+              messages,
+              profile,
+              dataStream,
+              isLargeModel: config.isLargeModel
+            }
           })
         })
 
@@ -252,16 +257,17 @@ async function getProviderConfig(
   }
 
   const selectedModel = isLargeModel ? proModel : defaultModel
+
+  const rateLimitModel =
+    selectedPlugin && selectedPlugin !== PluginID.NONE
+      ? selectedPlugin
+      : isLargeModel
+        ? "pentestgpt-pro"
+        : "pentestgpt"
+
   const rateLimitCheckResult = await checkRatelimitOnApi(
     profile.user_id,
-    selectedPlugin === PluginID.REASONING ||
-      selectedPlugin === PluginID.REASONING_WEB_SEARCH
-      ? "reasoning"
-      : selectedPlugin === PluginID.DEEP_RESEARCH
-        ? "deep-research"
-        : isLargeModel
-          ? "pentestgpt-pro"
-          : "pentestgpt"
+    rateLimitModel
   )
 
   return {

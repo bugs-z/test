@@ -41,8 +41,10 @@ const llmConfig = {
     pentestGPTBrowser: `${getPentestGPTInfo(true, true)}\n${systemPromptEnding}`,
     // For webSearch tool
     pentestGPTWebSearch: `${getPentestGPTInfo(false, true)}\n${systemPromptEnding}`,
+    // For ReasoningWebSearch tool
+    reasoningWebSearch: `${getPentestGPTInfo(false, true, "October 2023", "reasoningModel")}\n${systemPromptEnding}`,
     // For reasoning tool
-    pentestGPTReasoning: `${getPentestGPTInfo(true)}\n${systemPromptEnding}`,
+    pentestGPTReasoning: `${getPentestGPTInfo(true, false, "October 2023", "reasoningModel")}\n${systemPromptEnding}`,
     // For terminal tool
     pentestGPTTerminal: `${getPentestGPTInfo()}\n${TERMINAL_TOOL_INSTRUCTIONS}\n${systemPromptEnding}`,
     // For fragment tool

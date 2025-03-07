@@ -54,14 +54,14 @@ export async function POST(request: Request) {
     } = await request.json()
 
     const profile = await getAIProfile()
+    const rateLimitModel =
+      selectedPlugin && selectedPlugin !== PluginID.NONE
+        ? selectedPlugin
+        : "gpt-4"
+
     const rateLimitCheckResult = await checkRatelimitOnApi(
       profile.user_id,
-      selectedPlugin === PluginID.REASONING ||
-        selectedPlugin === PluginID.REASONING_WEB_SEARCH
-        ? "reasoning"
-        : selectedPlugin === PluginID.DEEP_RESEARCH
-          ? "deep-research"
-          : "gpt-4"
+      rateLimitModel
     )
     if (rateLimitCheckResult !== null) {
       return rateLimitCheckResult.response
@@ -113,7 +113,7 @@ export async function POST(request: Request) {
       case PluginID.REASONING:
         return createStreamResponse(async dataStream => {
           await executeReasonLLMTool({
-            config: { messages, profile, dataStream }
+            config: { messages, profile, dataStream, isLargeModel: true }
           })
         })
 

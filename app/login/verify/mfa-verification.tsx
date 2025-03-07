@@ -1,6 +1,6 @@
 "use client"
 
-import { useContext, useState } from "react"
+import { useContext, useState, useEffect, useRef } from "react"
 import { Brand } from "@/components/ui/brand"
 import { Button } from "@/components/ui/button"
 import { IconAlertCircle } from "@tabler/icons-react"
@@ -26,10 +26,67 @@ export function MFAVerification({ onVerify }: MFAVerificationProps) {
   const [error, setError] = useState("")
   const [isVerifying, setIsVerifying] = useState(false)
   const { user, fetchStartingData } = useContext(PentestGPTContext)
+  const inputRef = useRef<HTMLDivElement>(null)
+
+  // Effect to handle auto-filled inputs (like from password managers)
+  useEffect(() => {
+    if (!inputRef.current) return
+
+    // Create a MutationObserver to detect changes to the input fields
+    const observer = new MutationObserver(mutations => {
+      mutations.forEach(mutation => {
+        if (mutation.type === "attributes" || mutation.type === "childList") {
+          // Check all input elements inside the OTP component
+          const inputs = inputRef.current?.querySelectorAll("input")
+          if (!inputs) return
+
+          // Collect values from all inputs
+          let collectedValue = ""
+          inputs.forEach(input => {
+            collectedValue += input.value || ""
+          })
+
+          // If we have a complete code and it's different from current state, update it
+          if (collectedValue.length === 6 && collectedValue !== verifyCode) {
+            setVerifyCode(collectedValue)
+          }
+        }
+      })
+    })
+
+    // Start observing the input container
+    observer.observe(inputRef.current, {
+      attributes: true,
+      childList: true,
+      subtree: true,
+      characterData: true
+    })
+
+    // Cleanup observer on component unmount
+    return () => observer.disconnect()
+  }, [verifyCode])
+
+  // Handle paste event for the entire OTP input
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault()
+    const pastedData = e.clipboardData.getData("text")
+    const digits = pastedData.replace(/\D/g, "").slice(0, 6)
+
+    if (digits.length > 0) {
+      setVerifyCode(digits)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!user || verifyCode.length !== 6 || isVerifying) return
+
+    // Show error if code is incomplete
+    if (verifyCode.length !== 6) {
+      setError("Please enter the complete 6-digit verification code")
+      return
+    }
+
+    if (!user || isVerifying) return
 
     setError("")
     setIsVerifying(true)
@@ -85,13 +142,18 @@ export function MFAVerification({ onVerify }: MFAVerificationProps) {
           Enter the 6-digit code from your authenticator app to continue
         </p>
 
-        <div className="flex justify-center">
+        <div
+          className="flex justify-center"
+          ref={inputRef}
+          onPaste={handlePaste}
+        >
           <InputOTP
             maxLength={6}
             value={verifyCode}
             onChange={value => setVerifyCode(value)}
             disabled={isVerifying}
             pattern={REGEXP_ONLY_DIGITS}
+            autoFocus
           >
             <InputOTPGroup>
               <InputOTPSlot index={0} />
@@ -118,7 +180,11 @@ export function MFAVerification({ onVerify }: MFAVerificationProps) {
           <Button
             type="submit"
             className="w-full"
-            disabled={verifyCode.length !== 6 || isVerifying}
+            onClick={() => {
+              if (verifyCode.length !== 6) {
+                setError("Please enter the complete 6-digit verification code")
+              }
+            }}
           >
             {isVerifying ? "Verifying..." : "Verify"}
           </Button>

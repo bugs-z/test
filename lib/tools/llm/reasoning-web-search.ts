@@ -1,7 +1,7 @@
 import { buildSystemPrompt } from "@/lib/ai/prompts"
 import { toVercelChatMessages } from "@/lib/ai/message-utils"
 import llmConfig from "@/lib/models/llm/llm-config"
-import { streamText } from "ai"
+import { smoothStream, streamText } from "ai"
 import { perplexity } from "@ai-sdk/perplexity"
 
 interface ReasoningWebSearchConfig {
@@ -59,10 +59,11 @@ async function processStream({
     model: perplexity(selectedModel),
     maxTokens: 2048,
     system: buildSystemPrompt(
-      llmConfig.systemPrompts.pentestGPTWebSearch,
+      llmConfig.systemPrompts.reasoningWebSearch,
       profile.profile_context
     ),
-    messages: toVercelChatMessages(messages)
+    messages: toVercelChatMessages(messages),
+    experimental_transform: smoothStream({ chunking: "word" })
   })
 
   for await (const part of result.fullStream) {

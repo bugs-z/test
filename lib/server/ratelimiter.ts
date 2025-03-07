@@ -116,50 +116,70 @@ function getTimeWindow(): number {
 }
 
 function _getLimit(model: string, subscriptionInfo: SubscriptionInfo): number {
-  // Special case for fragments-reload and chat-name
+  const isPaid = subscriptionInfo.isPremium || subscriptionInfo.isTeam
+  const suffix = isPaid ? "_PREMIUM" : "_FREE"
+
+  // Handle special cases first
   if (model === "fragments-reload") {
-    const fragmentsLimit = Number(process.env.FRAGMENTS_RELOAD_LIMIT) || 100
-    if (isNaN(fragmentsLimit) || fragmentsLimit < 0) {
-      return 100
-    }
-    return fragmentsLimit
-  } else if (model === "generateTitle") {
-    if (subscriptionInfo.isPremium || subscriptionInfo.isTeam) {
-      const chatNameLimit =
-        Number(process.env.GENERATE_TITLE_LIMIT_PREMIUM) || 100
-      if (isNaN(chatNameLimit) || chatNameLimit < 0) {
-        return 100
-      }
-      return chatNameLimit
-    }
-    return Number(process.env.RATELIMITER_LIMIT_PENTESTGPT_FREE) || 15
+    return getValidatedLimit(process.env.FRAGMENTS_RELOAD_LIMIT, 100)
   }
 
+  if (model === "generate-title") {
+    return isPaid
+      ? getValidatedLimit(process.env.GENERATE_TITLE_LIMIT_PREMIUM, 100)
+      : getValidatedLimit(process.env.RATELIMITER_LIMIT_PENTESTGPT_FREE, 15)
+  }
+
+  // Pro queries group (reasoning and web search related plugins)
+  const proQueryModels = [
+    "reasoning",
+    "websearch",
+    "reasoning-web-search",
+    "web-search"
+  ]
+
+  if (proQueryModels.includes(model)) {
+    // Try consolidated limit first
+    const consolidatedKey = `RATELIMITER_LIMIT_PRO_QUERIES${suffix}`
+    let limit = getValidatedLimit(process.env[consolidatedKey], -1)
+
+    // Fall back to model-specific limit if consolidated isn't set
+    if (limit < 0) {
+      const modelKey = `RATELIMITER_LIMIT_${_getFixedModelName(model)}${suffix}`
+      limit = getValidatedLimit(process.env[modelKey], isPaid ? 25 : 5)
+    }
+
+    if (subscriptionInfo.isTeam) {
+      const teamMultiplier = Number(process.env.TEAM_LIMIT_MULTIPLIER) || 1.8
+      return Math.floor(limit * teamMultiplier)
+    }
+
+    return limit
+  }
+
+  // Standard model handling
   const fixedModelName = _getFixedModelName(model)
-  const baseKey = `RATELIMITER_LIMIT_${fixedModelName}`
-
-  // Use premium suffix for both premium and team, but apply multiplier for team
-  const suffix =
-    subscriptionInfo.isPremium || subscriptionInfo.isTeam ? "_PREMIUM" : "_FREE"
-
-  const limitKey = baseKey + suffix
-
-  let limit =
-    process.env[limitKey] === undefined
-      ? subscriptionInfo.isTeam || subscriptionInfo.isPremium
-        ? 30
-        : 0
-      : Number(process.env[limitKey])
+  const limitKey = `RATELIMITER_LIMIT_${fixedModelName}${suffix}`
+  const defaultLimit = isPaid ? 30 : 0
+  const limit = getValidatedLimit(process.env[limitKey], defaultLimit)
 
   if (subscriptionInfo.isTeam) {
-    const teamMultiplier = Number(process.env.TEAM_LIMIT_MULTIPLIER) || 1.5
-    limit = Math.floor(limit * teamMultiplier)
+    const teamMultiplier = Number(process.env.TEAM_LIMIT_MULTIPLIER) || 1.8
+    return Math.floor(limit * teamMultiplier)
   }
 
-  if (isNaN(limit) || limit < 0) {
-    throw new Error("Invalid limit configuration")
-  }
   return limit
+}
+
+// Helper function to validate and parse limits
+function getValidatedLimit(
+  value: string | undefined,
+  defaultValue: number
+): number {
+  if (value === undefined) return defaultValue
+
+  const parsedValue = Number(value)
+  return !isNaN(parsedValue) && parsedValue >= 0 ? parsedValue : defaultValue
 }
 
 async function _addRequest(key: string) {
@@ -197,6 +217,20 @@ function _getFixedModelName(model: string): string {
 }
 
 function _makeStorageKey(userId: string, model: string): string {
+  // Pro queries group (reasoning and web search related plugins)
+  const proQueryModels = [
+    "reasoning",
+    "websearch",
+    "reasoning-web-search",
+    "web-search"
+  ]
+
+  // Use a common key for all pro query models
+  if (proQueryModels.includes(model)) {
+    return `ratelimit:${userId}:PRO_QUERIES`
+  }
+
+  // For other models, use the model-specific key
   const fixedModelName = _getFixedModelName(model)
   return `ratelimit:${userId}:${fixedModelName}`
 }
@@ -229,7 +263,7 @@ export function getRateLimitErrorMessage(
     message += `\n\n🔓 Want more? Upgrade to Pro or Team and unlock a world of features:
 - Higher usage limits
 - Access to PentestGPT-Large and GPT-4o
-- Access to file uploads, vision, web search and browsing
+- Access to file uploads, vision, deep research and web browsing
 - Access to advanced plugins
 - Access to terminal`
   }
@@ -247,7 +281,8 @@ function getModelName(model: string): string {
     "stt-1": "speech-to-text",
     "fragments-reload": "fragment reloads",
     fragments: "artifacts",
-    reasoning: "reasoning model"
+    reasoning: "reasoning model",
+    "reasoning-web-search": "reasoning web search model"
   }
   return modelNames[model] || model
 }
@@ -258,6 +293,7 @@ export async function checkRatelimitOnApi(
   subscriptionInfo?: SubscriptionInfo
 ): Promise<{ response: Response; result: RateLimitResult } | null> {
   const result = await ratelimit(userId, model, subscriptionInfo)
+
   if (result.allowed) {
     return null
   }
@@ -269,6 +305,7 @@ export async function checkRatelimitOnApi(
     subInfo.isPremium,
     model
   )
+
   const response = new Response(
     JSON.stringify({
       message: message,

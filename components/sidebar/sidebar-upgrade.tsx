@@ -20,7 +20,7 @@ export const SidebarUpgrade: FC = () => {
           <div className="flex flex-col">
             <div className="text-sm font-semibold">Upgrade plan</div>
             <div className="text-muted-foreground mt-1 text-xs">
-              More access to pentest models
+              Upgrade for file upload, smarter AI, and more
             </div>
           </div>
         </div>
