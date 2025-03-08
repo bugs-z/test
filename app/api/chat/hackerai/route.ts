@@ -24,6 +24,7 @@ import { executeReasonLLMTool } from "@/lib/tools/llm/reason-llm"
 import { executeReasoningWebSearchTool } from "@/lib/tools/llm/reasoning-web-search"
 import { processRag } from "@/lib/rag/rag-processor"
 import { executeDeepResearchTool } from "@/lib/tools/llm/deep-research"
+import { geolocation } from "@vercel/functions"
 
 export const runtime: ServerRuntime = "edge"
 export const preferredRegion = [
@@ -110,14 +111,14 @@ export async function POST(request: Request) {
       }
 
       if (shouldUncensor) {
-        config.isLargeModel
-          ? (selectedModel = "mistral-large-latest")
-          : (selectedModel = "mistral-small-latest")
+        config.isLargeModel && (selectedModel = "mistral-large-latest")
         return handleAssistantMessages(messages)
       }
 
       return filterEmptyAssistantMessages(messages)
     }
+
+    const { region } = geolocation(request)
 
     if (
       llmConfig.openai.apiKey &&
@@ -125,7 +126,8 @@ export async function POST(request: Request) {
       !isContinuation &&
       selectedPlugin !== PluginID.WEB_SEARCH &&
       selectedPlugin !== PluginID.REASONING &&
-      selectedPlugin !== PluginID.REASONING_WEB_SEARCH
+      selectedPlugin !== PluginID.REASONING_WEB_SEARCH && 
+      region === "bom1"
     ) {
       const { shouldUncensorResponse: moderationResult } =
         await getModerationResult(
