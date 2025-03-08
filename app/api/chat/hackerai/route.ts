@@ -14,7 +14,7 @@ import { checkRatelimitOnApi } from "@/lib/server/ratelimiter"
 import { createOpenRouter } from "@openrouter/ai-sdk-provider"
 import { createMistral } from "@ai-sdk/mistral"
 import { createAnthropic } from "@ai-sdk/anthropic"
-import { LanguageModelV1, streamText } from "ai"
+import { LanguageModelV1, smoothStream, streamText } from "ai"
 import { getModerationResult } from "@/lib/server/moderation"
 import { PluginID } from "@/types/plugins"
 import { executeWebSearchTool } from "@/lib/tools/llm/web-search"
@@ -126,8 +126,8 @@ export async function POST(request: Request) {
       !isContinuation &&
       selectedPlugin !== PluginID.WEB_SEARCH &&
       selectedPlugin !== PluginID.REASONING &&
-      selectedPlugin !== PluginID.REASONING_WEB_SEARCH && 
-      region === "bom1"
+      selectedPlugin !== PluginID.REASONING_WEB_SEARCH &&
+      region !== "bom1"
     ) {
       const { shouldUncensorResponse: moderationResult } =
         await getModerationResult(
@@ -216,7 +216,8 @@ export async function POST(request: Request) {
               : undefined
           ),
           maxTokens: 2048,
-          abortSignal: request.signal
+          abortSignal: request.signal,
+          experimental_transform: smoothStream({ chunking: "word" })
         })
 
         result.mergeIntoDataStream(dataStream)

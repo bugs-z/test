@@ -51,7 +51,7 @@ async function processStream({
 
   const result = streamText({
     model: openrouter(selectedModel as string),
-    maxTokens: 2048,
+    maxTokens: 4096,
     system: buildSystemPrompt(
       llmConfig.systemPrompts.pentestGPTReasoning,
       profile.profile_context

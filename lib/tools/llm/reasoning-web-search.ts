@@ -57,7 +57,7 @@ async function processStream({
 
   const result = streamText({
     model: perplexity(selectedModel),
-    maxTokens: 2048,
+    maxTokens: 4096,
     system: buildSystemPrompt(
       llmConfig.systemPrompts.reasoningWebSearch,
       profile.profile_context
