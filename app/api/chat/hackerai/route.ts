@@ -11,7 +11,7 @@ import {
 import { handleErrorResponse } from "@/lib/models/llm/api-error"
 import llmConfig from "@/lib/models/llm/llm-config"
 import { checkRatelimitOnApi } from "@/lib/server/ratelimiter"
-import { createOpenAI as createOpenRouterAI } from "@ai-sdk/openai"
+import { createOpenRouter } from "@openrouter/ai-sdk-provider"
 import { createMistral } from "@ai-sdk/mistral"
 import { createAnthropic } from "@ai-sdk/anthropic"
 import { LanguageModelV1, streamText } from "ai"
@@ -22,7 +22,6 @@ import { createStreamResponse } from "@/lib/ai-helper"
 import { LargeModel } from "@/lib/models/llm/hackerai-llm-list"
 import { executeReasonLLMTool } from "@/lib/tools/llm/reason-llm"
 import { executeReasoningWebSearchTool } from "@/lib/tools/llm/reasoning-web-search"
-import { geolocation } from "@vercel/functions"
 import { processRag } from "@/lib/rag/rag-processor"
 import { executeDeepResearchTool } from "@/lib/tools/llm/deep-research"
 
@@ -104,11 +103,6 @@ export async function POST(request: Request) {
     let selectedModel = config.selectedModel
     let shouldUncensorResponse = false
 
-    const { region } = geolocation(request)
-    if (!config.isLargeModel && region === "bom1") {
-      selectedModel = "mistral-saba-2502"
-    }
-
     const handleMessages = (shouldUncensor: boolean) => {
       if (!config.isLargeModel && includeImages) {
         selectedModel = "pixtral-large-2411"
@@ -116,7 +110,9 @@ export async function POST(request: Request) {
       }
 
       if (shouldUncensor) {
-        config.isLargeModel && (selectedModel = "mistral-large-latest")
+        config.isLargeModel
+          ? (selectedModel = "mistral-large-latest")
+          : (selectedModel = "mistral-small-latest")
         return handleAssistantMessages(messages)
       }
 
@@ -291,7 +287,7 @@ function createProvider(selectedModel: string, config: any) {
   if (selectedModel.startsWith("claude-")) {
     return createAnthropic()
   }
-  return createOpenRouterAI({
+  return createOpenRouter({
     baseURL: config.providerBaseUrl,
     headers: config.providerHeaders
   })
