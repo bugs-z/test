@@ -81,8 +81,8 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
       if (!isTemporaryChat) {
         resetFragment()
         await Promise.all([
-          fetchMessages(params.chatid as string, params.workspaceid as string),
-          fetchChat(params.chatid as string, params.workspaceid as string)
+          fetchMessages(params.chatid as string),
+          fetchChat(params.chatid as string)
         ])
         scrollToBottom()
       }

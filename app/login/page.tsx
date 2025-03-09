@@ -91,16 +91,7 @@ export default async function Login({
     } = await supabase.auth.getUser()
 
     if (user) {
-      const { data: homeWorkspace } = await supabase
-        .from("workspaces")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("is_home", true)
-        .single()
-
-      if (homeWorkspace) {
-        return redirect(`/${homeWorkspace.id}/c`)
-      }
+      return redirect(`/c`)
     }
   }
 
@@ -130,7 +121,7 @@ export default async function Login({
       return redirect(`/login?message=11`)
     }
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
       options: {
@@ -155,20 +146,7 @@ export default async function Login({
       return redirect(`/login/verify`)
     }
 
-    const { data: homeWorkspace, error: homeWorkspaceError } = await supabase
-      .from("workspaces")
-      .select("*")
-      .eq("user_id", data.user.id)
-      .eq("is_home", true)
-      .single()
-
-    if (!homeWorkspace) {
-      throw new Error(
-        homeWorkspaceError?.message || "An unexpected error occurred"
-      )
-    }
-
-    return redirect(`/${homeWorkspace.id}/c`)
+    return redirect(`/c`)
   }
 
   const signUp = async (formData: FormData) => {

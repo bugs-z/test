@@ -25,7 +25,7 @@ export const TemporaryChatToggle = () => {
       const newSearchParams = new URLSearchParams(searchParams)
       if (isTemporary) {
         if (pathname.includes("/c/")) {
-          const baseURL = `/${params.workspaceid}/c`
+          const baseURL = `/c`
           newSearchParams.set("temporary-chat", "true")
           router.push(`${baseURL}?${newSearchParams.toString()}`)
         } else {

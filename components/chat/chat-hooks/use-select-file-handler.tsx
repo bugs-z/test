@@ -83,7 +83,6 @@ const fileProcessors: Record<string, FileProcessor> = {
 
 export const useSelectFileHandler = () => {
   const {
-    selectedWorkspace,
     profile,
     chatSettings,
     setNewMessageImages,
@@ -133,7 +132,7 @@ export const useSelectFileHandler = () => {
   }
 
   const handleSelectDeviceFile = async (file: File) => {
-    if (!profile || !selectedWorkspace || !chatSettings) return
+    if (!profile || !chatSettings) return
     if (!validateFile(file)) return
 
     const loadingId = "loading-" + crypto.randomUUID()

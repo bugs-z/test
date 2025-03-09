@@ -36,12 +36,6 @@ interface PentestGPTContextType {
   // ITEMS STORE
   chats: Tables<"chats">[]
   setChats: Dispatch<SetStateAction<Tables<"chats">[]>>
-  // workspaces: Tables<"workspaces">[]
-  // setWorkspaces: Dispatch<SetStateAction<Tables<"workspaces">[]>>
-
-  // WORKSPACE STORE
-  selectedWorkspace: Tables<"workspaces"> | null
-  setSelectedWorkspace: Dispatch<SetStateAction<Tables<"workspaces"> | null>>
 
   // PASSIVE CHAT STORE
   userInput: string
@@ -85,8 +79,8 @@ interface PentestGPTContextType {
   isTemporaryChat: boolean
 
   // Fetch Chat and Messages
-  fetchChat: (chatId: string, workspaceId: string) => Promise<void>
-  fetchMessages: (chatId: string, workspaceId: string) => Promise<void>
+  fetchChat: (chatId: string) => Promise<void>
+  fetchMessages: (chatId: string) => Promise<void>
   loadMoreMessages: (chatId: string) => Promise<void>
 
   // Loading Messages States
@@ -124,12 +118,6 @@ export const PentestGPTContext = createContext<PentestGPTContextType>({
   // ITEMS STORE
   chats: [],
   setChats: () => {},
-  // workspaces: [],
-  // setWorkspaces: () => {},
-
-  // WORKSPACE STORE
-  selectedWorkspace: null,
-  setSelectedWorkspace: () => {},
 
   // PASSIVE CHAT STORE
   userInput: "",
@@ -177,8 +165,8 @@ export const PentestGPTContext = createContext<PentestGPTContextType>({
   allMessagesLoaded: false,
 
   // Fetch Chat and Messages
-  fetchChat: async (chatId: string, workspaceId: string) => {},
-  fetchMessages: async (chatId: string, workspaceId: string) => {},
+  fetchChat: async (chatId: string) => {},
+  fetchMessages: async (chatId: string) => {},
   loadMoreMessages: async (chatId: string) => {},
 
   // User Email

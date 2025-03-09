@@ -29,7 +29,7 @@ export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
   createState,
   isTyping
 }) => {
-  const { selectedWorkspace, setChats } = useContext(PentestGPTContext)
+  const { setChats } = useContext(PentestGPTContext)
 
   const buttonRef = useRef<HTMLButtonElement>(null)
 
@@ -47,7 +47,6 @@ export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
 
   const handleCreate = async () => {
     try {
-      if (!selectedWorkspace) return
       if (isTyping) return // Prevent creation while typing
 
       const createFunction = createFunctions[contentType]

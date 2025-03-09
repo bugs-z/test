@@ -7,7 +7,6 @@ import { IconAlertCircle } from "@tabler/icons-react"
 import { supabase } from "@/lib/supabase/browser-client"
 import { useRouter } from "next/navigation"
 import { PentestGPTContext } from "@/context/context"
-import { getHomeWorkspaceByUserId } from "@/db/workspaces"
 import {
   InputOTP,
   InputOTPGroup,
@@ -100,8 +99,7 @@ export function MFAVerification({ onVerify }: MFAVerificationProps) {
       const result = await onVerify(verifyCode)
       if (result?.success) {
         await fetchStartingData()
-        const homeWorkspaceId = await getHomeWorkspaceByUserId(user.id)
-        router.push(`/${homeWorkspaceId}/c`)
+        router.push(`/c`)
       } else {
         setError(result.error || "Verification failed")
         setVerifyCode("")
@@ -150,7 +148,7 @@ export function MFAVerification({ onVerify }: MFAVerificationProps) {
           <InputOTP
             maxLength={6}
             value={verifyCode}
-            onChange={value => setVerifyCode(value)}
+            onChange={(value: string) => setVerifyCode(value)}
             disabled={isVerifying}
             pattern={REGEXP_ONLY_DIGITS}
             autoFocus
@@ -177,19 +175,10 @@ export function MFAVerification({ onVerify }: MFAVerificationProps) {
         )}
 
         <div className="mt-4 flex flex-col gap-2">
-          <Button
-            type="submit"
-            className="w-full"
-            onClick={() => {
-              if (verifyCode.length !== 6) {
-                setError("Please enter the complete 6-digit verification code")
-              }
-            }}
-          >
+          <Button type="submit" className="w-full">
             {isVerifying ? "Verifying..." : "Verify"}
           </Button>
           <button
-            type="button"
             onClick={handleSignOut}
             className="text-muted-foreground hover:text-foreground text-sm transition-colors"
           >

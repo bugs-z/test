@@ -11,7 +11,6 @@ import {
   getSubscriptionByUserId
 } from "@/db/subscriptions"
 import { getTeamMembersByTeamId } from "@/db/teams"
-// import { getWorkspacesByUserId } from "@/db/workspaces"
 import { convertBlobToBase64 } from "@/lib/blob-to-b64"
 import { supabase } from "@/lib/supabase/browser-client"
 import { ProcessedTeamMember } from "@/lib/team-utils"
@@ -61,11 +60,6 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
     useState<ProcessedTeamMember | null>(null)
   // ITEMS STORE
   const [chats, setChats] = useState<Tables<"chats">[]>([])
-  // const [workspaces, setWorkspaces] = useState<Tables<"workspaces">[]>([])
-
-  // WORKSPACE STORE
-  const [selectedWorkspace, setSelectedWorkspace] =
-    useState<Tables<"workspaces"> | null>(null)
 
   // PASSIVE CHAT STORE
   const [userInput, setUserInput] = useState<string>("")
@@ -245,7 +239,7 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
     }))
   }
 
-  const handleChatNotFound = (chatId: string, workspaceId: string) => {
+  const handleChatNotFound = (chatId: string) => {
     const toastKey = `chat-not-found-${chatId}`
     if (!window.sessionStorage.getItem(toastKey)) {
       toast.error("Unable to load conversation " + chatId)
@@ -253,10 +247,10 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
       setTimeout(() => window.sessionStorage.removeItem(toastKey), 2000)
     }
 
-    router.push(`/${workspaceId}/c`)
+    router.push(`//c`)
   }
 
-  const fetchMessages = async (chatId: string, workspaceId: string) => {
+  const fetchMessages = async (chatId: string) => {
     if (isTemporaryChat) {
       return
     }
@@ -266,8 +260,8 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
     const chatFiles = await getChatFilesByChatId(chatId)
 
     if (!chatFiles) {
-      // Chat not found, redirect to the workspace chat page
-      handleChatNotFound(chatId, workspaceId)
+      // Chat not found, redirect to the chat page
+      handleChatNotFound(chatId)
       return
     }
 
@@ -321,7 +315,7 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
     }
   }
 
-  const fetchChat = async (chatId: string, workspaceId: string) => {
+  const fetchChat = async (chatId: string) => {
     if (isTemporaryChat) {
       return
     }
@@ -329,8 +323,8 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
     try {
       const chat = await getChatById(chatId)
       if (!chat) {
-        // Chat not found, redirect to the workspace chat page
-        router.push(`/${workspaceId}/c`)
+        // Chat not found, redirect to the chat page
+        router.push(`/c`)
         return
       }
 
@@ -342,8 +336,8 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
     } catch (error) {
       console.error("Error fetching chat:", error)
       // Handle the error, e.g., show an error message to the user
-      // and redirect to the workspace chat page
-      handleChatNotFound(chatId, workspaceId)
+      // and redirect to the chat page
+      handleChatNotFound(chatId)
     }
   }
 
@@ -376,13 +370,6 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
         // ITEMS STORE
         chats,
         setChats,
-
-        // workspaces,
-        // setWorkspaces,
-
-        // WORKSPACE STORE
-        selectedWorkspace,
-        setSelectedWorkspace,
 
         // PASSIVE CHAT STORE
         userInput,

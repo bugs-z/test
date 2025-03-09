@@ -225,7 +225,6 @@ export const fetchChatResponse = async (
 export const handleCreateChat = async (
   chatSettings: ChatSettings,
   profile: Tables<"profiles">,
-  selectedWorkspace: Tables<"workspaces">,
   messageContent: string,
   finishReason: string,
   setSelectedChat: React.Dispatch<React.SetStateAction<Tables<"chats"> | null>>,
@@ -234,7 +233,6 @@ export const handleCreateChat = async (
   // Create chat first with a temporary chat name
   const createdChat = await createChat({
     user_id: profile.user_id,
-    workspace_id: selectedWorkspace.id,
     include_profile_context: chatSettings.includeProfileContext,
     model: chatSettings.model,
     name: messageContent.substring(0, 100),

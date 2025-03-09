@@ -35,7 +35,6 @@ export const useChatHandler = () => {
     profile,
     setChatMessages,
     selectedChat,
-    selectedWorkspace,
     setSelectedChat,
     setChats,
     abortController,
@@ -93,7 +92,6 @@ export const useChatHandler = () => {
   const handleSelectChat = async (
     chat: Tables<"chats"> | { chat_id: string }
   ) => {
-    if (!selectedWorkspace) return
     await handleStopMessage()
     setIsReadyToChat(false)
 
@@ -107,12 +105,10 @@ export const useChatHandler = () => {
       }))
     }
 
-    return router.push(`/${selectedWorkspace.id}/c/${chatId}`)
+    return router.push(`/c/${chatId}`)
   }
 
   const handleNewChat = async () => {
-    if (!selectedWorkspace) return
-
     await handleStopMessage()
 
     setUserInput("")
@@ -134,7 +130,7 @@ export const useChatHandler = () => {
     setFragment(null)
 
     setIsReadyToChat(true)
-    return router.push(`/${selectedWorkspace.id}/c`)
+    return router.push(`/c`)
   }
 
   const handleFocusChatInput = () => {
@@ -244,7 +240,6 @@ export const useChatHandler = () => {
         chatSettings,
         modelData,
         profile,
-        selectedWorkspace,
         isContinuation,
         messageContent
       )
@@ -476,7 +471,6 @@ export const useChatHandler = () => {
           currentChat = await handleCreateChat(
             chatSettings!,
             profile!,
-            selectedWorkspace!,
             messageContent || "",
             finishReason,
             setSelectedChat,
@@ -486,11 +480,7 @@ export const useChatHandler = () => {
           // Update URL without triggering a page reload or new history entry
           // This replaces the current URL with the chat ID after chat creation
           // Allows starting from home screen and seamlessly transitioning to chat URL
-          window.history.replaceState(
-            {},
-            "",
-            `/${selectedWorkspace?.id}/c/${currentChat.id}`
-          )
+          window.history.replaceState({}, "", `/c/${currentChat.id}`)
 
           generateChatTitle([
             {

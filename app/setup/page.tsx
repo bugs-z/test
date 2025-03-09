@@ -2,7 +2,6 @@
 
 import { PentestGPTContext } from "@/context/context"
 import { getProfileByUserId } from "@/db/profile"
-import { getHomeWorkspaceByUserId } from "@/db/workspaces"
 import { supabase } from "@/lib/supabase/browser-client"
 // import { TablesUpdate } from "@/supabase/types"
 // import { updateProfile } from "@/db/profile"
@@ -41,8 +40,7 @@ export default function SetupPage() {
 
       await fetchStartingData()
 
-      const homeWorkspaceId = await getHomeWorkspaceByUserId(user.id)
-      router.push(`/${homeWorkspaceId}/c`)
+      router.push(`/c`)
     })()
   }, [])
 

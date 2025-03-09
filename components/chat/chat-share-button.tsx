@@ -40,8 +40,7 @@ export const ShareChatButton: React.FC<ShareChatButtonProps> = ({
   const [isLoading, setIsLoading] = useState(false)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [shareUrl, setShareUrl] = useState("")
-  const { profile, selectedWorkspace, selectedChat } =
-    useContext(PentestGPTContext)
+  const { profile, selectedChat } = useContext(PentestGPTContext)
 
   const chatToShare = chat || selectedChat
 
@@ -71,7 +70,7 @@ export const ShareChatButton: React.FC<ShareChatButtonProps> = ({
   }
 
   const handleShareChat = async () => {
-    if (!chatToShare || !profile?.user_id || !selectedWorkspace?.id) return
+    if (!chatToShare || !profile?.user_id) return
 
     try {
       setIsLoading(true)

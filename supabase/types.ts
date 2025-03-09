@@ -87,7 +87,6 @@ export type Database = {
           sharing: string
           updated_at: string | null
           user_id: string
-          workspace_id: string
         }
         Insert: {
           created_at?: string
@@ -102,7 +101,6 @@ export type Database = {
           sharing?: string
           updated_at?: string | null
           user_id: string
-          workspace_id: string
         }
         Update: {
           created_at?: string
@@ -117,7 +115,6 @@ export type Database = {
           sharing?: string
           updated_at?: string | null
           user_id?: string
-          workspace_id?: string
         }
         Relationships: [
           {
@@ -125,13 +122,6 @@ export type Database = {
             columns: ["last_shared_message_id"]
             isOneToOne: true
             referencedRelation: "messages"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "chats_workspace_id_fkey"
-            columns: ["workspace_id"]
-            isOneToOne: false
-            referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
         ]
