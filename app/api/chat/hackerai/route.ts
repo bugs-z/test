@@ -24,7 +24,6 @@ import { executeReasonLLMTool } from "@/lib/tools/llm/reason-llm"
 import { executeReasoningWebSearchTool } from "@/lib/tools/llm/reasoning-web-search"
 import { processRag } from "@/lib/rag/rag-processor"
 import { executeDeepResearchTool } from "@/lib/tools/llm/deep-research"
-import { geolocation } from "@vercel/functions"
 
 export const runtime: ServerRuntime = "edge"
 export const preferredRegion = [
@@ -117,16 +116,13 @@ export async function POST(request: Request) {
       return filterEmptyAssistantMessages(messages)
     }
 
-    const { region } = geolocation(request)
-
     if (
       llmConfig.openai.apiKey &&
       !includeImages &&
       !isContinuation &&
       selectedPlugin !== PluginID.WEB_SEARCH &&
       selectedPlugin !== PluginID.REASONING &&
-      selectedPlugin !== PluginID.REASONING_WEB_SEARCH &&
-      region !== "bom1"
+      selectedPlugin !== PluginID.REASONING_WEB_SEARCH
     ) {
       const { shouldUncensorResponse: moderationResult } =
         await getModerationResult(
@@ -203,17 +199,8 @@ export async function POST(request: Request) {
 
         const result = streamText({
           model: provider(selectedModel) as LanguageModelV1,
-          system:
-            selectedModel == "claude-3-7-sonnet-20250219"
-              ? undefined
-              : systemPrompt,
-          messages: toVercelChatMessages(
-            validatedMessages,
-            includeImages,
-            selectedModel == "claude-3-7-sonnet-20250219"
-              ? systemPrompt
-              : undefined
-          ),
+          system: systemPrompt,
+          messages: toVercelChatMessages(validatedMessages, includeImages),
           maxTokens: 2048,
           abortSignal: request.signal,
           experimental_transform: smoothStream({ chunking: "word" })
