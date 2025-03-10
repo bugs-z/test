@@ -2,7 +2,7 @@ import { buildSystemPrompt } from "@/lib/ai/prompts"
 import { toVercelChatMessages } from "@/lib/ai/message-utils"
 import llmConfig from "@/lib/models/llm/llm-config"
 import { smoothStream, streamText } from "ai"
-import { perplexity } from "@ai-sdk/perplexity"
+import { myProvider } from "@/lib/ai/providers"
 
 interface DeepResearchConfig {
   messages: any[]
@@ -47,7 +47,7 @@ async function processStream({
   const sourceUrls: string[] = []
 
   const result = streamText({
-    model: perplexity("sonar-deep-research"),
+    model: myProvider.languageModel("deep-research"),
     maxTokens: 8192,
     system: buildSystemPrompt(
       llmConfig.systemPrompts.reasoningWebSearch,

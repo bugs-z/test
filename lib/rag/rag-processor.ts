@@ -47,8 +47,7 @@ export async function processRag({
       targetStandAloneMessage,
       llmConfig.systemPrompts.pentestgptCurrentDateOnly,
       true,
-      similarityTopK,
-      llmConfig.models.standalone_question
+      similarityTopK
     )
 
   const response = await fetch(llmConfig.hackerRAG.endpoint, {

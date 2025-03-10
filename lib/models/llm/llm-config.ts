@@ -32,23 +32,23 @@ const llmConfig = {
     // For question generator
     pentestgptCurrentDateOnly: `${initialSystemPrompt}\n${currentDateTime}`,
     // For PGPT-Small
-    smallModel: `${getPentestGPTInfo(true, false, "October 2023", "PGPT-Small")}\n${systemPromptEnding}`,
+    smallModel: `${getPentestGPTInfo(true, "October 2023", "PGPT-Small")}\n${systemPromptEnding}`,
     // For PGPT-Large
-    largeModel: `${getPentestGPTInfo(true, false, "October 2023", "PGPT-Large")}${systemPromptEnding}`,
+    largeModel: `${getPentestGPTInfo(true, "October 2023", "PGPT-Large")}${systemPromptEnding}`,
     // For GPT-4o
-    gpt4o: `${getPentestGPTInfo(true, true, "October 2024", "GPT-4o")}\n${systemPromptEnding}`,
+    gpt4o: `${getPentestGPTInfo(true, "October 2024", "GPT-4o")}\n${systemPromptEnding}`,
     // For browser tool
-    pentestGPTBrowser: `${getPentestGPTInfo(true, true)}\n${systemPromptEnding}`,
+    pentestGPTBrowser: `${getPentestGPTInfo(true)}\n${systemPromptEnding}`,
     // For webSearch tool
-    pentestGPTWebSearch: `${getPentestGPTInfo(false, true)}\n${systemPromptEnding}`,
+    pentestGPTWebSearch: `${getPentestGPTInfo(false)}\n${systemPromptEnding}`,
     // For ReasoningWebSearch tool
-    reasoningWebSearch: `${getPentestGPTInfo(false, true, "October 2023", "reasoningModel")}\n${systemPromptEnding}`,
+    reasoningWebSearch: `${getPentestGPTInfo(false, "October 2023", "reasoningModel")}\n${systemPromptEnding}`,
     // For reasoning tool
-    pentestGPTReasoning: `${getPentestGPTInfo(true, false, "October 2023", "reasoningModel")}\n${systemPromptEnding}`,
+    pentestGPTReasoning: `${getPentestGPTInfo(true, "October 2023", "reasoningModel")}\n${systemPromptEnding}`,
     // For terminal tool
     pentestGPTTerminal: `${getPentestGPTInfo()}\n${TERMINAL_TOOL_INSTRUCTIONS}\n${systemPromptEnding}`,
     // For fragment tool
-    pentestGPTFragment: `${getPentestGPTInfo(true, false, "October 2024", "GPT-4o")}}`
+    pentestGPTFragment: `${getPentestGPTInfo(true, "October 2024", "GPT-4o")}}`
   },
   models: {
     small: process.env.OPENROUTER_PENTESTGPT_DEFAULT_MODEL,

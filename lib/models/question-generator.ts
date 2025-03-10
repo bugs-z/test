@@ -4,15 +4,14 @@ import {
 } from "@/lib/ai/message-utils"
 import { generateText } from "ai"
 import endent from "endent"
-import { mistral } from "@ai-sdk/mistral"
+import { myProvider } from "../ai/providers"
 
 export async function generateStandaloneQuestion(
   messages: any[],
   latestUserMessage: any,
   systemMessageContent: string,
   generateAtomicQuestions: boolean = false,
-  numAtomicQuestions: number = 4,
-  selectedStandaloneQuestionModel: string | undefined
+  numAtomicQuestions: number = 4
 ) {
   filterEmptyAssistantMessages(messages)
 
@@ -58,7 +57,7 @@ export async function generateStandaloneQuestion(
 
   try {
     const result = await generateText({
-      model: mistral(`${selectedStandaloneQuestionModel}`),
+      model: myProvider.languageModel("standalone-question-model"),
       maxTokens: 1024,
       messages: [
         { role: "system", content: systemMessageContent },

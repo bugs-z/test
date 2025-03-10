@@ -1,9 +1,9 @@
 import { checkRatelimitOnApi } from "@/lib/server/ratelimiter"
 import { getAIProfile } from "@/lib/server/server-chat-helpers"
-import { mistral } from "@ai-sdk/mistral"
 import { generateObject } from "ai"
 import { DEFAULT_TITLE_GENERATION_PROMPT_TEMPLATE } from "@/lib/backend-config"
 import { z } from "zod"
+import { myProvider } from "@/lib/ai/providers"
 
 export const runtime = "edge"
 export const preferredRegion = [
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     const {
       object: { title }
     } = await generateObject({
-      model: mistral("mistral-small-latest"),
+      model: myProvider.languageModel("title-model"),
       schema: z.object({
         title: z.string().describe("The generated title (3-5 words)")
       }),

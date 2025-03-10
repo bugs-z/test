@@ -86,7 +86,7 @@ export const getToolsPrompt = (
   pluginID: PluginID,
   includePromptEnding: boolean = true
 ): string => {
-  return `${getPentestGPTInfo(true, true)}\n${getPluginSpecificInstructions(pluginID)}\n${includePromptEnding ? systemPromptEnding : ""}`
+  return `${getPentestGPTInfo(true)}\n${getPluginSpecificInstructions(pluginID)}\n${includePromptEnding ? systemPromptEnding : ""}`
 }
 
 export const getToolsWithAnswerPrompt = (pluginID: PluginID): string => {

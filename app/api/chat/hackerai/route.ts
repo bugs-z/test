@@ -11,10 +11,7 @@ import {
 import { handleErrorResponse } from "@/lib/models/llm/api-error"
 import llmConfig from "@/lib/models/llm/llm-config"
 import { checkRatelimitOnApi } from "@/lib/server/ratelimiter"
-import { createOpenRouter } from "@openrouter/ai-sdk-provider"
-import { createMistral } from "@ai-sdk/mistral"
-import { createAnthropic } from "@ai-sdk/anthropic"
-import { LanguageModelV1, smoothStream, streamText } from "ai"
+import { smoothStream, createDataStreamResponse, streamText } from "ai"
 import { getModerationResult } from "@/lib/server/moderation"
 import { PluginID } from "@/types/plugins"
 import { executeWebSearchTool } from "@/lib/tools/llm/web-search"
@@ -24,6 +21,8 @@ import { executeReasonLLMTool } from "@/lib/tools/llm/reason-llm"
 import { executeReasoningWebSearchTool } from "@/lib/tools/llm/reasoning-web-search"
 import { processRag } from "@/lib/rag/rag-processor"
 import { executeDeepResearchTool } from "@/lib/tools/llm/deep-research"
+import { myProvider } from "@/lib/ai/providers"
+import { createToolSchemas } from "@/lib/tools/llm/toolSchemas"
 
 export const runtime: ServerRuntime = "edge"
 export const preferredRegion = [
@@ -100,12 +99,12 @@ export async function POST(request: Request) {
     }
 
     const includeImages = messagesIncludeImages(messages)
-    let selectedModel = config.selectedModel
+    let selectedChatModel = config.selectedModel
     let shouldUncensorResponse = false
 
     const handleMessages = (shouldUncensor: boolean) => {
-      if (!config.isLargeModel && includeImages) {
-        selectedModel = "pixtral-large-2411"
+      if (includeImages) {
+        selectedChatModel = "vision-model"
         return filterEmptyAssistantMessages(messages)
       }
 
@@ -185,8 +184,6 @@ export async function POST(request: Request) {
         })
     }
 
-    const provider = createProvider(selectedModel, config)
-
     // Remove last message if it's a continuation to remove the continue prompt
     const cleanedMessages = isContinuation ? messages.slice(0, -1) : messages
 
@@ -194,19 +191,32 @@ export async function POST(request: Request) {
     const validatedMessages = validateMessages(cleanedMessages)
 
     try {
-      return createStreamResponse(dataStream => {
-        dataStream.writeData({ ragUsed, ragId })
+      return createDataStreamResponse({
+        execute: dataStream => {
+          if (ragUsed) dataStream.writeData({ ragUsed, ragId })
 
-        const result = streamText({
-          model: provider(selectedModel) as LanguageModelV1,
-          system: systemPrompt,
-          messages: toVercelChatMessages(validatedMessages, includeImages),
-          maxTokens: 2048,
-          abortSignal: request.signal,
-          experimental_transform: smoothStream({ chunking: "word" })
-        })
+          const { getSelectedSchemas } = createToolSchemas({
+            chatSettings,
+            messages,
+            profile,
+            dataStream
+          })
 
-        result.mergeIntoDataStream(dataStream)
+          const result = streamText({
+            model: myProvider.languageModel(selectedChatModel),
+            system: systemPrompt,
+            messages: toVercelChatMessages(validatedMessages, includeImages),
+            maxTokens: 2048,
+            abortSignal: request.signal,
+            tools:
+              config.isLargeModel && !ragUsed && !shouldUncensorResponse
+                ? getSelectedSchemas(["browser", "webSearch"])
+                : undefined,
+            experimental_transform: smoothStream({ chunking: "word" })
+          })
+
+          result.mergeIntoDataStream(dataStream)
+        }
       })
     } catch (error) {
       return handleErrorResponse(error)
@@ -228,8 +238,8 @@ async function getProviderConfig(
 ) {
   const isLargeModel = chatSettings.model === LargeModel.modelId
 
-  const defaultModel = llmConfig.models.small
-  const proModel = llmConfig.models.large
+  const defaultModel = "chat-model-small"
+  const proModel = "chat-model-large"
 
   const providerUrl = llmConfig.openrouter.url
   const providerBaseUrl = llmConfig.openrouter.baseURL
@@ -263,21 +273,4 @@ async function getProviderConfig(
     rateLimitCheckResult,
     isLargeModel
   }
-}
-
-function createProvider(selectedModel: string, config: any) {
-  if (
-    selectedModel.startsWith("mistral-") ||
-    selectedModel.startsWith("pixtral") ||
-    selectedModel.startsWith("codestral")
-  ) {
-    return createMistral()
-  }
-  if (selectedModel.startsWith("claude-")) {
-    return createAnthropic()
-  }
-  return createOpenRouter({
-    baseURL: config.providerBaseUrl,
-    headers: config.providerHeaders
-  })
 }

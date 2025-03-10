@@ -7,8 +7,7 @@ import {
 import llmConfig from "@/lib/models/llm/llm-config"
 import { checkRatelimitOnApi } from "@/lib/server/ratelimiter"
 import { getAIProfile } from "@/lib/server/server-chat-helpers"
-import { openai } from "@ai-sdk/openai"
-import { smoothStream, streamText } from "ai"
+import { createDataStreamResponse, smoothStream, streamText } from "ai"
 import { ServerRuntime } from "next"
 import { createToolSchemas } from "@/lib/tools/llm/toolSchemas"
 import { PluginID } from "@/types/plugins"
@@ -19,6 +18,7 @@ import { executeReasonLLMTool } from "@/lib/tools/llm/reason-llm"
 import { executeReasoningWebSearchTool } from "@/lib/tools/llm/reasoning-web-search"
 import { processRag } from "@/lib/rag/rag-processor"
 import { executeDeepResearchTool } from "@/lib/tools/llm/deep-research"
+import { myProvider } from "@/lib/ai/providers"
 
 export const runtime: ServerRuntime = "edge"
 export const preferredRegion = [
@@ -132,28 +132,30 @@ export async function POST(request: Request) {
         })
     }
 
-    return createStreamResponse(dataStream => {
-      dataStream.writeData({ ragUsed, ragId })
+    return createDataStreamResponse({
+      execute: dataStream => {
+        if (ragUsed) dataStream.writeData({ ragUsed, ragId })
 
-      const { getSelectedSchemas } = createToolSchemas({
-        chatSettings,
-        messages,
-        profile,
-        dataStream,
-        isTerminalContinuation
-      })
+        const { getSelectedSchemas } = createToolSchemas({
+          chatSettings,
+          messages,
+          profile,
+          dataStream,
+          isTerminalContinuation
+        })
 
-      const result = streamText({
-        model: openai("gpt-4o", { parallelToolCalls: false }),
-        system: systemPrompt,
-        messages: toVercelChatMessages(messages, true),
-        maxTokens: 2048,
-        abortSignal: request.signal,
-        tools: getSelectedSchemas(["browser", "webSearch", "terminal"]),
-        experimental_transform: smoothStream({ chunking: "word" })
-      })
+        const result = streamText({
+          model: myProvider.languageModel("chat-model-gpt-large"),
+          system: systemPrompt,
+          messages: toVercelChatMessages(messages, true),
+          maxTokens: 2048,
+          abortSignal: request.signal,
+          tools: getSelectedSchemas(["browser", "webSearch", "terminal"]),
+          experimental_transform: smoothStream({ chunking: "word" })
+        })
 
-      result.mergeIntoDataStream(dataStream)
+        result.mergeIntoDataStream(dataStream)
+      }
     })
   } catch (error: any) {
     const errorMessage = error.message || "An unexpected error occurred"

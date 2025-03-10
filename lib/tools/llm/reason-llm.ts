@@ -2,7 +2,7 @@ import { buildSystemPrompt } from "@/lib/ai/prompts"
 import { toVercelChatMessages } from "@/lib/ai/message-utils"
 import llmConfig from "@/lib/models/llm/llm-config"
 import { smoothStream, streamText } from "ai"
-import { openrouter } from "@openrouter/ai-sdk-provider"
+import { myProvider } from "@/lib/ai/providers"
 
 interface ReasonLLMConfig {
   messages: any[]
@@ -16,20 +16,14 @@ export async function executeReasonLLMTool({
 }: {
   config: ReasonLLMConfig
 }) {
-  const { messages, profile, dataStream, isLargeModel } = config
+  const { messages, profile, dataStream } = config
 
   console.log("[ReasonLLM] Executing reasonLLM")
-
-  const defaultModel = "deepseek/deepseek-r1"
-  const proModel = "deepseek/deepseek-r1"
-
-  const selectedModel = isLargeModel ? proModel : defaultModel
 
   await processStream({
     messages,
     profile,
-    dataStream,
-    selectedModel
+    dataStream
   })
 
   return "Reason LLM execution completed"
@@ -38,19 +32,17 @@ export async function executeReasonLLMTool({
 async function processStream({
   messages,
   profile,
-  dataStream,
-  selectedModel
+  dataStream
 }: {
   messages: any
   profile: any
   dataStream: any
-  selectedModel: string
 }) {
   let thinkingStartTime = null
   let enteredThinking = false
 
   const result = streamText({
-    model: openrouter(selectedModel as string),
+    model: myProvider.languageModel("chat-model-reasoning"),
     maxTokens: 4096,
     system: buildSystemPrompt(
       llmConfig.systemPrompts.pentestGPTReasoning,
