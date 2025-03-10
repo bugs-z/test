@@ -18,23 +18,24 @@ export const createToolSchemas = ({
 }) => {
   const allSchemas = {
     browser: {
-      description: `Browse one or more webpages (up to 3) and extract their text content. For HTML retrieval or more complex web scraping, use the Python tool. \
+      description: `Open one or more specific URLs (up to 3) and extract their text content. Use this tool only in specific circumstances: \
+1) When the human explicitly requests to visit, open, browse, or view a specific webpage or URL. \
+2) When the human directly instructs you to access a specific website they've mentioned. \
+Do not use this tool for general information queries that can be answered without visiting a URL. \
+Do not use this tool if the human merely mentions a URL without explicitly asking you to open it. \
 This tool can extract text content from webpages but cannot retrieve HTML, images, or other non-text elements directly. \
-When specific webpage information is needed, it fetches the most current text data, then analyzes and answers the query. \
-This tool can only visit HTTPS websites and cannot access HTTP-only sites. \
-Use this tool when: \
-- The human explicitly requests webpage browsing or reference links. \
-- Current information from a specific website is required for answering human queries.`,
+For HTML retrieval or more complex web scraping, use the Python tool instead. \
+This tool can only visit HTTPS websites and cannot access HTTP-only sites.`,
       parameters: z.object({
         open_url: z
           .union([
-            z.string().url().describe("The URL of the webpage to browse"),
+            z.string().url().describe("The URL of the webpage to open"),
             z
               .array(z.string().url())
               .max(3)
-              .describe("Up to 3 URLs to browse simultaneously")
+              .describe("Up to 3 URLs to open simultaneously")
           ])
-          .describe("One URL as a string or an array of up to 3 URLs to browse")
+          .describe("One URL as a string or an array of up to 3 URLs to open")
       }),
       execute: async ({ open_url }: { open_url: string | string[] }) => {
         return executeBrowserTool({
