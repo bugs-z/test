@@ -62,7 +62,8 @@ export const useChatHandler = () => {
     setToolInUse,
     isGenerating,
     setIsReadyToChat,
-    setSelectedPlugin
+    setSelectedPlugin,
+    setAgentState
   } = useUIContext()
 
   let { selectedPlugin } = useUIContext()
@@ -125,6 +126,7 @@ export const useChatHandler = () => {
     setUseRetrieval(false)
 
     setToolInUse("none")
+    setAgentState(null)
     setSelectedPlugin(PluginID.NONE)
 
     setFragment(null)
@@ -381,7 +383,6 @@ export const useChatHandler = () => {
           citations: citationsFromResponse
         } = await handleHostedPluginsChat(
           payload,
-          profile!,
           modelData!,
           tempAssistantChatMessage,
           isRegeneration,
@@ -396,7 +397,8 @@ export const useChatHandler = () => {
           alertDispatch,
           selectedPlugin,
           isContinuation,
-          setFragment
+          setFragment,
+          setAgentState
         )
         generatedText = fullText
         finishReason = finishReasonFromResponse
@@ -415,7 +417,6 @@ export const useChatHandler = () => {
           fragment: fragmentFromResponse
         } = await handleHostedChat(
           payload,
-          profile!,
           modelData!,
           tempAssistantChatMessage,
           isRegeneration,
@@ -430,7 +431,8 @@ export const useChatHandler = () => {
           setToolInUse,
           alertDispatch,
           selectedPlugin,
-          setFragment
+          setFragment,
+          setAgentState
         )
         generatedText = fullText
         thinkingText = thinkingTextFromResponse
@@ -563,10 +565,12 @@ export const useChatHandler = () => {
       setToolInUse("none")
       setIsGenerating(false)
       setFirstTokenReceived(false)
+      setAgentState(null)
     } catch (error) {
       setToolInUse("none")
       setIsGenerating(false)
       setFirstTokenReceived(false)
+      setAgentState(null)
     }
   }
 

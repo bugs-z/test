@@ -121,7 +121,8 @@ export async function POST(request: Request) {
       !isContinuation &&
       selectedPlugin !== PluginID.WEB_SEARCH &&
       selectedPlugin !== PluginID.REASONING &&
-      selectedPlugin !== PluginID.REASONING_WEB_SEARCH
+      selectedPlugin !== PluginID.REASONING_WEB_SEARCH &&
+      selectedPlugin !== PluginID.DEEP_RESEARCH
     ) {
       const { shouldUncensorResponse: moderationResult } =
         await getModerationResult(

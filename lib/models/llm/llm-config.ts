@@ -1,4 +1,3 @@
-import { TERMINAL_TOOL_INSTRUCTIONS } from "@/lib/backend-config"
 import { getPentestGPTInfo, systemPromptEnding } from "./llm-prompting"
 
 const options: Intl.DateTimeFormatOptions = {
@@ -45,8 +44,6 @@ const llmConfig = {
     reasoningWebSearch: `${getPentestGPTInfo(false, "October 2023", "reasoningModel")}\n${systemPromptEnding}`,
     // For reasoning tool
     pentestGPTReasoning: `${getPentestGPTInfo(true, "October 2023", "reasoningModel")}\n${systemPromptEnding}`,
-    // For terminal tool
-    pentestGPTTerminal: `${getPentestGPTInfo()}\n${TERMINAL_TOOL_INSTRUCTIONS}\n${systemPromptEnding}`,
     // For fragment tool
     pentestGPTFragment: `${getPentestGPTInfo(true, "October 2024", "GPT-4o")}}`
   },

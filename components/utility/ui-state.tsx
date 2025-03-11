@@ -4,6 +4,7 @@ import { UIContext } from "@/context/ui-context"
 import { PluginID } from "@/types/plugins"
 import { FC, useEffect, useState } from "react"
 import { useLocalStorageState } from "@/lib/hooks/use-local-storage-state"
+import { AgentActionState } from "../messages/agent-state"
 
 interface UIStateProps {
   children: React.ReactNode
@@ -37,6 +38,9 @@ export const UIState: FC<UIStateProps> = ({ children }) => {
   const [isToolPickerOpen, setIsToolPickerOpen] = useState(false)
   const [focusTool, setFocusTool] = useState(false)
   const [toolInUse, setToolInUse] = useState("none")
+
+  // Agent states
+  const [agentState, setAgentState] = useState<AgentActionState | null>(null)
 
   // Loading States
   const [isGenerating, setIsGenerating] = useState(false)
@@ -91,6 +95,10 @@ export const UIState: FC<UIStateProps> = ({ children }) => {
         setFocusTool,
         toolInUse,
         setToolInUse,
+
+        // Agent states
+        agentState,
+        setAgentState,
 
         // Loading States
         isGenerating,

@@ -5,20 +5,23 @@ import { processDataStream } from "ai"
 import { toast } from "sonner"
 import { getTerminalPlugins } from "@/lib/tools/tool-store/tools-helper"
 import { PluginID } from "@/types/plugins"
+import { AgentActionState } from "@/components/messages/agent-state"
+import { Dispatch, SetStateAction } from "react"
 
 export const processResponse = async (
   response: Response,
   lastChatMessage: ChatMessage,
   controller: AbortController,
-  setFirstTokenReceived: React.Dispatch<React.SetStateAction<boolean>>,
-  setChatMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
-  setToolInUse: React.Dispatch<React.SetStateAction<string>>,
+  setFirstTokenReceived: Dispatch<SetStateAction<boolean>>,
+  setChatMessages: Dispatch<SetStateAction<ChatMessage[]>>,
+  setToolInUse: Dispatch<SetStateAction<string>>,
   requestBody: object,
-  setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>,
-  alertDispatch: React.Dispatch<AlertAction>,
+  setIsGenerating: Dispatch<SetStateAction<boolean>>,
+  alertDispatch: Dispatch<AlertAction>,
   selectedPlugin: PluginID,
   isContinuation: boolean,
-  setFragment: (fragment: Fragment | null, chatMessage?: ChatMessage) => void
+  setFragment: (fragment: Fragment | null, chatMessage?: ChatMessage) => void,
+  setAgentState: Dispatch<SetStateAction<AgentActionState | null>>
 ) => {
   if (!response.ok) {
     const result = await response.json()
@@ -160,6 +163,10 @@ export const processResponse = async (
                       : chatMessage
                   )
                 )
+              }
+
+              if (firstValue.type === "tool-call") {
+                setAgentState(firstValue.content as AgentActionState)
               }
 
               if (firstValue.type === "reasoning") {

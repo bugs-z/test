@@ -1,7 +1,4 @@
-import { buildSystemPrompt } from "@/lib/ai/prompts"
 import { toVercelChatMessages } from "@/lib/ai/message-utils"
-import llmConfig from "@/lib/models/llm/llm-config"
-import { anthropic } from "@ai-sdk/anthropic"
 import { streamText, tool } from "ai"
 import { z } from "zod"
 import { executeTerminalCommand } from "./terminal-executor"
@@ -18,6 +15,9 @@ import {
   pauseSandbox
 } from "../e2b/sandbox"
 import { uploadFilesToSandbox } from "@/lib/tools/e2b/file-handler"
+import { createAgentTools } from "./agent-tools"
+import { anthropic } from "@ai-sdk/anthropic"
+import { PENTESTGPT_AGENT_SYSTEM_PROMPT } from "./agent-prompts"
 
 const BASH_SANDBOX_TIMEOUT = 15 * 60 * 1000
 const PERSISTENT_SANDBOX_TEMPLATE = "persistent-sandbox"
@@ -58,13 +58,12 @@ export async function executeTerminalTool({
       ? messages.slice(0, -1)
       : messages
 
-    const { textStream, finishReason } = streamText({
+    const abortController = new AbortController()
+
+    const { fullStream, finishReason } = streamText({
       model: anthropic("claude-3-7-sonnet-20250219"),
       maxTokens: 2048,
-      system: buildSystemPrompt(
-        llmConfig.systemPrompts.pentestGPTTerminal,
-        profile.profile_context
-      ),
+      system: PENTESTGPT_AGENT_SYSTEM_PROMPT,
       messages: toVercelChatMessages(cleanedMessages, true),
       tools: {
         terminal: tool({
@@ -136,20 +135,47 @@ export async function executeTerminalTool({
             })
             return reduceTerminalOutput(terminalOutput)
           }
-        })
+        }),
+        ...createAgentTools({ dataStream })
       },
-      maxSteps: 2
+      maxSteps: 5,
+      toolChoice: "required",
+      abortSignal: abortController.signal
     })
 
-    for await (const chunk of textStream) {
-      dataStream.writeData({
-        type: "text-delta",
-        content: chunk
-      })
+    // Create a mutable variable to track if we should stop due to idle tool
+    let shouldStop = false
+
+    for await (const chunk of fullStream) {
+      if (chunk.type === "text-delta") {
+        dataStream.writeData({
+          type: "text-delta",
+          content: chunk.textDelta
+        })
+      } else if (chunk.type === "tool-result") {
+        // Check if it's an idle tool result
+        if (
+          chunk.toolName === "idle" &&
+          chunk.result === "Entered idle state"
+        ) {
+          // Send finish reason immediately and then abort
+          dataStream.writeData({ finishReason: "stop" })
+          abortController.abort("Idle state detected")
+          shouldStop = true
+        }
+      } else if (chunk.type === "tool-call") {
+        dataStream.writeData({
+          type: "tool-call",
+          content: chunk.toolName
+        })
+      }
     }
 
-    const finalFinishReason = await finishReason
-    dataStream.writeData({ finishReason: finalFinishReason })
+    // Only send finish reason if we haven't already sent it due to idle state
+    if (!shouldStop) {
+      const originalFinishReason = await finishReason
+      dataStream.writeData({ finishReason: originalFinishReason })
+    }
   } finally {
     // Pause sandbox at the end of the API request
     if (sandbox && persistentSandbox) {

@@ -24,8 +24,8 @@ export const createToolSchemas = ({
 Do not use this tool for general information queries that can be answered without visiting a URL. \
 Do not use this tool if the human merely mentions a URL without explicitly asking you to open it. \
 This tool can extract text content from webpages but cannot retrieve HTML, images, or other non-text elements directly. \
-For HTML retrieval or more complex web scraping, use the Python tool instead. \
-This tool can only visit HTTPS websites and cannot access HTTP-only sites.`,
+This tool can only visit HTTPS websites with valid domain names. It cannot access HTTP-only sites, IP addresses (like 192.168.1.1), or non-standard URLs. \
+Always ensure URLs start with 'https://' and contain a valid domain name (e.g., 'https://example.com') if not don't use this tool.`,
       parameters: z.object({
         open_url: z
           .union([

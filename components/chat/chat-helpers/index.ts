@@ -13,9 +13,10 @@ import {
   MessageImage,
   PluginID
 } from "@/types"
-import React from "react"
+import { Dispatch, SetStateAction } from "react"
 import { toast } from "sonner"
 import { processResponse } from "./stream-processor"
+import { AgentActionState } from "@/components/messages/agent-state"
 
 export * from "./create-messages"
 export * from "./create-temp-messages"
@@ -25,7 +26,6 @@ export * from "./validation"
 
 export const handleHostedChat = async (
   payload: ChatPayload,
-  profile: Tables<"profiles">,
   modelData: LLM,
   tempAssistantChatMessage: ChatMessage,
   isRegeneration: boolean,
@@ -34,13 +34,14 @@ export const handleHostedChat = async (
   isTerminalContinuation: boolean,
   newAbortController: AbortController,
   chatImages: MessageImage[],
-  setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>,
-  setFirstTokenReceived: React.Dispatch<React.SetStateAction<boolean>>,
-  setChatMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
-  setToolInUse: React.Dispatch<React.SetStateAction<string>>,
-  alertDispatch: React.Dispatch<AlertAction>,
+  setIsGenerating: Dispatch<SetStateAction<boolean>>,
+  setFirstTokenReceived: Dispatch<SetStateAction<boolean>>,
+  setChatMessages: Dispatch<SetStateAction<ChatMessage[]>>,
+  setToolInUse: Dispatch<SetStateAction<string>>,
+  alertDispatch: Dispatch<AlertAction>,
   selectedPlugin: PluginID,
-  setFragment: (fragment: Fragment | null, chatMessage?: ChatMessage) => void
+  setFragment: (fragment: Fragment | null, chatMessage?: ChatMessage) => void,
+  setAgentState: Dispatch<SetStateAction<AgentActionState | null>>
 ) => {
   const { provider } = modelData
   let apiEndpoint = `/api/chat/${provider}`
@@ -105,13 +106,13 @@ export const handleHostedChat = async (
     alertDispatch,
     selectedPlugin,
     isContinuation,
-    setFragment
+    setFragment,
+    setAgentState
   )
 }
 
 export const handleHostedPluginsChat = async (
   payload: ChatPayload,
-  profile: Tables<"profiles">,
   modelData: LLM,
   tempAssistantChatMessage: ChatMessage,
   isRegeneration: boolean,
@@ -119,14 +120,15 @@ export const handleHostedPluginsChat = async (
   newAbortController: AbortController,
   newMessageImages: MessageImage[],
   chatImages: MessageImage[],
-  setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>,
-  setFirstTokenReceived: React.Dispatch<React.SetStateAction<boolean>>,
-  setChatMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
-  setToolInUse: React.Dispatch<React.SetStateAction<string>>,
-  alertDispatch: React.Dispatch<AlertAction>,
+  setIsGenerating: Dispatch<SetStateAction<boolean>>,
+  setFirstTokenReceived: Dispatch<SetStateAction<boolean>>,
+  setChatMessages: Dispatch<SetStateAction<ChatMessage[]>>,
+  setToolInUse: Dispatch<SetStateAction<string>>,
+  alertDispatch: Dispatch<AlertAction>,
   selectedPlugin: PluginID,
   isContinuation: boolean,
-  setFragment: (fragment: Fragment | null, chatMessage?: ChatMessage) => void
+  setFragment: (fragment: Fragment | null, chatMessage?: ChatMessage) => void,
+  setAgentState: Dispatch<SetStateAction<AgentActionState | null>>
 ) => {
   const apiEndpoint = "/api/chat/plugins"
 
@@ -171,7 +173,8 @@ export const handleHostedPluginsChat = async (
     alertDispatch,
     selectedPlugin,
     isContinuation,
-    setFragment
+    setFragment,
+    setAgentState
   )
 }
 
@@ -179,9 +182,9 @@ export const fetchChatResponse = async (
   url: string,
   body: object,
   controller: AbortController,
-  setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>,
-  setChatMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
-  alertDispatch: React.Dispatch<AlertAction>
+  setIsGenerating: Dispatch<SetStateAction<boolean>>,
+  setChatMessages: Dispatch<SetStateAction<ChatMessage[]>>,
+  alertDispatch: Dispatch<AlertAction>
 ) => {
   const response = await fetch(url, {
     method: "POST",
@@ -227,8 +230,8 @@ export const handleCreateChat = async (
   profile: Tables<"profiles">,
   messageContent: string,
   finishReason: string,
-  setSelectedChat: React.Dispatch<React.SetStateAction<Tables<"chats"> | null>>,
-  setChats: React.Dispatch<React.SetStateAction<Tables<"chats">[]>>
+  setSelectedChat: Dispatch<SetStateAction<Tables<"chats"> | null>>,
+  setChats: Dispatch<SetStateAction<Tables<"chats">[]>>
 ) => {
   // Create chat first with a temporary chat name
   const createdChat = await createChat({

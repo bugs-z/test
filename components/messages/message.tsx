@@ -3,12 +3,6 @@ import { PentestGPTContext } from "@/context/context"
 import { cn } from "@/lib/utils"
 import { Tables } from "@/supabase/types"
 import { ChatMessage, LLMID, MessageImage } from "@/types"
-// import {
-//   IconCaretDownFilled,
-//   IconCaretRightFilled,
-//   IconFileFilled,
-//   IconFileTypePdf
-// } from "@tabler/icons-react"
 import Image from "next/image"
 import { FC, RefObject, useContext, useEffect, useRef, useState } from "react"
 import { Button } from "../ui/button"
@@ -25,6 +19,7 @@ import { LoadingState } from "./loading-states"
 import dynamic from "next/dynamic"
 import { useUIContext } from "@/context/ui-context"
 import { ChatFileItem } from "../chat/chat-file-item"
+import { AgentState, isValidAgentState } from "./agent-state"
 
 const DynamicFilePreview = dynamic(() => import("../ui/file-preview"), {
   ssr: false
@@ -70,7 +65,8 @@ export const Message: FC<MessageProps> = ({
     setIsGenerating,
     firstTokenReceived,
     toolInUse,
-    isMobile
+    isMobile,
+    agentState
   } = useUIContext()
 
   const { message, feedback } = chatMessage
@@ -100,8 +96,6 @@ export const Message: FC<MessageProps> = ({
   const [showFileItemPreview, setShowFileItemPreview] = useState(false)
   const [selectedFileItem, setSelectedFileItem] =
     useState<Tables<"file_items"> | null>(null)
-
-  // const [viewSources, setViewSources] = useState(false)
 
   const [quickFeedback, setQuickFeedback] = useState(false)
   const [sendReportQuery, setSendReportQuery] = useState(false)
@@ -311,74 +305,15 @@ export const Message: FC<MessageProps> = ({
           </div>
         </div>
 
+        {agentState !== null &&
+          isValidAgentState(agentState) &&
+          isGenerating &&
+          isLast &&
+          message.role === "assistant" && <AgentState state={agentState} />}
+
         {fragment && (
           <MessageFragment fragment={fragment} chatMessage={chatMessage} />
         )}
-
-        {/* {fileItems.length > 0 && (
-          <div className="my-2 text-lg font-bold">
-            {!viewSources ? (
-              <div
-                className="flex cursor-pointer items-center hover:opacity-50"
-                onClick={() => setViewSources(true)}
-              >
-                View {fileItems.length} Sources{" "}
-                <IconCaretRightFilled className="ml-1" />
-              </div>
-            ) : (
-              <>
-                <div
-                  className="flex cursor-pointer items-center hover:opacity-50"
-                  onClick={() => setViewSources(false)}
-                >
-                  Sources <IconCaretDownFilled className="ml-1" />
-                </div>
-
-                <div className="mt-2 grid grid-cols-2 gap-2">
-                  {fileItems.map((fileItem, index) => {
-                    const parentFile = chatFiles.find(
-                      file => file.id === fileItem.file_id
-                    )
-
-                    return (
-                      <div
-                        key={index}
-                        className="border-primary flex cursor-pointer items-center space-x-4 rounded-xl border px-4 py-3 hover:opacity-50"
-                        onClick={() => {
-                          setSelectedFileItem(fileItem)
-                          setShowFileItemPreview(true)
-                        }}
-                      >
-                        <div className="rounded bg-blue-500 p-2">
-                          {(() => {
-                            const fileExtension = parentFile?.type.includes("/")
-                              ? parentFile.type.split("/")[1]
-                              : parentFile?.type
-
-                            switch (fileExtension) {
-                              case "pdf":
-                                return <IconFileTypePdf />
-                              default:
-                                return <IconFileFilled />
-                            }
-                          })()}
-                        </div>
-
-                        <div className="w-fit space-y-1 truncate text-wrap text-xs">
-                          <div className="truncate">{parentFile?.name}</div>
-
-                          <div className="truncate text-xs opacity-50">
-                            {fileItem.content.substring(0, 60)}...
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </>
-            )}
-          </div>
-        )} */}
 
         <div className="mt-3 flex flex-wrap gap-2"></div>
 
