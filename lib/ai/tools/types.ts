@@ -30,7 +30,6 @@ export const PLUGIN_COMMAND_MAP: Partial<Record<PluginID, string>> = {
   [PluginID.WHOIS_LOOKUP]: "whois",
   [PluginID.SUBDOMAIN_FINDER]: "subfinder",
   [PluginID.CVE_MAP]: "cvemap",
-  [PluginID.URL_FUZZER]: "ffuf",
   [PluginID.WORDPRESS_SCANNER]: "wpscan",
   [PluginID.XSS_EXPLOITER]: "dalfox"
 }

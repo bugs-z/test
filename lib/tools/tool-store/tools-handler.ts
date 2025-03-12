@@ -94,7 +94,6 @@ export async function commandGeneratorHandler({
                   [PluginID.WHOIS_LOOKUP]: "whois",
                   [PluginID.SUBDOMAIN_FINDER]: "subfinder",
                   [PluginID.CVE_MAP]: "cvemap",
-                  [PluginID.URL_FUZZER]: "ffuf",
                   [PluginID.WORDPRESS_SCANNER]: "wpscan",
                   [PluginID.XSS_EXPLOITER]: "dalfox"
                 }

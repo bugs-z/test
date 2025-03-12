@@ -38,7 +38,6 @@ export const terminalPlugins = [
   PluginID.WHOIS_LOOKUP,
   PluginID.SUBDOMAIN_FINDER,
   PluginID.CVE_MAP,
-  PluginID.URL_FUZZER,
   PluginID.WORDPRESS_SCANNER,
   PluginID.XSS_EXPLOITER
 ]
