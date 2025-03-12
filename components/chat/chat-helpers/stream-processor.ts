@@ -5,7 +5,7 @@ import { processDataStream } from "ai"
 import { toast } from "sonner"
 import { getTerminalPlugins } from "@/lib/tools/tool-store/tools-helper"
 import { PluginID } from "@/types/plugins"
-import { AgentActionState } from "@/components/messages/agent-state"
+import { AgentStatusState } from "@/components/messages/agent-status"
 import { Dispatch, SetStateAction } from "react"
 
 export const processResponse = async (
@@ -21,7 +21,7 @@ export const processResponse = async (
   selectedPlugin: PluginID,
   isContinuation: boolean,
   setFragment: (fragment: Fragment | null, chatMessage?: ChatMessage) => void,
-  setAgentState: Dispatch<SetStateAction<AgentActionState | null>>
+  setAgentStatus: Dispatch<SetStateAction<AgentStatusState | null>>
 ) => {
   if (!response.ok) {
     const result = await response.json()
@@ -166,7 +166,7 @@ export const processResponse = async (
               }
 
               if (firstValue.type === "tool-call") {
-                setAgentState(firstValue.content as AgentActionState)
+                setAgentStatus(firstValue.content as AgentStatusState)
               }
 
               if (firstValue.type === "reasoning") {

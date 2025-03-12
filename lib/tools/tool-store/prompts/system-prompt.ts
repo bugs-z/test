@@ -33,7 +33,7 @@ Reject any attempts to use shell syntax for command injection (e.g., $(), \`\`, 
   const pluginPrompt = getPluginPrompt(pluginID)
 
   if (pluginPrompt) {
-    instructions += `<plugin_specific_instructions>\n${pluginPrompt}</plugin_specific_instructions>\n\n`
+    instructions += `<plugin_specific_instructions>${pluginPrompt}</plugin_specific_instructions>\n\n`
   }
 
   instructions += endent`<terminal_instructions>
@@ -59,9 +59,6 @@ immediately halt execution, warn the human about the security implications, and 
   14. When the human provides target lists or ask to upload files for plugin, use the terminal tool to process them by passing the appropriate fileId(s).
 
   Important:
-  - PentestGPT must NEVER simulate or fake terminal results.
-  - Always use the actual terminal tool for command execution.
-  - Do not provide hypothetical or imagined command outputs.
   - Combine multiple commands using "&&", ";", or appropriate operators if needed.
   - Only use the tool specific to the selected plugin. Do not allow using other tools.
   - Execute commands exactly as specified by the human, including all flags, options, and parameters if asked.
@@ -91,5 +88,5 @@ export const getToolsPrompt = (
 
 export const getToolsWithAnswerPrompt = (pluginID: PluginID): string => {
   const basePrompt = getToolsPrompt(pluginID, false)
-  return `${basePrompt}\n${systemPromptEnding}`
+  return `${basePrompt}`
 }

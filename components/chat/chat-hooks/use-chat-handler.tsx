@@ -17,7 +17,6 @@ import {
   handleCreateChat,
   handleCreateMessages,
   handleHostedChat,
-  handleHostedPluginsChat,
   validateChatSettings
 } from "../chat-helpers"
 import { useFragments } from "./use-fragments"
@@ -63,7 +62,7 @@ export const useChatHandler = () => {
     isGenerating,
     setIsReadyToChat,
     setSelectedPlugin,
-    setAgentState
+    setAgentStatus
   } = useUIContext()
 
   let { selectedPlugin } = useUIContext()
@@ -126,7 +125,7 @@ export const useChatHandler = () => {
     setUseRetrieval(false)
 
     setToolInUse("none")
-    setAgentState(null)
+    setAgentStatus(null)
     setSelectedPlugin(PluginID.NONE)
 
     setFragment(null)
@@ -366,88 +365,49 @@ export const useChatHandler = () => {
       let citations: string[] = []
       let fragment: Fragment | null = null
 
-      if (
-        selectedPlugin.length > 0 &&
-        selectedPlugin !== PluginID.NONE &&
-        selectedPlugin !== PluginID.WEB_SEARCH &&
-        selectedPlugin !== PluginID.ENHANCED_SEARCH &&
-        selectedPlugin !== PluginID.TERMINAL &&
-        selectedPlugin !== PluginID.ARTIFACTS &&
-        selectedPlugin !== PluginID.REASONING &&
-        selectedPlugin !== PluginID.REASONING_WEB_SEARCH &&
-        selectedPlugin !== PluginID.DEEP_RESEARCH
-      ) {
-        const {
-          fullText,
-          finishReason: finishReasonFromResponse,
-          citations: citationsFromResponse
-        } = await handleHostedPluginsChat(
-          payload,
-          modelData!,
-          tempAssistantChatMessage,
-          isRegeneration,
-          isTerminalContinuation,
-          newAbortController,
-          newMessageImages,
-          chatImages,
-          setIsGenerating,
-          setFirstTokenReceived,
-          isTemporaryChat ? setTemporaryChatMessages : setChatMessages,
-          setToolInUse,
-          alertDispatch,
-          selectedPlugin,
-          isContinuation,
-          setFragment,
-          setAgentState
-        )
-        generatedText = fullText
-        finishReason = finishReasonFromResponse
-        citations = citationsFromResponse
-      } else {
-        const {
-          fullText,
-          thinkingText: thinkingTextFromResponse,
-          thinkingElapsedSecs: thinkingElapsedSecsFromResponse,
-          finishReason: finishReasonFromResponse,
-          ragUsed: ragUsedFromResponse,
-          ragId: ragIdFromResponse,
-          selectedPlugin: updatedSelectedPlugin,
-          assistantGeneratedImages: assistantGeneratedImagesFromResponse,
-          citations: citationsFromResponse,
-          fragment: fragmentFromResponse
-        } = await handleHostedChat(
-          payload,
-          modelData!,
-          tempAssistantChatMessage,
-          isRegeneration,
-          isRagEnabled,
-          isContinuation,
-          isTerminalContinuation,
-          newAbortController,
-          chatImages,
-          setIsGenerating,
-          setFirstTokenReceived,
-          isTemporaryChat ? setTemporaryChatMessages : setChatMessages,
-          setToolInUse,
-          alertDispatch,
-          selectedPlugin,
-          setFragment,
-          setAgentState
-        )
-        generatedText = fullText
-        thinkingText = thinkingTextFromResponse
-        thinkingElapsedSecs = thinkingElapsedSecsFromResponse
-        finishReason = finishReasonFromResponse
-        ragUsed = ragUsedFromResponse
-        ragId = ragIdFromResponse
-        selectedPlugin = updatedSelectedPlugin
-        assistantGeneratedImages = assistantGeneratedImagesFromResponse
-        citations = citationsFromResponse
-        fragment =
-          Object.keys(fragmentFromResponse || {}).length === 0
-            ? null
-            : fragmentFromResponse
-      }
+      const {
+        fullText,
+        thinkingText: thinkingTextFromResponse,
+        thinkingElapsedSecs: thinkingElapsedSecsFromResponse,
+        finishReason: finishReasonFromResponse,
+        ragUsed: ragUsedFromResponse,
+        ragId: ragIdFromResponse,
+        selectedPlugin: updatedSelectedPlugin,
+        assistantGeneratedImages: assistantGeneratedImagesFromResponse,
+        citations: citationsFromResponse,
+        fragment: fragmentFromResponse
+      } = await handleHostedChat(
+        payload,
+        modelData!,
+        tempAssistantChatMessage,
+        isRegeneration,
+        isRagEnabled,
+        isContinuation,
+        isTerminalContinuation,
+        newAbortController,
+        chatImages,
+        setIsGenerating,
+        setFirstTokenReceived,
+        isTemporaryChat ? setTemporaryChatMessages : setChatMessages,
+        setToolInUse,
+        alertDispatch,
+        selectedPlugin,
+        setFragment,
+        setAgentStatus
+      )
+      generatedText = fullText
+      thinkingText = thinkingTextFromResponse
+      thinkingElapsedSecs = thinkingElapsedSecsFromResponse
+      finishReason = finishReasonFromResponse
+      ragUsed = ragUsedFromResponse
+      ragId = ragIdFromResponse
+      selectedPlugin = updatedSelectedPlugin
+      assistantGeneratedImages = assistantGeneratedImagesFromResponse
+      citations = citationsFromResponse
+      fragment =
+        Object.keys(fragmentFromResponse || {}).length === 0
+          ? null
+          : fragmentFromResponse
 
       if (isTemporaryChat) {
         // Update temporary chat messages with the generated response
@@ -565,12 +525,12 @@ export const useChatHandler = () => {
       setToolInUse("none")
       setIsGenerating(false)
       setFirstTokenReceived(false)
-      setAgentState(null)
+      setAgentStatus(null)
     } catch (error) {
       setToolInUse("none")
       setIsGenerating(false)
       setFirstTokenReceived(false)
-      setAgentState(null)
+      setAgentStatus(null)
     }
   }
 

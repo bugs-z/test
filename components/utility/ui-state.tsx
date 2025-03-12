@@ -4,7 +4,7 @@ import { UIContext } from "@/context/ui-context"
 import { PluginID } from "@/types/plugins"
 import { FC, useEffect, useState } from "react"
 import { useLocalStorageState } from "@/lib/hooks/use-local-storage-state"
-import { AgentActionState } from "../messages/agent-state"
+import { AgentStatusState } from "../messages/agent-status"
 
 interface UIStateProps {
   children: React.ReactNode
@@ -40,7 +40,7 @@ export const UIState: FC<UIStateProps> = ({ children }) => {
   const [toolInUse, setToolInUse] = useState("none")
 
   // Agent states
-  const [agentState, setAgentState] = useState<AgentActionState | null>(null)
+  const [agentStatus, setAgentStatus] = useState<AgentStatusState | null>(null)
 
   // Loading States
   const [isGenerating, setIsGenerating] = useState(false)
@@ -97,8 +97,8 @@ export const UIState: FC<UIStateProps> = ({ children }) => {
         setToolInUse,
 
         // Agent states
-        agentState,
-        setAgentState,
+        agentStatus,
+        setAgentStatus,
 
         // Loading States
         isGenerating,

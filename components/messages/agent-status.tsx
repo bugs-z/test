@@ -1,54 +1,60 @@
 /**
  * Represents the different states an agent can be in during execution
  */
-export enum AgentActionState {
+export enum AgentStatusState {
   THINKING = "message_notify_user",
-  TERMINAL = "terminal"
+  TERMINAL = "terminal",
+  FILE_WRITE = "file_write"
 }
 
 /**
  * Human-readable descriptions for each agent state
  */
-export const AgentActionStateLabels: Record<AgentActionState, string> = {
-  [AgentActionState.THINKING]: "Thinking...",
-  [AgentActionState.TERMINAL]: "Executing command..."
+export const AgentStatusLabels: Record<AgentStatusState, string> = {
+  [AgentStatusState.THINKING]: "Thinking",
+  [AgentStatusState.TERMINAL]: "Using terminal",
+  [AgentStatusState.FILE_WRITE]: "Uploading files"
 }
 
 /**
  * Color configurations for different agent states
  */
-const AgentStateColors: Record<
-  AgentActionState,
+const AgentStatusColors: Record<
+  AgentStatusState,
   { ping: string; base: string }
 > = {
-  [AgentActionState.THINKING]: {
+  [AgentStatusState.THINKING]: {
     ping: "bg-blue-400",
     base: "bg-blue-500"
   },
-  [AgentActionState.TERMINAL]: {
+  [AgentStatusState.TERMINAL]: {
     ping: "bg-amber-400",
     base: "bg-amber-500"
+  },
+  [AgentStatusState.FILE_WRITE]: {
+    ping: "bg-green-400",
+    base: "bg-green-500"
   }
 }
 
 /**
- * Helper function to check if a value is a valid AgentActionState
+ * Helper function to check if a value is a valid AgentStatusState
  */
-export const isValidAgentState = (
+export const isValidAgentStatus = (
   state: string | null
-): state is AgentActionState => {
+): state is AgentStatusState => {
   if (!state) return false
-  return Object.values(AgentActionState).includes(state as AgentActionState)
+  return Object.values(AgentStatusState).includes(state as AgentStatusState)
 }
 
-export const AgentState = ({ state }: { state: AgentActionState | null }) => {
+export const AgentStatus = ({ state }: { state: AgentStatusState | null }) => {
   // If state is null or invalid, don't render anything
-  if (!isValidAgentState(state)) {
+  if (!isValidAgentStatus(state)) {
     return null
   }
 
-  const text = AgentActionStateLabels[state]
-  const colors = AgentStateColors[state]
+  const text = AgentStatusLabels[state]
+  const colors = AgentStatusColors[state]
 
   return (
     <div className="mt-2 flex items-center space-x-3 text-sm">

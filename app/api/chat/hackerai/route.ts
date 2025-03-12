@@ -23,6 +23,8 @@ import { processRag } from "@/lib/rag/rag-processor"
 import { executeDeepResearchTool } from "@/lib/tools/llm/deep-research"
 import { myProvider } from "@/lib/ai/providers"
 import { createToolSchemas } from "@/lib/tools/llm/toolSchemas"
+import { executeTerminalTool } from "@/lib/tools/llm/terminal"
+import { terminalPlugins } from "@/lib/ai/terminal-utils"
 
 export const runtime: ServerRuntime = "edge"
 export const preferredRegion = [
@@ -52,7 +54,8 @@ export async function POST(request: Request) {
     isRetrieval,
     isContinuation,
     isRagEnabled,
-    selectedPlugin
+    selectedPlugin,
+    isTerminalContinuation
   } = await request.json()
 
   try {
@@ -122,7 +125,8 @@ export async function POST(request: Request) {
       selectedPlugin !== PluginID.WEB_SEARCH &&
       selectedPlugin !== PluginID.REASONING &&
       selectedPlugin !== PluginID.REASONING_WEB_SEARCH &&
-      selectedPlugin !== PluginID.DEEP_RESEARCH
+      selectedPlugin !== PluginID.DEEP_RESEARCH &&
+      !terminalPlugins.includes(selectedPlugin as PluginID)
     ) {
       const { shouldUncensorResponse: moderationResult } =
         await getModerationResult(
@@ -183,6 +187,21 @@ export async function POST(request: Request) {
             }
           })
         })
+
+      default:
+        if (terminalPlugins.includes(selectedPlugin as PluginID)) {
+          return createStreamResponse(async dataStream => {
+            await executeTerminalTool({
+              config: {
+                messages,
+                profile,
+                dataStream,
+                isTerminalContinuation,
+                selectedPlugin: selectedPlugin as PluginID
+              }
+            })
+          })
+        }
     }
 
     // Remove last message if it's a continuation to remove the continue prompt
@@ -255,7 +274,9 @@ async function getProviderConfig(
   const selectedModel = isLargeModel ? proModel : defaultModel
 
   const rateLimitModel =
-    selectedPlugin && selectedPlugin !== PluginID.NONE
+    selectedPlugin &&
+    selectedPlugin !== PluginID.NONE &&
+    !terminalPlugins.includes(selectedPlugin as PluginID)
       ? selectedPlugin
       : isLargeModel
         ? "pentestgpt-pro"

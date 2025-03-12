@@ -10,6 +10,7 @@ import { FC, useContext, useState } from "react"
 import { WithTooltip } from "../ui/with-tooltip"
 import { ChatFileItem } from "./chat-file-item"
 import { deleteFile } from "@/db/files"
+
 const DynamicFilePreview = dynamic(() => import("../ui/file-preview"), {
   ssr: false
 })

@@ -19,7 +19,7 @@ import { LoadingState } from "./loading-states"
 import dynamic from "next/dynamic"
 import { useUIContext } from "@/context/ui-context"
 import { ChatFileItem } from "../chat/chat-file-item"
-import { AgentState, isValidAgentState } from "./agent-state"
+import { AgentStatus, isValidAgentStatus } from "./agent-status"
 
 const DynamicFilePreview = dynamic(() => import("../ui/file-preview"), {
   ssr: false
@@ -66,7 +66,7 @@ export const Message: FC<MessageProps> = ({
     firstTokenReceived,
     toolInUse,
     isMobile,
-    agentState
+    agentStatus
   } = useUIContext()
 
   const { message, feedback } = chatMessage
@@ -305,11 +305,11 @@ export const Message: FC<MessageProps> = ({
           </div>
         </div>
 
-        {agentState !== null &&
-          isValidAgentState(agentState) &&
+        {agentStatus !== null &&
+          isValidAgentStatus(agentStatus) &&
           isGenerating &&
           isLast &&
-          message.role === "assistant" && <AgentState state={agentState} />}
+          message.role === "assistant" && <AgentStatus state={agentStatus} />}
 
         {fragment && (
           <MessageFragment fragment={fragment} chatMessage={chatMessage} />

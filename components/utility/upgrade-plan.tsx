@@ -186,16 +186,16 @@ export const UpgradePlan: FC = () => {
             onButtonClick={() => handleUpgradeClick("pro")}
             savingsNote={getYearlySavingsNote("pro")}
           >
-            <PlanStatement>Early access to new features</PlanStatement>
             <PlanStatement>
-              Access to PGPT-Large, GPT-4o, PGPT-Small
+              Access to additional PentestGPT models
             </PlanStatement>
             <PlanStatement>
               Access to file uploads, vision, web search, browsing and deep
               research
             </PlanStatement>
             <PlanStatement>Access to advanced plugins</PlanStatement>
-            <PlanStatement>Access to terminal</PlanStatement>
+            <PlanStatement>Access to Terminal</PlanStatement>
+            <PlanStatement>Opportunities to test new features</PlanStatement>
           </PlanCard>
 
           {/* Team Plan */}
@@ -208,7 +208,7 @@ export const UpgradePlan: FC = () => {
             savingsNote={getYearlySavingsNote("team")}
           >
             <PlanStatement>Everything in Pro</PlanStatement>
-            <PlanStatement>Higher usage limits versus Pro plan</PlanStatement>
+            <PlanStatement>Higher usage limits</PlanStatement>
             <PlanStatement>Central billing and administration</PlanStatement>
           </PlanCard>
         </div>

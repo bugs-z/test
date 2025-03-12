@@ -1,6 +1,6 @@
 import { PluginID } from "@/types/plugins"
 import { Dispatch, SetStateAction, createContext, useContext } from "react"
-import { AgentActionState } from "@/components/messages/agent-state"
+import { AgentStatusState } from "@/components/messages/agent-status"
 
 interface UIContextType {
   // ENHANCE MENU
@@ -35,8 +35,8 @@ interface UIContextType {
   setToolInUse: Dispatch<SetStateAction<string>>
 
   // Agent states
-  agentState: AgentActionState | null
-  setAgentState: Dispatch<SetStateAction<AgentActionState | null>>
+  agentStatus: AgentStatusState | null
+  setAgentStatus: Dispatch<SetStateAction<AgentStatusState | null>>
 
   // Loading States
   isGenerating: boolean
@@ -76,8 +76,8 @@ export const UIContext = createContext<UIContextType>({
   setToolInUse: () => {},
 
   // Agent states
-  agentState: null,
-  setAgentState: () => {},
+  agentStatus: null,
+  setAgentStatus: () => {},
 
   // Loading States
   isGenerating: false,
