@@ -6,7 +6,7 @@ import { perplexity } from "@ai-sdk/perplexity"
 
 export const myProvider = customProvider({
   languageModels: {
-    "chat-model-small": openrouter("google/gemma-3-27b-it"),
+    "chat-model-small": mistral("mistral-small-latest"),
     "chat-model-large": mistral("mistral-large-latest"),
     "chat-model-gpt-small": openai("gpt-4o-mini"),
     "chat-model-gpt-large": openai("gpt-4o", { parallelToolCalls: false }),
