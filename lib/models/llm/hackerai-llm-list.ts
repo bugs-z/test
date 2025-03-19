@@ -2,16 +2,16 @@ import { LLM } from "@/types"
 
 export const SmallModel: LLM = {
   modelId: "mistral-medium",
-  modelName: "PentestGPT Small",
-  shortModelName: "PGPT-Small",
+  modelName: "Small Model",
+  shortModelName: "Small",
   provider: "hackerai",
   imageInput: true
 }
 
 export const LargeModel: LLM = {
   modelId: "mistral-large",
-  modelName: "PentestGPT Large",
-  shortModelName: "PGPT-Large",
+  modelName: "Large Model",
+  shortModelName: "Large",
   provider: "hackerai",
   imageInput: true
 }

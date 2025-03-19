@@ -10,6 +10,7 @@ interface WebSearchConfig {
   profile: any
   dataStream: any
   isLargeModel: boolean
+  directToolCall?: boolean
 }
 
 async function getProviderConfig(isLargeModel: boolean, profile: any) {
@@ -38,7 +39,7 @@ export async function executeWebSearchTool({
     throw new Error("Perplexity API key is not set for web search")
   }
 
-  const { messages, profile, dataStream, isLargeModel } = config
+  const { messages, profile, dataStream, isLargeModel, directToolCall } = config
 
   const { systemPrompt, selectedModel } = await getProviderConfig(
     isLargeModel,
@@ -48,6 +49,13 @@ export async function executeWebSearchTool({
   console.log("[WebSearch] Executing web search with model:", selectedModel)
 
   const cleanedMessages = removeLastSureMessage(messages)
+
+  if (!directToolCall) {
+    dataStream.writeData({
+      type: "tool-call",
+      content: "websearch"
+    })
+  }
 
   const response = await fetch(llmConfig.perplexity.url, {
     method: "POST",
@@ -64,7 +72,7 @@ export async function executeWebSearchTool({
         },
         ...toVercelChatMessages(cleanedMessages)
       ],
-      max_tokens: 1024,
+      max_tokens: 2048,
       stream: true
     })
   })
@@ -100,6 +108,18 @@ export async function executeWebSearchTool({
             dataStream.writeData({ citations: citations })
           }
           isFirstChunk = false
+
+          if (!directToolCall) {
+            dataStream.writeData({
+              type: "tool-call",
+              content: "none"
+            })
+
+            dataStream.writeData({
+              type: "text-delta",
+              content: "\n\n"
+            })
+          }
         }
 
         // Handle content

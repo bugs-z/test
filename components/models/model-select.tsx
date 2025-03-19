@@ -7,7 +7,7 @@ import { ModelIcon } from "./model-icon"
 import { Button } from "../ui/button"
 import { LLM_LIST } from "@/lib/models/llm/llm-list"
 import { LargeModel, SmallModel } from "@/lib/models/llm/hackerai-llm-list"
-import { GPT4o } from "@/lib/models/llm/openai-llm-list"
+import { Agent } from "@/lib/models/llm/openai-llm-list"
 
 interface ModelSelectProps {
   selectedModelId: LLMID
@@ -39,7 +39,7 @@ export const ModelSelect: FC<ModelSelectProps> = ({
 
   // Define the specific order of models
   const modelOrder: LLMID[] = [
-    GPT4o.modelId,
+    Agent.modelId,
     LargeModel.modelId,
     SmallModel.modelId
   ]
@@ -72,7 +72,7 @@ export const ModelSelect: FC<ModelSelectProps> = ({
 
   const freeUserModels = [
     {
-      modelId: GPT4o.modelId,
+      modelId: Agent.modelId,
       modelName: "PentestGPT Pro",
       description: "Our smartest model & more",
       isUpgrade: true
@@ -85,9 +85,9 @@ export const ModelSelect: FC<ModelSelectProps> = ({
   ]
 
   const modelDescriptions: Record<string, string> = {
-    [GPT4o.modelId]: "Great model with tools",
-    [LargeModel.modelId]: "Best model for complex tasks",
-    [SmallModel.modelId]: "Fast model for everyday tasks"
+    [Agent.modelId]: "Smartest model with advanced tools",
+    [LargeModel.modelId]: "Great for most questions",
+    [SmallModel.modelId]: "Faster for most questions"
   }
 
   return (

@@ -30,12 +30,12 @@ const llmConfig = {
   systemPrompts: {
     // For question generator
     pentestgptCurrentDateOnly: `${initialSystemPrompt}\n${currentDateTime}`,
-    // For PGPT-Small
-    smallModel: `${getPentestGPTInfo(true, "October 2023", "PGPT-Small")}\n${systemPromptEnding}`,
-    // For PGPT-Large
-    largeModel: `${getPentestGPTInfo(true, "October 2023", "PGPT-Large")}${systemPromptEnding}`,
-    // For GPT-4o
-    gpt4o: `${getPentestGPTInfo(true, "October 2024", "GPT-4o")}\n${systemPromptEnding}`,
+    // For Small Model
+    smallModel: `${getPentestGPTInfo(true, "October 2023", "Small Model")}\n${systemPromptEnding}`,
+    // For Large Model
+    largeModel: `${getPentestGPTInfo(true, "October 2023", "Large Model")}${systemPromptEnding}`,
+    // For PentestGPT Agent
+    agent: `${getPentestGPTInfo(true, "October 2024", "PentestGPT Agent")}\n${systemPromptEnding}`,
     // For browser tool
     pentestGPTBrowser: `${getPentestGPTInfo(true)}\n${systemPromptEnding}`,
     // For webSearch tool
@@ -46,11 +46,6 @@ const llmConfig = {
     pentestGPTReasoning: `${getPentestGPTInfo(true, "October 2023", "reasoningModel")}\n${systemPromptEnding}`,
     // For fragment tool
     pentestGPTFragment: `${getPentestGPTInfo(true, "October 2024", "GPT-4o")}}`
-  },
-  models: {
-    small: process.env.OPENROUTER_PENTESTGPT_DEFAULT_MODEL,
-    standalone_question: process.env.OPENROUTER_STANDALONE_QUESTION_MODEL,
-    large: process.env.OPENROUTER_PENTESTGPT_PRO_MODEL
   },
   hackerRAG: {
     enabled:

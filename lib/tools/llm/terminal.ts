@@ -22,6 +22,7 @@ interface TerminalToolConfig {
   dataStream: any
   isTerminalContinuation?: boolean
   selectedPlugin?: PluginID
+  previousMessage?: string
 }
 
 export async function executeTerminalTool({
@@ -34,14 +35,15 @@ export async function executeTerminalTool({
     profile,
     dataStream,
     isTerminalContinuation,
-    selectedPlugin
+    selectedPlugin,
+    previousMessage
   } = config
   let sandbox: Sandbox | null = null
   let persistentSandbox = false
   const userID = profile.user_id
   let systemPrompt = PENTESTGPT_AGENT_SYSTEM_PROMPT
   let terminalTemplate = TEMPORARY_SANDBOX_TEMPLATE
-  let selectedChatModel = "chat-model-gpt-large"
+  const selectedChatModel = "chat-model-gpt-large"
 
   try {
     // Check rate limit
@@ -69,8 +71,8 @@ export async function executeTerminalTool({
         return "Access Denied to plugin"
       }
 
-      if (!subscriptionInfo.isPremium)
-        selectedChatModel = "chat-model-gpt-small"
+      // if (!subscriptionInfo.isPremium)
+      //   selectedChatModel = "chat-model-gpt-small"
 
       systemPrompt = getToolsWithAnswerPrompt(selectedPlugin)
       terminalTemplate = getTerminalTemplate(selectedPlugin)
@@ -88,6 +90,13 @@ export async function executeTerminalTool({
 
     const setPersistentSandbox = (isPersistent: boolean) => {
       persistentSandbox = isPersistent
+    }
+
+    if (previousMessage) {
+      cleanedMessages.push({
+        role: "assistant",
+        content: previousMessage + "\n\n "
+      })
     }
 
     const { fullStream, finishReason } = streamText({

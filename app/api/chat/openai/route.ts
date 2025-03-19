@@ -7,7 +7,7 @@ import {
 import llmConfig from "@/lib/models/llm/llm-config"
 import { checkRatelimitOnApi } from "@/lib/server/ratelimiter"
 import { getAIProfile } from "@/lib/server/server-chat-helpers"
-import { createDataStreamResponse, smoothStream, streamText } from "ai"
+import { createDataStreamResponse, streamText } from "ai"
 import { ServerRuntime } from "next"
 import { createToolSchemas } from "@/lib/tools/llm/toolSchemas"
 import { PluginID } from "@/types/plugins"
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
     }
 
     let systemPrompt = buildSystemPrompt(
-      llmConfig.systemPrompts.gpt4o,
+      llmConfig.systemPrompts.agent,
       profile.profile_context
     )
 
@@ -97,16 +97,30 @@ export async function POST(request: Request) {
     filterEmptyAssistantMessages(messages)
     replaceWordsInLastUserMessage(messages)
 
+    if (isTerminalContinuation) {
+      return createStreamResponse(async dataStream => {
+        await executeTerminalTool({
+          config: { messages, profile, dataStream, isTerminalContinuation }
+        })
+      })
+    }
+
     // Handle special plugins
     switch (selectedPlugin) {
       case PluginID.WEB_SEARCH:
         return createStreamResponse(async dataStream => {
           await executeWebSearchTool({
-            config: { messages, profile, dataStream, isLargeModel: true }
+            config: {
+              messages,
+              profile,
+              dataStream,
+              isLargeModel: true,
+              directToolCall: true
+            }
           })
         })
 
-      case PluginID.TERMINAL || isTerminalContinuation:
+      case PluginID.TERMINAL:
         return createStreamResponse(async dataStream => {
           await executeTerminalTool({
             config: { messages, profile, dataStream, isTerminalContinuation }
@@ -163,13 +177,12 @@ export async function POST(request: Request) {
         })
 
         const result = streamText({
-          model: myProvider.languageModel("chat-model-gpt-large"),
+          model: myProvider.languageModel("chat-model-agent"),
           system: systemPrompt,
           messages: toVercelChatMessages(messages, true),
           maxTokens: 2048,
           abortSignal: request.signal,
-          tools: getSelectedSchemas(["browser", "webSearch", "terminal"]),
-          experimental_transform: smoothStream({ chunking: "word" })
+          tools: getSelectedSchemas(["browser", "webSearch", "terminal"])
         })
 
         result.mergeIntoDataStream(dataStream)

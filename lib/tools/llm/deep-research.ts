@@ -1,7 +1,7 @@
 import { buildSystemPrompt } from "@/lib/ai/prompts"
 import { toVercelChatMessages } from "@/lib/ai/message-utils"
 import llmConfig from "@/lib/models/llm/llm-config"
-import { smoothStream, streamText } from "ai"
+import { streamText } from "ai"
 import { myProvider } from "@/lib/ai/providers"
 
 interface DeepResearchConfig {
@@ -53,8 +53,7 @@ async function processStream({
       llmConfig.systemPrompts.reasoningWebSearch,
       profile.profile_context
     ),
-    messages: toVercelChatMessages(messages),
-    experimental_transform: smoothStream({ chunking: "word" })
+    messages: toVercelChatMessages(messages)
   })
 
   for await (const part of result.fullStream) {

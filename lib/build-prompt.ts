@@ -6,7 +6,7 @@ import {
 } from "@/types"
 import { Tables } from "@/supabase/types"
 import { countTokens } from "gpt-tokenizer"
-import { GPT4o } from "./models/llm/openai-llm-list"
+import { Agent } from "./models/llm/openai-llm-list"
 import { SmallModel, LargeModel } from "./models/llm/hackerai-llm-list"
 import { toast } from "sonner"
 import { Fragment } from "./tools/e2b/fragments/types"
@@ -18,7 +18,7 @@ export async function buildFinalMessages(
   const { chatSettings, chatMessages, retrievedFileItems } = payload
 
   let CHUNK_SIZE = 12000
-  if (chatSettings.model === GPT4o.modelId) {
+  if (chatSettings.model === Agent.modelId) {
     CHUNK_SIZE = 32000 - 4000 // -4000 for the system prompt, custom instructions, and more
   } else if (chatSettings.model === LargeModel.modelId) {
     CHUNK_SIZE = 22000 - 4000 // -4000 for the system prompt, custom instructions, and more
