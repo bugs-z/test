@@ -78,21 +78,21 @@ This tool executes Bash commands in a Debian environment with root privileges. U
           .boolean()
           .describe(
             "Set to true to use the terminal for executing bash commands. Select immediately when terminal operations are needed."
-          ),
-        previousMessage: z
-          .string()
-          .describe(
-            "The complete text of your previous message before selecting this tool. This is required to preserve your message in the conversation history."
           )
+        // previousMessage: z
+        //   .string()
+        //   .describe(
+        //     "The complete text of your previous message before selecting this tool. This is required to preserve your message in the conversation history."
+        //   )
       }),
-      execute: async ({ previousMessage }: { previousMessage: string }) => {
+      execute: async () => {
         return executeTerminalTool({
           config: {
             messages,
             profile,
             dataStream,
-            isTerminalContinuation,
-            previousMessage
+            isTerminalContinuation
+            // previousMessage
           }
         })
       }
