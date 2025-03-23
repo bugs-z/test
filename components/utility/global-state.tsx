@@ -12,7 +12,6 @@ import {
 } from "@/db/subscriptions"
 import { getTeamMembersByTeamId } from "@/db/teams"
 import { convertBlobToBase64 } from "@/lib/blob-to-b64"
-import { supabase } from "@/lib/supabase/browser-client"
 import { ProcessedTeamMember } from "@/lib/team-utils"
 import { Tables } from "@/supabase/types"
 import {
@@ -32,15 +31,13 @@ import { FragmentsProvider } from "../chat/chat-hooks/use-fragments"
 const MESSAGES_PER_FETCH = 20
 
 interface GlobalStateProps {
+  user: User | null
   children: React.ReactNode
 }
 
-export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
+export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
   const router = useRouter()
   const searchParams = useSearchParams()
-
-  // USER STORE
-  const [user, setUser] = useState<User | null>(null)
 
   // PROFILE STORE
   const [profile, setProfile] = useState<Tables<"profiles"> | null>(null)
@@ -128,15 +125,10 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
   )
 
   const fetchStartingData = async () => {
-    const {
-      data: { user: userFromAuth }
-    } = await supabase.auth.getUser()
+    if (user) {
+      setUserEmail(user.email || "Not available")
 
-    if (userFromAuth) {
-      setUser(userFromAuth)
-      setUserEmail(userFromAuth.email || "Not available")
-
-      const profile = await getProfileByUserId(userFromAuth.id)
+      const profile = await getProfileByUserId(user.id)
       if (!profile) return
 
       setProfile(profile)
@@ -145,19 +137,19 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
       //   return router.push("/setup")
       // }
 
-      const subscription = await getSubscriptionByUserId(userFromAuth.id)
+      const subscription = await getSubscriptionByUserId(user.id)
       updateSubscription(subscription)
 
       const members = await getTeamMembersByTeamId(
-        userFromAuth.id,
-        userFromAuth.email,
+        user.id,
+        user.email,
         subscription?.team_id
       )
 
       const membershipData = members?.find(
         member =>
-          member.member_user_id === userFromAuth.id ||
-          member.invitee_email === userFromAuth.email
+          member.member_user_id === user.id ||
+          member.invitee_email === user.email
       )
 
       if (membershipData?.invitation_status !== "rejected") {

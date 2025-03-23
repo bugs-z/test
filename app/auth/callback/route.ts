@@ -6,6 +6,8 @@ import { NextResponse } from "next/server"
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get("code")
+  const error = requestUrl.searchParams.get("error")
+  const errorCode = requestUrl.searchParams.get("error_code")
   const next = requestUrl.searchParams.get("next") || "/"
 
   if (code) {
@@ -64,6 +66,17 @@ export async function GET(request: Request) {
       redirectUrl.searchParams.set("message", "auth")
       return NextResponse.redirect(redirectUrl)
     }
+  }
+
+  // Handle expired email link
+  if (error === "unauthorized_client" && errorCode === "401") {
+    const supabase = await createClient()
+    await supabase.auth.signOut({ scope: "local" })
+    const redirectUrl = new URL(
+      "/login?message=code_expired",
+      process.env.NEXT_PUBLIC_PRODUCTION_ORIGIN || requestUrl.origin
+    )
+    return NextResponse.redirect(redirectUrl)
   }
 
   return NextResponse.redirect(new URL(next, request.url))

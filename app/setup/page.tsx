@@ -2,22 +2,17 @@
 
 import { PentestGPTContext } from "@/context/context"
 import { getProfileByUserId } from "@/db/profile"
-import { supabase } from "@/lib/supabase/browser-client"
 // import { TablesUpdate } from "@/supabase/types"
 // import { updateProfile } from "@/db/profile"
 import { useRouter } from "next/navigation"
 import { useContext, useEffect } from "react"
 
 export default function SetupPage() {
-  const { setProfile, fetchStartingData } = useContext(PentestGPTContext)
+  const { setProfile, fetchStartingData, user } = useContext(PentestGPTContext)
   const router = useRouter()
 
   useEffect(() => {
     ;(async () => {
-      const {
-        data: { user }
-      } = await supabase.auth.getUser()
-
       if (!user) {
         router.push("/login")
         return

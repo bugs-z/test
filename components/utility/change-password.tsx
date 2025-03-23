@@ -1,8 +1,6 @@
-"use client"
-
-import { supabase } from "@/lib/supabase/browser-client"
 import { useRouter } from "next/navigation"
 import { FC, useState } from "react"
+import { toast } from "sonner"
 import { Button } from "../ui/button"
 import {
   Dialog,
@@ -12,7 +10,7 @@ import {
   DialogTitle
 } from "../ui/dialog"
 import { Input } from "../ui/input"
-import { toast } from "sonner"
+import { supabase } from "@/lib/supabase/browser-client"
 
 interface ChangePasswordProps {}
 
@@ -27,11 +25,14 @@ export const ChangePassword: FC<ChangePasswordProps> = () => {
     if (newPassword !== confirmPassword)
       return toast.error("Your password's don't match.")
 
-    await supabase.auth.updateUser({ password: newPassword })
-
-    toast.success("Password changed successfully.")
-
-    return router.push("/login")
+    try {
+      await supabase.auth.updateUser({ password: newPassword })
+      toast.success("Password changed successfully.")
+      return router.push("/login")
+    } catch (error) {
+      console.error("Error updating password:", error)
+      toast.error("Failed to update password. Please try again.")
+    }
   }
 
   return (

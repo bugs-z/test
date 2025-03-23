@@ -31,7 +31,8 @@ const errorMessages: Record<string, string> = {
   "14": "Too many signup attempts. Please try again later.",
   password_reset_limit:
     "Too many password reset attempts. Please try again later.",
-  signin_success: "Email confirmed successfully. You can now login."
+  signin_success: "Email confirmed successfully. You can now login.",
+  code_expired: "Email link is invalid or has expired."
 }
 
 const messageTypes: Record<string, "error" | "success" | "warning"> = {
@@ -54,7 +55,8 @@ const messageTypes: Record<string, "error" | "success" | "warning"> = {
   captcha_required: "error",
   ratelimit_default: "warning",
   password_reset_limit: "warning",
-  signin_success: "success"
+  signin_success: "success",
+  code_expired: "error"
 }
 
 const validateEmail = (email: string) => {

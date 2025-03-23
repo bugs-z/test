@@ -112,7 +112,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
           <div className="bg-background text-foreground flex h-dvh flex-col items-center overflow-x-auto">
             {user ? (
               <PluginProvider>
-                <GlobalState>
+                <GlobalState user={user}>
                   <UIState>{children}</UIState>
                 </GlobalState>
               </PluginProvider>

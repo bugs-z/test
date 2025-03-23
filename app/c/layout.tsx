@@ -2,14 +2,13 @@
 
 import { Dashboard } from "@/components/ui/dashboard"
 import { PentestGPTContext } from "@/context/context"
+import { useUIContext } from "@/context/ui-context"
 import { getChatsByUserId } from "@/db/chats"
-import { supabase } from "@/lib/supabase/browser-client"
+import { getSubscriptionByUserId } from "@/db/subscriptions"
+import { LargeModel, SmallModel } from "@/lib/models/llm/hackerai-llm-list"
 import { useRouter } from "next/navigation"
 import { ReactNode, useContext, useEffect, useState } from "react"
 import Loading from "../loading"
-import { getSubscriptionByUserId } from "@/db/subscriptions"
-import { useUIContext } from "@/context/ui-context"
-import { LargeModel, SmallModel } from "@/lib/models/llm/hackerai-llm-list"
 
 interface WorkspaceLayoutProps {
   children: ReactNode
@@ -43,7 +42,8 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     setChatFiles,
     setChatImages,
     setNewMessageFiles,
-    setNewMessageImages
+    setNewMessageImages,
+    user
   } = useContext(PentestGPTContext)
 
   const { setIsGenerating, setFirstTokenReceived } = useUIContext()
@@ -51,11 +51,6 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
   useEffect(() => {
     const initializeWorkspace = async () => {
       try {
-        // Check authentication
-        const {
-          data: { user }
-        } = await supabase.auth.getUser()
-
         if (!user) {
           router.push("/login")
           return
