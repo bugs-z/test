@@ -25,23 +25,29 @@ export async function getSubscriptionByUserId(userId: string) {
     }
   }
 
-  const { data: subscription, error } = await supabase
+  const { data: subscriptions } = await supabase
     .from("subscriptions")
     .select("*")
     .eq("user_id", userId)
     .eq("status", "active")
-    .maybeSingle()
+
+  // If user has multiple active subscriptions, pick the first one
+  const subscription =
+    subscriptions && subscriptions.length > 0 ? subscriptions[0] : null
 
   return subscription
 }
 
 export async function getSubscriptionByTeamId(teamId: string) {
-  const { data: subscription, error } = await supabase
+  const { data: subscriptions } = await supabase
     .from("subscriptions")
     .select("*")
     .eq("team_id", teamId)
     .eq("status", "active")
-    .maybeSingle()
+
+  // If team has multiple active subscriptions, pick the first one
+  const subscription =
+    subscriptions && subscriptions.length > 0 ? subscriptions[0] : null
 
   return subscription
 }

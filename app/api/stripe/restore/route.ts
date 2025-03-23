@@ -99,10 +99,10 @@ async function restoreToDatabase(
     .from("subscriptions")
     .select("*")
     .eq("subscription_id", subscriptionId)
-    .single()
+    .maybeSingle()
 
   let result
-  if (existingSubscription.data) {
+  if (existingSubscription && existingSubscription.data) {
     // If the subscription exists, update it
     result = await supabaseAdmin
       .from("subscriptions")
@@ -158,10 +158,14 @@ async function restoreToDatabase(
     .select("*")
     .eq("status", "active")
     .eq("user_id", user.id)
-    .single()
+    .eq("subscription_id", subscriptionId)
+    .maybeSingle()
   if (newSubscription.error) {
     console.error(newSubscription.error)
     return { type: "error", error: "error fetching new subscription" }
+  }
+  if (!newSubscription.data) {
+    return { type: "error", error: "subscription not found" }
   }
   return { type: "ok", value: newSubscription.data }
 }
