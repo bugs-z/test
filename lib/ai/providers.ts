@@ -5,7 +5,11 @@ import {
 } from "ai"
 import { mistral } from "@ai-sdk/mistral"
 import { openai } from "@ai-sdk/openai"
-import { perplexity } from "@ai-sdk/perplexity"
+import { createOpenRouter } from "@openrouter/ai-sdk-provider"
+
+const openrouter = createOpenRouter({
+  apiKey: process.env.OPENROUTER_API_KEY
+})
 
 export const myProvider = customProvider({
   languageModels: {
@@ -19,10 +23,10 @@ export const myProvider = customProvider({
       parallelToolCalls: false
     }),
     "chat-model-reasoning": wrapLanguageModel({
-      model: perplexity("r1-1776"),
+      model: openrouter("perplexity/r1-1776"),
       middleware: extractReasoningMiddleware({ tagName: "think" })
     }),
-    "deep-research": perplexity("sonar-deep-research"),
+    "deep-research": openrouter("perplexity/sonar-deep-research"),
     "vision-model": mistral("pixtral-large-latest"),
     "title-model": mistral("mistral-small-latest"),
     "standalone-question-model": mistral("mistral-small-latest")

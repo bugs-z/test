@@ -56,6 +56,11 @@ async function processStream({
     messages: toVercelChatMessages(messages)
   })
 
+  if (!result || !result.fullStream) {
+    console.error("No result from deep research")
+    throw new Error("No result from deep research")
+  }
+
   for await (const part of result.fullStream) {
     // Collect source URLs
     if (

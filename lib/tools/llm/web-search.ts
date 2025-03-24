@@ -57,14 +57,14 @@ export async function executeWebSearchTool({
     })
   }
 
-  const response = await fetch(llmConfig.perplexity.url, {
+  const response = await fetch(llmConfig.openrouter.url, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${llmConfig.perplexity.apiKey}`,
+      Authorization: `Bearer ${llmConfig.openrouter.apiKey}`,
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      model: selectedModel,
+      model: `perplexity/${selectedModel}`,
       messages: [
         {
           role: "system",
@@ -76,6 +76,10 @@ export async function executeWebSearchTool({
       stream: true
     })
   })
+
+  if (!response.ok) {
+    throw new Error(`Perplexity API returned ${response.status}`)
+  }
 
   const reader = response.body?.getReader()
   const decoder = new TextDecoder()
