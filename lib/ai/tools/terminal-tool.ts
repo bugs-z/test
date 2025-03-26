@@ -55,9 +55,10 @@ export const createTerminalTool = (context: ToolContext) => {
     execute: async args => {
       const { command } = args
       // Handle usePersistentSandbox with type safety
-      const usePersistentSandbox = selectedPlugin
+      const usePersistentSandbox = false
+        /* selectedPlugin
         ? false
-        : Boolean(args.usePersistentSandbox)
+        : Boolean(args.usePersistentSandbox) */
 
       // Validate plugin-specific commands
       if (selectedPlugin) {
