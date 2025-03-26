@@ -41,7 +41,7 @@ export const createTerminalTool = (context: ToolContext) => {
     description: "Execute commands in the sandbox environment.",
     parameters: z.object({
       command: z.string().describe("Command to execute"),
-      ...(selectedPlugin
+      /*...(selectedPlugin
         ? {}
         : {
             usePersistentSandbox: z
@@ -50,7 +50,7 @@ export const createTerminalTool = (context: ToolContext) => {
               .describe(
                 "Use persistent sandbox (30-day storage) instead of temporary"
               )
-          })
+          })*/
     }),
     execute: async args => {
       const { command } = args
