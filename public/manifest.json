@@ -1,7 +1,7 @@
 {
   "short_name": "PentestGPT",
   "name": "PentestGPT",
-  "description": "PentestGPT: AI-Powered Penetration Testing Assistant",
+  "description": "PentestGPT - AI Assistant for Penetration Testers",
   "icons": [
     {
       "src": "/icon-192x192.png",
