@@ -2,7 +2,7 @@ import { buildSystemPrompt } from "@/lib/ai/prompts"
 import { toVercelChatMessages } from "@/lib/ai/message-utils"
 import llmConfig from "@/lib/models/llm/llm-config"
 import { streamText } from "ai"
-import { createOpenRouter } from "@openrouter/ai-sdk-provider"
+import { perplexity } from "@ai-sdk/perplexity"
 
 interface ReasoningWebSearchConfig {
   messages: any[]
@@ -55,12 +55,8 @@ async function processStream({
   let sentFirstTextDelta = false
   const sourceUrls: string[] = []
 
-  const openrouter = createOpenRouter({
-    apiKey: llmConfig.openrouter.apiKey
-  })
-
   const result = streamText({
-    model: openrouter(`perplexity/${selectedModel}`),
+    model: perplexity(selectedModel),
     maxTokens: 4096,
     system: buildSystemPrompt(
       llmConfig.systemPrompts.reasoningWebSearch,

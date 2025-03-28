@@ -6,6 +6,7 @@ import {
 import { mistral } from "@ai-sdk/mistral"
 import { openai } from "@ai-sdk/openai"
 import { createOpenRouter } from "@openrouter/ai-sdk-provider"
+import { perplexity } from "@ai-sdk/perplexity"
 
 const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY
@@ -26,7 +27,7 @@ export const myProvider = customProvider({
       model: openrouter("perplexity/r1-1776"),
       middleware: extractReasoningMiddleware({ tagName: "think" })
     }),
-    "deep-research": openrouter("perplexity/sonar-deep-research"),
+    "deep-research": perplexity("sonar-deep-research"),
     "vision-model": mistral("pixtral-large-latest"),
     "title-model": mistral("mistral-small-latest"),
     "standalone-question-model": mistral("mistral-small-latest")
