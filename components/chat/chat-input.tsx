@@ -40,6 +40,7 @@ export const ChatInput: FC = () => {
   const {
     userInput,
     chatMessages,
+    temporaryChatMessages,
     newMessageImages,
     isPremiumSubscription,
     isMicSupported,
@@ -147,7 +148,7 @@ export const ChatInput: FC = () => {
         >
           <ChatFilesDisplay />
 
-          {chatMessages.length === 0 && (
+          {chatMessages.length === 0 && temporaryChatMessages.length === 0 && (
             <ChatStarters
               selectedPlugin={selectedPlugin}
               chatMessages={chatMessages}
