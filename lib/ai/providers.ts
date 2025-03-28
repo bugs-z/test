@@ -13,7 +13,7 @@ const openrouter = createOpenRouter({
 
 export const myProvider = customProvider({
   languageModels: {
-    "chat-model-small": mistral("mistral-small-latest"),
+    "chat-model-small": openrouter("deepseek/deepseek-chat-v3-0324"),
     "chat-model-large": openrouter("anthropic/claude-3.7-sonnet"),
     "chat-model-gpt-small": openai("gpt-4o-mini"),
     "chat-model-gpt-large": openai("gpt-4o-2024-11-20", {
