@@ -93,7 +93,7 @@ export const ToolPicker: FC<ToolPickerProps> = ({
                     itemsRef.current[filteredTools.length - 1 - index] = ref
                   }}
                   tabIndex={tool.isPremium && !isPremiumSubscription ? -1 : 0}
-                  className={`flex cursor-pointer items-center rounded p-2 focus:outline-none focus:ring-2
+                  className={`flex cursor-pointer items-center rounded p-2 focus:outline-hidden focus:ring-2
                     ${
                       tool.isPremium && !isPremiumSubscription
                         ? "cursor-not-allowed opacity-50"

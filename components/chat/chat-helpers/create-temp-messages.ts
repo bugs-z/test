@@ -1,4 +1,4 @@
-import { CONTINUE_PROMPT } from "@/lib/models/llm/llm-prompting"
+import { CONTINUE_PROMPT } from "@/lib/models/llm-prompting"
 import { lastSequenceNumber } from "@/lib/utils"
 import { ChatMessage, LLMID, PluginID } from "@/types"
 import { v4 as uuidv4 } from "uuid"

@@ -209,7 +209,7 @@ export const Settings: FC<{ showEmail?: boolean }> = ({
                   <Tab
                     key={value}
                     className={({ selected }) => `
-                      ${isMobile ? "flex-shrink flex-grow-0 min-w-0" : "w-full justify-start"}
+                      ${isMobile ? "shrink grow-0 min-w-0" : "w-full justify-start"}
                       flex items-center whitespace-nowrap px-2 py-2 rounded
                       ${selected ? "bg-secondary text-primary" : "text-primary hover:bg-secondary/50"}
                     `}

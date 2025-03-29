@@ -1,5 +1,5 @@
 import { executeWebSearchTool } from "./web-search"
-import { executeTerminalTool } from "./terminal"
+import { executeTerminalAgent } from "./terminal-agent"
 import { executeBrowserTool } from "./browser"
 import { z } from "zod"
 
@@ -86,7 +86,7 @@ This tool executes Bash commands in a Debian environment with root privileges. U
         //   )
       }),
       execute: async () => {
-        return executeTerminalTool({
+        return executeTerminalAgent({
           config: {
             messages,
             profile,

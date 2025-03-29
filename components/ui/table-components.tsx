@@ -2,7 +2,7 @@ import React from "react"
 
 export const Table: React.FC<React.PropsWithChildren> = ({ children }) => (
   <div className="overflow-x-auto">
-    <table className="border-select !my-0 min-w-full border-collapse border !p-0 text-sm">
+    <table className="border-select my-0! min-w-full border-collapse border p-0! text-sm">
       {children}
     </table>
   </div>

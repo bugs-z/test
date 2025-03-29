@@ -5,9 +5,9 @@ import { FC, useContext, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { ModelIcon } from "./model-icon"
 import { Button } from "../ui/button"
-import { LLM_LIST } from "@/lib/models/llm/llm-list"
-import { LargeModel, SmallModel } from "@/lib/models/llm/hackerai-llm-list"
-import { Agent } from "@/lib/models/llm/openai-llm-list"
+import { LLM_LIST } from "@/lib/models/llm-list"
+import { LargeModel, SmallModel } from "@/lib/models/hackerai-llm-list"
+import { Agent } from "@/lib/models/openai-llm-list"
 
 interface ModelSelectProps {
   selectedModelId: LLMID

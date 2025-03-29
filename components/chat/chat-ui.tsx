@@ -84,7 +84,6 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
           fetchMessages(params.chatid as string),
           fetchChat(params.chatid as string)
         ])
-        scrollToBottom()
       }
     }
 
@@ -97,6 +96,7 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
         handleFocusChatInput()
         setLoading(false)
         setIsReadyToChat(true)
+        scrollToBottom({ instant: true, force: true })
       })
     } else {
       setLoading(false)

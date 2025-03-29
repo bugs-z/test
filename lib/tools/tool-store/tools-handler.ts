@@ -7,7 +7,7 @@ import {
 } from "@/lib/ai/message-utils"
 import { terminalExecutor } from "./tools-terminal"
 import { z } from "zod"
-import { APIError } from "@/lib/models/llm/api-error"
+import { APIError } from "@/lib/models/api-error"
 import {
   replaceWordsInLastUserMessage,
   updateSystemMessage

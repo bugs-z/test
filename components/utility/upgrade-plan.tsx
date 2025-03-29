@@ -113,7 +113,7 @@ export const UpgradePlan: FC = () => {
   }
 
   const planPrices = {
-    pro: { monthly: "$20", yearly: "$15" },
+    pro: { monthly: "$25", yearly: "$20" },
     team: { monthly: "$40", yearly: "$32" }
   }
 
@@ -161,7 +161,7 @@ export const UpgradePlan: FC = () => {
                   transition-all duration-200 ease-in-out
                   ${
                     selected
-                      ? "bg-primary text-primary-foreground shadow"
+                      ? "bg-primary text-primary-foreground shadow-sm"
                       : "text-muted-foreground hover:bg-secondary/20 hover:text-foreground"
                   }`
                 }

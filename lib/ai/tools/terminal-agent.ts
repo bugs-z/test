@@ -3,13 +3,13 @@ import { streamText } from "ai"
 import { ratelimit } from "@/lib/server/ratelimiter"
 import { epochTimeToNaturalLanguage } from "@/lib/utils"
 import { Sandbox } from "@e2b/code-interpreter"
-import { pauseSandbox } from "../e2b/sandbox"
-import { createAgentTools } from "@/lib/ai/tools"
-import { PENTESTGPT_AGENT_SYSTEM_PROMPT } from "./agent-prompts"
+import { pauseSandbox } from "@/lib/tools/e2b/sandbox"
+import { createAgentTools } from "@/lib/ai/tools/agent"
+import { PENTESTGPT_AGENT_SYSTEM_PROMPT } from "@/lib/models/agent-prompts"
 import { getSubscriptionInfo } from "@/lib/server/subscription-utils"
 import { PluginID } from "@/types/plugins"
-import { isFreePlugin } from "../tool-store/tools-helper"
-import { getToolsWithAnswerPrompt } from "../tool-store/prompts/system-prompt"
+import { isFreePlugin } from "@/lib/tools/tool-store/tools-helper"
+import { getToolsWithAnswerPrompt } from "@/lib/tools/tool-store/prompts/system-prompt"
 import { getTerminalTemplate } from "@/lib/tools/tool-store/tools-helper"
 import { myProvider } from "@/lib/ai/providers"
 
@@ -25,7 +25,7 @@ interface TerminalToolConfig {
   previousMessage?: string
 }
 
-export async function executeTerminalTool({
+export async function executeTerminalAgent({
   config
 }: {
   config: TerminalToolConfig
@@ -91,13 +91,6 @@ export async function executeTerminalTool({
     const setPersistentSandbox = (isPersistent: boolean) => {
       persistentSandbox = isPersistent
     }
-
-    // if (previousMessage) {
-    //   cleanedMessages.push({
-    //     role: "assistant",
-    //     content: previousMessage + "\n\n "
-    //   })
-    // }
 
     const { fullStream, finishReason } = streamText({
       model: myProvider.languageModel(selectedChatModel),

@@ -1,7 +1,7 @@
 import {
   getPentestGPTInfo,
   systemPromptEnding
-} from "@/lib/models/llm/llm-prompting"
+} from "@/lib/models/llm-prompting"
 import { PluginID } from "@/types/plugins"
 import { getPluginPrompt } from "./tools-prompts"
 import endent from "endent"

@@ -8,22 +8,22 @@ import {
   toVercelChatMessages,
   validateMessages
 } from "@/lib/ai/message-utils"
-import { handleErrorResponse } from "@/lib/models/llm/api-error"
-import llmConfig from "@/lib/models/llm/llm-config"
+import { handleErrorResponse } from "@/lib/models/api-error"
+import llmConfig from "@/lib/models/llm-config"
 import { checkRatelimitOnApi } from "@/lib/server/ratelimiter"
 import { createDataStreamResponse, streamText } from "ai"
 import { getModerationResult } from "@/lib/server/moderation"
 import { PluginID } from "@/types/plugins"
-import { executeWebSearchTool } from "@/lib/tools/llm/web-search"
+import { executeWebSearchTool } from "@/lib/ai/tools/web-search"
 import { createStreamResponse } from "@/lib/ai-helper"
-import { LargeModel } from "@/lib/models/llm/hackerai-llm-list"
-import { executeReasonLLMTool } from "@/lib/tools/llm/reason-llm"
-import { executeReasoningWebSearchTool } from "@/lib/tools/llm/reasoning-web-search"
+import { LargeModel } from "@/lib/models/hackerai-llm-list"
+import { executeReasonLLMTool } from "@/lib/ai/tools/reason-llm"
+import { executeReasoningWebSearchTool } from "@/lib/ai/tools/reasoning-web-search"
 import { processRag } from "@/lib/rag/rag-processor"
-import { executeDeepResearchTool } from "@/lib/tools/llm/deep-research"
+import { executeDeepResearchTool } from "@/lib/ai/tools/deep-research"
 import { myProvider } from "@/lib/ai/providers"
-import { createToolSchemas } from "@/lib/tools/llm/toolSchemas"
-import { executeTerminalTool } from "@/lib/tools/llm/terminal"
+import { createToolSchemas } from "@/lib/ai/tools/toolSchemas"
+import { executeTerminalAgent } from "@/lib/ai/tools/terminal-agent"
 import { terminalPlugins } from "@/lib/ai/terminal-utils"
 
 export const runtime: ServerRuntime = "edge"
@@ -106,7 +106,7 @@ export async function POST(request: Request) {
     let shouldUncensorResponse = false
 
     const handleMessages = (shouldUncensor: boolean) => {
-      if (includeImages) {
+      if (includeImages && !config.isLargeModel) {
         selectedChatModel = "vision-model"
         return filterEmptyAssistantMessages(messages)
       }
@@ -142,7 +142,7 @@ export async function POST(request: Request) {
 
     if (isTerminalContinuation) {
       return createStreamResponse(async dataStream => {
-        await executeTerminalTool({
+        await executeTerminalAgent({
           config: { messages, profile, dataStream, isTerminalContinuation }
         })
       })
@@ -200,7 +200,7 @@ export async function POST(request: Request) {
       default:
         if (terminalPlugins.includes(selectedPlugin as PluginID)) {
           return createStreamResponse(async dataStream => {
-            await executeTerminalTool({
+            await executeTerminalAgent({
               config: {
                 messages,
                 profile,

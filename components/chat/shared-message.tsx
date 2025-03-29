@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import { Tables } from "@/supabase/types"
-import { LLM_LIST } from "@/lib/models/llm/llm-list"
+import { LLM_LIST } from "@/lib/models/llm-list"
 import { ModelIcon } from "../models/model-icon"
 import { MessageTypeResolver } from "@/components/messages/message-type-solver"
 import { bulkFetchImageData } from "./chat-helpers"

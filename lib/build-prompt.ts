@@ -6,8 +6,8 @@ import {
 } from "@/types"
 import { Tables } from "@/supabase/types"
 import { countTokens } from "gpt-tokenizer"
-import { Agent } from "./models/llm/openai-llm-list"
-import { SmallModel, LargeModel } from "./models/llm/hackerai-llm-list"
+import { Agent } from "./models/openai-llm-list"
+import { SmallModel, LargeModel } from "./models/hackerai-llm-list"
 import { toast } from "sonner"
 import { Fragment } from "./tools/e2b/fragments/types"
 

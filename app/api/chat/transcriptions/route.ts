@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAIProfile } from "@/lib/server/server-chat-helpers"
 import { checkRatelimitOnApi } from "@/lib/server/ratelimiter"
-import llmConfig from "@/lib/models/llm/llm-config"
+import llmConfig from "@/lib/models/llm-config"
 import { getSubscriptionInfo } from "@/lib/server/subscription-utils"
 
 const SUPPORTED_MIME_TYPES = [

@@ -1,4 +1,4 @@
-import llmConfig from "@/lib/models/llm/llm-config"
+import llmConfig from "@/lib/models/llm-config"
 import { processDocX } from "@/lib/retrieval/processing"
 import { getServerProfile } from "@/lib/server/server-chat-helpers"
 import { Database } from "@/supabase/types"

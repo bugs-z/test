@@ -1,5 +1,5 @@
 import { generateStandaloneQuestion } from "@/lib/models/question-generator"
-import llmConfig from "@/lib/models/llm/llm-config"
+import llmConfig from "@/lib/models/llm-config"
 import { RAG_SYSTEM_PROMPT_BODY } from "@/lib/backend-config"
 import { buildSystemPrompt } from "@/lib/ai/prompts"
 

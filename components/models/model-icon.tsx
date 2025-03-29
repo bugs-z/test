@@ -4,8 +4,8 @@ import { IconSparkles, IconBolt } from "@tabler/icons-react"
 import { Sparkles, Sparkle } from "lucide-react"
 import { useTheme } from "next-themes"
 import { FC, HTMLAttributes } from "react"
-import { Agent } from "@/lib/models/llm/openai-llm-list"
-import { SmallModel, LargeModel } from "@/lib/models/llm/hackerai-llm-list"
+import { Agent } from "@/lib/models/openai-llm-list"
+import { SmallModel, LargeModel } from "@/lib/models/hackerai-llm-list"
 
 interface ModelIconProps extends HTMLAttributes<HTMLDivElement> {
   modelId: LLMID | "custom"

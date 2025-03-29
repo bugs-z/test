@@ -1,5 +1,5 @@
 import { PentestGPTContext } from "@/context/context"
-import { LLM_LIST } from "@/lib/models/llm/llm-list"
+import { LLM_LIST } from "@/lib/models/llm-list"
 import { IconChevronDown, IconRefresh } from "@tabler/icons-react"
 import { FC, useContext, useRef, useState } from "react"
 import { Button } from "../ui/button"

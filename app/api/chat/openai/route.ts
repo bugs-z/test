@@ -4,20 +4,20 @@ import {
   filterEmptyAssistantMessages,
   toVercelChatMessages
 } from "@/lib/ai/message-utils"
-import llmConfig from "@/lib/models/llm/llm-config"
+import llmConfig from "@/lib/models/llm-config"
 import { checkRatelimitOnApi } from "@/lib/server/ratelimiter"
 import { getAIProfile } from "@/lib/server/server-chat-helpers"
 import { createDataStreamResponse, streamText } from "ai"
 import { ServerRuntime } from "next"
-import { createToolSchemas } from "@/lib/tools/llm/toolSchemas"
+import { createToolSchemas } from "@/lib/ai/tools/toolSchemas"
 import { PluginID } from "@/types/plugins"
-import { executeWebSearchTool } from "@/lib/tools/llm/web-search"
+import { executeWebSearchTool } from "@/lib/ai/tools/web-search"
 import { createStreamResponse } from "@/lib/ai-helper"
-import { executeTerminalTool } from "@/lib/tools/llm/terminal"
-import { executeReasonLLMTool } from "@/lib/tools/llm/reason-llm"
-import { executeReasoningWebSearchTool } from "@/lib/tools/llm/reasoning-web-search"
+import { executeTerminalAgent } from "@/lib/ai/tools/terminal-agent"
+import { executeReasonLLMTool } from "@/lib/ai/tools/reason-llm"
+import { executeReasoningWebSearchTool } from "@/lib/ai/tools/reasoning-web-search"
 import { processRag } from "@/lib/rag/rag-processor"
-import { executeDeepResearchTool } from "@/lib/tools/llm/deep-research"
+import { executeDeepResearchTool } from "@/lib/ai/tools/deep-research"
 import { myProvider } from "@/lib/ai/providers"
 import { terminalPlugins } from "@/lib/ai/terminal-utils"
 
@@ -99,7 +99,7 @@ export async function POST(request: Request) {
 
     if (isTerminalContinuation) {
       return createStreamResponse(async dataStream => {
-        await executeTerminalTool({
+        await executeTerminalAgent({
           config: { messages, profile, dataStream, isTerminalContinuation }
         })
       })
@@ -122,7 +122,7 @@ export async function POST(request: Request) {
 
       case PluginID.TERMINAL:
         return createStreamResponse(async dataStream => {
-          await executeTerminalTool({
+          await executeTerminalAgent({
             config: { messages, profile, dataStream, isTerminalContinuation }
           })
         })
@@ -151,7 +151,7 @@ export async function POST(request: Request) {
       default:
         if (terminalPlugins.includes(selectedPlugin as PluginID)) {
           return createStreamResponse(async dataStream => {
-            await executeTerminalTool({
+            await executeTerminalAgent({
               config: {
                 messages,
                 profile,

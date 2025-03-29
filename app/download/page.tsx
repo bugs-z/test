@@ -90,7 +90,7 @@ function DownloadOption({
 
 export default function DownloadPage() {
   return (
-    <div className="from-background to-background/80 min-h-screen bg-gradient-to-b py-16">
+    <div className="from-background to-background/80 min-h-screen bg-linear-to-b py-16">
       {/* Header Section */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center">
@@ -105,8 +105,8 @@ export default function DownloadPage() {
 
       {/* Main Image */}
       <div className="mx-auto mt-16 max-w-5xl px-4 sm:px-6 lg:px-8">
-        <div className="from-primary/10 to-secondary/10 overflow-hidden rounded-2xl bg-gradient-to-br shadow-xl">
-          <div className="relative aspect-[16/9] w-full">
+        <div className="from-primary/10 to-secondary/10 overflow-hidden rounded-2xl bg-linear-to-br shadow-xl">
+          <div className="relative aspect-16/9 w-full">
             <Image
               src={`${BUCKET_URL}/pentestgpt-mac-app.png`}
               alt="PentestGPT Desktop Application"

@@ -1,6 +1,6 @@
 import { buildSystemPrompt } from "@/lib/ai/prompts"
 import { toVercelChatMessages } from "@/lib/ai/message-utils"
-import llmConfig from "@/lib/models/llm/llm-config"
+import llmConfig from "@/lib/models/llm-config"
 import { streamText } from "ai"
 import { myProvider } from "@/lib/ai/providers"
 import FirecrawlApp, { ScrapeResponse } from "@mendable/firecrawl-js"
@@ -10,6 +10,24 @@ interface BrowserToolConfig {
   profile: any
   messages: any[]
   dataStream: any
+}
+
+type Delta = {
+  type: "text-delta" | "tool-call"
+  textDelta?: string
+  content?: string
+}
+
+async function getProviderConfig(profile: any) {
+  const systemPrompt = buildSystemPrompt(
+    llmConfig.systemPrompts.pentestGPTBrowser,
+    profile.profile_context
+  )
+
+  return {
+    systemPrompt,
+    model: myProvider.languageModel("chat-model-gpt-small")
+  }
 }
 
 export function getLastUserMessage(messages: any[]): string {
@@ -22,7 +40,6 @@ export async function browsePage(url: string): Promise<string> {
   const firecrawlApiKey = process.env.FIRECRAWL_API_KEY
 
   if (!firecrawlApiKey) {
-    console.error("FIRECRAWL_API_KEY is not set in the environment variables")
     throw new Error("FIRECRAWL_API_KEY is not set in the environment variables")
   }
 
@@ -33,19 +50,19 @@ export async function browsePage(url: string): Promise<string> {
     })) as ScrapeResponse
 
     if (!scrapeResult.success) {
-      console.error(`Error fetching URL: ${url}. Error: ${scrapeResult.error}`)
-      return `No content could be retrieved from the URL: ${url}. The webpage might be empty, unavailable, or there could be an issue with the content retrieval process. Error: ${scrapeResult.error}`
+      throw new Error(
+        `Error fetching URL: ${url}. Error: ${scrapeResult.error}`
+      )
     }
 
     if (!scrapeResult.markdown) {
-      console.error(`Empty content received from URL: ${url}`)
-      return `No content could be retrieved from the URL: ${url}. The webpage might be empty, unavailable, or there could be an issue with the content retrieval process.`
+      throw new Error(`Empty content received from URL: ${url}`)
     }
 
     return scrapeResult.markdown
   } catch (error) {
-    console.error("Error browsing URL:", url, error)
-    return `No content could be retrieved from the URL: ${url}. The webpage might be empty, unavailable, or there could be an issue with the content retrieval process.`
+    console.error("[BrowserTool] Error browsing URL:", url, error)
+    throw error
   }
 }
 
@@ -53,23 +70,25 @@ export async function browseMultiplePages(
   urls: string[]
 ): Promise<Record<string, string>> {
   const results: Record<string, string> = {}
-
-  // Process up to 3 URLs
   const urlsToProcess = urls.slice(0, 3)
 
-  // Process URLs in parallel
-  await Promise.all(
-    urlsToProcess.map(async url => {
-      try {
-        const content = await browsePage(url)
-        results[url] = content
-      } catch (error) {
-        console.error(`Error browsing URL: ${url}`, error)
-        results[url] =
-          `No content could be retrieved from the URL: ${url}. The webpage might be empty, unavailable, or there could be an issue with the content retrieval process.`
-      }
-    })
-  )
+  try {
+    await Promise.all(
+      urlsToProcess.map(async url => {
+        try {
+          const content = await browsePage(url)
+          results[url] = content
+        } catch (error) {
+          console.error(`[BrowserTool] Error browsing URL: ${url}`, error)
+          results[url] =
+            `Error accessing URL: ${url}. The webpage might be empty, unavailable, or there could be an issue with the content retrieval process.`
+        }
+      })
+    )
+  } catch (error) {
+    console.error("[BrowserTool] Error in browseMultiplePages:", error)
+    throw error
+  }
 
   return results
 }
@@ -146,52 +165,72 @@ export async function executeBrowserTool({
   open_url: string | string[]
   config: BrowserToolConfig
 }) {
+  if (!process.env.FIRECRAWL_API_KEY) {
+    throw new Error("FIRECRAWL_API_KEY is not set in the environment variables")
+  }
+
   const { profile, messages, dataStream } = config
+  const { systemPrompt, model } = await getProviderConfig(profile)
 
-  const lastUserMessage = getLastUserMessage(messages)
-  let browserPrompt: string
+  try {
+    const lastUserMessage = getLastUserMessage(messages)
+    let browserPrompt: string
 
-  dataStream.writeData({ type: "tool-call", content: "browser" })
+    dataStream.writeData({ type: "tool-call", content: "browser" })
 
-  // Handle single URL or multiple URLs
-  if (typeof open_url === "string") {
-    const browserResult = await browsePage(open_url)
-    browserPrompt = createBrowserPrompt(
-      browserResult,
-      lastUserMessage,
-      open_url
-    )
-  } else {
-    const browserResults = await browseMultiplePages(open_url)
-    browserPrompt = createMultiBrowserPrompt(browserResults, lastUserMessage)
-  }
-
-  console.log("[BrowserTool] Executing browser tool")
-
-  const { fullStream } = streamText({
-    model: myProvider.languageModel("chat-model-gpt-small"),
-    system: buildSystemPrompt(
-      llmConfig.systemPrompts.pentestGPTBrowser,
-      profile.profile_context
-    ),
-    messages: [
-      ...toVercelChatMessages(messages.slice(0, -1)),
-      { role: "user", content: browserPrompt }
-    ],
-    maxTokens: 2048
-  })
-
-  dataStream.writeData({ type: "tool-call", content: "none" })
-  dataStream.writeData({ type: "text-delta", content: "\n\n" })
-
-  for await (const delta of fullStream) {
-    if (delta.type === "text-delta") {
-      dataStream.writeData({
-        type: "text-delta",
-        content: delta.textDelta
-      })
+    // Handle single URL or multiple URLs
+    if (typeof open_url === "string") {
+      const browserResult = await browsePage(open_url)
+      browserPrompt = createBrowserPrompt(
+        browserResult,
+        lastUserMessage,
+        open_url
+      )
+    } else {
+      const browserResults = await browseMultiplePages(open_url)
+      browserPrompt = createMultiBrowserPrompt(browserResults, lastUserMessage)
     }
-  }
 
-  return "Browser tool executed"
+    const { fullStream } = streamText({
+      model,
+      messages: [
+        {
+          role: "system",
+          content: systemPrompt
+        },
+        ...toVercelChatMessages(messages.slice(0, -1)),
+        { role: "user", content: browserPrompt }
+      ],
+      maxTokens: 2048,
+      onError: (error: unknown) => {
+        console.error("[BrowserTool] Streaming Error:", {
+          error: error instanceof Error ? error.message : "Unknown error",
+          model
+        })
+        throw error
+      }
+    })
+
+    dataStream.writeData({ type: "tool-call", content: "none" })
+    dataStream.writeData({ type: "text-delta", content: "\n\n" })
+
+    for await (const delta of fullStream) {
+      const { type } = delta as Delta
+      if (type === "text-delta") {
+        const { textDelta } = delta as Delta
+        dataStream.writeData({
+          type: "text-delta",
+          content: textDelta
+        })
+      }
+    }
+
+    return "Browser tool executed"
+  } catch (error) {
+    console.error("[BrowserTool] Error:", {
+      error: error instanceof Error ? error.message : "Unknown error",
+      model
+    })
+    throw error
+  }
 }

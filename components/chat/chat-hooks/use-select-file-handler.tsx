@@ -1,6 +1,6 @@
 import { PentestGPTContext } from "@/context/context"
 import { createFileBasedOnExtension } from "@/db/files"
-import { LLM_LIST } from "@/lib/models/llm/llm-list"
+import { LLM_LIST } from "@/lib/models/llm-list"
 import mammoth from "mammoth"
 import { useContext, useEffect, useState } from "react"
 import { toast } from "sonner"

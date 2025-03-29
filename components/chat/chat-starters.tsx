@@ -15,7 +15,7 @@ const InfoCard: React.FC<{
 }> = ({ title, description, onClick, isTemporaryChat }) => (
   <button
     className={cn(
-      "min-w-72 rounded-xl p-3.5 text-left duration-300 ease-in-out focus:outline-none",
+      "min-w-72 rounded-xl p-3.5 text-left duration-300 ease-in-out focus:outline-hidden",
       "hover:bg-select",
       isTemporaryChat ? "bg-tertiary" : "bg-secondary"
     )}

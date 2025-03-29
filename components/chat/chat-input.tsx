@@ -216,7 +216,7 @@ export const ChatInput: FC = () => {
                   className={cn(
                     "ring-offset-background placeholder:text-muted-foreground text-md",
                     "flex w-full resize-none rounded-t-xl bg-transparent",
-                    "border-none focus-visible:outline-none",
+                    "border-none focus-visible:outline-hidden",
                     "disabled:cursor-not-allowed disabled:opacity-50",
                     "py-3",
                     "px-3"

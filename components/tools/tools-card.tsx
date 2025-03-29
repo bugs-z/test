@@ -33,7 +33,7 @@ export function PluginCard({
   }
 
   return (
-    <div className="border-pgpt-light-gray flex h-[200px] w-full flex-col justify-between rounded-lg border p-4 shadow transition-shadow duration-200 hover:shadow-md">
+    <div className="border-pgpt-light-gray flex h-[200px] w-full flex-col justify-between rounded-lg border p-4 shadow-sm transition-shadow duration-200 hover:shadow-md">
       <div className="flex items-center">
         <div className="mr-4 size-[60px] shrink-0">
           <Image
@@ -50,7 +50,7 @@ export function PluginCard({
           <h4 className="text-primary flex items-center text-lg">
             <span className="font-medium">{plugin.name}</span>
             {plugin.isPremium && (
-              <span className="ml-2 rounded bg-yellow-200 px-2 py-1 text-xs font-semibold uppercase text-yellow-700 shadow">
+              <span className="ml-2 rounded bg-yellow-200 px-2 py-1 text-xs font-semibold uppercase text-yellow-700 shadow-sm">
                 Pro
               </span>
             )}

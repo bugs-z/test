@@ -11,7 +11,7 @@ import {
   createOrConnectTemporaryTerminal,
   createOrConnectPersistentTerminal
 } from "@/lib/tools/e2b/sandbox"
-import { executeTerminalCommand } from "@/lib/tools/llm/terminal-executor"
+import { executeTerminalCommand } from "@/lib/tools/e2b/terminal-executor"
 import {
   streamTerminalOutput,
   reduceTerminalOutput

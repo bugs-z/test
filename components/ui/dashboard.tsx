@@ -243,7 +243,7 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
 
       {isMobile && showSidebar && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm dark:bg-black/80"
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs dark:bg-black/80"
           onClick={handleOverlayClick}
         />
       )}

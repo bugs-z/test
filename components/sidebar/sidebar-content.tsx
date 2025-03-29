@@ -42,7 +42,6 @@ export const SidebarContent: FC<SidebarContentProps> = ({
     setIsAcceptInviteDialogOpen(isInvitationPending)
   }, [isInvitationPending])
 
-  // console.log(isAcceptInviteDialogOpen, membershipData, isInvitationPending)
   const canInviteMembers =
     isTeamAdmin(membershipData) &&
     teamMembers &&

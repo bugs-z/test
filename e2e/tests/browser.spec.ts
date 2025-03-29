@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test"
-import { browsePage } from "@/lib/tools/llm/browser"
+import { browsePage } from "@/lib/ai/tools/browser"
 
 if (process.env.E2E_TESTS === "true") {
   test.describe("Browser Tool", () => {

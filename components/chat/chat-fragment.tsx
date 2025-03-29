@@ -1,4 +1,3 @@
-/* eslint-disable tailwindcss/classnames-order */
 import { IconX, IconReload, IconDownload } from "@tabler/icons-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {

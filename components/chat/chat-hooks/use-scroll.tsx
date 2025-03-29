@@ -7,17 +7,28 @@ export const useScroll = () => {
 
   const stickToBottom = useStickToBottom({
     resize: "smooth",
-    initial: "smooth"
+    initial: "instant"
   })
 
   const scrollToBottom = useCallback(
-    (options?: { force?: boolean }) => {
+    (options?: {
+      force?: boolean
+      instant?: boolean
+    }): boolean | Promise<boolean> => {
+      if (options?.instant) {
+        const scrollContainer = stickToBottom.scrollRef.current
+        if (scrollContainer) {
+          scrollContainer.scrollTop = scrollContainer.scrollHeight
+        }
+        return true
+      }
+
       return stickToBottom.scrollToBottom({
         animation: "smooth",
         preserveScrollPosition: !options?.force
       })
     },
-    [stickToBottom.scrollToBottom]
+    [stickToBottom.scrollToBottom, stickToBottom.scrollRef]
   )
 
   useEffect(() => {

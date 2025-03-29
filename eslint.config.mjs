@@ -1,4 +1,3 @@
-import tailwindcss from "eslint-plugin-tailwindcss";
 import tsParser from "@typescript-eslint/parser";
 import js from "@eslint/js";
 import { FlatCompat } from "@eslint/eslintrc";
@@ -12,24 +11,15 @@ export default [
     ...compat.extends(
         "next/core-web-vitals",
         "next/typescript",
-        "prettier",
-        "plugin:tailwindcss/recommended"
+        "prettier"
     ),
     {
-        plugins: {
-            tailwindcss,
-        },
         settings: {
-            tailwindcss: {
-                callees: ["cn", "cva"],
-                config: "tailwind.config.js",
-            },
             next: {
                 rootDir: "./"
             }
         },
         rules: {
-            "tailwindcss/no-custom-classname": "off",
             "@next/next/no-img-element": "error",
             "@next/next/no-html-link-for-pages": "error",
         },

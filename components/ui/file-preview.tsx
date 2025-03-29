@@ -25,7 +25,7 @@ export default function FilePreview({
 
       <DialogContent
         className={cn(
-          "flex items-center justify-center outline-none",
+          "flex items-center justify-center outline-hidden",
           "border-transparent bg-transparent"
         )}
       >

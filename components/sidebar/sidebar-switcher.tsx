@@ -24,7 +24,7 @@ const LabeledSwitchItem: FC<LabeledSwitchItemProps> = ({
 }) => {
   return (
     <TabsTrigger
-      className="hover:bg-accent flex w-full items-center justify-start gap-2 p-2 hover:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+      className="hover:bg-accent flex w-full items-center justify-start gap-2 p-2 hover:opacity-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
       value={value}
       onClick={() => onContentTypeChange(value)}
     >

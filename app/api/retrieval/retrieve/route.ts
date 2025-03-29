@@ -1,4 +1,4 @@
-import llmConfig from "@/lib/models/llm/llm-config"
+import llmConfig from "@/lib/models/llm-config"
 import { getServerProfile } from "@/lib/server/server-chat-helpers"
 import { Database, Tables } from "@/supabase/types"
 import { createClient, SupabaseClient } from "@supabase/supabase-js"

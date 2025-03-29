@@ -1,31 +1,69 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
-::-webkit-scrollbar-track {
-  background-color: transparent;
+@config '../tailwind.config.ts';
+
+/*
+  The default border color has changed to `currentColor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
 }
 
-::-webkit-scrollbar-thumb {
-  background-color: #ccc;
-  border-radius: 10px;
+@utility scrollbar-hide {
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  /* Hide scrollbar for IE, Edge and Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background-color: #aaa;
+@utility scrollbar-show {
+  scrollbar-width: auto; /* Firefox */
+  -ms-overflow-style: auto; /* IE and Edge */
+  &::-webkit-scrollbar {
+    display: block; /* Chrome, Safari, Opera */
+  }
 }
 
-::-webkit-scrollbar-track:hover {
-  background-color: #f2f2f2;
-}
+@layer utilities {
+  ::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
 
-::-webkit-scrollbar-corner {
-  background-color: transparent;
-}
+  ::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 10px;
+  }
 
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #aaa;
+  }
+
+  ::-webkit-scrollbar-track:hover {
+    background-color: #f2f2f2;
+  }
+
+  ::-webkit-scrollbar-corner {
+    background-color: transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
 }
 
 @layer base {
@@ -138,25 +176,6 @@
     @apply bg-background text-foreground;
   }
 }
-
-@layer utilities {
-      /* Hide scrollbar for Chrome, Safari and Opera */
-      .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-      }
-     /* Hide scrollbar for IE, Edge and Firefox */
-      .scrollbar-hide {
-          -ms-overflow-style: none;  /* IE and Edge */
-          scrollbar-width: none;  /* Firefox */
-    }
-    .scrollbar-show {
-      scrollbar-width: auto; /* Firefox */
-      -ms-overflow-style: auto; /* IE and Edge */
-    }
-    .scrollbar-show::-webkit-scrollbar {
-      display: block; /* Chrome, Safari, Opera */
-    }
-  }
 
   .ansi-terminal .ansi-black-fg { color: #696969; }
   .ansi-terminal .ansi-red-fg { color: #FF6B68; }

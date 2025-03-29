@@ -28,7 +28,7 @@ export const myProvider = customProvider({
       middleware: extractReasoningMiddleware({ tagName: "think" })
     }),
     "deep-research": perplexity("sonar-deep-research"),
-    "vision-model": mistral("pixtral-large-latest"),
+    "vision-model": mistral("mistral-small-latest"),
     "title-model": mistral("mistral-small-latest"),
     "standalone-question-model": mistral("mistral-small-latest")
   }
