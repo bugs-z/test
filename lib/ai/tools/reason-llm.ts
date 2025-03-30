@@ -11,13 +11,6 @@ interface ReasonLLMConfig {
   isLargeModel: boolean
 }
 
-type Delta = {
-  type: "text-delta" | "reasoning" | "thinking-time"
-  textDelta?: string
-  content?: string
-  elapsed_secs?: number
-}
-
 async function getProviderConfig(profile: any) {
   const systemPrompt = buildSystemPrompt(
     llmConfig.systemPrompts.pentestGPTReasoning,
@@ -35,8 +28,8 @@ export async function executeReasonLLMTool({
 }: {
   config: ReasonLLMConfig
 }) {
-  if (!process.env.PERPLEXITY_API_KEY) {
-    throw new Error("Perplexity API key is not set for reason LLM")
+  if (!process.env.OPENROUTER_API_KEY) {
+    throw new Error("OpenRouter API key is not set for reason LLM")
   }
 
   const { messages, profile, dataStream } = config
@@ -52,40 +45,29 @@ export async function executeReasonLLMTool({
         },
         ...toVercelChatMessages(messages)
       ],
-      maxTokens: 4096,
-      onError: (error: unknown) => {
-        console.error("[ReasonLLM] Streaming Error:", {
-          error: error instanceof Error ? error.message : "Unknown error",
-          model
-        })
-        throw error
-      }
+      maxTokens: 4096
     })
 
     let thinkingStartTime: number | null = null
     let isThinking = false
 
     for await (const delta of fullStream) {
-      const { type } = delta as Delta
-
-      if (type === "text-delta") {
-        const { textDelta } = delta as Delta
+      if (delta.type === "text-delta") {
         dataStream.writeData({
           type: "text-delta",
-          content: textDelta
+          content: delta.textDelta
         })
       }
 
-      if (type === "reasoning") {
+      if (delta.type === "reasoning") {
         if (!isThinking) {
           isThinking = true
           thinkingStartTime = Date.now()
         }
 
-        const { content } = delta as Delta
         dataStream.writeData({
           type: "reasoning",
-          content
+          content: delta.textDelta
         })
       }
     }

@@ -52,14 +52,7 @@ export async function executeReasoningWebSearchTool({
         },
         ...toVercelChatMessages(messages)
       ],
-      maxTokens: 4096,
-      onError: (error: unknown) => {
-        console.error("[ReasoningWebSearch] Streaming Error:", {
-          error: error instanceof Error ? error.message : "Unknown error",
-          model: selectedModel
-        })
-        throw error
-      }
+      maxTokens: 4096
     })
 
     const citations: string[] = []
@@ -68,16 +61,13 @@ export async function executeReasoningWebSearchTool({
     let isThinking = false
 
     for await (const delta of fullStream) {
-      const { type } = delta
-
-      if (type === "source") {
-        const { source } = delta
-        if (source.sourceType === "url") {
-          citations.push(source.url)
+      if (delta.type === "source") {
+        if (delta.source.sourceType === "url") {
+          citations.push(delta.source.url)
         }
       }
 
-      if (type === "text-delta") {
+      if (delta.type === "text-delta") {
         const { textDelta } = delta
 
         if (!hasFirstTextDelta && textDelta.trim() !== "") {

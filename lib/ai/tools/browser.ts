@@ -12,12 +12,6 @@ interface BrowserToolConfig {
   dataStream: any
 }
 
-type Delta = {
-  type: "text-delta" | "tool-call"
-  textDelta?: string
-  content?: string
-}
-
 async function getProviderConfig(profile: any) {
   const systemPrompt = buildSystemPrompt(
     llmConfig.systemPrompts.pentestGPTBrowser,
@@ -201,26 +195,17 @@ export async function executeBrowserTool({
         ...toVercelChatMessages(messages.slice(0, -1)),
         { role: "user", content: browserPrompt }
       ],
-      maxTokens: 2048,
-      onError: (error: unknown) => {
-        console.error("[BrowserTool] Streaming Error:", {
-          error: error instanceof Error ? error.message : "Unknown error",
-          model
-        })
-        throw error
-      }
+      maxTokens: 2048
     })
 
     dataStream.writeData({ type: "tool-call", content: "none" })
     dataStream.writeData({ type: "text-delta", content: "\n\n" })
 
     for await (const delta of fullStream) {
-      const { type } = delta as Delta
-      if (type === "text-delta") {
-        const { textDelta } = delta as Delta
+      if (delta.type === "text-delta") {
         dataStream.writeData({
           type: "text-delta",
-          content: textDelta
+          content: delta.textDelta
         })
       }
     }

@@ -36,8 +36,8 @@ export async function executeTerminalAgent({
     dataStream,
     isTerminalContinuation,
     selectedPlugin
-    // previousMessage
   } = config
+
   let sandbox: Sandbox | null = null
   let persistentSandbox = false
   const userID = profile.user_id
@@ -130,7 +130,7 @@ export async function executeTerminalAgent({
           if (chunk.toolName === "message_ask_user") {
             dataStream.writeData({
               type: "text-delta",
-              content: chunk.args.text
+              content: chunk.args?.text
             })
           }
         }
@@ -147,12 +147,23 @@ export async function executeTerminalAgent({
       const originalFinishReason = await finishReason
       dataStream.writeData({ finishReason: originalFinishReason })
     }
+
+    return "Terminal execution completed"
+  } catch (error) {
+    console.error("[TerminalAgent] Error:", {
+      error: error instanceof Error ? error.message : "Unknown error",
+      model: selectedChatModel,
+      plugin: selectedPlugin
+    })
+    dataStream.writeData({
+      type: "error",
+      content: "An error occurred during terminal execution. Please try again."
+    })
+    throw error
   } finally {
     // Pause sandbox at the end of the API request
     if (sandbox && persistentSandbox) {
       await pauseSandbox(sandbox)
     }
   }
-
-  return "Terminal execution completed"
 }

@@ -44,14 +44,7 @@ export async function executeDeepResearchTool({
         },
         ...toVercelChatMessages(messages)
       ],
-      maxTokens: 8192,
-      onError: (error: unknown) => {
-        console.error("[DeepResearch] Streaming Error:", {
-          error: error instanceof Error ? error.message : "Unknown error",
-          model
-        })
-        throw error
-      }
+      maxTokens: 8192
     })
 
     const citations: string[] = []
@@ -60,16 +53,13 @@ export async function executeDeepResearchTool({
     let isThinking = false
 
     for await (const delta of fullStream) {
-      const { type } = delta
-
-      if (type === "source") {
-        const { source } = delta
-        if (source.sourceType === "url") {
-          citations.push(source.url)
+      if (delta.type === "source") {
+        if (delta.source.sourceType === "url") {
+          citations.push(delta.source.url)
         }
       }
 
-      if (type === "text-delta") {
+      if (delta.type === "text-delta") {
         const { textDelta } = delta
 
         if (!hasFirstTextDelta && textDelta.trim() !== "") {
