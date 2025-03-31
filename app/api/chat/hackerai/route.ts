@@ -4,6 +4,7 @@ import { buildSystemPrompt } from "@/lib/ai/prompts"
 import {
   filterEmptyAssistantMessages,
   handleAssistantMessages,
+  addAuthMessage,
   messagesIncludeImages,
   toVercelChatMessages,
   validateMessages
@@ -106,28 +107,28 @@ export async function POST(request: Request) {
     let shouldUncensorResponse = false
 
     const handleMessages = (shouldUncensor: boolean) => {
-      if (includeImages && !config.isLargeModel) {
+      if (includeImages && config.isLargeModel) {
         selectedChatModel = "vision-model"
-        return filterEmptyAssistantMessages(messages)
       }
 
       if (shouldUncensor) {
-        return handleAssistantMessages(messages)
+        addAuthMessage(messages)
+        if (
+          !includeImages &&
+          selectedPlugin !== PluginID.WEB_SEARCH &&
+          selectedPlugin !== PluginID.REASONING &&
+          selectedPlugin !== PluginID.REASONING_WEB_SEARCH &&
+          selectedPlugin !== PluginID.DEEP_RESEARCH &&
+          !terminalPlugins.includes(selectedPlugin as PluginID)
+        ) {
+          return handleAssistantMessages(messages)
+        }
       }
 
       return filterEmptyAssistantMessages(messages)
     }
 
-    if (
-      llmConfig.openai.apiKey &&
-      !includeImages &&
-      !isContinuation &&
-      selectedPlugin !== PluginID.WEB_SEARCH &&
-      selectedPlugin !== PluginID.REASONING &&
-      selectedPlugin !== PluginID.REASONING_WEB_SEARCH &&
-      selectedPlugin !== PluginID.DEEP_RESEARCH &&
-      !terminalPlugins.includes(selectedPlugin as PluginID)
-    ) {
+    if (llmConfig.openai.apiKey && !isContinuation) {
       const { shouldUncensorResponse: moderationResult } =
         await getModerationResult(
           messages,

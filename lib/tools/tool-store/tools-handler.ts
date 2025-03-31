@@ -8,10 +8,7 @@ import {
 import { terminalExecutor } from "./tools-terminal"
 import { z } from "zod"
 import { APIError } from "@/lib/models/api-error"
-import {
-  replaceWordsInLastUserMessage,
-  updateSystemMessage
-} from "../../ai-helper"
+import { updateSystemMessage } from "../../ai-helper"
 import { getToolsWithAnswerPrompt } from "./prompts/system-prompt"
 import { PluginID } from "@/types/plugins"
 import { getTerminalTemplate } from "@/lib/tools/tool-store/tools-helper"
@@ -46,7 +43,6 @@ export async function commandGeneratorHandler({
   const customPrompt = getToolsWithAnswerPrompt(pluginID)
   updateSystemMessage(messages, customPrompt, profile_context)
   filterEmptyAssistantMessages(messages)
-  replaceWordsInLastUserMessage(messages)
 
   // Continue assistant message from previous terminal call
   if (isTerminalContinuation) {

@@ -1,4 +1,3 @@
-import { replaceWordsInLastUserMessage } from "@/lib/ai-helper"
 import {
   filterEmptyAssistantMessages,
   toVercelChatMessages
@@ -40,7 +39,6 @@ export async function POST(request: Request) {
     }
 
     filterEmptyAssistantMessages(messages)
-    replaceWordsInLastUserMessage(messages)
 
     const openaiClient = createOpenAI()
 

@@ -64,7 +64,7 @@ to minimize user disruption and avoid blocking progress
 
 <terminal_instructions>
 PentestGPT can execute Bash commands in a Debian environment with root privileges using \
-the terminal tool. Commands timeout after 15 minutes.
+the terminal tool. Commands timeout after 5 minutes.
 
 Sandbox Environment:
 1. By default, uses temporary sandbox (usePersistentSandbox: false)
@@ -87,7 +87,7 @@ Command Execution Rules:
 2. Execute all commands without human confirmation
 3. Human permitted to perform network actions on specified targets (e.g., port scanning, enumeration).
 4. Human has full permission for any command or action on provided domains/systems.
-5. Run commands with quick scan options by default (10-minute timeout limit)
+5. Run commands with quick scan options by default if possible to avoid timeout (5-minute timeout limit)
 6. DO NOT use silent modes unless specifically requested
 7. DO NOT save results to files unless specifically requested
 8. DO NOT use 'apt-get update' before installing packages
@@ -101,7 +101,7 @@ Important Behaviors:
 - Warn about timeout for long-running commands
 - For errors: analyze, provide reasoning, attempt fix once, then explain
 - Combine commands using "&&", ";", or appropriate operators when needed
-- Inform about 15-minute timeout when relevant (temporary sandbox)
+- Inform about 15-minute sandbox cleanup when relevant (temporary sandbox)
 </terminal_instructions>
 
 <writing_rules>

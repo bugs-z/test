@@ -1,7 +1,7 @@
-import { replaceWordsInLastUserMessage } from "@/lib/ai-helper"
 import { buildSystemPrompt } from "@/lib/ai/prompts"
 import {
   filterEmptyAssistantMessages,
+  addAuthMessage,
   toVercelChatMessages
 } from "@/lib/ai/message-utils"
 import llmConfig from "@/lib/models/llm-config"
@@ -20,6 +20,7 @@ import { processRag } from "@/lib/rag/rag-processor"
 import { executeDeepResearchTool } from "@/lib/ai/tools/deep-research"
 import { myProvider } from "@/lib/ai/providers"
 import { terminalPlugins } from "@/lib/ai/terminal-utils"
+import { getModerationResult } from "@/lib/server/moderation"
 
 export const runtime: ServerRuntime = "edge"
 export const preferredRegion = [
@@ -94,8 +95,33 @@ export async function POST(request: Request) {
       }
     }
 
-    filterEmptyAssistantMessages(messages)
-    replaceWordsInLastUserMessage(messages)
+    let shouldUncensorResponse = false
+
+    if (
+      llmConfig.openai.apiKey &&
+      !isContinuation &&
+      selectedPlugin !== PluginID.WEB_SEARCH &&
+      selectedPlugin !== PluginID.REASONING &&
+      selectedPlugin !== PluginID.REASONING_WEB_SEARCH &&
+      selectedPlugin !== PluginID.DEEP_RESEARCH &&
+      !terminalPlugins.includes(selectedPlugin as PluginID)
+    ) {
+      const { shouldUncensorResponse: moderationResult } =
+        await getModerationResult(
+          messages,
+          llmConfig.openai.apiKey || "",
+          10,
+          true
+        )
+      shouldUncensorResponse = moderationResult
+    }
+
+    if (shouldUncensorResponse) {
+      addAuthMessage(messages)
+      filterEmptyAssistantMessages(messages)
+    } else {
+      filterEmptyAssistantMessages(messages)
+    }
 
     if (isTerminalContinuation) {
       return createStreamResponse(async dataStream => {

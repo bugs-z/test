@@ -7,11 +7,12 @@ import { mistral } from "@ai-sdk/mistral"
 import { openai } from "@ai-sdk/openai"
 import { openrouter } from "@openrouter/ai-sdk-provider"
 import { perplexity } from "@ai-sdk/perplexity"
+import { deepseek } from "@ai-sdk/deepseek"
 
 export const myProvider = customProvider({
   languageModels: {
-    "chat-model-small": openrouter("deepseek/deepseek-chat-v3-0324"),
-    "chat-model-large": openrouter("anthropic/claude-3.7-sonnet"),
+    "chat-model-small": mistral("mistral-small-latest"),
+    "chat-model-large": deepseek("deepseek-chat"),
     "chat-model-gpt-small": openai("gpt-4o-mini"),
     "chat-model-gpt-large": openai("gpt-4o-2024-11-20", {
       parallelToolCalls: false

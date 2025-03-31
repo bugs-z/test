@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.2.2",
+    "@ai-sdk/deepseek": "^0.2.2",
     "@ai-sdk/mistral": "^1.2.1",
     "@ai-sdk/openai": "^1.3.4",
     "@ai-sdk/perplexity": "^1.1.1",
@@ -70,6 +71,7 @@
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.3",
     "@tabler/icons-react": "^3.31.0",
+    "@tailwindcss/typography": "^0.5.16",
     "@upstash/redis": "^1.34.6",
     "@vercel/edge-config": "^1.4.0",
     "@vercel/functions": "^2.0.0",
@@ -106,11 +108,10 @@
     "sonner": "^2.0.2",
     "strip-ansi": "^7.1.0",
     "stripe": "^17.7.0",
+    "tailwindcss": "^4.0.17",
     "use-stick-to-bottom": "^1.0.48",
     "uuid": "^11.1.0",
-    "zod": "^3.24.2",
-    "tailwindcss": "^4.0.17",
-    "@tailwindcss/typography": "^0.5.16"
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.0",
