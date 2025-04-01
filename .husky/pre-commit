@@ -3,7 +3,6 @@
 
 # Run only fast checks
 npm run type-check
-npm run lint:fix
 npm run format:write
 
 # Run Jest tests

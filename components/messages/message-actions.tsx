@@ -127,7 +127,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
         !isTemporaryChat && (
           <WithTooltip
             delayDuration={0}
-            side="bottomRight"
+            side="bottom"
             display={<div>Edit</div>}
             trigger={
               <IconEdit

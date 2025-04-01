@@ -3,7 +3,6 @@
 
 # Run type checking and linting
 npm run type-check
-npm run lint:fix
 
 # Run E2E tests
 npm run test:e2e

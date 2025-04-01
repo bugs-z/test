@@ -275,7 +275,7 @@ function getModelName(model: string): string {
   const modelNames: { [key: string]: string } = {
     pentestgpt: "Small Model",
     "pentestgpt-pro": "Large Model",
-    "gpt-4": "PentestGPT-4o",
+    "gpt-4": "PentestGPT 4o",
     terminal: "terminal",
     "tts-1": "text-to-speech",
     "stt-1": "speech-to-text",

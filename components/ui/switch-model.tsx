@@ -29,7 +29,7 @@ interface SwitchModelProps {
 const getModelDisplayName = (modelId: string): string => {
   switch (modelId) {
     case Agent.modelId:
-      return "agent"
+      return "4o"
     case SmallModel.modelId:
       return "small"
     case LargeModel.modelId:
@@ -144,7 +144,7 @@ export const SwitchModel: FC<SwitchModelProps> = ({
               </div>
 
               {[
-                { id: Agent.modelId, name: "PGPT-Agent" },
+                { id: Agent.modelId, name: "PGPT-4o" },
                 { id: LargeModel.modelId, name: "Large Model" },
                 { id: SmallModel.modelId, name: "Small Model" }
               ]
@@ -174,7 +174,7 @@ export const SwitchModel: FC<SwitchModelProps> = ({
               <div className="bg-muted-foreground/50 mx-2 my-1 h-px" />
 
               {[
-                { id: Agent.modelId, name: "PGPT-Agent" },
+                { id: Agent.modelId, name: "PGPT-4o" },
                 { id: LargeModel.modelId, name: "Large Model" },
                 { id: SmallModel.modelId, name: "Small Model" }
               ]

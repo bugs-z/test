@@ -74,6 +74,8 @@ dnsutils, wpscan, wafw00f, gem, golang, and other basic tools
 dnsutils, wafw00f, golang (for faster startup)
 4. Sandbox times out and erases after 15 minutes of inactivity (temporary mode)
 5. Persistent sandbox keeps data for 30 days
+6. SecLists is pre-installed in /root/SecLists and should be used by default for \
+any fuzzing or wordlist needs
 
 Set usePersistentSandbox: true when:
 1. Installing tools

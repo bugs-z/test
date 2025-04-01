@@ -61,7 +61,7 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
         const modelId =
           subscription?.status === "active"
             ? LargeModel.modelId
-            : SmallModel.modelId
+            : LargeModel.modelId
 
         setChatSettings({
           model: modelId,
