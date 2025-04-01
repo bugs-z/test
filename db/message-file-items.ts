@@ -13,7 +13,12 @@ export const getMessageFileItemsByMessageId = async (messageId: string) => {
     .eq("id", messageId)
     .single()
 
-  if (!messageFileItems) {
+  if (error) {
+    if (error.code === "PGRST116") {
+      // No file items found, return empty result
+      return { id: messageId, file_items: [] }
+    }
+    // For other errors, throw
     throw new Error(error.message)
   }
 

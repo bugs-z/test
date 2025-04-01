@@ -140,6 +140,7 @@ export const Message: FC<MessageProps> = ({
 
   const handleRegenerate = async () => {
     setIsGenerating(true)
+
     await handleSendMessage(
       editedMessage ||
         messagesToDisplay[messagesToDisplay.length - 2].message.content,
