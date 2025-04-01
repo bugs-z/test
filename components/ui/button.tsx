@@ -23,20 +23,19 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         custom_accent1:
           "text-primary-accent bg-green-600 hover:bg-green-600/90",
-        custom_accent2: 
-          "text-primary-accent bg-red-700 hover:bg-red-700/90"
+        custom_accent2: "text-primary-accent bg-red-700 hover:bg-red-700/90"
       },
       size: {
         default: "h-9 px-4 py-2",
         sm: "h-8 rounded-md gap-1.5 px-3",
         lg: "h-10 rounded-md px-6",
-        icon: "size-9",
-      },
+        icon: "size-9"
+      }
     },
     defaultVariants: {
       variant: "default",
-      size: "default",
-    },
+      size: "default"
+    }
   }
 )
 
@@ -48,7 +47,18 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, loading = false, children, ...props }, ref) => {
+  (
+    {
+      className,
+      variant,
+      size,
+      asChild = false,
+      loading = false,
+      children,
+      ...props
+    },
+    ref
+  ) => {
     const Comp = asChild ? Slot : "button"
 
     return (
