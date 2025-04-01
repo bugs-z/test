@@ -64,7 +64,6 @@ export const TemporaryChatToggle = () => {
       onClick={() => handleToggleTemporaryChat(!isTemporaryChat)}
       variant="secondary"
       className="border-secondary-foreground rounded-full border px-4"
-      size="sm"
       aria-label="Toggle temporary chat"
     >
       <div className="flex w-full items-center justify-center gap-1.5">

@@ -6,6 +6,8 @@ import { FC, useEffect, useState } from "react"
 import { useLocalStorageState } from "@/lib/hooks/use-local-storage-state"
 import { AgentStatusState } from "../messages/agent-status"
 
+const MOBILE_BREAKPOINT = 768
+
 interface UIStateProps {
   children: React.ReactNode
 }
@@ -23,7 +25,7 @@ export const UIState: FC<UIStateProps> = ({ children }) => {
   const [slashCommand, setSlashCommand] = useState("")
 
   // UI States
-  const [isMobile, setIsMobile] = useState(false)
+  const [isMobile, setIsMobile] = useState<boolean | undefined>(undefined)
   const [isReadyToChat, setIsReadyToChat] = useState(true)
   const [showSidebar, setShowSidebar] = useLocalStorageState(
     "showSidebar",
@@ -46,22 +48,15 @@ export const UIState: FC<UIStateProps> = ({ children }) => {
   const [isGenerating, setIsGenerating] = useState(false)
   const [firstTokenReceived, setFirstTokenReceived] = useState(false)
 
-  // Handle window resize to update isMobile
+  // Handle mobile detection using matchMedia
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 640)
+    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
+    const onChange = () => {
+      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
     }
-
-    // Set initial value
-    setIsMobile(window.innerWidth <= 640)
-
-    // Add event listener
-    window.addEventListener("resize", handleResize)
-
-    // Clean up
-    return () => {
-      window.removeEventListener("resize", handleResize)
-    }
+    mql.addEventListener("change", onChange)
+    setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
+    return () => mql.removeEventListener("change", onChange)
   }, [])
 
   return (
@@ -80,7 +75,7 @@ export const UIState: FC<UIStateProps> = ({ children }) => {
         setSlashCommand,
 
         // UI States
-        isMobile,
+        isMobile: !!isMobile,
         isReadyToChat,
         setIsReadyToChat,
         showSidebar,
