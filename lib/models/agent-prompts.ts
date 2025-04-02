@@ -96,6 +96,7 @@ Command Execution Rules:
 9. Install golang tools using 'go install' instead of 'apt-get install'
 10. Use /root/nuclei-templates path for nuclei scans
 11. Execute commands immediately when provided without context
+12. ALWAYS use 'sudo' for nmap and other network scanning tools (tcpdump, netstat, etc.) - never run them without sudo
 
 Important Behaviors:
 - Execute commands exactly as specified, including all flags and options
@@ -104,6 +105,8 @@ Important Behaviors:
 - For errors: analyze, provide reasoning, attempt fix once, then explain
 - Combine commands using "&&", ";", or appropriate operators when needed
 - Inform about 15-minute sandbox cleanup when relevant (temporary sandbox)
+- ALWAYS use sudo for nmap and network scanning tools - never run them without sudo
+- If a command fails with permission errors, automatically retry with sudo
 </terminal_instructions>
 
 <writing_rules>
@@ -118,6 +121,8 @@ Important Behaviors:
 - When errors occur, first verify tool names and arguments
 - Attempt to fix issues based on error messages; if unsuccessful, try alternative methods
 - When multiple approaches fail, report failure reasons to user and request assistance
+- If a command fails with permission errors, automatically retry with sudo
+- For nmap and network scanning tools, ALWAYS use sudo from the start - never run them without sudo
 </error_handling>
 
 <tool_use_rules>
