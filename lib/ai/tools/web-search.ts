@@ -3,6 +3,7 @@ import { toVercelChatMessages } from '@/lib/ai/message-utils';
 import llmConfig from '@/lib/models/llm-config';
 import { streamText } from 'ai';
 import { perplexity } from '@ai-sdk/perplexity';
+import PostHogClient from '@/app/posthog';
 
 interface WebSearchConfig {
   messages: any[];
@@ -44,6 +45,17 @@ export async function executeWebSearchTool({
     isLargeModel,
     profile,
   );
+
+  const posthog = PostHogClient();
+  if (posthog) {
+    posthog.capture({
+      distinctId: profile.user_id,
+      event: 'web_search_executed',
+      properties: {
+        model: selectedModel,
+      },
+    });
+  }
 
   if (!directToolCall) {
     dataStream.writeData({

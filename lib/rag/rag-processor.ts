@@ -2,6 +2,7 @@ import { generateStandaloneQuestion } from '@/lib/models/question-generator';
 import llmConfig from '@/lib/models/llm-config';
 import { RAG_SYSTEM_PROMPT_BODY } from '@/lib/backend-config';
 import { buildSystemPrompt } from '@/lib/ai/prompts';
+import PostHogClient from '@/app/posthog';
 
 interface RagResult {
   ragUsed: boolean;
@@ -40,7 +41,14 @@ export async function processRag({
     return result;
   }
 
-  console.log('[EnhancedSearch] Executing enhanced search');
+  const posthog = PostHogClient();
+  if (posthog) {
+    posthog.capture({
+      distinctId: profile.user_id,
+      event: 'enhanced_search_executed',
+    });
+  }
+
   const { standaloneQuestion, atomicQuestions } =
     await generateStandaloneQuestion(
       messages,

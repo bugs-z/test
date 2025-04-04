@@ -4,6 +4,7 @@ import llmConfig from '@/lib/models/llm-config';
 import { streamText } from 'ai';
 import { myProvider } from '@/lib/ai/providers';
 import FirecrawlApp, { type ScrapeResponse } from '@mendable/firecrawl-js';
+import PostHogClient from '@/app/posthog';
 
 interface BrowserToolConfig {
   chatSettings: any;
@@ -169,6 +170,17 @@ export async function executeBrowserTool({
 
   const { profile, messages, dataStream } = config;
   const { systemPrompt, model } = await getProviderConfig(profile);
+  
+  const posthog = PostHogClient();
+  if (posthog) {
+    posthog.capture({
+      distinctId: profile.user_id,
+      event: 'browser_executed',
+      properties: {
+        model: model,
+      },
+    });
+  }
 
   try {
     const lastUserMessage = getLastUserMessage(messages);

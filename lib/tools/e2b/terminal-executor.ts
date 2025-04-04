@@ -40,10 +40,6 @@ export const executeTerminalCommand = async ({
       controller.enqueue(
         ENCODER.encode(`\n\`\`\`terminal\n${command}\n\`\`\``),
       );
-      console.log(`[${userID}] Starting terminal execution:
-        - Command: ${command}
-        - Persistent: ${usePersistentSandbox}
-        - Timeout: ${MAX_EXECUTION_TIME}ms`);
 
       try {
         if (!sandbox) {

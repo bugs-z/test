@@ -16,6 +16,7 @@ import {
   streamTerminalOutput,
   reduceTerminalOutput,
 } from '@/lib/ai/terminal-utils';
+import PostHogClient from '@/app/posthog';
 
 /**
  * Creates a terminal tool for executing commands in the sandbox environment
@@ -101,6 +102,18 @@ export const createTerminalTool = (context: ToolContext) => {
         if (setSandbox) {
           setSandbox(sandbox);
         }
+      }
+
+      const posthog = PostHogClient();
+      if (posthog) {
+        posthog.capture({
+          distinctId: userID,
+          event: 'terminal_executed',
+          properties: {
+            command: command,
+            persistentSandbox: persistentSandbox,
+          },
+        });
       }
 
       // Execute command

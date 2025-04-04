@@ -21,8 +21,6 @@ export async function POST(request: Request) {
       return rateLimitCheckResult.response;
     }
 
-    console.log('Generating chat title for user', profile.user_id);
-
     const simplifiedMessages = messages.slice(-2);
 
     const {

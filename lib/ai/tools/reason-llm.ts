@@ -3,6 +3,7 @@ import { toVercelChatMessages } from '@/lib/ai/message-utils';
 import llmConfig from '@/lib/models/llm-config';
 import { streamText } from 'ai';
 import { myProvider } from '@/lib/ai/providers';
+import PostHogClient from '@/app/posthog';
 
 interface ReasonLLMConfig {
   messages: any[];
@@ -34,6 +35,17 @@ export async function executeReasonLLMTool({
 
   const { messages, profile, dataStream } = config;
   const { systemPrompt, model } = await getProviderConfig(profile);
+  
+  const posthog = PostHogClient();
+  if (posthog) {
+    posthog.capture({
+      distinctId: profile.user_id,
+      event: 'reason_llm_executed',
+      properties: {
+        model: model,
+      },
+    });
+  }
 
   try {
     const { fullStream } = streamText({
