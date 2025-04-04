@@ -1,15 +1,15 @@
-import { cn } from "@/lib/utils"
-import { ContentType, DataItemType } from "@/types"
-import { FC, useRef, JSX } from "react"
-import { SidebarUpdateItem } from "./sidebar-update-item"
+import { cn } from '@/lib/utils';
+import type { ContentType, DataItemType } from '@/types';
+import { type FC, useRef, type JSX } from 'react';
+import { SidebarUpdateItem } from './sidebar-update-item';
 
 interface SidebarItemProps {
-  item: DataItemType
-  isTyping: boolean
-  contentType: ContentType
-  icon: React.ReactNode
-  updateState: any
-  renderInputs: (renderState: any) => JSX.Element
+  item: DataItemType;
+  isTyping: boolean;
+  contentType: ContentType;
+  icon: React.ReactNode;
+  updateState: any;
+  renderInputs: (renderState: any) => JSX.Element;
 }
 
 export const SidebarItem: FC<SidebarItemProps> = ({
@@ -18,16 +18,16 @@ export const SidebarItem: FC<SidebarItemProps> = ({
   updateState,
   renderInputs,
   icon,
-  isTyping
+  isTyping,
 }) => {
-  const itemRef = useRef<HTMLDivElement>(null)
+  const itemRef = useRef<HTMLDivElement>(null);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === "Enter") {
-      e.stopPropagation()
-      itemRef.current?.click()
+    if (e.key === 'Enter') {
+      e.stopPropagation();
+      itemRef.current?.click();
     }
-  }
+  };
 
   return (
     <SidebarUpdateItem
@@ -40,9 +40,8 @@ export const SidebarItem: FC<SidebarItemProps> = ({
       <div
         ref={itemRef}
         className={cn(
-          "hover:bg-accent flex w-full cursor-pointer items-center rounded p-2 hover:opacity-50 focus:outline-hidden"
+          'hover:bg-accent flex w-full cursor-pointer items-center rounded p-2 hover:opacity-50 focus:outline-hidden',
         )}
-        tabIndex={0}
         onKeyDown={handleKeyDown}
       >
         {icon}
@@ -52,5 +51,5 @@ export const SidebarItem: FC<SidebarItemProps> = ({
         </div>
       </div>
     </SidebarUpdateItem>
-  )
-}
+  );
+};

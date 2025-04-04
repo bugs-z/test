@@ -1,111 +1,111 @@
-import { getServerUserAndProfile } from "@/lib/server/server-chat-helpers"
-import { createSupabaseAdminClient } from "@/lib/server/server-utils"
+import { getServerUserAndProfile } from '@/lib/server/server-chat-helpers';
+import { createSupabaseAdminClient } from '@/lib/server/server-utils';
 import {
   getActiveSubscriptions,
   getCustomersByEmail,
   getStripe,
-  isRestoreableSubscription
-} from "@/lib/server/stripe"
-import { unixToDateString } from "@/lib/utils"
-import { Tables } from "@/supabase/types"
-import { User } from "@supabase/supabase-js"
-import { NextResponse } from "next/server"
-import Stripe from "stripe"
+  isRestoreableSubscription,
+} from '@/lib/server/stripe';
+import { unixToDateString } from '@/lib/utils';
+import type { Tables } from '@/supabase/types';
+import type { User } from '@supabase/supabase-js';
+import { NextResponse } from 'next/server';
+import type Stripe from 'stripe';
 
 export async function POST() {
   try {
-    const { user } = await getServerUserAndProfile()
+    const { user } = await getServerUserAndProfile();
 
-    const stripe = getStripe()
-    const email = user.email
+    const stripe = getStripe();
+    const email = user.email;
 
     if (!email) {
       return NextResponse.json(
-        { error: "User email not found" },
-        { status: 404 }
-      )
+        { error: 'User email not found' },
+        { status: 404 },
+      );
     }
 
-    const customers = await getCustomersByEmail(stripe, email)
+    const customers = await getCustomersByEmail(stripe, email);
     if (customers.length === 0) {
       return NextResponse.json(
-        { message: "You have no subscription to restore." },
-        { status: 200 }
-      )
+        { message: 'You have no subscription to restore.' },
+        { status: 200 },
+      );
     }
 
     for (const customer of customers) {
-      const subscriptions = await getActiveSubscriptions(stripe, customer.id)
+      const subscriptions = await getActiveSubscriptions(stripe, customer.id);
       for (const subscription of subscriptions.data) {
         if (isRestoreableSubscription(subscription)) {
           const restoredItem = await restoreToDatabase(
             stripe,
             user,
-            subscription.id
-          )
-          if (restoredItem.type === "error") {
+            subscription.id,
+          );
+          if (restoredItem.type === 'error') {
             return NextResponse.json(
               { error: restoredItem.error },
-              { status: 400 }
-            )
+              { status: 400 },
+            );
           }
           return NextResponse.json(
             { subscription: restoredItem.value },
-            { status: 200 }
-          )
+            { status: 200 },
+          );
         }
       }
     }
 
     return NextResponse.json(
-      { message: "No subscription to restore" },
-      { status: 200 }
-    )
+      { message: 'No subscription to restore' },
+      { status: 200 },
+    );
   } catch (error) {
-    console.error("Error restoring subscription:", error)
+    console.error('Error restoring subscription:', error);
     return NextResponse.json(
-      { error: "An unexpected error occurred" },
-      { status: 500 }
-    )
+      { error: 'An unexpected error occurred' },
+      { status: 500 },
+    );
   }
 }
 
 async function restoreToDatabase(
   stripe: Stripe,
   user: User,
-  subscriptionId: string
+  subscriptionId: string,
 ): Promise<
-  | { type: "error"; error: string }
-  | { type: "ok"; value: Tables<"subscriptions"> }
+  | { type: 'error'; error: string }
+  | { type: 'ok'; value: Tables<'subscriptions'> }
 > {
-  const supabaseAdmin = createSupabaseAdminClient()
+  const supabaseAdmin = createSupabaseAdminClient();
 
   // Retrieve the subscription details from Stripe
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
 
   // Ensure the subscription has a valid customer ID from Stripe
-  if (!subscription.customer || typeof subscription.customer !== "string") {
-    return { type: "error", error: "invalid customer value" }
+  if (!subscription.customer || typeof subscription.customer !== 'string') {
+    return { type: 'error', error: 'invalid customer value' };
   }
 
   // Determine the plan type and team name
-  const planType = subscription.metadata.teamName ? "team" : "pro"
-  const teamName = subscription.metadata.teamName || null
+  const planType = subscription.metadata.teamName ? 'team' : 'pro';
+  const teamName = subscription.metadata.teamName || null;
 
   // Get the quantity (number of seats) for team plans
-  const quantity = subscription.items.data[0].quantity || 1
+  const quantity = subscription.items.data[0].quantity || 1;
   // Check if the subscription already exists in the database
   const existingSubscription = await supabaseAdmin
-    .from("subscriptions")
-    .select("*")
-    .eq("subscription_id", subscriptionId)
-    .maybeSingle()
+    .from('subscriptions')
+    .select('*')
+    .eq('subscription_id', subscriptionId)
+    .maybeSingle();
 
-  let result
-  if (existingSubscription && existingSubscription.data) {
+  let result;
+  if (existingSubscription?.data) {
     // If the subscription exists, update it
     result = await supabaseAdmin
-      .from("subscriptions")
+      .from('subscriptions')
       .update({
         user_id: user.id,
         customer_id: subscription.customer,
@@ -122,12 +122,12 @@ async function restoreToDatabase(
           : null,
         plan_type: planType,
         team_name: teamName,
-        quantity: quantity
+        quantity: quantity,
       })
-      .eq("subscription_id", subscriptionId)
+      .eq('subscription_id', subscriptionId);
   } else {
     // If the subscription doesn't exist, insert it
-    result = await supabaseAdmin.from("subscriptions").insert({
+    result = await supabaseAdmin.from('subscriptions').insert({
       subscription_id: subscriptionId,
       user_id: user.id,
       customer_id: subscription.customer,
@@ -144,28 +144,28 @@ async function restoreToDatabase(
         : null,
       plan_type: planType,
       team_name: teamName,
-      quantity: quantity
-    })
+      quantity: quantity,
+    });
   }
   if (result.error) {
-    console.error(result.error)
-    return { type: "error", error: "error upserting subscription" }
+    console.error(result.error);
+    return { type: 'error', error: 'error upserting subscription' };
   }
 
   // Retrieve and return the newly restored subscription from Supabase
   const newSubscription = await supabaseAdmin
-    .from("subscriptions")
-    .select("*")
-    .eq("status", "active")
-    .eq("user_id", user.id)
-    .eq("subscription_id", subscriptionId)
-    .maybeSingle()
+    .from('subscriptions')
+    .select('*')
+    .eq('status', 'active')
+    .eq('user_id', user.id)
+    .eq('subscription_id', subscriptionId)
+    .maybeSingle();
   if (newSubscription.error) {
-    console.error(newSubscription.error)
-    return { type: "error", error: "error fetching new subscription" }
+    console.error(newSubscription.error);
+    return { type: 'error', error: 'error fetching new subscription' };
   }
   if (!newSubscription.data) {
-    return { type: "error", error: "subscription not found" }
+    return { type: 'error', error: 'subscription not found' };
   }
-  return { type: "ok", value: newSubscription.data }
+  return { type: 'ok', value: newSubscription.data };
 }

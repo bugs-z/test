@@ -1,24 +1,24 @@
-import { Button } from "@/components/ui/button"
+import { Button } from '@/components/ui/button';
 import {
   Sheet,
   SheetContent,
   SheetFooter,
   SheetHeader,
-  SheetTitle
-} from "@/components/ui/sheet"
-import { PentestGPTContext } from "@/context/context"
-import { createChat } from "@/db/chats"
-import { ContentType } from "@/types"
-import { FC, JSX, useContext, useRef, useState } from "react"
-import { toast } from "sonner"
+  SheetTitle,
+} from '@/components/ui/sheet';
+import { PentestGPTContext } from '@/context/context';
+import { createChat } from '@/db/chats';
+import type { ContentType } from '@/types';
+import { type FC, type JSX, useContext, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 interface SidebarCreateItemProps {
-  isOpen: boolean
-  isTyping: boolean
-  onOpenChange: (isOpen: boolean) => void
-  contentType: ContentType
-  renderInputs: () => JSX.Element
-  createState: any
+  isOpen: boolean;
+  isTyping: boolean;
+  onOpenChange: (isOpen: boolean) => void;
+  contentType: ContentType;
+  renderInputs: () => JSX.Element;
+  createState: any;
 }
 
 export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
@@ -27,53 +27,53 @@ export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
   contentType,
   renderInputs,
   createState,
-  isTyping
+  isTyping,
 }) => {
-  const { setChats } = useContext(PentestGPTContext)
+  const { setChats } = useContext(PentestGPTContext);
 
-  const buttonRef = useRef<HTMLButtonElement>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const [creating, setCreating] = useState(false)
+  const [creating, setCreating] = useState(false);
 
   const createFunctions = {
     chats: createChat,
-    tools: createChat
-  }
+    tools: createChat,
+  };
 
   const stateUpdateFunctions = {
     chats: setChats,
-    tools: setChats
-  }
+    tools: setChats,
+  };
 
   const handleCreate = async () => {
     try {
-      if (isTyping) return // Prevent creation while typing
+      if (isTyping) return; // Prevent creation while typing
 
-      const createFunction = createFunctions[contentType]
-      const setStateFunction = stateUpdateFunctions[contentType]
+      const createFunction = createFunctions[contentType];
+      const setStateFunction = stateUpdateFunctions[contentType];
 
-      if (!createFunction || !setStateFunction) return
+      if (!createFunction || !setStateFunction) return;
 
-      setCreating(true)
+      setCreating(true);
 
-      const newItem = await createFunction(createState)
+      const newItem = await createFunction(createState);
 
-      setStateFunction((prevItems: any) => [...prevItems, newItem])
+      setStateFunction((prevItems: any) => [...prevItems, newItem]);
 
-      onOpenChange(false)
-      setCreating(false)
+      onOpenChange(false);
+      setCreating(false);
     } catch (error) {
-      toast.error(`Error creating ${contentType.slice(0, -1)}. ${error}.`)
-      setCreating(false)
+      toast.error(`Error creating ${contentType.slice(0, -1)}. ${error}.`);
+      setCreating(false);
     }
-  }
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (!isTyping && e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      buttonRef.current?.click()
+    if (!isTyping && e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      buttonRef.current?.click();
     }
-  }
+  };
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -85,7 +85,7 @@ export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
         <div className="grow overflow-auto">
           <SheetHeader>
             <SheetTitle className="text-xl font-bold sm:text-2xl">
-              Create{" "}
+              Create{' '}
               {contentType.charAt(0).toUpperCase() + contentType.slice(1, -1)}
             </SheetTitle>
           </SheetHeader>
@@ -112,11 +112,11 @@ export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
               onClick={handleCreate}
               className="text-xs sm:text-sm"
             >
-              {creating ? "Creating..." : "Create"}
+              {creating ? 'Creating...' : 'Create'}
             </Button>
           </div>
         </SheetFooter>
       </SheetContent>
     </Sheet>
-  )
-}
+  );
+};

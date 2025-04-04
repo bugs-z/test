@@ -1,61 +1,66 @@
-import { PluginID } from "@/types/plugins"
-import { Dispatch, SetStateAction, createContext, useContext } from "react"
-import { AgentStatusState } from "@/components/messages/agent-status"
+import { PluginID } from '@/types/plugins';
+import {
+  type Dispatch,
+  type SetStateAction,
+  createContext,
+  useContext,
+} from 'react';
+import type { AgentStatusState } from '@/components/messages/agent-status';
 
 interface UIContextType {
   // ENHANCE MENU
-  isEnhancedMenuOpen: boolean
-  setIsEnhancedMenuOpen: Dispatch<SetStateAction<boolean>>
-  selectedPluginType: string
-  setSelectedPluginType: Dispatch<SetStateAction<string>>
-  selectedPlugin: PluginID
-  setSelectedPlugin: Dispatch<SetStateAction<PluginID>>
+  isEnhancedMenuOpen: boolean;
+  setIsEnhancedMenuOpen: Dispatch<SetStateAction<boolean>>;
+  selectedPluginType: string;
+  setSelectedPluginType: Dispatch<SetStateAction<string>>;
+  selectedPlugin: PluginID;
+  setSelectedPlugin: Dispatch<SetStateAction<PluginID>>;
 
   // CHAT INPUT COMMAND
-  slashCommand: string
-  setSlashCommand: Dispatch<SetStateAction<string>>
+  slashCommand: string;
+  setSlashCommand: Dispatch<SetStateAction<string>>;
 
   // UI States
-  isMobile: boolean
-  isReadyToChat: boolean
-  setIsReadyToChat: Dispatch<SetStateAction<boolean>>
-  showSidebar: boolean
-  setShowSidebar: (value: boolean | ((prevState: boolean) => boolean)) => void
-  showTerminalOutput: boolean
+  isMobile: boolean;
+  isReadyToChat: boolean;
+  setIsReadyToChat: Dispatch<SetStateAction<boolean>>;
+  showSidebar: boolean;
+  setShowSidebar: (value: boolean | ((prevState: boolean) => boolean)) => void;
+  showTerminalOutput: boolean;
   setShowTerminalOutput: (
-    value: boolean | ((prevState: boolean) => boolean)
-  ) => void
+    value: boolean | ((prevState: boolean) => boolean),
+  ) => void;
 
   // Tools UI
-  isToolPickerOpen: boolean
-  setIsToolPickerOpen: Dispatch<SetStateAction<boolean>>
-  focusTool: boolean
-  setFocusTool: Dispatch<SetStateAction<boolean>>
-  toolInUse: string
-  setToolInUse: Dispatch<SetStateAction<string>>
+  isToolPickerOpen: boolean;
+  setIsToolPickerOpen: Dispatch<SetStateAction<boolean>>;
+  focusTool: boolean;
+  setFocusTool: Dispatch<SetStateAction<boolean>>;
+  toolInUse: string;
+  setToolInUse: Dispatch<SetStateAction<string>>;
 
   // Agent states
-  agentStatus: AgentStatusState | null
-  setAgentStatus: Dispatch<SetStateAction<AgentStatusState | null>>
+  agentStatus: AgentStatusState | null;
+  setAgentStatus: Dispatch<SetStateAction<AgentStatusState | null>>;
 
   // Loading States
-  isGenerating: boolean
-  setIsGenerating: Dispatch<SetStateAction<boolean>>
-  firstTokenReceived: boolean
-  setFirstTokenReceived: Dispatch<SetStateAction<boolean>>
+  isGenerating: boolean;
+  setIsGenerating: Dispatch<SetStateAction<boolean>>;
+  firstTokenReceived: boolean;
+  setFirstTokenReceived: Dispatch<SetStateAction<boolean>>;
 }
 
 export const UIContext = createContext<UIContextType>({
   // ENHANCE MENU
   isEnhancedMenuOpen: false,
   setIsEnhancedMenuOpen: () => {},
-  selectedPluginType: "",
+  selectedPluginType: '',
   setSelectedPluginType: () => {},
   selectedPlugin: PluginID.NONE,
   setSelectedPlugin: () => {},
 
   // CHAT INPUT COMMAND
-  slashCommand: "",
+  slashCommand: '',
   setSlashCommand: () => {},
 
   // UI States
@@ -72,7 +77,7 @@ export const UIContext = createContext<UIContextType>({
   setIsToolPickerOpen: () => {},
   focusTool: false,
   setFocusTool: () => {},
-  toolInUse: "none",
+  toolInUse: 'none',
   setToolInUse: () => {},
 
   // Agent states
@@ -83,7 +88,7 @@ export const UIContext = createContext<UIContextType>({
   isGenerating: false,
   setIsGenerating: () => {},
   firstTokenReceived: false,
-  setFirstTokenReceived: () => {}
-})
+  setFirstTokenReceived: () => {},
+});
 
-export const useUIContext = () => useContext(UIContext)
+export const useUIContext = () => useContext(UIContext);

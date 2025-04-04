@@ -1,20 +1,20 @@
-import { ContentType } from "@/types"
-import { FC } from "react"
-import { TabsTrigger } from "../ui/tabs"
-import { WithTooltip } from "../ui/with-tooltip"
+import type { ContentType } from '@/types';
+import type { FC } from 'react';
+import { TabsTrigger } from '../ui/tabs';
+import { WithTooltip } from '../ui/with-tooltip';
 
 interface SidebarSwitchItemProps {
-  contentType: ContentType
-  icon: React.ReactNode
-  onContentTypeChange: (contentType: ContentType) => void
-  display?: string
+  contentType: ContentType;
+  icon: React.ReactNode;
+  onContentTypeChange: (contentType: ContentType) => void;
+  display?: string;
 }
 
 export const SidebarSwitchItem: FC<SidebarSwitchItemProps> = ({
   contentType,
   icon,
   onContentTypeChange,
-  display
+  display,
 }) => {
   return (
     <WithTooltip
@@ -35,5 +35,5 @@ export const SidebarSwitchItem: FC<SidebarSwitchItemProps> = ({
         </TabsTrigger>
       }
     />
-  )
-}
+  );
+};

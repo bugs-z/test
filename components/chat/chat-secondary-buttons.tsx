@@ -1,10 +1,10 @@
-import { useChatHandler } from "@/components/chat/chat-hooks/use-chat-handler"
-import { IconMessagePlus } from "@tabler/icons-react"
-import { FC } from "react"
-import { WithTooltip } from "../ui/with-tooltip"
+import { useChatHandler } from '@/components/chat/chat-hooks/use-chat-handler';
+import { IconMessagePlus } from '@tabler/icons-react';
+import type { FC } from 'react';
+import { WithTooltip } from '../ui/with-tooltip';
 
 export const ChatSecondaryButtons: FC = () => {
-  const { handleNewChat } = useChatHandler()
+  const { handleNewChat } = useChatHandler();
 
   return (
     <div className="flex items-center pl-3">
@@ -20,5 +20,5 @@ export const ChatSecondaryButtons: FC = () => {
         side="bottom"
       />
     </div>
-  )
-}
+  );
+};

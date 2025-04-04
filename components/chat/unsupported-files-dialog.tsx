@@ -1,30 +1,30 @@
-import React from "react"
-import Modal from "@/components/chat/dialog-portal"
+import React from 'react';
+import Modal from '@/components/chat/dialog-portal';
 
 interface UnsupportedFilesDialogProps {
-  isOpen: boolean
-  pendingFiles: File[]
-  onCancel: () => void
-  onConfirm: () => void
+  isOpen: boolean;
+  pendingFiles: File[];
+  onCancel: () => void;
+  onConfirm: () => void;
 }
 
 export const UnsupportedFilesDialog: React.FC<UnsupportedFilesDialogProps> = ({
   isOpen,
   pendingFiles,
   onCancel,
-  onConfirm
+  onConfirm,
 }) => {
   return (
     <Modal isOpen={isOpen}>
-      <div className="bg-background/20 size-screen fixed inset-0 z-50 backdrop-blur-xs"></div>
+      <div className="bg-background/20 size-screen fixed inset-0 z-50 backdrop-blur-xs" />
 
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div className="bg-background w-full max-w-lg rounded-md p-10 text-center">
           <p>The following file extensions are currently not supported:</p>
           <ul className="mt-4">
-            {pendingFiles.map(file => (
+            {pendingFiles.map((file) => (
               <li key={file.name}>
-                <b>.{file.name.split(".").pop()?.toLowerCase()}</b> -{" "}
+                <b>.{file.name.split('.').pop()?.toLowerCase()}</b> -{' '}
                 {file.name}
               </li>
             ))}
@@ -49,5 +49,5 @@ export const UnsupportedFilesDialog: React.FC<UnsupportedFilesDialogProps> = ({
         </div>
       </div>
     </Modal>
-  )
-}
+  );
+};

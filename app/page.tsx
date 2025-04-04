@@ -1,19 +1,19 @@
-"use client"
+'use client';
 
-import { Brand } from "@/components/ui/brand"
-import { IconArrowRight } from "@tabler/icons-react"
-import Link from "next/link"
-import { useEffect, useState } from "react"
+import { Brand } from '@/components/ui/brand';
+import { IconArrowRight } from '@tabler/icons-react';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 export default function HomePage() {
-  const [mounted, setMounted] = useState(false)
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
+    setMounted(true);
+  }, []);
 
   if (!mounted) {
-    return null
+    return null;
   }
 
   return (
@@ -28,5 +28,5 @@ export default function HomePage() {
         <IconArrowRight className="ml-1" size={20} />
       </Link>
     </div>
-  )
+  );
 }

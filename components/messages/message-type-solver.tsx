@@ -1,18 +1,18 @@
-import { Tables } from "@/supabase/types"
-import { PluginID } from "@/types/plugins"
-import { FC } from "react"
-import { MessageMarkdown } from "./message-markdown"
-import { MessagePluginFile } from "./message-plugin-file"
-import { MessageTerminal } from "./e2b-messages/message-terminal"
-import { MessageCitations } from "./message-citations"
-import { MessageThinking } from "./message-thinking"
+import type { Tables } from '@/supabase/types';
+import { PluginID } from '@/types/plugins';
+import type { FC } from 'react';
+import { MessageMarkdown } from './message-markdown';
+import { MessagePluginFile } from './message-plugin-file';
+import { MessageTerminal } from './e2b-messages/message-terminal';
+import { MessageCitations } from './message-citations';
+import { MessageThinking } from './message-thinking';
 
 interface MessageTypeResolverProps {
-  message: Tables<"messages">
-  previousMessage: Tables<"messages"> | undefined
-  messageSizeLimit: number
-  isLastMessage: boolean
-  toolInUse: string
+  message: Tables<'messages'>;
+  previousMessage: Tables<'messages'> | undefined;
+  messageSizeLimit: number;
+  isLastMessage: boolean;
+  toolInUse: string;
 }
 
 // const extractOutputFilename = (content: string) => {
@@ -35,21 +35,21 @@ export const terminalPlugins = [
   PluginID.CVE_MAP,
   PluginID.WORDPRESS_SCANNER,
   PluginID.XSS_EXPLOITER,
-  "persistent-sandbox",
-  "temporary-sandbox"
-]
+  'persistent-sandbox',
+  'temporary-sandbox',
+];
 
 export const MessageTypeResolver: FC<MessageTypeResolverProps> = ({
   // previousMessage,
   message,
   messageSizeLimit,
   isLastMessage,
-  toolInUse
+  toolInUse,
 }) => {
   const isPluginOutput =
     message.plugin !== null &&
     message.plugin !== PluginID.NONE.toString() &&
-    message.role === "assistant"
+    message.role === 'assistant';
 
   // console.log({
   //   isPluginOutput,
@@ -65,13 +65,13 @@ export const MessageTypeResolver: FC<MessageTypeResolverProps> = ({
       <MessageTerminal
         content={message.content}
         messageId={message.id}
-        isAssistant={message.role === "assistant"}
+        isAssistant={message.role === 'assistant'}
       />
-    )
+    );
   }
 
   if (
-    typeof message.content === "string" &&
+    typeof message.content === 'string' &&
     message.content.length > messageSizeLimit
   ) {
     return (
@@ -81,11 +81,11 @@ export const MessageTypeResolver: FC<MessageTypeResolverProps> = ({
         plugin={message.plugin ?? PluginID.NONE}
         autoDownloadEnabled={false}
         id={message.id}
-        filename={message.plugin + "-" + message.id + ".md"}
+        filename={`${message.plugin}-${message.id}.md`}
         isLastMessage={isLastMessage}
-        isAssistant={message.role === "assistant"}
+        isAssistant={message.role === 'assistant'}
       />
-    )
+    );
   }
 
   if (
@@ -99,10 +99,10 @@ export const MessageTypeResolver: FC<MessageTypeResolverProps> = ({
         content={message.content}
         thinking_content={message.thinking_content}
         thinking_elapsed_secs={message.thinking_elapsed_secs}
-        isAssistant={message.role === "assistant"}
+        isAssistant={message.role === 'assistant'}
         citations={message.citations || []}
       />
-    )
+    );
   }
 
   if (
@@ -113,16 +113,16 @@ export const MessageTypeResolver: FC<MessageTypeResolverProps> = ({
     return (
       <MessageCitations
         content={message.content}
-        isAssistant={message.role === "assistant"}
+        isAssistant={message.role === 'assistant'}
         citations={message.citations || []}
       />
-    )
+    );
   }
 
   return (
     <MessageMarkdown
       content={message.content}
-      isAssistant={message.role === "assistant"}
+      isAssistant={message.role === 'assistant'}
     />
-  )
-}
+  );
+};

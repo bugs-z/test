@@ -1,30 +1,30 @@
 export function dragHelper(e: {
-  preventDefault: () => void
-  currentTarget: any
-  clientX: any
+  preventDefault: () => void;
+  currentTarget: any;
+  clientX: any;
 }) {
-  e.preventDefault() // Prevents the click event after dragging
-  const el = e.currentTarget
-  let isDragging = false
-  const posX = e.clientX
-  const scrollLeft = el.scrollLeft
+  e.preventDefault(); // Prevents the click event after dragging
+  const el = e.currentTarget;
+  let isDragging = false;
+  const posX = e.clientX;
+  const scrollLeft = el.scrollLeft;
   function onMouseMove(e: { clientX: number }) {
-    isDragging = true
-    const dx = e.clientX - posX
-    el.scrollLeft = scrollLeft - dx
+    isDragging = true;
+    const dx = e.clientX - posX;
+    el.scrollLeft = scrollLeft - dx;
   }
   function onMouseUp() {
-    document.removeEventListener("mousemove", onMouseMove)
-    el.style.cursor = "grab"
+    document.removeEventListener('mousemove', onMouseMove);
+    el.style.cursor = 'grab';
     if (isDragging) {
-      el.addEventListener("click", preventClick, { once: true })
+      el.addEventListener('click', preventClick, { once: true });
     }
-    isDragging = false
+    isDragging = false;
   }
   function preventClick(e: { stopPropagation: () => void }) {
-    e.stopPropagation() // Prevents the click event from firing after dragging
+    e.stopPropagation(); // Prevents the click event from firing after dragging
   }
-  document.addEventListener("mousemove", onMouseMove)
-  document.addEventListener("mouseup", onMouseUp, { once: true })
-  el.style.cursor = "grabbing"
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mouseup', onMouseUp, { once: true });
+  el.style.cursor = 'grabbing';
 }

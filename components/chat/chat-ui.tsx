@@ -1,52 +1,52 @@
-import Loading from "@/app/loading"
-import { useChatHandler } from "@/components/chat/chat-hooks/use-chat-handler"
-import { PentestGPTContext } from "@/context/context"
-import useHotkey from "@/lib/hooks/use-hotkey"
+import Loading from '@/app/loading';
+import { useChatHandler } from '@/components/chat/chat-hooks/use-chat-handler';
+import { PentestGPTContext } from '@/context/context';
+import useHotkey from '@/lib/hooks/use-hotkey';
 import {
   IconInfoCircle,
   IconMessageOff,
   IconPlayerTrackNext,
-  IconRefresh
-} from "@tabler/icons-react"
-import { useParams } from "next/navigation"
+  IconRefresh,
+} from '@tabler/icons-react';
+import { useParams } from 'next/navigation';
 import {
-  FC,
+  type FC,
   useCallback,
   useContext,
   useEffect,
   useLayoutEffect,
   useRef,
-  useState
-} from "react"
-import { Button } from "../ui/button"
-import { WithTooltip } from "../ui/with-tooltip"
-import { ChatFragment } from "./chat-fragment"
-import { ChatHelp } from "./chat-help"
-import { useScroll } from "./chat-hooks/use-scroll"
-import { ChatInput } from "./chat-input"
-import { ChatMessages } from "./chat-messages"
-import { ChatScrollButtons } from "./chat-scroll-buttons"
-import { ChatSecondaryButtons } from "./chat-secondary-buttons"
-import { ChatSettings } from "./chat-settings"
-import { GlobalDeleteChatDialog } from "./global-delete-chat-dialog"
-import { useFragments } from "./chat-hooks/use-fragments"
-import { Settings } from "../utility/settings"
-import { ShareChatButton } from "./chat-share-button"
-import { useUIContext } from "@/context/ui-context"
+  useState,
+} from 'react';
+import { Button } from '../ui/button';
+import { WithTooltip } from '../ui/with-tooltip';
+import { ChatFragment } from './chat-fragment';
+import { ChatHelp } from './chat-help';
+import { useScroll } from './chat-hooks/use-scroll';
+import { ChatInput } from './chat-input';
+import { ChatMessages } from './chat-messages';
+import { ChatScrollButtons } from './chat-scroll-buttons';
+import { ChatSecondaryButtons } from './chat-secondary-buttons';
+import { ChatSettings } from './chat-settings';
+import { GlobalDeleteChatDialog } from './global-delete-chat-dialog';
+import { useFragments } from './chat-hooks/use-fragments';
+import { Settings } from '../utility/settings';
+import { ShareChatButton } from './chat-share-button';
+import { useUIContext } from '@/context/ui-context';
 
-interface ChatUIProps {}
+type ChatUIProps = {};
 
 export const ChatUI: FC<ChatUIProps> = ({}) => {
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  useHotkey("o", () => handleNewChat())
-  useHotkey("Backspace", () => {
+  useHotkey('o', () => handleNewChat());
+  useHotkey('Backspace', () => {
     if (selectedChat) {
-      setIsDeleteDialogOpen(true)
+      setIsDeleteDialogOpen(true);
     }
-  })
+  });
 
-  const params = useParams()
+  const params = useParams();
 
   const {
     chatMessages,
@@ -57,52 +57,52 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
     fetchChat,
     loadMoreMessages,
     isLoadingMore,
-    allMessagesLoaded
-  } = useContext(PentestGPTContext)
+    allMessagesLoaded,
+  } = useContext(PentestGPTContext);
 
-  const { isMobile, isGenerating, setIsReadyToChat } = useUIContext()
+  const { isMobile, isGenerating, setIsReadyToChat } = useUIContext();
 
   const {
     handleNewChat,
     handleFocusChatInput,
     handleSendContinuation,
-    handleSendTerminalContinuation
-  } = useChatHandler()
+    handleSendTerminalContinuation,
+  } = useChatHandler();
 
-  const { scrollRef, contentRef, isAtBottom, scrollToBottom } = useScroll()
+  const { scrollRef, contentRef, isAtBottom, scrollToBottom } = useScroll();
 
-  const [loading, setLoading] = useState(true)
-  const previousHeightRef = useRef<number | null>(null)
+  const [loading, setLoading] = useState(true);
+  const previousHeightRef = useRef<number | null>(null);
 
-  const { resetFragment } = useFragments()
+  const { resetFragment } = useFragments();
 
   useEffect(() => {
     const fetchData = async () => {
       if (!isTemporaryChat) {
-        resetFragment()
+        resetFragment();
         await Promise.all([
           fetchMessages(params.chatid as string),
-          fetchChat(params.chatid as string)
-        ])
+          fetchChat(params.chatid as string),
+        ]);
       }
-    }
+    };
 
     if (
       !isTemporaryChat &&
       ((chatMessages?.length === 0 && !params.chatid) || params.chatid)
     ) {
-      setIsReadyToChat(false)
+      setIsReadyToChat(false);
       fetchData().then(() => {
-        handleFocusChatInput()
-        setLoading(false)
-        setIsReadyToChat(true)
-        scrollToBottom({ instant: true, force: true })
-      })
+        handleFocusChatInput();
+        setLoading(false);
+        setIsReadyToChat(true);
+        scrollToBottom({ instant: true, force: true });
+      });
     } else {
-      setLoading(false)
-      setIsReadyToChat(true)
+      setLoading(false);
+      setIsReadyToChat(true);
     }
-  }, [])
+  }, []);
 
   const loadMoreMessagesInner = useCallback(async () => {
     if (
@@ -111,21 +111,21 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
       isLoadingMore ||
       !chatMessages.length
     )
-      return
+      return;
 
-    const chatId = params.chatid as string
+    const chatId = params.chatid as string;
 
     if (!chatId) {
-      console.error("Chat ID is undefined")
-      return
+      console.error('Chat ID is undefined');
+      return;
     }
 
-    const scrollContainer = scrollRef.current
+    const scrollContainer = scrollRef.current;
     if (scrollContainer) {
-      previousHeightRef.current = scrollContainer.scrollHeight
+      previousHeightRef.current = scrollContainer.scrollHeight;
     }
 
-    loadMoreMessages(chatId)
+    loadMoreMessages(chatId);
   }, [
     isTemporaryChat,
     allMessagesLoaded,
@@ -133,49 +133,49 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
     chatMessages,
     loadMoreMessages,
     params.chatid,
-    scrollRef
-  ])
+    scrollRef,
+  ]);
 
   useLayoutEffect(() => {
     if (isLoadingMore) {
       setTimeout(() => {
-        const scrollContainer = scrollRef.current
+        const scrollContainer = scrollRef.current;
         if (scrollContainer && previousHeightRef.current !== null) {
-          const newHeight = scrollContainer.scrollHeight
-          const previousHeight = previousHeightRef.current
-          const scrollDifference = newHeight - previousHeight
+          const newHeight = scrollContainer.scrollHeight;
+          const previousHeight = previousHeightRef.current;
+          const scrollDifference = newHeight - previousHeight;
 
           // console.log("newHeight", newHeight)
           // console.log("previousHeight", previousHeight)
           // console.log("scrollDifference", scrollDifference)
           // console.log("scrollContainer.scrollTop", scrollContainer.scrollTop)
           // Adjust scroll position
-          scrollContainer.scrollTop = scrollDifference
+          scrollContainer.scrollTop = scrollDifference;
           // Reset previousHeightRef for next load
-          previousHeightRef.current = null
+          previousHeightRef.current = null;
         }
-      }, 200) // allow some time for the new messages to render
+      }, 200); // allow some time for the new messages to render
     }
-  }, [chatMessages, isLoadingMore, scrollRef])
+  }, [chatMessages, isLoadingMore, scrollRef]);
 
   const innerHandleScroll = useCallback(
     (e: React.UIEvent<HTMLDivElement>) => {
-      const { scrollTop } = e.currentTarget
+      const { scrollTop } = e.currentTarget;
 
       if (scrollTop === 0) {
-        loadMoreMessagesInner()
+        loadMoreMessagesInner();
       }
     },
-    [loadMoreMessagesInner]
-  )
+    [loadMoreMessagesInner],
+  );
 
   const handleCleanChat = () => {
-    resetFragment()
-    setTemporaryChatMessages([])
-  }
+    resetFragment();
+    setTemporaryChatMessages([]);
+  };
 
   if (loading) {
-    return <Loading />
+    return <Loading />;
   }
 
   return (
@@ -198,7 +198,7 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
         <div className="absolute right-[22px] top-2 flex h-[40px] items-center space-x-3">
           {isMobile ? (
             <WithTooltip
-              display={isTemporaryChat ? "Clear chat" : "New chat"}
+              display={isTemporaryChat ? 'Clear chat' : 'New chat'}
               trigger={
                 isTemporaryChat && (
                   <IconRefresh
@@ -267,12 +267,12 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
               </div>
 
               {!isGenerating &&
-                (selectedChat?.finish_reason === "length" ||
-                  selectedChat?.finish_reason === "terminal-calls") && (
+                (selectedChat?.finish_reason === 'length' ||
+                  selectedChat?.finish_reason === 'terminal-calls') && (
                   <div className="flex w-full justify-center p-2">
                     <Button
                       onClick={
-                        selectedChat?.finish_reason === "terminal-calls"
+                        selectedChat?.finish_reason === 'terminal-calls'
                           ? handleSendTerminalContinuation
                           : handleSendContinuation
                       }
@@ -297,5 +297,5 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
         onOpenChange={setIsDeleteDialogOpen}
       />
     </div>
-  )
-}
+  );
+};

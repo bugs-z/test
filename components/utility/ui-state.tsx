@@ -1,63 +1,63 @@
-"use client"
+'use client';
 
-import { UIContext } from "@/context/ui-context"
-import { PluginID } from "@/types/plugins"
-import { FC, useEffect, useState } from "react"
-import { useLocalStorageState } from "@/lib/hooks/use-local-storage-state"
-import { AgentStatusState } from "../messages/agent-status"
+import { UIContext } from '@/context/ui-context';
+import { PluginID } from '@/types/plugins';
+import { type FC, useEffect, useState } from 'react';
+import { useLocalStorageState } from '@/lib/hooks/use-local-storage-state';
+import type { AgentStatusState } from '../messages/agent-status';
 
-const MOBILE_BREAKPOINT = 768
+const MOBILE_BREAKPOINT = 768;
 
 interface UIStateProps {
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
 export const UIState: FC<UIStateProps> = ({ children }) => {
   // ENHANCE MENU
   const [isEnhancedMenuOpen, setIsEnhancedMenuOpen] = useLocalStorageState(
-    "isEnhancedMenuOpen",
-    false
-  )
-  const [selectedPluginType, setSelectedPluginType] = useState("")
-  const [selectedPlugin, setSelectedPlugin] = useState(PluginID.NONE)
+    'isEnhancedMenuOpen',
+    false,
+  );
+  const [selectedPluginType, setSelectedPluginType] = useState('');
+  const [selectedPlugin, setSelectedPlugin] = useState(PluginID.NONE);
 
   // CHAT INPUT COMMAND
-  const [slashCommand, setSlashCommand] = useState("")
+  const [slashCommand, setSlashCommand] = useState('');
 
   // UI States
-  const [isMobile, setIsMobile] = useState<boolean | undefined>(undefined)
-  const [isReadyToChat, setIsReadyToChat] = useState(true)
+  const [isMobile, setIsMobile] = useState<boolean | undefined>(undefined);
+  const [isReadyToChat, setIsReadyToChat] = useState(true);
   const [showSidebar, setShowSidebar] = useLocalStorageState(
-    "showSidebar",
-    false
-  )
+    'showSidebar',
+    false,
+  );
   const [showTerminalOutput, setShowTerminalOutput] = useLocalStorageState(
-    "showTerminalOutput",
-    true
-  )
+    'showTerminalOutput',
+    true,
+  );
 
   // Tools UI
-  const [isToolPickerOpen, setIsToolPickerOpen] = useState(false)
-  const [focusTool, setFocusTool] = useState(false)
-  const [toolInUse, setToolInUse] = useState("none")
+  const [isToolPickerOpen, setIsToolPickerOpen] = useState(false);
+  const [focusTool, setFocusTool] = useState(false);
+  const [toolInUse, setToolInUse] = useState('none');
 
   // Agent states
-  const [agentStatus, setAgentStatus] = useState<AgentStatusState | null>(null)
+  const [agentStatus, setAgentStatus] = useState<AgentStatusState | null>(null);
 
   // Loading States
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [firstTokenReceived, setFirstTokenReceived] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [firstTokenReceived, setFirstTokenReceived] = useState(false);
 
   // Handle mobile detection using matchMedia
   useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
+    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
     const onChange = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
-    }
-    mql.addEventListener("change", onChange)
-    setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
-    return () => mql.removeEventListener("change", onChange)
-  }, [])
+      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+    };
+    mql.addEventListener('change', onChange);
+    setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
 
   return (
     <UIContext.Provider
@@ -99,10 +99,10 @@ export const UIState: FC<UIStateProps> = ({ children }) => {
         isGenerating,
         setIsGenerating,
         firstTokenReceived,
-        setFirstTokenReceived
+        setFirstTokenReceived,
       }}
     >
       {children}
     </UIContext.Provider>
-  )
-}
+  );
+};

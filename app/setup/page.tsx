@@ -1,28 +1,28 @@
-"use client"
+'use client';
 
-import { PentestGPTContext } from "@/context/context"
-import { getProfileByUserId } from "@/db/profile"
+import { PentestGPTContext } from '@/context/context';
+import { getProfileByUserId } from '@/db/profile';
 // import { TablesUpdate } from "@/supabase/types"
 // import { updateProfile } from "@/db/profile"
-import { useRouter } from "next/navigation"
-import { useContext, useEffect } from "react"
+import { useRouter } from 'next/navigation';
+import { useContext, useEffect } from 'react';
 
 export default function SetupPage() {
-  const { setProfile, fetchStartingData, user } = useContext(PentestGPTContext)
-  const router = useRouter()
+  const { setProfile, fetchStartingData, user } = useContext(PentestGPTContext);
+  const router = useRouter();
 
   useEffect(() => {
-    ;(async () => {
+    (async () => {
       if (!user) {
-        router.push("/login")
-        return
+        router.push('/login');
+        return;
       }
 
-      const profile = await getProfileByUserId(user.id)
-      setProfile(profile)
+      const profile = await getProfileByUserId(user.id);
+      setProfile(profile);
 
       if (!profile) {
-        throw new Error("Profile not found")
+        throw new Error('Profile not found');
       }
 
       // if (!profile.has_onboarded) {
@@ -33,11 +33,11 @@ export default function SetupPage() {
       //   await updateProfile(profile.id, updateProfilePayload)
       // }
 
-      await fetchStartingData()
+      await fetchStartingData();
 
-      router.push(`/c`)
-    })()
-  }, [])
+      router.push(`/c`);
+    })();
+  }, []);
 
-  return null
+  return null;
 }

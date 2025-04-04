@@ -1,15 +1,15 @@
-import { FC } from "react"
-import { DialogPanel, DialogTitle } from "@headlessui/react"
-import { Button } from "../ui/button"
-import { TransitionedDialog } from "../ui/transitioned-dialog"
+import type { FC } from 'react';
+import { DialogPanel, DialogTitle } from '@headlessui/react';
+import { Button } from '../ui/button';
+import { TransitionedDialog } from '../ui/transitioned-dialog';
 
 interface DeleteDialogProps {
-  isOpen: boolean
-  onClose: () => void
-  onConfirm: () => void
-  title: string
-  message: string
-  confirmButtonText?: string
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  message: string;
+  confirmButtonText?: string;
 }
 
 export const DeleteDialog: FC<DeleteDialogProps> = ({
@@ -18,7 +18,7 @@ export const DeleteDialog: FC<DeleteDialogProps> = ({
   onConfirm,
   title,
   message,
-  confirmButtonText = "Delete"
+  confirmButtonText = 'Delete',
 }) => {
   return (
     <TransitionedDialog isOpen={isOpen} onClose={onClose}>
@@ -41,5 +41,5 @@ export const DeleteDialog: FC<DeleteDialogProps> = ({
         </div>
       </DialogPanel>
     </TransitionedDialog>
-  )
-}
+  );
+};

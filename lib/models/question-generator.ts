@@ -1,31 +1,31 @@
 import {
   filterEmptyAssistantMessages,
-  validateMessages
-} from "@/lib/ai/message-utils"
-import { generateText } from "ai"
-import endent from "endent"
-import { myProvider } from "../ai/providers"
+  validateMessages,
+} from '@/lib/ai/message-utils';
+import { generateText } from 'ai';
+import endent from 'endent';
+import { myProvider } from '../ai/providers';
 
 export async function generateStandaloneQuestion(
   messages: any[],
   latestUserMessage: any,
   systemMessageContent: string,
-  generateAtomicQuestions: boolean = false,
-  numAtomicQuestions: number = 4
+  generateAtomicQuestions = false,
+  numAtomicQuestions = 4,
 ) {
-  filterEmptyAssistantMessages(messages)
+  filterEmptyAssistantMessages(messages);
 
   // Validate messages to handle empty Mistral responses
-  const validatedMessages = validateMessages(messages)
+  const validatedMessages = validateMessages(messages);
 
   const chatHistory = validatedMessages
     .slice(1, -1) // Remove the first (system prompt) and the last message (user message)
     .slice(-3) // Get the last 3 messages only (assistant, user, assistant)
-    .map(msg => `${msg.role}: ${msg.content}`)
-    .join("\n")
+    .map((msg) => `${msg.role}: ${msg.content}`)
+    .join('\n');
 
   // Compressed prompt with HyDE
-  let template = ""
+  let template = '';
 
   if (generateAtomicQuestions) {
     template = endent`
@@ -52,59 +52,59 @@ export async function generateStandaloneQuestion(
       <Atomic Questions>
         <Atomic Question>{Your atomic question here}</Atomic Question>
         <Atomic Question>{Your atomic question here}</Atomic Question>
-      </Atomic Questions>`
+      </Atomic Questions>`;
   }
 
   try {
     const result = await generateText({
-      model: myProvider.languageModel("standalone-question-model"),
+      model: myProvider.languageModel('standalone-question-model'),
       maxTokens: 1024,
       messages: [
-        { role: "system", content: systemMessageContent },
-        { role: "user", content: template }
-      ]
-    })
+        { role: 'system', content: systemMessageContent },
+        { role: 'user', content: template },
+      ],
+    });
 
-    const returnText = result.text
+    const returnText = result.text;
 
-    let standaloneQuestion = ""
-    let atomicQuestions: string[] = []
+    let standaloneQuestion = '';
+    let atomicQuestions: string[] = [];
 
     if (
-      returnText.includes("<Standalone Question>") &&
-      returnText.includes("</Standalone Question>")
+      returnText.includes('<Standalone Question>') &&
+      returnText.includes('</Standalone Question>')
     ) {
       standaloneQuestion = returnText
-        .split("<Standalone Question>")[1]
-        .split("</Standalone Question>")[0]
-        .trim()
+        .split('<Standalone Question>')[1]
+        .split('</Standalone Question>')[0]
+        .trim();
     }
 
     if (
       generateAtomicQuestions &&
-      returnText.includes("<Atomic Questions>") &&
-      returnText.includes("</Atomic Questions>")
+      returnText.includes('<Atomic Questions>') &&
+      returnText.includes('</Atomic Questions>')
     ) {
       const atomicQuestionsSection = returnText
-        .split("<Atomic Questions>")[1]
-        .split("</Atomic Questions>")[0]
+        .split('<Atomic Questions>')[1]
+        .split('</Atomic Questions>')[0];
 
       atomicQuestions = atomicQuestionsSection
-        .split("<Atomic Question>")
-        .filter((question: string) => question.trim() !== "")
+        .split('<Atomic Question>')
+        .filter((question: string) => question.trim() !== '')
         .map((question: string) =>
-          question.split("</Atomic Question>")[0].trim()
-        )
+          question.split('</Atomic Question>')[0].trim(),
+        );
     } else {
-      atomicQuestions = [standaloneQuestion]
+      atomicQuestions = [standaloneQuestion];
     }
 
-    return { standaloneQuestion, atomicQuestions }
+    return { standaloneQuestion, atomicQuestions };
   } catch (error) {
-    console.error("Error in generateStandaloneQuestion:", error)
+    console.error('Error in generateStandaloneQuestion:', error);
     return {
       standaloneQuestion: latestUserMessage,
-      atomicQuestions: [latestUserMessage]
-    }
+      atomicQuestions: [latestUserMessage],
+    };
   }
 }

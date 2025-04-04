@@ -1,29 +1,29 @@
-import { FC, useState } from "react"
-import { Button } from "../../ui/button"
-import { Label } from "../../ui/label"
-import { useRouter } from "next/navigation"
-import { supabase } from "@/lib/supabase/browser-client"
-import { toast } from "sonner"
-import { MFAEnableModal } from "../mfa/mfa-enable-modal"
-import { MFADisableModal } from "../mfa/mfa-disable-modal"
-import { useMFA } from "../mfa/use-mfa"
+import { type FC, useState } from 'react';
+import { Button } from '../../ui/button';
+import { Label } from '../../ui/label';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase/browser-client';
+import { toast } from 'sonner';
+import { MFAEnableModal } from '../mfa/mfa-enable-modal';
+import { MFADisableModal } from '../mfa/mfa-disable-modal';
+import { useMFA } from '../mfa/use-mfa';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle
-} from "@/components/ui/dialog"
-import { Loader2 } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Loader2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 export const SecurityTab: FC = () => {
-  const router = useRouter()
-  const [isLoggingOut, setIsLoggingOut] = useState(false)
-  const [showMFAModal, setShowMFAModal] = useState(false)
-  const [showSecret, setShowSecret] = useState(false)
-  const [showVerifyModal, setShowVerifyModal] = useState(false)
-  const [showConfirmDisable, setShowConfirmDisable] = useState(false)
-  const [verifyCode, setVerifyCode] = useState("")
+  const router = useRouter();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showMFAModal, setShowMFAModal] = useState(false);
+  const [showSecret, setShowSecret] = useState(false);
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
+  const [showConfirmDisable, setShowConfirmDisable] = useState(false);
+  const [verifyCode, setVerifyCode] = useState('');
 
   const {
     isLoading,
@@ -35,63 +35,63 @@ export const SecurityTab: FC = () => {
     startEnrollment,
     verifyMFA,
     verifyBeforeUnenroll,
-    unenrollMFA
-  } = useMFA()
+    unenrollMFA,
+  } = useMFA();
 
   const handleLogoutAllDevices = async () => {
-    setIsLoggingOut(true)
+    setIsLoggingOut(true);
     try {
-      await supabase.auth.signOut({ scope: "global" })
-      router.push("/login")
-      router.refresh()
-      toast.success("Logged out of all devices")
+      await supabase.auth.signOut({ scope: 'global' });
+      router.push('/login');
+      router.refresh();
+      toast.success('Logged out of all devices');
     } catch (error) {
-      console.error("Error logging out:", error)
-      toast.error("Failed to log out of all devices")
+      console.error('Error logging out:', error);
+      toast.error('Failed to log out of all devices');
     } finally {
-      setIsLoggingOut(false)
+      setIsLoggingOut(false);
     }
-  }
+  };
 
   const handleEnableClick = async () => {
     try {
-      await startEnrollment()
-      setShowMFAModal(true)
+      await startEnrollment();
+      setShowMFAModal(true);
     } catch {
-      setShowMFAModal(false)
+      setShowMFAModal(false);
     }
-  }
+  };
 
   const handleVerify = async (code: string) => {
     try {
-      await verifyMFA(code)
-      setShowMFAModal(false)
-      setVerifyCode("")
+      await verifyMFA(code);
+      setShowMFAModal(false);
+      setVerifyCode('');
     } catch {
       // Error is handled in the hook
     }
-  }
+  };
 
   const handleVerifyForDisable = async (code: string) => {
     try {
-      await verifyBeforeUnenroll(code)
-      setShowVerifyModal(false)
-      setVerifyCode("")
+      await verifyBeforeUnenroll(code);
+      setShowVerifyModal(false);
+      setVerifyCode('');
       // After successful verification, show the confirmation modal
-      setShowConfirmDisable(true)
+      setShowConfirmDisable(true);
     } catch {
       // Error is handled in the hook
     }
-  }
+  };
 
   const handleConfirmDisable = async () => {
     try {
-      await unenrollMFA()
-      setShowConfirmDisable(false)
+      await unenrollMFA();
+      setShowConfirmDisable(false);
     } catch {
       // Error is handled in the hook
     }
-  }
+  };
 
   return (
     <div className="space-y-4">
@@ -116,7 +116,7 @@ export const SecurityTab: FC = () => {
             {isLoading ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (
-              "Disable"
+              'Disable'
             )}
           </Button>
         ) : (
@@ -125,7 +125,7 @@ export const SecurityTab: FC = () => {
             disabled={isLoading || isEnrolling}
             aria-label="Enable two-factor authentication"
           >
-            {isLoading ? <Loader2 className="size-4 animate-spin" /> : "Enable"}
+            {isLoading ? <Loader2 className="size-4 animate-spin" /> : 'Enable'}
           </Button>
         )}
       </div>
@@ -159,7 +159,7 @@ export const SecurityTab: FC = () => {
                 id="verifyCode"
                 type="text"
                 value={verifyCode}
-                onChange={e => setVerifyCode(e.target.value.trim())}
+                onChange={(e) => setVerifyCode(e.target.value.trim())}
                 className="w-full rounded border p-2"
                 placeholder="Enter 6-digit code"
               />
@@ -168,8 +168,8 @@ export const SecurityTab: FC = () => {
               <Button
                 variant="outline"
                 onClick={() => {
-                  setShowVerifyModal(false)
-                  setVerifyCode("")
+                  setShowVerifyModal(false);
+                  setVerifyCode('');
                 }}
               >
                 Cancel
@@ -204,9 +204,9 @@ export const SecurityTab: FC = () => {
           disabled={isLoggingOut}
           aria-label="Log out of all devices"
         >
-          {isLoggingOut ? "Logging out..." : "Log out all"}
+          {isLoggingOut ? 'Logging out...' : 'Log out all'}
         </Button>
       </div>
     </div>
-  )
-}
+  );
+};

@@ -1,18 +1,18 @@
-import { ChatMessage } from "@/types"
-import { useContext } from "react"
-import { PentestGPTContext } from "@/context/context"
+import type { ChatMessage } from '@/types';
+import { useContext } from 'react';
+import { PentestGPTContext } from '@/context/context';
 
 interface UseMessageHandlerProps {
-  isGenerating: boolean
-  userInput: string
-  chatMessages: ChatMessage[]
+  isGenerating: boolean;
+  userInput: string;
+  chatMessages: ChatMessage[];
   handleSendMessage: (
     message: string,
     chatMessages: ChatMessage[],
     isRegeneration: boolean,
-    shouldAddMessage?: boolean
-  ) => void
-  handleStopMessage: () => void
+    shouldAddMessage?: boolean,
+  ) => void;
+  handleStopMessage: () => void;
 }
 
 export const useMessageHandler = ({
@@ -20,27 +20,27 @@ export const useMessageHandler = ({
   userInput,
   chatMessages,
   handleSendMessage,
-  handleStopMessage
+  handleStopMessage,
 }: UseMessageHandlerProps) => {
-  const { newMessageFiles } = useContext(PentestGPTContext)
+  const { newMessageFiles } = useContext(PentestGPTContext);
 
   const sendMessage = () => {
-    if (!userInput || isGenerating) return
-    handleSendMessage(userInput, chatMessages, false, false)
-  }
+    if (!userInput || isGenerating) return;
+    handleSendMessage(userInput, chatMessages, false, false);
+  };
 
   const stopMessage = () => {
-    if (!isGenerating) return
-    handleStopMessage()
-  }
+    if (!isGenerating) return;
+    handleStopMessage();
+  };
 
-  const fileLoading = newMessageFiles.some(file =>
-    file.id.startsWith("loading")
-  )
+  const fileLoading = newMessageFiles.some((file) =>
+    file.id.startsWith('loading'),
+  );
 
   return {
     sendMessage,
     stopMessage,
-    canSend: !!userInput && !isGenerating && !fileLoading
-  }
-}
+    canSend: !!userInput && !isGenerating && !fileLoading,
+  };
+};

@@ -1,118 +1,119 @@
-"use client"
+'use client';
 
-import { FC, useState, useContext, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { toast } from "sonner"
-import { Switch } from "@/components/ui/switch"
-import { IconArrowLeft, IconLoader2 } from "@tabler/icons-react"
-import Loading from "@/app/loading"
+import { type FC, useState, useContext, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { toast } from 'sonner';
+import { Switch } from '@/components/ui/switch';
+import { IconArrowLeft, IconLoader2 } from '@tabler/icons-react';
+import Loading from '@/app/loading';
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { supabase } from "@/lib/supabase/browser-client"
-import { getCheckoutUrl } from "@/lib/server/stripe-url"
-import PentestGPTTextSVG from "@/components/icons/pentestgpt-text-svg"
-import { useTheme } from "next-themes"
-import { PentestGPTContext } from "@/context/context"
-import { getSubscriptionByUserId } from "@/db/subscriptions"
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { supabase } from '@/lib/supabase/browser-client';
+import { getCheckoutUrl } from '@/lib/server/stripe-url';
+import PentestGPTTextSVG from '@/components/icons/pentestgpt-text-svg';
+import { useTheme } from 'next-themes';
+import { PentestGPTContext } from '@/context/context';
+import { getSubscriptionByUserId } from '@/db/subscriptions';
 
 const MONTHLY_TEAM_PRICE_ID =
-  process.env.NEXT_PUBLIC_STRIPE_MONTHLY_TEAM_PRICE_ID
-const YEARLY_TEAM_PRICE_ID = process.env.NEXT_PUBLIC_STRIPE_YEARLY_TEAM_PRICE_ID
-const MAX_TEAM_NAME_LENGTH = 25
-const MAX_SEAT_QUANTITY = 100
+  process.env.NEXT_PUBLIC_STRIPE_MONTHLY_TEAM_PRICE_ID;
+const YEARLY_TEAM_PRICE_ID =
+  process.env.NEXT_PUBLIC_STRIPE_YEARLY_TEAM_PRICE_ID;
+const MAX_TEAM_NAME_LENGTH = 25;
+const MAX_SEAT_QUANTITY = 100;
 
 const NewTeamPage: FC = () => {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const { profile, userEmail } = useContext(PentestGPTContext)
-  const [teamName, setTeamName] = useState("")
-  const [isYearly, setIsYearly] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const [seatQuantity, setSeatQuantity] = useState(1)
-  const { theme } = useTheme()
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { profile, userEmail } = useContext(PentestGPTContext);
+  const [teamName, setTeamName] = useState('');
+  const [isYearly, setIsYearly] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [seatQuantity, setSeatQuantity] = useState(1);
+  const { theme } = useTheme();
 
   useEffect(() => {
     const checkSubscription = async () => {
       if (profile) {
         try {
-          const subscription = await getSubscriptionByUserId(profile.user_id)
+          const subscription = await getSubscriptionByUserId(profile.user_id);
 
           if (subscription) {
-            router.push("/login")
-            return
+            router.push('/login');
+            return;
           }
         } catch (error) {
-          console.error("Error checking subscription:", error)
-          toast.error("Failed to check subscription status. Please try again.")
+          console.error('Error checking subscription:', error);
+          toast.error('Failed to check subscription status. Please try again.');
         } finally {
-          setIsLoading(false)
+          setIsLoading(false);
         }
       }
-    }
+    };
 
-    checkSubscription()
-  }, [profile, router])
+    checkSubscription();
+  }, [profile, router]);
 
   useEffect(() => {
-    const yearlyParam = searchParams.get("yearly")
-    setIsYearly(yearlyParam === "true")
-  }, [searchParams])
+    const yearlyParam = searchParams.get('yearly');
+    setIsYearly(yearlyParam === 'true');
+  }, [searchParams]);
 
   const handleCreateTeam = async () => {
     if (!teamName.trim()) {
-      toast.error("Please enter a team name")
-      return
+      toast.error('Please enter a team name');
+      return;
     }
 
     if (teamName.length > MAX_TEAM_NAME_LENGTH) {
       toast.error(
-        `Team name must be ${MAX_TEAM_NAME_LENGTH} characters or less`
-      )
-      return
+        `Team name must be ${MAX_TEAM_NAME_LENGTH} characters or less`,
+      );
+      return;
     }
 
     if (seatQuantity < 1) {
-      toast.error("Seat quantity must be at least 1")
-      return
+      toast.error('Seat quantity must be at least 1');
+      return;
     }
 
     if (seatQuantity > MAX_SEAT_QUANTITY) {
-      toast.error(`Seat quantity cannot exceed ${MAX_SEAT_QUANTITY}`)
-      return
+      toast.error(`Seat quantity cannot exceed ${MAX_SEAT_QUANTITY}`);
+      return;
     }
 
-    setIsLoading(true)
+    setIsLoading(true);
 
     try {
-      const priceId = isYearly ? YEARLY_TEAM_PRICE_ID : MONTHLY_TEAM_PRICE_ID
-      const result = await getCheckoutUrl(priceId, teamName, seatQuantity)
+      const priceId = isYearly ? YEARLY_TEAM_PRICE_ID : MONTHLY_TEAM_PRICE_ID;
+      const result = await getCheckoutUrl(priceId, teamName, seatQuantity);
 
-      if (result.type === "error") {
-        throw new Error(result.error.message)
+      if (result.type === 'error') {
+        throw new Error(result.error.message);
       }
 
       // Redirect to the checkout page
-      router.push(result.value)
+      router.push(result.value);
     } catch (error) {
-      toast.error("Failed to create team. Please try again.")
+      toast.error('Failed to create team. Please try again.');
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut({ scope: "local" })
-    router.push("/login")
-    router.refresh()
-  }
+    await supabase.auth.signOut({ scope: 'local' });
+    router.push('/login');
+    router.refresh();
+  };
 
   if (isLoading) {
-    return <Loading />
+    return <Loading />;
   }
 
   if (!profile) {
-    return null
+    return null;
   }
 
   return (
@@ -120,7 +121,7 @@ const NewTeamPage: FC = () => {
       <div className="relative flex items-center justify-center p-4">
         <Button
           variant="ghost"
-          onClick={() => router.push("/upgrade")}
+          onClick={() => router.push('/upgrade')}
           className="absolute left-4 p-2"
           aria-label="Back"
         >
@@ -128,7 +129,7 @@ const NewTeamPage: FC = () => {
         </Button>
         <div className="flex w-full items-center justify-center">
           <PentestGPTTextSVG
-            className={`${theme === "dark" ? "text-white" : "text-black"}`}
+            className={`${theme === 'dark' ? 'text-white' : 'text-black'}`}
             scale={0.08}
           />
         </div>
@@ -161,7 +162,7 @@ const NewTeamPage: FC = () => {
                 id="teamName"
                 type="text"
                 value={teamName}
-                onChange={e => setTeamName(e.target.value)}
+                onChange={(e) => setTeamName(e.target.value)}
                 placeholder="Enter your team name"
                 maxLength={MAX_TEAM_NAME_LENGTH}
               />
@@ -181,8 +182,10 @@ const NewTeamPage: FC = () => {
                 id="seatQuantity"
                 type="number"
                 value={seatQuantity}
-                onChange={e =>
-                  setSeatQuantity(Math.max(1, parseInt(e.target.value) || 1))
+                onChange={(e) =>
+                  setSeatQuantity(
+                    Math.max(1, Number.parseInt(e.target.value) || 1),
+                  )
                 }
                 min="1"
                 max={MAX_SEAT_QUANTITY}
@@ -205,13 +208,13 @@ const NewTeamPage: FC = () => {
                   <span>Creating...</span>
                 </>
               ) : (
-                `Create Team - ${isYearly ? "$300" : "$30"} / user / ${isYearly ? "year" : "month"}`
+                `Create Team - ${isYearly ? '$300' : '$30'} / user / ${isYearly ? 'year' : 'month'}`
               )}
             </Button>
 
             <div className="relative py-2">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
+                <div className="w-full border-t border-gray-300" />
               </div>
             </div>
 
@@ -226,7 +229,7 @@ const NewTeamPage: FC = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default NewTeamPage
+export default NewTeamPage;

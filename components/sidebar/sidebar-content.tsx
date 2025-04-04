@@ -1,69 +1,69 @@
-import { ContentType, DataListType } from "@/types"
-import { FC, useContext, useEffect, useState } from "react"
-import { SidebarDataList } from "./sidebar-data-list"
-import { PentestGPTContext } from "@/context/context"
-import { SidebarUpgrade } from "./sidebar-upgrade"
-import { SidebarInviteButton } from "./sidebar-invite-button"
-import { InviteMembersDialog } from "@/components/utility/invite-members-dialog"
-import { AcceptInvitationDialog } from "@/components/utility/accept-invitation-dialog"
-import { isTeamAdmin } from "@/lib/team-utils"
-import { SidebarHeader } from "./sidebar-header"
-import { SidebarSwitcher } from "./sidebar-switcher"
-import { WithTooltip } from "../ui/with-tooltip"
-import { Settings } from "../utility/settings"
-import { useUIContext } from "@/context/ui-context"
+import type { ContentType, DataListType } from '@/types';
+import { type FC, useContext, useEffect, useState } from 'react';
+import { SidebarDataList } from './sidebar-data-list';
+import { PentestGPTContext } from '@/context/context';
+import { SidebarUpgrade } from './sidebar-upgrade';
+import { SidebarInviteButton } from './sidebar-invite-button';
+import { InviteMembersDialog } from '@/components/utility/invite-members-dialog';
+import { AcceptInvitationDialog } from '@/components/utility/accept-invitation-dialog';
+import { isTeamAdmin } from '@/lib/team-utils';
+import { SidebarHeader } from './sidebar-header';
+import { SidebarSwitcher } from './sidebar-switcher';
+import { WithTooltip } from '../ui/with-tooltip';
+import { Settings } from '../utility/settings';
+import { useUIContext } from '@/context/ui-context';
 
-export const SIDEBAR_ICON_SIZE = 26
+export const SIDEBAR_ICON_SIZE = 26;
 
 interface SidebarContentProps {
-  contentType: ContentType
-  data: DataListType
+  contentType: ContentType;
+  data: DataListType;
 }
 
 export const SidebarContent: FC<SidebarContentProps> = ({
   contentType,
-  data
+  data,
 }) => {
   const {
     isPremiumSubscription,
     subscription,
     membershipData,
     teamMembers,
-    setContentType
-  } = useContext(PentestGPTContext)
-  const { isMobile, setShowSidebar } = useUIContext()
-  const isInvitationPending = membershipData?.invitation_status === "pending"
+    setContentType,
+  } = useContext(PentestGPTContext);
+  const { isMobile, setShowSidebar } = useUIContext();
+  const isInvitationPending = membershipData?.invitation_status === 'pending';
 
-  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false)
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [isAcceptInviteDialogOpen, setIsAcceptInviteDialogOpen] =
-    useState(isInvitationPending)
+    useState(isInvitationPending);
 
   useEffect(() => {
-    setIsAcceptInviteDialogOpen(isInvitationPending)
-  }, [isInvitationPending])
+    setIsAcceptInviteDialogOpen(isInvitationPending);
+  }, [isInvitationPending]);
 
   const canInviteMembers =
     isTeamAdmin(membershipData) &&
     teamMembers &&
-    teamMembers.length < (subscription?.quantity || 0)
+    teamMembers.length < (subscription?.quantity || 0);
 
   const handleSidebarVisibility = () => {
     if (isMobile) {
-      setShowSidebar(false)
+      setShowSidebar(false);
     }
-  }
+  };
 
   const handleInvite = () => {
-    setIsInviteDialogOpen(true)
-  }
+    setIsInviteDialogOpen(true);
+  };
 
   const handleAcceptInvitation = () => {
-    setIsAcceptInviteDialogOpen(true)
-  }
+    setIsAcceptInviteDialogOpen(true);
+  };
 
   const handleToggleSidebar = () => {
-    setShowSidebar(false)
-  }
+    setShowSidebar(false);
+  };
 
   return (
     <div className="flex max-h-[calc(100%-10px)] grow flex-col">
@@ -115,5 +115,5 @@ export const SidebarContent: FC<SidebarContentProps> = ({
         />
       )}
     </div>
-  )
-}
+  );
+};

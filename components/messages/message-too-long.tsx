@@ -2,43 +2,43 @@ import {
   IconArrowDown,
   IconArrowUp,
   IconDownload,
-  IconEye
-} from "@tabler/icons-react"
-import { FC, useState } from "react"
-import Modal from "../chat/dialog-portal"
-import { Button } from "../ui/button"
-import { MessageMarkdown } from "./message-markdown"
+  IconEye,
+} from '@tabler/icons-react';
+import { type FC, useState } from 'react';
+import Modal from '../chat/dialog-portal';
+import { Button } from '../ui/button';
+import { MessageMarkdown } from './message-markdown';
 
 interface MessageTooLongProps {
-  content: string
-  plugin: string
-  id: string
+  content: string;
+  plugin: string;
+  id: string;
 }
 
 export const MessageTooLong: FC<MessageTooLongProps> = ({
   content,
   plugin,
-  id
+  id,
 }) => {
-  const [showModal, setShowModal] = useState(false)
+  const [showModal, setShowModal] = useState(false);
 
   const handleViewContent = () => {
-    setShowModal(true)
-  }
+    setShowModal(true);
+  };
 
   const handleCloseModal = () => {
-    setShowModal(false)
-  }
+    setShowModal(false);
+  };
 
   const handleDownloadContent = () => {
-    const element = document.createElement("a")
-    const file = new Blob([content], { type: "text/markdown" })
-    element.href = URL.createObjectURL(file)
-    element.download = `${plugin}-${id}.md`
-    document.body.appendChild(element)
-    element.click()
-    document.body.removeChild(element)
-  }
+    const element = document.createElement('a');
+    const file = new Blob([content], { type: 'text/markdown' });
+    element.href = URL.createObjectURL(file);
+    element.download = `${plugin}-${id}.md`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  };
 
   return (
     <>
@@ -88,15 +88,15 @@ export const MessageTooLong: FC<MessageTooLongProps> = ({
         </div>
       </div>
       <Modal isOpen={showModal}>
-        <div className="size-screen fixed inset-0 z-50 bg-black/50 backdrop-blur-xs dark:bg-black/80"></div>
+        <div className="size-screen fixed inset-0 z-50 bg-black/50 backdrop-blur-xs dark:bg-black/80" />
         <div
           className="fixed inset-0 z-50 flex size-full items-center justify-center"
           onClick={handleCloseModal}
         >
           <div
             className="bg-secondary relative flex w-full max-w-4xl flex-col rounded-md border shadow-lg"
-            style={{ maxHeight: "90vh" }}
-            onClick={e => e.stopPropagation()}
+            style={{ maxHeight: '90vh' }}
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="message-content-scrollable grow overflow-y-auto p-4">
               <MessageMarkdown content={content} isAssistant={true} />
@@ -105,7 +105,7 @@ export const MessageTooLong: FC<MessageTooLongProps> = ({
               <Button
                 onClick={() =>
                   document
-                    ?.querySelector(".message-content-scrollable")
+                    ?.querySelector('.message-content-scrollable')
                     ?.scrollTo(0, 0)
                 }
                 variant="ghost"
@@ -122,11 +122,11 @@ export const MessageTooLong: FC<MessageTooLongProps> = ({
               <Button
                 onClick={() =>
                   document
-                    ?.querySelector(".message-content-scrollable")
+                    ?.querySelector('.message-content-scrollable')
                     ?.scrollTo(
                       0,
-                      document?.querySelector(".message-content-scrollable")
-                        ?.scrollHeight || 0
+                      document?.querySelector('.message-content-scrollable')
+                        ?.scrollHeight || 0,
                     )
                 }
                 variant="ghost"
@@ -138,5 +138,5 @@ export const MessageTooLong: FC<MessageTooLongProps> = ({
         </div>
       </Modal>
     </>
-  )
-}
+  );
+};

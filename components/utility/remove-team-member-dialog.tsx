@@ -4,16 +4,16 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 interface RemoveTeamMemberDialogProps {
-  isOpen: boolean
-  onClose: () => void
-  onConfirm: () => void
-  email: string
-  isPendingInvitation: boolean
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  email: string;
+  isPendingInvitation: boolean;
 }
 
 export function RemoveTeamMemberDialog({
@@ -21,14 +21,14 @@ export function RemoveTeamMemberDialog({
   onClose,
   onConfirm,
   email,
-  isPendingInvitation
+  isPendingInvitation,
 }: RemoveTeamMemberDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {isPendingInvitation ? "Cancel Invitation" : "Remove Team Member"}
+            {isPendingInvitation ? 'Cancel Invitation' : 'Remove Team Member'}
           </DialogTitle>
           <DialogDescription>
             {isPendingInvitation
@@ -41,10 +41,10 @@ export function RemoveTeamMemberDialog({
             Cancel
           </Button>
           <Button variant="destructive" onClick={onConfirm}>
-            {isPendingInvitation ? "Cancel Invitation" : "Remove"}
+            {isPendingInvitation ? 'Cancel Invitation' : 'Remove'}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

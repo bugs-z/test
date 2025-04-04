@@ -1,49 +1,49 @@
-import { useChatHandler } from "@/components/chat/chat-hooks/use-chat-handler"
-import { ContentType } from "@/types"
-import { IconMessagePlus, IconRefresh } from "@tabler/icons-react"
-import { FC, useContext } from "react"
-import { Button } from "../ui/button"
-import { PentestGPTContext } from "@/context/context"
-import { SIDEBAR_ICON_SIZE } from "./sidebar-content"
-import { WithTooltip } from "../ui/with-tooltip"
+import { useChatHandler } from '@/components/chat/chat-hooks/use-chat-handler';
+import type { ContentType } from '@/types';
+import { IconMessagePlus, IconRefresh } from '@tabler/icons-react';
+import { type FC, useContext } from 'react';
+import { Button } from '../ui/button';
+import { PentestGPTContext } from '@/context/context';
+import { SIDEBAR_ICON_SIZE } from './sidebar-content';
+import { WithTooltip } from '../ui/with-tooltip';
 
 interface SidebarCreateButtonsProps {
-  contentType: ContentType
-  handleSidebarVisibility: () => void
+  contentType: ContentType;
+  handleSidebarVisibility: () => void;
 }
 
 export const SidebarCreateButtons: FC<SidebarCreateButtonsProps> = ({
   contentType,
-  handleSidebarVisibility
+  handleSidebarVisibility,
 }) => {
   const { isTemporaryChat, setTemporaryChatMessages } =
-    useContext(PentestGPTContext)
-  const { handleNewChat } = useChatHandler()
+    useContext(PentestGPTContext);
+  const { handleNewChat } = useChatHandler();
 
   const getCreateFunction = () => {
     switch (contentType) {
-      case "chats":
+      case 'chats':
         if (isTemporaryChat) {
           return () => {
-            setTemporaryChatMessages([])
-            handleSidebarVisibility()
-          }
+            setTemporaryChatMessages([]);
+            handleSidebarVisibility();
+          };
         }
         return async () => {
-          handleNewChat()
-          handleSidebarVisibility()
-        }
+          handleNewChat();
+          handleSidebarVisibility();
+        };
 
       default:
-        break
+        break;
     }
-  }
+  };
 
   return (
     <div className="flex">
       <WithTooltip
         display={
-          isTemporaryChat && contentType === "chats" ? "Clear chat" : "New chat"
+          isTemporaryChat && contentType === 'chats' ? 'Clear chat' : 'New chat'
         }
         trigger={
           <Button
@@ -51,7 +51,7 @@ export const SidebarCreateButtons: FC<SidebarCreateButtonsProps> = ({
             className="size-10 p-0"
             onClick={getCreateFunction()}
           >
-            {isTemporaryChat && contentType === "chats" ? (
+            {isTemporaryChat && contentType === 'chats' ? (
               <IconRefresh size={SIDEBAR_ICON_SIZE} />
             ) : (
               <IconMessagePlus size={SIDEBAR_ICON_SIZE} />
@@ -61,5 +61,5 @@ export const SidebarCreateButtons: FC<SidebarCreateButtonsProps> = ({
         side="bottom"
       />
     </div>
-  )
-}
+  );
+};

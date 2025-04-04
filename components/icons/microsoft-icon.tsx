@@ -1,8 +1,8 @@
-import React from "react"
+import React from 'react';
 
 interface MicrosoftIconProps extends React.SVGProps<SVGSVGElement> {
-  width?: number
-  height?: number
+  width?: number;
+  height?: number;
 }
 
 export const MicrosoftIcon: React.FC<MicrosoftIconProps> = ({
@@ -24,5 +24,5 @@ export const MicrosoftIcon: React.FC<MicrosoftIconProps> = ({
       <path fill="#05a6f0" d="M1 12.5h9.5V22H1z" />
       <path fill="#ffba08" d="M12.5 12.5H22V22h-9.5z" />
     </svg>
-  )
-}
+  );
+};

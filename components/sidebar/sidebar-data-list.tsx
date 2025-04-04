@@ -1,101 +1,111 @@
-import { PentestGPTContext } from "@/context/context"
-import { cn } from "@/lib/utils"
-import { Tables } from "@/supabase/types"
-import { ContentType, DataItemType, DataListType } from "@/types"
-import { FC, useCallback, useContext, useEffect, useRef, useState } from "react"
-import { ChatItem } from "./items/chat/chat-item"
-import { getMoreChatsByUserId } from "@/db/chats"
-import { Loader2 } from "lucide-react"
-import { DateCategory, sortByDateCategory } from "@/lib/utils"
+import { PentestGPTContext } from '@/context/context';
+import { cn } from '@/lib/utils';
+import type { Tables } from '@/supabase/types';
+import type { ContentType, DataItemType, DataListType } from '@/types';
+import {
+  type FC,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+import { ChatItem } from './items/chat/chat-item';
+import { getMoreChatsByUserId } from '@/db/chats';
+import { Loader2 } from 'lucide-react';
+import { type DateCategory, sortByDateCategory } from '@/lib/utils';
 
 interface SidebarDataListProps {
-  contentType: ContentType
-  data: DataListType
+  contentType: ContentType;
+  data: DataListType;
 }
 
 export const SidebarDataList: FC<SidebarDataListProps> = ({
   contentType,
-  data
+  data,
 }) => {
-  const { setChats, isTemporaryChat } = useContext(PentestGPTContext)
+  const { setChats, isTemporaryChat } = useContext(PentestGPTContext);
 
-  const divRef = useRef<HTMLDivElement>(null)
-  const loaderRef = useRef<HTMLDivElement>(null)
+  const divRef = useRef<HTMLDivElement>(null);
+  const loaderRef = useRef<HTMLDivElement>(null);
 
-  const [isLoadingMore, setIsLoadingMore] = useState(false)
-  const [hasMoreChats, setHasMoreChats] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMoreChats, setHasMoreChats] = useState(true);
 
   const fetchMoreChats = useCallback(async () => {
     if (
-      (contentType === "chats" || contentType === "tools") &&
+      (contentType === 'chats' || contentType === 'tools') &&
       data.length > 0 &&
       !isLoadingMore &&
       hasMoreChats
     ) {
-      setIsLoadingMore(true)
-      const lastChat = data[data.length - 1] as Tables<"chats">
+      setIsLoadingMore(true);
+      const lastChat = data[data.length - 1] as Tables<'chats'>;
       const moreChats = await getMoreChatsByUserId(
         lastChat.user_id,
-        lastChat.created_at
-      )
+        lastChat.created_at,
+      );
       if (moreChats.length > 0) {
-        setChats((prevChats: Tables<"chats">[]) => [...prevChats, ...moreChats])
+        setChats((prevChats: Tables<'chats'>[]) => [
+          ...prevChats,
+          ...moreChats,
+        ]);
       } else {
-        setHasMoreChats(false)
+        setHasMoreChats(false);
       }
-      setIsLoadingMore(false)
+      setIsLoadingMore(false);
     }
-  }, [contentType, data, isLoadingMore, hasMoreChats, setChats])
+  }, [contentType, data, isLoadingMore, hasMoreChats, setChats]);
 
   useEffect(() => {
     const options = {
       root: null,
-      rootMargin: "0px",
-      threshold: 1.0
-    }
+      rootMargin: '0px',
+      threshold: 1.0,
+    };
 
-    const observer = new IntersectionObserver(entries => {
-      const [entry] = entries
+    const observer = new IntersectionObserver((entries) => {
+      const [entry] = entries;
       if (entry.isIntersecting && !isLoadingMore && hasMoreChats) {
-        fetchMoreChats()
+        fetchMoreChats();
       }
-    }, options)
+    }, options);
 
     if (loaderRef.current) {
-      observer.observe(loaderRef.current)
+      observer.observe(loaderRef.current);
     }
 
     return () => {
       if (loaderRef.current) {
-        observer.unobserve(loaderRef.current)
+        observer.unobserve(loaderRef.current);
       }
-    }
-  }, [loaderRef, isLoadingMore, hasMoreChats, fetchMoreChats])
+    };
+  }, [loaderRef, isLoadingMore, hasMoreChats, fetchMoreChats]);
 
   const getDataListComponent = (
     contentType: ContentType,
-    item: DataItemType
+    item: DataItemType,
   ) => {
     switch (contentType) {
-      case "chats":
-        return <ChatItem key={item.id} chat={item as Tables<"chats">} />
-      case "tools":
-        return <ChatItem key={item.id} chat={item as Tables<"chats">} />
+      case 'chats':
+        return <ChatItem key={item.id} chat={item as Tables<'chats'>} />;
+      case 'tools':
+        return <ChatItem key={item.id} chat={item as Tables<'chats'>} />;
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   const getSortedData = (data: DataItemType[], category: DateCategory) => {
-    return sortByDateCategory(data, category)
-  }
+    return sortByDateCategory(data, category);
+  };
 
   return (
     <div
       ref={divRef}
       className={cn(
-        "relative flex h-full flex-col",
-        isTemporaryChat ? "overflow-hidden" : "overflow-auto"
+        'relative flex h-full flex-col',
+        isTemporaryChat ? 'overflow-hidden' : 'overflow-auto',
       )}
     >
       {isTemporaryChat && (
@@ -103,8 +113,8 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
       )}
       <div
         className={cn(
-          "relative z-10",
-          isTemporaryChat && "pointer-events-none"
+          'relative z-10',
+          isTemporaryChat && 'pointer-events-none',
         )}
       >
         {data.length === 0 && (
@@ -117,24 +127,24 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
 
         {data.length > 0 && (
           <div className={`size-full space-y-3 pt-4`}>
-            {contentType === "chats" || contentType === "tools" ? (
+            {contentType === 'chats' || contentType === 'tools' ? (
               <>
                 {[
-                  "Today",
-                  "Yesterday",
-                  "Previous 7 Days",
-                  "Previous 30 Days",
-                  "Older"
-                ].map(dateCategory => {
+                  'Today',
+                  'Yesterday',
+                  'Previous 7 Days',
+                  'Previous 30 Days',
+                  'Older',
+                ].map((dateCategory) => {
                   const sortedData = getSortedData(
                     data,
                     dateCategory as
-                      | "Today"
-                      | "Yesterday"
-                      | "Previous 7 Days"
-                      | "Previous 30 Days"
-                      | "Older"
-                  )
+                      | 'Today'
+                      | 'Yesterday'
+                      | 'Previous 7 Days'
+                      | 'Previous 30 Days'
+                      | 'Older',
+                  );
 
                   return (
                     sortedData.length > 0 && (
@@ -143,7 +153,7 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
                           {dateCategory}
                         </div>
 
-                        <div className={cn("flex grow flex-col")}>
+                        <div className={cn('flex grow flex-col')}>
                           {sortedData.map((item: any) => (
                             <div key={item.id}>
                               {getDataListComponent(contentType, item)}
@@ -152,9 +162,9 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
                         </div>
                       </div>
                     )
-                  )
+                  );
                 })}
-                {(contentType === "chats" || contentType === "tools") &&
+                {(contentType === 'chats' || contentType === 'tools') &&
                   data.length > 0 &&
                   hasMoreChats &&
                   !isTemporaryChat && (
@@ -166,8 +176,8 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
                   )}
               </>
             ) : (
-              <div className={cn("flex grow flex-col")}>
-                {data.map(item => (
+              <div className={cn('flex grow flex-col')}>
+                {data.map((item) => (
                   <div key={item.id}>
                     {getDataListComponent(contentType, item)}
                   </div>
@@ -178,5 +188,5 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
         )}
       </div>
     </div>
-  )
-}
+  );
+};

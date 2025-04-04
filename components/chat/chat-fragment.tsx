@@ -1,106 +1,106 @@
-import { IconX, IconReload, IconDownload } from "@tabler/icons-react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { IconX, IconReload, IconDownload } from '@tabler/icons-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
-} from "@/components/ui/tooltip"
-import { Button } from "@/components/ui/button"
-import { useFragments } from "./chat-hooks/use-fragments"
-import { MessageMarkdown } from "../messages/message-markdown"
-import { useEffect, useState } from "react"
-import { toast } from "sonner"
-import { cn } from "@/lib/utils"
-import Image from "next/image"
-import { CopyButton } from "@/components/ui/copy-button"
-import dynamic from "next/dynamic"
-import { useUIContext } from "@/context/ui-context"
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Button } from '@/components/ui/button';
+import { useFragments } from './chat-hooks/use-fragments';
+import { MessageMarkdown } from '../messages/message-markdown';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import Image from 'next/image';
+import { CopyButton } from '@/components/ui/copy-button';
+import dynamic from 'next/dynamic';
+import { useUIContext } from '@/context/ui-context';
 
-const DynamicFragmentPreview = dynamic(() => import("./fragment-preview"), {
-  ssr: false
-})
+const DynamicFragmentPreview = dynamic(() => import('./fragment-preview'), {
+  ssr: false,
+});
 
 export function ChatFragment() {
-  const [isReloading, setIsReloading] = useState(false)
+  const [isReloading, setIsReloading] = useState(false);
   const {
     isFragmentBarOpen,
     fragment,
     activeTab,
     setActiveTab,
     closeFragmentBar,
-    updateFragment
-  } = useFragments()
+    updateFragment,
+  } = useFragments();
 
-  const { isMobile } = useUIContext()
+  const { isMobile } = useUIContext();
 
   const handleReload = async () => {
     if (
       !fragment ||
       isReloading ||
       !fragment.code ||
-      fragment.sandboxExecution !== "completed" ||
-      fragment.template === "code-interpreter-v1"
+      fragment.sandboxExecution !== 'completed' ||
+      fragment.template === 'code-interpreter-v1'
     )
-      return
+      return;
 
-    setIsReloading(true)
+    setIsReloading(true);
     try {
-      const response = await fetch("/api/chat/tools/fragments/reload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fragment })
-      })
+      const response = await fetch('/api/chat/tools/fragments/reload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fragment }),
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (!response.ok) {
         if (response.status === 429) {
-          toast.error(data.message)
+          toast.error(data.message);
         } else {
-          toast.error("Failed to reload sandbox")
+          toast.error('Failed to reload sandbox');
         }
-        return
+        return;
       }
 
       updateFragment({
         ...fragment,
-        sandboxResult: data.sandboxResult
-      })
+        sandboxResult: data.sandboxResult,
+      });
     } catch (error) {
-      toast.error("Failed to reload sandbox")
+      toast.error('Failed to reload sandbox');
     } finally {
       setTimeout(() => {
-        setIsReloading(false)
-      }, 2000)
+        setIsReloading(false);
+      }, 2000);
     }
-  }
+  };
 
   const handleDownloadImage = (pngData: string, index: number) => {
-    const link = document.createElement("a")
-    link.href = `data:image/png;base64,${pngData}`
+    const link = document.createElement('a');
+    link.href = `data:image/png;base64,${pngData}`;
     const sanitizedTitle = fragment?.title
-      ? fragment.title.replace(/[^a-z0-9]/gi, "_").toLowerCase()
-      : "chart"
-    link.download = `${sanitizedTitle}_${index + 1}.png`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }
+      ? fragment.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()
+      : 'chart';
+    link.download = `${sanitizedTitle}_${index + 1}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   useEffect(() => {
-    handleReload()
-  }, [fragment?.code])
+    handleReload();
+  }, [fragment?.code]);
 
   if (!isFragmentBarOpen || !fragment) {
-    return null
+    return null;
   }
 
   return (
     <div className="border-border flex h-[45%] flex-col overflow-hidden border-b lg:h-auto lg:w-3/5 lg:border-b-0 lg:border-l">
       <Tabs
         value={activeTab}
-        onValueChange={value => setActiveTab(value as "code" | "execution")}
+        onValueChange={(value) => setActiveTab(value as 'code' | 'execution')}
         className="flex h-full flex-col"
       >
         <div className="flex w-full items-center justify-between border-b p-2">
@@ -126,9 +126,9 @@ export function ChatFragment() {
           </div>
 
           <div className="flex items-center gap-2">
-            {activeTab === "execution" &&
+            {activeTab === 'execution' &&
               fragment.sandboxResult &&
-              !fragment.sandboxResult.template.includes("interpreter") &&
+              !fragment.sandboxResult.template.includes('interpreter') &&
               isMobile && (
                 <>
                   <TooltipProvider>
@@ -143,8 +143,8 @@ export function ChatFragment() {
                         >
                           <IconReload
                             className={cn(
-                              "size-4",
-                              isReloading && "animate-spin"
+                              'size-4',
+                              isReloading && 'animate-spin',
                             )}
                           />
                         </Button>
@@ -154,7 +154,7 @@ export function ChatFragment() {
                   </TooltipProvider>
 
                   {fragment.sandboxResult &&
-                    "url" in fragment.sandboxResult && (
+                    'url' in fragment.sandboxResult && (
                       <TooltipProvider>
                         <Tooltip delayDuration={0}>
                           <TooltipTrigger asChild>
@@ -170,8 +170,8 @@ export function ChatFragment() {
                     )}
                 </>
               )}
-            {activeTab === "execution" &&
-              fragment.sandboxResult?.template === "code-interpreter-v1" &&
+            {activeTab === 'execution' &&
+              fragment.sandboxResult?.template === 'code-interpreter-v1' &&
               fragment.sandboxResult.cellResults?.map(
                 (result, index) =>
                   result.png && (
@@ -192,7 +192,7 @@ export function ChatFragment() {
                         <TooltipContent>Download chart</TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                  )
+                  ),
               )}
             <TabsList className="grid h-8 w-[160px] grid-cols-2 border px-1 py-0">
               <TabsTrigger
@@ -212,12 +212,12 @@ export function ChatFragment() {
         </div>
 
         <TabsContent value="execution" className="-mt-1 flex-1 overflow-auto">
-          {fragment.sandboxResult?.template === "code-interpreter-v1" ? (
+          {fragment.sandboxResult?.template === 'code-interpreter-v1' ? (
             <div className="p-2">
               {fragment.sandboxResult.stdout.length > 0 && (
                 <div className="mb-4">
                   <MessageMarkdown
-                    content={`\`\`\`stdout\n${fragment.sandboxResult.stdout.join("\n")}\n\`\`\``}
+                    content={`\`\`\`stdout\n${fragment.sandboxResult.stdout.join('\n')}\n\`\`\``}
                     isAssistant={true}
                   />
                 </div>
@@ -225,7 +225,7 @@ export function ChatFragment() {
               {fragment.sandboxResult.stderr.length > 0 && (
                 <div className="mb-4">
                   <MessageMarkdown
-                    content={`\`\`\`stderr\n${fragment.sandboxResult.stderr.join("\n")}\n\`\`\``}
+                    content={`\`\`\`stderr\n${fragment.sandboxResult.stderr.join('\n')}\n\`\`\``}
                     isAssistant={true}
                   />
                 </div>
@@ -251,7 +251,7 @@ export function ChatFragment() {
           ) : (
             <div className="size-full flex-1">
               {fragment.sandboxResult &&
-                !fragment.sandboxResult.template.includes("interpreter") && (
+                !fragment.sandboxResult.template.includes('interpreter') && (
                   <DynamicFragmentPreview
                     url={fragment.sandboxResult.url}
                     isMobile={isMobile}
@@ -267,7 +267,7 @@ export function ChatFragment() {
           <div className="flex-1 overflow-auto px-2">
             {fragment.code && (
               <pre className="whitespace-pre-wrap">
-                {fragment.sandboxResult?.template === "code-interpreter-v1" ? (
+                {fragment.sandboxResult?.template === 'code-interpreter-v1' ? (
                   <MessageMarkdown
                     content={`\`\`\`python\n${fragment.code}\n\`\`\``}
                     isAssistant={true}
@@ -284,5 +284,5 @@ export function ChatFragment() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

@@ -1,16 +1,16 @@
-import { Dialog, Transition, TransitionChild } from "@headlessui/react"
-import { Fragment, ReactNode } from "react"
+import { Dialog, Transition, TransitionChild } from '@headlessui/react';
+import { Fragment, type ReactNode } from 'react';
 
 interface TransitionedDialogProps {
-  isOpen: boolean
-  onClose: () => void
-  children: ReactNode
+  isOpen: boolean;
+  onClose: () => void;
+  children: ReactNode;
 }
 
 export const TransitionedDialog: React.FC<TransitionedDialogProps> = ({
   isOpen,
   onClose,
-  children
+  children,
 }) => {
   return (
     <Transition show={isOpen} as={Fragment}>
@@ -44,5 +44,5 @@ export const TransitionedDialog: React.FC<TransitionedDialogProps> = ({
         </div>
       </Dialog>
     </Transition>
-  )
-}
+  );
+};

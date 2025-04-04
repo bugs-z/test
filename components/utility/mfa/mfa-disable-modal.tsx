@@ -1,22 +1,22 @@
-import { FC } from "react"
+import type { FC } from 'react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 interface MFADisableModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onDisable: () => void
+  isOpen: boolean;
+  onClose: () => void;
+  onDisable: () => void;
 }
 
 export const MFADisableModal: FC<MFADisableModalProps> = ({
   isOpen,
   onClose,
-  onDisable
+  onDisable,
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -40,5 +40,5 @@ export const MFADisableModal: FC<MFADisableModalProps> = ({
         </div>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};

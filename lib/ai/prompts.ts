@@ -1,8 +1,8 @@
-import endent from "endent"
+import endent from 'endent';
 
 export function buildSystemPrompt(
   basePrompt: string,
-  profileContext?: string
+  profileContext?: string,
 ): string {
   const profilePrompt = profileContext
     ? endent`The user provided the following information about themselves. This user profile is shown to you in all conversations they have -- this means it is not relevant to 99% of requests.
@@ -12,7 +12,7 @@ export function buildSystemPrompt(
     <user_profile>
     ${profileContext}
     </user_profile>`
-    : ""
+    : '';
 
-  return `${basePrompt}\n\n${profilePrompt}`.trim()
+  return `${basePrompt}\n\n${profilePrompt}`.trim();
 }

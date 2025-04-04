@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button"
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -6,70 +6,70 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
-} from "@/components/ui/dialog"
-import { PentestGPTContext } from "@/context/context"
-import { deleteChat } from "@/db/chats"
-import { deleteFile } from "@/db/files"
-import { deleteFileFromStorage } from "@/db/storage/files"
-import { Tables } from "@/supabase/types"
-import { ContentType, DataItemType } from "@/types"
-import { FC, useContext, useRef, useState } from "react"
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { PentestGPTContext } from '@/context/context';
+import { deleteChat } from '@/db/chats';
+import { deleteFile } from '@/db/files';
+import { deleteFileFromStorage } from '@/db/storage/files';
+import type { Tables } from '@/supabase/types';
+import type { ContentType, DataItemType } from '@/types';
+import { type FC, useContext, useRef, useState } from 'react';
 
 interface SidebarDeleteItemProps {
-  item: DataItemType
-  contentType: ContentType
+  item: DataItemType;
+  contentType: ContentType;
 }
 
 export const SidebarDeleteItem: FC<SidebarDeleteItemProps> = ({
   item,
-  contentType
+  contentType,
 }) => {
-  const { setChats } = useContext(PentestGPTContext)
+  const { setChats } = useContext(PentestGPTContext);
 
-  const buttonRef = useRef<HTMLButtonElement>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const [showDialog, setShowDialog] = useState(false)
+  const [showDialog, setShowDialog] = useState(false);
 
   const deleteFunctions = {
-    chats: async (chat: Tables<"chats">) => {
-      await deleteChat(chat.id)
+    chats: async (chat: Tables<'chats'>) => {
+      await deleteChat(chat.id);
     },
-    files: async (file: Tables<"files">) => {
-      await deleteFileFromStorage(file.file_path)
-      await deleteFile(file.id)
+    files: async (file: Tables<'files'>) => {
+      await deleteFileFromStorage(file.file_path);
+      await deleteFile(file.id);
     },
-    tools: async (chat: Tables<"chats">) => {
-      await deleteChat(chat.id)
-    }
-  }
+    tools: async (chat: Tables<'chats'>) => {
+      await deleteChat(chat.id);
+    },
+  };
 
   const stateUpdateFunctions = {
     chats: setChats,
-    tools: setChats
-  }
+    tools: setChats,
+  };
 
   const handleDelete = async () => {
-    const deleteFunction = deleteFunctions[contentType]
-    const setStateFunction = stateUpdateFunctions[contentType]
+    const deleteFunction = deleteFunctions[contentType];
+    const setStateFunction = stateUpdateFunctions[contentType];
 
-    if (!deleteFunction || !setStateFunction) return
+    if (!deleteFunction || !setStateFunction) return;
 
-    await deleteFunction(item as any)
+    await deleteFunction(item as any);
 
     setStateFunction((prevItems: any) =>
-      prevItems.filter((prevItem: any) => prevItem.id !== item.id)
-    )
+      prevItems.filter((prevItem: any) => prevItem.id !== item.id),
+    );
 
-    setShowDialog(false)
-  }
+    setShowDialog(false);
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === "Enter") {
-      e.stopPropagation()
-      buttonRef.current?.click()
+    if (e.key === 'Enter') {
+      e.stopPropagation();
+      buttonRef.current?.click();
     }
-  }
+  };
 
   return (
     <Dialog open={showDialog} onOpenChange={setShowDialog}>
@@ -99,5 +99,5 @@ export const SidebarDeleteItem: FC<SidebarDeleteItemProps> = ({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};

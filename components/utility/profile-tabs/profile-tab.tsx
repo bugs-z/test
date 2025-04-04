@@ -1,25 +1,25 @@
-import { FC } from "react"
-import { Button } from "../../ui/button"
-import { Label } from "../../ui/label"
-import { ThemeSwitcher } from "../theme-switcher"
-import { IconLogout } from "@tabler/icons-react"
-import { Switch } from "@/components/ui/switch"
-import { useUIContext } from "@/context/ui-context"
+import type { FC } from 'react';
+import { Button } from '../../ui/button';
+import { Label } from '../../ui/label';
+import { ThemeSwitcher } from '../theme-switcher';
+import { IconLogout } from '@tabler/icons-react';
+import { Switch } from '@/components/ui/switch';
+import { useUIContext } from '@/context/ui-context';
 
 interface ProfileTabProps {
-  handleDeleteAllChats: () => void
-  handleSignOut: () => void
+  handleDeleteAllChats: () => void;
+  handleSignOut: () => void;
 }
 
 export const ProfileTab: FC<ProfileTabProps> = ({
   handleDeleteAllChats,
-  handleSignOut
+  handleSignOut,
 }) => {
-  const { showTerminalOutput, setShowTerminalOutput } = useUIContext()
+  const { showTerminalOutput, setShowTerminalOutput } = useUIContext();
 
   const handleToggleTerminalOutput = (checked: boolean) => {
-    setShowTerminalOutput(checked)
-  }
+    setShowTerminalOutput(checked);
+  };
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -59,5 +59,5 @@ export const ProfileTab: FC<ProfileTabProps> = ({
         </Button>
       </div>
     </div>
-  )
-}
+  );
+};

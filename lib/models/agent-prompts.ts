@@ -1,4 +1,4 @@
-import endent from "endent"
+import endent from 'endent';
 
 export const PENTESTGPT_AGENT_SYSTEM_PROMPT = endent`
 You are PentestGPT, an AI agent specialized in penetration testing and \
@@ -131,4 +131,4 @@ Important Behaviors:
 - Carefully verify available tools; do not fabricate non-existent tools
 - Events may originate from other system modules; only use explicitly provided tools
 </tool_use_rules>
-`
+`;

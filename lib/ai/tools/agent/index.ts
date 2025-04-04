@@ -1,11 +1,11 @@
-import { ToolContext } from "./types"
-import { createTerminalTool } from "./terminal-tool"
-import { createMessageNotifyTool } from "./message-notify-tool"
-import { createMessageAskTool } from "./message-ask-tool"
+import type { ToolContext } from './types';
+import { createTerminalTool } from './terminal-tool';
+import { createMessageNotifyTool } from './message-notify-tool';
+import { createMessageAskTool } from './message-ask-tool';
 // import { createFileWriteTool } from "./file-write-tool"
 // import { createFileReadTool } from "./file-read-tool"
-import { createIdleTool } from "./idle-tool"
-import { createFileUploadTool } from "./file-upload-tool"
+import { createIdleTool } from './idle-tool';
+import { createFileUploadTool } from './file-upload-tool';
 
 /**
  * Creates and returns all agent tools with the provided context
@@ -20,9 +20,9 @@ export function createAgentTools(context: ToolContext) {
     // file_write: createFileWriteTool(context),
     file_upload: createFileUploadTool(context),
     // file_read: createFileReadTool(context),
-    idle: createIdleTool()
-  }
+    idle: createIdleTool(),
+  };
 }
 
 // Export types and constants
-export * from "./types"
+export * from './types';

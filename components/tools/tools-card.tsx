@@ -1,22 +1,22 @@
-import React from "react"
+import React from 'react';
 import {
   IconCode,
   IconCircleX,
   IconCloudDownload,
   IconMessagePlus,
-  IconLockOpen
-} from "@tabler/icons-react"
-import Image from "next/image"
-import { Button } from "../ui/button"
-import { PluginID, PluginSummary } from "@/types/plugins"
-import { useRouter } from "next/navigation"
+  IconLockOpen,
+} from '@tabler/icons-react';
+import Image from 'next/image';
+import { Button } from '../ui/button';
+import type { PluginID, PluginSummary } from '@/types/plugins';
+import { useRouter } from 'next/navigation';
 
 interface PluginCardProps {
-  plugin: PluginSummary
-  installPlugin: (id: number) => void
-  uninstallPlugin: (id: number) => void
-  startChatWithPlugin: (pluginValue: PluginID) => void
-  hasSubscription: boolean
+  plugin: PluginSummary;
+  installPlugin: (id: number) => void;
+  uninstallPlugin: (id: number) => void;
+  startChatWithPlugin: (pluginValue: PluginID) => void;
+  hasSubscription: boolean;
 }
 
 export function PluginCard({
@@ -24,13 +24,13 @@ export function PluginCard({
   installPlugin,
   uninstallPlugin,
   startChatWithPlugin,
-  hasSubscription
+  hasSubscription,
 }: PluginCardProps) {
-  const router = useRouter()
+  const router = useRouter();
 
   const handleUpgrade = () => {
-    router.push("/upgrade")
-  }
+    router.push('/upgrade');
+  };
 
   return (
     <div className="border-pgpt-light-gray flex h-[200px] w-full flex-col justify-between rounded-lg border p-4 shadow-sm transition-shadow duration-200 hover:shadow-md">
@@ -38,12 +38,12 @@ export function PluginCard({
         <div className="mr-4 size-[60px] shrink-0">
           <Image
             src={
-              plugin.icon || "https://avatars.githubusercontent.com/u/148977464"
+              plugin.icon || 'https://avatars.githubusercontent.com/u/148977464'
             }
             alt={plugin.name}
             width={60}
             height={60}
-            className={`size-full rounded object-cover ${plugin.invertInDarkMode ? "dark:brightness-0 dark:invert" : ""}`}
+            className={`size-full rounded object-cover ${plugin.invertInDarkMode ? 'dark:brightness-0 dark:invert' : ''}`}
           />
         </div>
         <div className="flex flex-1 flex-col justify-between">
@@ -59,20 +59,20 @@ export function PluginCard({
             <Button
               variant={
                 plugin.isPremium && !hasSubscription
-                  ? "default"
+                  ? 'default'
                   : plugin.isInstalled
-                    ? "destructive"
-                    : "default"
+                    ? 'destructive'
+                    : 'default'
               }
               size="sm"
               className="flex w-[140px] items-center justify-center"
               onClick={() => {
                 if (plugin.isPremium && !hasSubscription) {
-                  handleUpgrade()
+                  handleUpgrade();
                 } else {
                   plugin.isInstalled
                     ? uninstallPlugin(plugin.id)
-                    : installPlugin(plugin.id)
+                    : installPlugin(plugin.id);
                 }
               }}
             >
@@ -100,15 +100,15 @@ export function PluginCard({
               size="icon"
               onClick={() => {
                 if (plugin.isPremium && !hasSubscription) {
-                  handleUpgrade()
+                  handleUpgrade();
                 } else {
-                  startChatWithPlugin(plugin.value)
+                  startChatWithPlugin(plugin.value);
                 }
               }}
               title={
                 plugin.isPremium && !hasSubscription
-                  ? "Upgrade to use this plugin"
-                  : "Start chat with this plugin"
+                  ? 'Upgrade to use this plugin'
+                  : 'Start chat with this plugin'
               }
             >
               {plugin.isPremium && !hasSubscription ? (
@@ -137,5 +137,5 @@ export function PluginCard({
         </div>
       )}
     </div>
-  )
+  );
 }

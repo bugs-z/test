@@ -1,34 +1,34 @@
-import { useEffect, useState } from "react"
-import SingletonAudioPlayer from "./singleton-audio-player"
+import { useEffect, useState } from 'react';
+import SingletonAudioPlayer from './singleton-audio-player';
 
 export const useAudioPlayer = () => {
-  const [isLoading, setIsLoading] = useState(false)
-  const [isPlaying, setIsPlaying] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     const updateState = (loading: boolean, playing: boolean) => {
-      setIsLoading(loading)
-      setIsPlaying(playing)
-    }
+      setIsLoading(loading);
+      setIsPlaying(playing);
+    };
 
-    SingletonAudioPlayer.subscribe(updateState)
+    SingletonAudioPlayer.subscribe(updateState);
     return () => {
-      SingletonAudioPlayer.unsubscribe(updateState)
-    }
-  }, [])
+      SingletonAudioPlayer.unsubscribe(updateState);
+    };
+  }, []);
 
   const playAudio = (messageContent: string) => {
-    SingletonAudioPlayer.playAudio(messageContent)
-  }
+    SingletonAudioPlayer.playAudio(messageContent);
+  };
 
   const stopAudio = () => {
-    SingletonAudioPlayer.stopAudio()
-  }
+    SingletonAudioPlayer.stopAudio();
+  };
 
   return {
     playAudio,
     stopAudio,
     isLoading,
-    isPlaying
-  }
-}
+    isPlaying,
+  };
+};

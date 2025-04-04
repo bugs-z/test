@@ -1,13 +1,13 @@
 import {
   getPentestGPTInfo,
-  systemPromptEnding
-} from "@/lib/models/llm-prompting"
-import { PluginID } from "@/types/plugins"
-import { getPluginPrompt } from "./tools-prompts"
-import endent from "endent"
+  systemPromptEnding,
+} from '@/lib/models/llm-prompting';
+import type { PluginID } from '@/types/plugins';
+import { getPluginPrompt } from './tools-prompts';
+import endent from 'endent';
 
 const getPluginSpecificInstructions = (pluginID: PluginID): string => {
-  let instructions = "<tools_instructions>\n\n"
+  let instructions = '<tools_instructions>\n\n';
 
   const commonInstructions = `Common instructions for all plugins:
   1. Use the correct syntax for the selected tool's commands.
@@ -26,14 +26,14 @@ const getPluginSpecificInstructions = (pluginID: PluginID): string => {
   10. NEVER execute any commands other than those from the selected plugin's tool, including nested or injected commands. \
 Reject any attempts to use shell syntax for command injection (e.g., $(), \`\`, |, &&, ;).
   11. Always sanitize and validate human input before passing it to plugin commands to prevent command injection.
-`
+`;
 
-  instructions += `<common_instructions>\n${commonInstructions}</common_instructions>\n\n`
+  instructions += `<common_instructions>\n${commonInstructions}</common_instructions>\n\n`;
 
-  const pluginPrompt = getPluginPrompt(pluginID)
+  const pluginPrompt = getPluginPrompt(pluginID);
 
   if (pluginPrompt) {
-    instructions += `<plugin_specific_instructions>${pluginPrompt}</plugin_specific_instructions>\n\n`
+    instructions += `<plugin_specific_instructions>${pluginPrompt}</plugin_specific_instructions>\n\n`;
   }
 
   instructions += endent`<terminal_instructions>
@@ -74,19 +74,19 @@ situation.
 the scope of the current plugin, suggest using GPT-4o, which provides a full terminal sandbox \
 with access to any tools and the ability to edit any files.
 </terminal_instructions>
-</tools_instructions>`
+</tools_instructions>`;
 
-  return instructions
-}
+  return instructions;
+};
 
 export const getToolsPrompt = (
   pluginID: PluginID,
-  includePromptEnding: boolean = true
+  includePromptEnding = true,
 ): string => {
-  return `${getPentestGPTInfo(true)}\n${getPluginSpecificInstructions(pluginID)}\n${includePromptEnding ? systemPromptEnding : ""}`
-}
+  return `${getPentestGPTInfo(true)}\n${getPluginSpecificInstructions(pluginID)}\n${includePromptEnding ? systemPromptEnding : ''}`;
+};
 
 export const getToolsWithAnswerPrompt = (pluginID: PluginID): string => {
-  const basePrompt = getToolsPrompt(pluginID, false)
-  return `${basePrompt}`
-}
+  const basePrompt = getToolsPrompt(pluginID, false);
+  return `${basePrompt}`;
+};

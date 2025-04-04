@@ -1,72 +1,72 @@
-"use client"
+'use client';
 
-import { createContext, useContext, useReducer } from "react"
+import { createContext, useContext, useReducer } from 'react';
 
 interface AlertState {
-  message: string
-  title?: string
+  message: string;
+  title?: string;
   action?: {
-    label: string
-    onClick: () => void
-  }
+    label: string;
+    onClick: () => void;
+  };
 }
 
 export type AlertAction =
   | {
-      type: "SHOW"
+      type: 'SHOW';
       payload: {
-        message: string
-        title?: string
-        action?: { label: string; onClick: () => void }
-      }
+        message: string;
+        title?: string;
+        action?: { label: string; onClick: () => void };
+      };
     }
-  | { type: "HIDE" }
+  | { type: 'HIDE' };
 
 const initialState: AlertState = {
-  message: ""
-}
+  message: '',
+};
 
 const AlertContext = createContext<{
-  state: AlertState
-  dispatch: React.Dispatch<AlertAction>
+  state: AlertState;
+  dispatch: React.Dispatch<AlertAction>;
 }>({
   state: initialState,
-  dispatch: () => undefined
-})
+  dispatch: () => undefined,
+});
 
 const alertReducer = (state: AlertState, action: AlertAction): AlertState => {
   switch (action.type) {
-    case "SHOW":
+    case 'SHOW':
       return {
         ...state,
         message: action.payload.message,
         title: action.payload.title,
-        action: action.payload.action
-      }
-    case "HIDE":
-      return { ...state, message: "", title: undefined, action: undefined }
+        action: action.payload.action,
+      };
+    case 'HIDE':
+      return { ...state, message: '', title: undefined, action: undefined };
     default:
-      return state
+      return state;
   }
-}
+};
 
 const AlertProvider: React.FC<{ children: React.ReactNode }> = ({
-  children
+  children,
 }) => {
-  const [state, dispatch] = useReducer(alertReducer, initialState)
+  const [state, dispatch] = useReducer(alertReducer, initialState);
 
   return (
     <AlertContext.Provider value={{ state, dispatch }}>
       {children}
     </AlertContext.Provider>
-  )
-}
+  );
+};
 
 const useAlertContext = () => {
-  const { state, dispatch } = useContext(AlertContext)
-  dispatch
+  const { state, dispatch } = useContext(AlertContext);
+  dispatch;
 
-  return { state, dispatch }
-}
+  return { state, dispatch };
+};
 
-export { AlertProvider, useAlertContext }
+export { AlertProvider, useAlertContext };

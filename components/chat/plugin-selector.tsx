@@ -1,30 +1,30 @@
-import React, { useContext, useState, useEffect } from "react"
+import React, { useContext, useState, useEffect } from 'react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuItem,
-  DropdownMenuContent
-} from "../ui/dropdown-menu"
+  DropdownMenuContent,
+} from '../ui/dropdown-menu';
 import {
   IconChevronUp,
   IconLock,
   IconBuildingStore,
-  IconMessage
-} from "@tabler/icons-react"
-import { PluginID, PluginSummary } from "@/types/plugins"
-import { PentestGPTContext } from "@/context/context"
+  IconMessage,
+} from '@tabler/icons-react';
+import { PluginID, type PluginSummary } from '@/types/plugins';
+import { PentestGPTContext } from '@/context/context';
 import {
   usePluginContext,
-  getInstalledPlugins
-} from "./chat-hooks/PluginProvider"
-import { availablePlugins } from "@/lib/tools/tool-store/available-tools"
-import { TransitionedDialog } from "../ui/transitioned-dialog"
-import { DialogPanel } from "@headlessui/react"
-import { usePathname, useRouter } from "next/navigation"
-import { useUIContext } from "@/context/ui-context"
+  getInstalledPlugins,
+} from './chat-hooks/PluginProvider';
+import { availablePlugins } from '@/lib/tools/tool-store/available-tools';
+import { TransitionedDialog } from '../ui/transitioned-dialog';
+import { DialogPanel } from '@headlessui/react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useUIContext } from '@/context/ui-context';
 
 interface PluginSelectorProps {
-  onPluginSelect: (type: string) => void
+  onPluginSelect: (type: string) => void;
 }
 
 const PluginSelector: React.FC<PluginSelectorProps> = ({ onPluginSelect }) => {
@@ -32,72 +32,74 @@ const PluginSelector: React.FC<PluginSelectorProps> = ({ onPluginSelect }) => {
     isPremiumSubscription,
     chatSettings,
     setContentType,
-    isTemporaryChat
-  } = useContext(PentestGPTContext)
+    isTemporaryChat,
+  } = useContext(PentestGPTContext);
 
-  const { setSelectedPlugin, selectedPlugin } = useUIContext()
+  const { setSelectedPlugin, selectedPlugin } = useUIContext();
 
   const [selectedPluginName, setSelectedPluginName] = useState(
-    availablePlugins[0].name
-  )
-  const [showLockedPluginDialog, setShowLockedPluginDialog] = useState(false)
-  const [currentPlugin, setCurrentPlugin] = useState<PluginSummary | null>(null)
-  const { state: pluginState } = usePluginContext()
+    availablePlugins[0].name,
+  );
+  const [showLockedPluginDialog, setShowLockedPluginDialog] = useState(false);
+  const [currentPlugin, setCurrentPlugin] = useState<PluginSummary | null>(
+    null,
+  );
+  const { state: pluginState } = usePluginContext();
 
-  const router = useRouter()
-  const pathname = usePathname()
+  const router = useRouter();
+  const pathname = usePathname();
 
-  const defaultPluginIds = [0, 99]
+  const defaultPluginIds = [0, 99];
 
   const handleUpgradeToPlus = () => {
-    setShowLockedPluginDialog(false)
-    router.push("/upgrade")
-  }
+    setShowLockedPluginDialog(false);
+    router.push('/upgrade');
+  };
 
   useEffect(() => {
     const foundPlugin = availablePlugins.find(
-      plugin => plugin.value === selectedPlugin
-    )
+      (plugin) => plugin.value === selectedPlugin,
+    );
     if (foundPlugin) {
-      setSelectedPluginName(foundPlugin.name)
+      setSelectedPluginName(foundPlugin.name);
     }
-  }, [selectedPlugin, chatSettings?.model])
+  }, [selectedPlugin, chatSettings?.model]);
 
-  const installedPlugins = getInstalledPlugins(pluginState.installedPluginIds)
+  const installedPlugins = getInstalledPlugins(pluginState.installedPluginIds);
 
-  const updatedAvailablePlugins = availablePlugins.map(plugin => ({
+  const updatedAvailablePlugins = availablePlugins.map((plugin) => ({
     ...plugin,
-    isInstalled: installedPlugins.some(p => p.id === plugin.id)
-  }))
+    isInstalled: installedPlugins.some((p) => p.id === plugin.id),
+  }));
 
   const selectorPlugins = updatedAvailablePlugins.filter(
-    plugin => plugin.isInstalled || defaultPluginIds.includes(plugin.id)
-  )
+    (plugin) => plugin.isInstalled || defaultPluginIds.includes(plugin.id),
+  );
 
   const handleOpenGPTsStore = () => {
-    setContentType("tools")
-    router.replace(`${pathname}?tab=tools`)
-  }
+    setContentType('tools');
+    router.replace(`${pathname}?tab=tools`);
+  };
 
   const renderPluginOptions = () => {
-    return selectorPlugins.map(plugin => (
+    return selectorPlugins.map((plugin) => (
       <DropdownMenuItem
         key={plugin.id}
         onSelect={() => {
           if (!plugin.isPremium || isPremiumSubscription) {
             if (plugin.value === PluginID.PLUGINS_STORE) {
-              handleOpenGPTsStore()
+              handleOpenGPTsStore();
             } else {
-              onPluginSelect(plugin.value)
-              setSelectedPluginName(plugin.name)
-              setSelectedPlugin(plugin.value)
+              onPluginSelect(plugin.value);
+              setSelectedPluginName(plugin.name);
+              setSelectedPlugin(plugin.value);
             }
           } else {
-            setCurrentPlugin(plugin)
-            setShowLockedPluginDialog(true)
+            setCurrentPlugin(plugin);
+            setShowLockedPluginDialog(true);
           }
         }}
-        className={`flex items-center justify-between ${plugin.isPremium && !isPremiumSubscription ? "cursor-not-allowed opacity-50" : ""}`}
+        className={`flex items-center justify-between ${plugin.isPremium && !isPremiumSubscription ? 'cursor-not-allowed opacity-50' : ''}`}
       >
         <span>{plugin.name}</span>
         {plugin.isPremium && !isPremiumSubscription ? (
@@ -108,8 +110,8 @@ const PluginSelector: React.FC<PluginSelectorProps> = ({ onPluginSelect }) => {
           <IconMessage size={18} className="ml-2" />
         ) : null}
       </DropdownMenuItem>
-    ))
-  }
+    ));
+  };
 
   return (
     <div className="flex items-center justify-start space-x-4">
@@ -127,7 +129,7 @@ const PluginSelector: React.FC<PluginSelectorProps> = ({ onPluginSelect }) => {
           side="top"
           align="start"
           className={`${
-            isTemporaryChat ? "bg-tertiary" : "bg-secondary"
+            isTemporaryChat ? 'bg-tertiary' : 'bg-secondary'
           } z-50 min-w-32 overflow-hidden rounded-md border p-1 shadow-md`}
         >
           {renderPluginOptions()}
@@ -141,21 +143,21 @@ const PluginSelector: React.FC<PluginSelectorProps> = ({ onPluginSelect }) => {
         isPremium={isPremiumSubscription}
       />
     </div>
-  )
-}
+  );
+};
 
 const LockedPluginModal = ({
   isOpen,
   currentPlugin,
   handleCancelUpgrade,
   handleUpgradeToPlus,
-  isPremium
+  isPremium,
 }: {
-  isOpen: boolean
-  currentPlugin: any
-  handleCancelUpgrade: () => void
-  handleUpgradeToPlus: () => void
-  isPremium: boolean
+  isOpen: boolean;
+  currentPlugin: any;
+  handleCancelUpgrade: () => void;
+  handleUpgradeToPlus: () => void;
+  isPremium: boolean;
 }) => {
   return (
     <TransitionedDialog isOpen={isOpen} onClose={handleCancelUpgrade}>
@@ -163,7 +165,7 @@ const LockedPluginModal = ({
         {!isPremium && (
           <>
             <p>
-              The <b>{currentPlugin?.name}</b> plugin is only accessible with a{" "}
+              The <b>{currentPlugin?.name}</b> plugin is only accessible with a{' '}
               <b>Pro</b> plan.
             </p>
             <p className="mt-2">Ready to upgrade for access?</p>
@@ -187,7 +189,7 @@ const LockedPluginModal = ({
         </div>
       </DialogPanel>
     </TransitionedDialog>
-  )
-}
+  );
+};
 
-export default PluginSelector
+export default PluginSelector;

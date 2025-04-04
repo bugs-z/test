@@ -1,50 +1,50 @@
-import { availablePlugins } from "@/lib/tools/tool-store/available-tools"
-import { ChatMessage } from "@/types"
-import { PluginID } from "@/types/plugins"
-import React, { memo, useContext } from "react"
-import { useChatHandler } from "./chat-hooks/use-chat-handler"
-import { dragHelper } from "@/components/chat/chat-helpers/drag"
-import { PentestGPTContext } from "@/context/context"
-import { cn } from "@/lib/utils"
+import { availablePlugins } from '@/lib/tools/tool-store/available-tools';
+import type { ChatMessage } from '@/types';
+import type { PluginID } from '@/types/plugins';
+import React, { memo, useContext } from 'react';
+import { useChatHandler } from './chat-hooks/use-chat-handler';
+import { dragHelper } from '@/components/chat/chat-helpers/drag';
+import { PentestGPTContext } from '@/context/context';
+import { cn } from '@/lib/utils';
 
 const InfoCard: React.FC<{
-  title: string
-  description: string
-  onClick: () => void
-  isTemporaryChat: boolean
+  title: string;
+  description: string;
+  onClick: () => void;
+  isTemporaryChat: boolean;
 }> = ({ title, description, onClick, isTemporaryChat }) => (
   <button
     className={cn(
-      "min-w-72 rounded-xl p-3.5 text-left duration-300 ease-in-out focus:outline-hidden",
-      "hover:bg-select",
-      isTemporaryChat ? "bg-tertiary" : "bg-secondary"
+      'min-w-72 rounded-xl p-3.5 text-left duration-300 ease-in-out focus:outline-hidden',
+      'hover:bg-select',
+      isTemporaryChat ? 'bg-tertiary' : 'bg-secondary',
     )}
     onClick={onClick}
   >
     <div className="pb-1 text-sm font-bold">{title}</div>
     <div className="text-xs opacity-75">{description}</div>
   </button>
-)
+);
 
 interface ChatStartersProps {
-  selectedPlugin: PluginID
-  chatMessages: ChatMessage[]
+  selectedPlugin: PluginID;
+  chatMessages: ChatMessage[];
 }
 
 const ChatStarters: React.FC<ChatStartersProps> = ({
   selectedPlugin,
-  chatMessages
+  chatMessages,
 }) => {
   const { userInput, newMessageFiles, newMessageImages, isTemporaryChat } =
-    useContext(PentestGPTContext)
-  const { handleSendMessage } = useChatHandler()
+    useContext(PentestGPTContext);
+  const { handleSendMessage } = useChatHandler();
 
   const pluginStarters = availablePlugins.find(
-    plugin => plugin.value === selectedPlugin
-  )?.starters
+    (plugin) => plugin.value === selectedPlugin,
+  )?.starters;
 
   if (userInput || newMessageFiles.length > 0 || newMessageImages.length > 0) {
-    return null
+    return null;
   }
 
   return (
@@ -52,11 +52,11 @@ const ChatStarters: React.FC<ChatStartersProps> = ({
       <div className="w-full max-w-[800px]">
         <div
           className={cn(
-            "scrollbar-hide flex w-[calc(100vw-2rem)] gap-2 overflow-x-auto pt-2",
-            "sm:scrollbar-show sm:w-full sm:max-w-[800px]",
-            "lg:grid lg:grid-cols-2"
+            'scrollbar-hide flex w-[calc(100vw-2rem)] gap-2 overflow-x-auto pt-2',
+            'sm:scrollbar-show sm:w-full sm:max-w-[800px]',
+            'lg:grid lg:grid-cols-2',
           )}
-          style={{ cursor: "grab" }}
+          style={{ cursor: 'grab' }}
           onMouseDown={dragHelper}
         >
           {selectedPlugin &&
@@ -74,7 +74,7 @@ const ChatStarters: React.FC<ChatStartersProps> = ({
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default memo(ChatStarters)
+export default memo(ChatStarters);

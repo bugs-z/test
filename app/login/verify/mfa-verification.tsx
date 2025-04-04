@@ -1,127 +1,127 @@
-"use client"
+'use client';
 
-import { useContext, useState, useEffect, useRef } from "react"
-import { Brand } from "@/components/ui/brand"
-import { Button } from "@/components/ui/button"
-import { IconAlertCircle } from "@tabler/icons-react"
-import { supabase } from "@/lib/supabase/browser-client"
-import { useRouter } from "next/navigation"
-import { PentestGPTContext } from "@/context/context"
+import { useContext, useState, useEffect, useRef } from 'react';
+import { Brand } from '@/components/ui/brand';
+import { Button } from '@/components/ui/button';
+import { IconAlertCircle } from '@tabler/icons-react';
+import { supabase } from '@/lib/supabase/browser-client';
+import { useRouter } from 'next/navigation';
+import { PentestGPTContext } from '@/context/context';
 import {
   InputOTP,
   InputOTPGroup,
   InputOTPSeparator,
-  InputOTPSlot
-} from "@/components/ui/input-otp"
-import { REGEXP_ONLY_DIGITS } from "input-otp"
+  InputOTPSlot,
+} from '@/components/ui/input-otp';
+import { REGEXP_ONLY_DIGITS } from 'input-otp';
 
 interface MFAVerificationProps {
-  onVerify: (code: string) => Promise<{ success: boolean; error?: string }>
+  onVerify: (code: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 export function MFAVerification({ onVerify }: MFAVerificationProps) {
-  const router = useRouter()
-  const [verifyCode, setVerifyCode] = useState("")
-  const [error, setError] = useState("")
-  const [isVerifying, setIsVerifying] = useState(false)
-  const { user, fetchStartingData } = useContext(PentestGPTContext)
-  const inputRef = useRef<HTMLDivElement>(null)
+  const router = useRouter();
+  const [verifyCode, setVerifyCode] = useState('');
+  const [error, setError] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const { user, fetchStartingData } = useContext(PentestGPTContext);
+  const inputRef = useRef<HTMLDivElement>(null);
 
   // Effect to handle auto-filled inputs (like from password managers)
   useEffect(() => {
-    if (!inputRef.current) return
+    if (!inputRef.current) return;
 
     // Create a MutationObserver to detect changes to the input fields
-    const observer = new MutationObserver(mutations => {
-      mutations.forEach(mutation => {
-        if (mutation.type === "attributes" || mutation.type === "childList") {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' || mutation.type === 'childList') {
           // Check all input elements inside the OTP component
-          const inputs = inputRef.current?.querySelectorAll("input")
-          if (!inputs) return
+          const inputs = inputRef.current?.querySelectorAll('input');
+          if (!inputs) return;
 
           // Collect values from all inputs
-          let collectedValue = ""
-          inputs.forEach(input => {
-            collectedValue += input.value || ""
-          })
+          let collectedValue = '';
+          inputs.forEach((input) => {
+            collectedValue += input.value || '';
+          });
 
           // If we have a complete code and it's different from current state, update it
           if (collectedValue.length === 6 && collectedValue !== verifyCode) {
-            setVerifyCode(collectedValue)
+            setVerifyCode(collectedValue);
           }
         }
-      })
-    })
+      });
+    });
 
     // Start observing the input container
     observer.observe(inputRef.current, {
       attributes: true,
       childList: true,
       subtree: true,
-      characterData: true
-    })
+      characterData: true,
+    });
 
     // Cleanup observer on component unmount
-    return () => observer.disconnect()
-  }, [verifyCode])
+    return () => observer.disconnect();
+  }, [verifyCode]);
 
   // Handle paste event for the entire OTP input
   const handlePaste = (e: React.ClipboardEvent) => {
-    e.preventDefault()
-    const pastedData = e.clipboardData.getData("text")
-    const digits = pastedData.replace(/\D/g, "").slice(0, 6)
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text');
+    const digits = pastedData.replace(/\D/g, '').slice(0, 6);
 
     if (digits.length > 0) {
-      setVerifyCode(digits)
+      setVerifyCode(digits);
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     // Show error if code is incomplete
     if (verifyCode.length !== 6) {
-      setError("Please enter the complete 6-digit verification code")
-      return
+      setError('Please enter the complete 6-digit verification code');
+      return;
     }
 
-    if (!user || isVerifying) return
+    if (!user || isVerifying) return;
 
-    setError("")
-    setIsVerifying(true)
+    setError('');
+    setIsVerifying(true);
 
     if (!user) {
-      router.push("/login")
-      return
+      router.push('/login');
+      return;
     }
 
     try {
-      const result = await onVerify(verifyCode)
+      const result = await onVerify(verifyCode);
       if (result?.success) {
-        await fetchStartingData()
-        router.push(`/c`)
+        await fetchStartingData();
+        router.push(`/c`);
       } else {
-        setError(result.error || "Verification failed")
-        setVerifyCode("")
+        setError(result.error || 'Verification failed');
+        setVerifyCode('');
       }
     } catch (error) {
-      setError("Please try again")
-      setVerifyCode("")
+      setError('Please try again');
+      setVerifyCode('');
     } finally {
-      setIsVerifying(false)
+      setIsVerifying(false);
     }
-  }
+  };
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut({ scope: "local" })
-      router.push("/login")
-      router.refresh()
+      await supabase.auth.signOut({ scope: 'local' });
+      router.push('/login');
+      router.refresh();
     } catch (error) {
-      console.error("Sign out error:", error)
-      router.push("/login")
+      console.error('Sign out error:', error);
+      router.push('/login');
     }
-  }
+  };
 
   return (
     <div className="mx-4 w-full max-w-md">
@@ -176,7 +176,7 @@ export function MFAVerification({ onVerify }: MFAVerificationProps) {
 
         <div className="mt-4 flex flex-col gap-2">
           <Button type="submit" className="w-full">
-            {isVerifying ? "Verifying..." : "Verify"}
+            {isVerifying ? 'Verifying...' : 'Verify'}
           </Button>
           <button
             onClick={handleSignOut}
@@ -195,5 +195,5 @@ export function MFAVerification({ onVerify }: MFAVerificationProps) {
         </div>
       </form>
     </div>
-  )
+  );
 }

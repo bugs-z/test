@@ -1,13 +1,13 @@
-import { FC } from "react"
-import { useRouter } from "next/navigation"
-import { IconLockOpen } from "@tabler/icons-react"
+import type { FC } from 'react';
+import { useRouter } from 'next/navigation';
+import { IconLockOpen } from '@tabler/icons-react';
 
 export const SidebarUpgrade: FC = () => {
-  const router = useRouter()
+  const router = useRouter();
 
   const handleUpgradeClick = () => {
-    router.push("/upgrade")
-  }
+    router.push('/upgrade');
+  };
 
   return (
     <div className="mt-2">
@@ -26,5 +26,5 @@ export const SidebarUpgrade: FC = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

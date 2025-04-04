@@ -1,5 +1,5 @@
-import { UpgradePlan } from "@/components/utility/upgrade-plan"
+import { UpgradePlan } from '@/components/utility/upgrade-plan';
 
 export default function UpgradePage() {
-  return <UpgradePlan />
+  return <UpgradePlan />;
 }

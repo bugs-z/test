@@ -1,24 +1,24 @@
-import { cn } from "@/lib/utils"
-import { FC } from "react"
-import ReactTextareaAutosize from "react-textarea-autosize"
+import { cn } from '@/lib/utils';
+import type { FC } from 'react';
+import ReactTextareaAutosize from 'react-textarea-autosize';
 
 interface TextareaAutosizeProps {
-  value: string
-  onValueChange: (value: string) => void
-  onClick?: () => void
+  value: string;
+  onValueChange: (value: string) => void;
+  onClick?: () => void;
 
-  textareaRef?: React.RefObject<HTMLTextAreaElement>
-  className?: string
-  disabled?: boolean
+  textareaRef?: React.RefObject<HTMLTextAreaElement>;
+  className?: string;
+  disabled?: boolean;
 
-  placeholder?: string
-  minRows?: number
-  maxRows?: number
-  maxLength?: number
-  onKeyDown?: (event: React.KeyboardEvent) => void
-  onPaste?: (event: React.ClipboardEvent) => void
-  onCompositionStart?: (event: React.CompositionEvent) => void
-  onCompositionEnd?: (event: React.CompositionEvent) => void
+  placeholder?: string;
+  minRows?: number;
+  maxRows?: number;
+  maxLength?: number;
+  onKeyDown?: (event: React.KeyboardEvent) => void;
+  onPaste?: (event: React.ClipboardEvent) => void;
+  onCompositionStart?: (event: React.CompositionEvent) => void;
+  onCompositionEnd?: (event: React.CompositionEvent) => void;
 }
 
 export const TextareaAutosize: FC<TextareaAutosizeProps> = ({
@@ -28,21 +28,21 @@ export const TextareaAutosize: FC<TextareaAutosizeProps> = ({
   disabled,
   textareaRef,
   className,
-  placeholder = "",
+  placeholder = '',
   minRows = 1,
   maxRows = 6,
   maxLength,
   onKeyDown = () => {},
   onPaste = () => {},
   onCompositionStart = () => {},
-  onCompositionEnd = () => {}
+  onCompositionEnd = () => {},
 }) => {
   return (
     <ReactTextareaAutosize
       ref={textareaRef}
       className={cn(
-        "bg-secondary ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex w-full resize-none rounded-md border-2 px-3 py-2 text-sm focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50",
-        className
+        'bg-secondary ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex w-full resize-none rounded-md border-2 px-3 py-2 text-sm focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50',
+        className,
       )}
       onClick={onClick}
       minRows={minRows}
@@ -50,12 +50,12 @@ export const TextareaAutosize: FC<TextareaAutosizeProps> = ({
       placeholder={placeholder}
       value={value}
       disabled={disabled}
-      onChange={event => onValueChange(event.target.value)}
+      onChange={(event) => onValueChange(event.target.value)}
       onKeyDown={onKeyDown}
       onPaste={onPaste}
       maxLength={maxLength}
       onCompositionStart={onCompositionStart}
       onCompositionEnd={onCompositionEnd}
     />
-  )
-}
+  );
+};

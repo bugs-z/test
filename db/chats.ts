@@ -1,101 +1,101 @@
-import { supabase } from "@/lib/supabase/browser-client"
-import { TablesInsert, TablesUpdate } from "@/supabase/types"
+import { supabase } from '@/lib/supabase/browser-client';
+import type { TablesInsert, TablesUpdate } from '@/supabase/types';
 
 export const getChatById = async (chatId: string) => {
   const { data: chat } = await supabase
-    .from("chats")
-    .select("*")
-    .eq("id", chatId)
-    .maybeSingle()
+    .from('chats')
+    .select('*')
+    .eq('id', chatId)
+    .maybeSingle();
 
-  return chat
-}
+  return chat;
+};
 
-export const createChat = async (chat: TablesInsert<"chats">) => {
+export const createChat = async (chat: TablesInsert<'chats'>) => {
   const { data: createdChat, error } = await supabase
-    .from("chats")
+    .from('chats')
     .insert([chat])
-    .select("*")
-    .single()
+    .select('*')
+    .single();
 
   if (error) {
-    throw new Error(error.message)
+    throw new Error(error.message);
   }
 
-  return createdChat
-}
+  return createdChat;
+};
 
 export const updateChat = async (
   chatId: string,
-  chat: TablesUpdate<"chats">
+  chat: TablesUpdate<'chats'>,
 ) => {
   const { data: updatedChat, error } = await supabase
-    .from("chats")
+    .from('chats')
     .update(chat)
-    .eq("id", chatId)
-    .select("*")
-    .single()
+    .eq('id', chatId)
+    .select('*')
+    .single();
 
   if (error) {
-    throw new Error(error.message)
+    throw new Error(error.message);
   }
 
-  return updatedChat
-}
+  return updatedChat;
+};
 
 export const deleteChat = async (chatId: string) => {
-  const { error } = await supabase.from("chats").delete().eq("id", chatId)
+  const { error } = await supabase.from('chats').delete().eq('id', chatId);
 
   if (error) {
-    throw new Error(error.message)
+    throw new Error(error.message);
   }
 
-  return true
-}
+  return true;
+};
 
 export const deleteAllChats = async (userId: string) => {
   const { error: chatDeleteError } = await supabase
-    .from("chats")
+    .from('chats')
     .delete()
-    .eq("user_id", userId)
+    .eq('user_id', userId);
 
   if (chatDeleteError) {
-    throw new Error(chatDeleteError.message)
+    throw new Error(chatDeleteError.message);
   }
 
-  return true
-}
+  return true;
+};
 
 export const getChatsByUserId = async (userId: string) => {
   const { data: chats, error } = await supabase
-    .from("chats")
-    .select("*")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false })
-    .limit(25)
+    .from('chats')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(25);
 
   if (error) {
-    throw new Error(error.message)
+    throw new Error(error.message);
   }
 
-  return chats
-}
+  return chats;
+};
 
 export const getMoreChatsByUserId = async (
   userId: string,
-  lastChatCreatedAt: string
+  lastChatCreatedAt: string,
 ) => {
   const { data: chats, error } = await supabase
-    .from("chats")
-    .select("*")
-    .eq("user_id", userId)
-    .lt("created_at", lastChatCreatedAt)
-    .order("created_at", { ascending: false })
-    .limit(25)
+    .from('chats')
+    .select('*')
+    .eq('user_id', userId)
+    .lt('created_at', lastChatCreatedAt)
+    .order('created_at', { ascending: false })
+    .limit(25);
 
   if (error) {
-    throw new Error(error.message)
+    throw new Error(error.message);
   }
 
-  return chats
-}
+  return chats;
+};

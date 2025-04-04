@@ -1,99 +1,99 @@
-import React, { useState, useEffect, useContext } from "react"
-import { DialogPanel, DialogTitle } from "@headlessui/react"
-import { Button } from "../../ui/button"
-import { IconTrash, IconX, IconLoader2 } from "@tabler/icons-react"
-import { supabase } from "@/lib/supabase/browser-client"
-import { PentestGPTContext } from "@/context/context"
-import { Tables } from "@/supabase/types"
-import { updateChat } from "@/db/chats"
-import { toast } from "sonner"
-import Link from "next/link"
-import { TransitionedDialog } from "@/components/ui/transitioned-dialog"
+import React, { useState, useEffect, useContext } from 'react';
+import { DialogPanel, DialogTitle } from '@headlessui/react';
+import { Button } from '../../ui/button';
+import { IconTrash, IconX, IconLoader2 } from '@tabler/icons-react';
+import { supabase } from '@/lib/supabase/browser-client';
+import { PentestGPTContext } from '@/context/context';
+import type { Tables } from '@/supabase/types';
+import { updateChat } from '@/db/chats';
+import { toast } from 'sonner';
+import Link from 'next/link';
+import { TransitionedDialog } from '@/components/ui/transitioned-dialog';
 
 interface SharedChatsPopupProps {
-  isOpen: boolean
-  onClose: () => void
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 export const SharedChatsPopup: React.FC<SharedChatsPopupProps> = ({
   isOpen,
-  onClose
+  onClose,
 }) => {
-  const [sharedChats, setSharedChats] = useState<Tables<"chats">[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [deletingChatId, setDeletingChatId] = useState<string | null>(null)
-  const [isDeletingAll, setIsDeletingAll] = useState(false)
-  const { profile } = useContext(PentestGPTContext)
+  const [sharedChats, setSharedChats] = useState<Tables<'chats'>[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [deletingChatId, setDeletingChatId] = useState<string | null>(null);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
+  const { profile } = useContext(PentestGPTContext);
 
   useEffect(() => {
     if (profile?.user_id) {
-      fetchSharedChats()
+      fetchSharedChats();
     }
-  }, [profile?.user_id])
+  }, [profile?.user_id]);
 
   const fetchSharedChats = async () => {
-    if (!profile?.user_id) return
-    setIsLoading(true)
+    if (!profile?.user_id) return;
+    setIsLoading(true);
 
     try {
       const { data, error } = await supabase
-        .from("chats")
-        .select("*")
-        .eq("user_id", profile.user_id)
-        .eq("sharing", "public")
-        .order("shared_at", { ascending: false })
+        .from('chats')
+        .select('*')
+        .eq('user_id', profile.user_id)
+        .eq('sharing', 'public')
+        .order('shared_at', { ascending: false });
 
-      if (error) throw error
-      setSharedChats(data || [])
+      if (error) throw error;
+      setSharedChats(data || []);
     } catch (error) {
-      console.error("Error fetching shared chats:", error)
-      toast.error("Failed to fetch shared chats")
+      console.error('Error fetching shared chats:', error);
+      toast.error('Failed to fetch shared chats');
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleMakePrivate = async (chatId: string) => {
-    setDeletingChatId(chatId)
+    setDeletingChatId(chatId);
     try {
       await updateChat(chatId, {
-        sharing: "private",
+        sharing: 'private',
         last_shared_message_id: null,
         shared_by: null,
-        shared_at: null
-      })
-      toast.success("Shared link deleted successfully")
-      fetchSharedChats()
+        shared_at: null,
+      });
+      toast.success('Shared link deleted successfully');
+      fetchSharedChats();
     } catch (error) {
-      console.error("Error deleting shared link:", error)
-      toast.error("Failed to delete shared link")
+      console.error('Error deleting shared link:', error);
+      toast.error('Failed to delete shared link');
     } finally {
-      setDeletingChatId(null)
+      setDeletingChatId(null);
     }
-  }
+  };
 
   const handleMakeAllPrivate = async () => {
-    setIsDeletingAll(true)
+    setIsDeletingAll(true);
     try {
       await Promise.all(
-        sharedChats.map(chat =>
+        sharedChats.map((chat) =>
           updateChat(chat.id, {
-            sharing: "private",
+            sharing: 'private',
             last_shared_message_id: null,
             shared_by: null,
-            shared_at: null
-          })
-        )
-      )
-      toast.success("All shared links deleted successfully")
-      fetchSharedChats()
+            shared_at: null,
+          }),
+        ),
+      );
+      toast.success('All shared links deleted successfully');
+      fetchSharedChats();
     } catch (error) {
-      console.error("Error deleting all shared links:", error)
-      toast.error("Failed to delete all shared links")
+      console.error('Error deleting all shared links:', error);
+      toast.error('Failed to delete all shared links');
     } finally {
-      setIsDeletingAll(false)
+      setIsDeletingAll(false);
     }
-  }
+  };
 
   return (
     <TransitionedDialog isOpen={isOpen} onClose={onClose}>
@@ -121,19 +121,19 @@ export const SharedChatsPopup: React.FC<SharedChatsPopupProps> = ({
           ) : (
             <table className="w-full table-fixed">
               <colgroup>
-                <col style={{ width: "50%" }} />
-                <col style={{ width: "25%" }} />
-                <col style={{ width: "10%" }} />
+                <col style={{ width: '50%' }} />
+                <col style={{ width: '25%' }} />
+                <col style={{ width: '10%' }} />
               </colgroup>
               <thead>
                 <tr className="border-b">
                   <th className="pb-2 text-left font-medium">Name</th>
                   <th className="pb-2 text-left font-medium">Date Shared</th>
-                  <th className="pb-2 text-right font-medium"></th>
+                  <th className="pb-2 text-right font-medium" />
                 </tr>
               </thead>
               <tbody>
-                {sharedChats.map(chat => (
+                {sharedChats.map((chat) => (
                   <tr key={chat.id} className="border-b">
                     <td className="py-3 pr-4">
                       <Link
@@ -142,7 +142,7 @@ export const SharedChatsPopup: React.FC<SharedChatsPopupProps> = ({
                         rel="noopener noreferrer"
                         className="break-words text-sm text-blue-500 transition-colors duration-200 hover:text-blue-700"
                       >
-                        {chat.name || "Unnamed Chat"}
+                        {chat.name || 'Unnamed Chat'}
                       </Link>
                     </td>
                     <td className="py-3 pr-4">
@@ -186,12 +186,12 @@ export const SharedChatsPopup: React.FC<SharedChatsPopupProps> = ({
                   Deleting...
                 </>
               ) : (
-                "Delete all shared links"
+                'Delete all shared links'
               )}
             </Button>
           </div>
         )}
       </DialogPanel>
     </TransitionedDialog>
-  )
-}
+  );
+};

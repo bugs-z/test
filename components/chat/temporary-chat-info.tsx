@@ -1,5 +1,5 @@
-import React from "react"
-import { BrandLarge } from "@/components/ui/brand"
+import React from 'react';
+import { BrandLarge } from '@/components/ui/brand';
 
 export const TemporaryChatInfo: React.FC = () => {
   return (
@@ -14,5 +14,5 @@ export const TemporaryChatInfo: React.FC = () => {
         reload the page or click the &quot;Clear chat&quot; button.
       </p>
     </div>
-  )
-}
+  );
+};

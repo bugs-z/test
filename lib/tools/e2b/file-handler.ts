@@ -1,126 +1,123 @@
-import { createClient } from "@supabase/supabase-js"
-import { Database } from "@/supabase/types"
-import { Sandbox } from "@e2b/code-interpreter"
+import type { Sandbox } from '@e2b/code-interpreter';
+import { createSupabaseAdminClient } from '@/lib/server/server-utils';
 
 interface FileUploadResult {
-  success: boolean
-  name: string
-  path: string
-  error?: string
+  success: boolean;
+  name: string;
+  path: string;
+  error?: string;
 }
 
 interface BatchFileUploadResult {
-  success: boolean
-  uploadedFiles: FileUploadResult[]
-  limitExceeded: boolean
+  success: boolean;
+  uploadedFiles: FileUploadResult[];
+  limitExceeded: boolean;
 }
 
 export async function uploadFileToSandbox(
   fileId: string,
   sandbox: Sandbox,
-  dataStream: any
+  dataStream: any,
 ): Promise<FileUploadResult> {
-  let name = fileId
+  let name = fileId;
   try {
-    const { content, name: fileName } = await getFileContentFromSupabase(fileId)
-    name = fileName
-    const sandboxPath = `/home/user/${name}`
+    const { content, name: fileName } =
+      await getFileContentFromSupabase(fileId);
+    name = fileName;
+    const sandboxPath = `/home/user/${name}`;
 
-    await sandbox.files.write(sandboxPath, content)
+    await sandbox.files.write(sandboxPath, content);
 
     dataStream.writeData({
-      type: "text-delta",
-      content: `📝 Uploaded ${name} to /home/user/\n`
-    })
+      type: 'text-delta',
+      content: `📝 Uploaded ${name} to /home/user/\n`,
+    });
 
     return {
       success: true,
       name,
-      path: sandboxPath
-    }
+      path: sandboxPath,
+    };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error)
-    console.error("❌ File upload failed:", errorMessage)
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('❌ File upload failed:', errorMessage);
 
     dataStream.writeData({
-      type: "text-delta",
-      content: `⚠️ Failed to upload ${name}: ${errorMessage}\n`
-    })
+      type: 'text-delta',
+      content: `⚠️ Failed to upload ${name}: ${errorMessage}\n`,
+    });
 
     return {
       success: false,
       name,
-      path: "",
-      error: errorMessage
-    }
+      path: '',
+      error: errorMessage,
+    };
   }
 }
 
 async function getFileContentFromSupabase(fileId: string) {
-  const supabaseAdmin = createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
+  const supabaseAdmin = createSupabaseAdminClient();
 
   // First get file metadata
   const { data: fileData, error: fileError } = await supabaseAdmin
-    .from("files")
-    .select("*")
-    .eq("id", fileId)
-    .single()
+    .from('files')
+    .select('*')
+    .eq('id', fileId)
+    .single();
 
   if (fileError || !fileData) {
-    console.error("❌ Failed to get file metadata:", fileError?.message)
-    throw new Error(`Failed to get file metadata: ${fileError?.message}`)
+    console.error('❌ Failed to get file metadata:', fileError?.message);
+    throw new Error(`Failed to get file metadata: ${fileError?.message}`);
   }
 
   // Then get actual file content from storage
   const { data: fileContent, error: storageError } = await supabaseAdmin.storage
-    .from("files")
-    .download(fileData.file_path)
+    .from('files')
+    .download(fileData.file_path);
 
   if (storageError) {
-    console.error("❌ Failed to download file:", storageError.message)
-    throw new Error(`Failed to download file: ${storageError.message}`)
+    console.error('❌ Failed to download file:', storageError.message);
+    throw new Error(`Failed to download file: ${storageError.message}`);
   }
 
-  const content = await fileContent.text()
+  const content = await fileContent.text();
 
   return {
     content,
-    name: fileData.name
-  }
+    name: fileData.name,
+  };
 }
 
 export async function uploadFilesToSandbox(
   files: { fileId: string }[],
   sandbox: Sandbox,
-  dataStream: any
+  dataStream: any,
 ): Promise<BatchFileUploadResult> {
-  let filesToProcess = files
+  let filesToProcess = files;
 
   if (files.length > 1) {
     dataStream.writeData({
-      type: "text-delta",
+      type: 'text-delta',
       content:
-        "⚠️ Warning: Maximum 3 files can be uploaded at once. Only the first 3 files will be processed.\n"
-    })
-    filesToProcess = files.slice(0, 3)
+        '⚠️ Warning: Maximum 3 files can be uploaded at once. Only the first 3 files will be processed.\n',
+    });
+    filesToProcess = files.slice(0, 3);
   }
 
-  const results = []
+  const results = [];
   for (const fileRequest of filesToProcess) {
     const result = await uploadFileToSandbox(
       fileRequest.fileId,
       sandbox,
-      dataStream
-    )
-    results.push(result)
+      dataStream,
+    );
+    results.push(result);
   }
 
   return {
-    success: results.every(r => r.success),
+    success: results.every((r) => r.success),
     uploadedFiles: results,
-    limitExceeded: files.length > 3
-  }
+    limitExceeded: files.length > 3,
+  };
 }

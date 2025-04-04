@@ -1,32 +1,32 @@
-import { encode, decode } from "gpt-tokenizer"
-import { PluginID } from "@/types/plugins"
-const MAX_TOKENS = 32000
-const INITIAL_TOKENS = 1000
+import { encode, decode } from 'gpt-tokenizer';
+import { PluginID } from '@/types/plugins';
+const MAX_TOKENS = 32000;
+const INITIAL_TOKENS = 1000;
 
 export async function streamTerminalOutput(
   terminalStream: ReadableStream<Uint8Array>,
-  enqueueChunk: (chunk: string) => void
+  enqueueChunk: (chunk: string) => void,
 ): Promise<string> {
-  const reader = terminalStream.getReader()
-  let terminalOutput = ""
+  const reader = terminalStream.getReader();
+  let terminalOutput = '';
   while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-    const chunk = new TextDecoder().decode(value)
-    terminalOutput += chunk
-    enqueueChunk(chunk)
+    const { done, value } = await reader.read();
+    if (done) break;
+    const chunk = new TextDecoder().decode(value);
+    terminalOutput += chunk;
+    enqueueChunk(chunk);
   }
-  return terminalOutput
+  return terminalOutput;
 }
 
 export function reduceTerminalOutput(output: string): string {
-  const tokens = encode(output)
+  const tokens = encode(output);
   if (tokens.length > MAX_TOKENS) {
-    const initial = tokens.slice(0, INITIAL_TOKENS)
-    const remaining = tokens.slice(-(MAX_TOKENS - INITIAL_TOKENS))
-    return decode(initial) + "\n...\n" + decode(remaining)
+    const initial = tokens.slice(0, INITIAL_TOKENS);
+    const remaining = tokens.slice(-(MAX_TOKENS - INITIAL_TOKENS));
+    return `${decode(initial)}\n...\n${decode(remaining)}`;
   }
-  return output
+  return output;
 }
 
 export const terminalPlugins = [
@@ -39,5 +39,5 @@ export const terminalPlugins = [
   PluginID.SUBDOMAIN_FINDER,
   PluginID.CVE_MAP,
   PluginID.WORDPRESS_SCANNER,
-  PluginID.XSS_EXPLOITER
-]
+  PluginID.XSS_EXPLOITER,
+];

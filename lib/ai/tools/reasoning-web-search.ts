@@ -1,147 +1,147 @@
-import { buildSystemPrompt } from "@/lib/ai/prompts"
-import { toVercelChatMessages } from "@/lib/ai/message-utils"
-import llmConfig from "@/lib/models/llm-config"
-import { streamText } from "ai"
-import { perplexity } from "@ai-sdk/perplexity"
+import { buildSystemPrompt } from '@/lib/ai/prompts';
+import { toVercelChatMessages } from '@/lib/ai/message-utils';
+import llmConfig from '@/lib/models/llm-config';
+import { streamText } from 'ai';
+import { perplexity } from '@ai-sdk/perplexity';
 
 interface ReasoningWebSearchConfig {
-  messages: any[]
-  profile: any
-  dataStream: any
-  isLargeModel: boolean
+  messages: any[];
+  profile: any;
+  dataStream: any;
+  isLargeModel: boolean;
 }
 
 async function getProviderConfig(isLargeModel: boolean, profile: any) {
-  const defaultModel = "sonar-reasoning"
-  const proModel = "sonar-reasoning-pro"
-  const selectedModel = isLargeModel ? proModel : defaultModel
+  const defaultModel = 'sonar-reasoning';
+  const proModel = 'sonar-reasoning-pro';
+  const selectedModel = isLargeModel ? proModel : defaultModel;
 
   const systemPrompt = buildSystemPrompt(
     llmConfig.systemPrompts.reasoningWebSearch,
-    profile.profile_context
-  )
+    profile.profile_context,
+  );
 
   return {
     systemPrompt,
-    selectedModel
-  }
+    selectedModel,
+  };
 }
 
 export async function executeReasoningWebSearchTool({
-  config
+  config,
 }: {
-  config: ReasoningWebSearchConfig
+  config: ReasoningWebSearchConfig;
 }) {
   if (!process.env.PERPLEXITY_API_KEY) {
-    throw new Error("Perplexity API key is not set for reason LLM")
+    throw new Error('Perplexity API key is not set for reason LLM');
   }
 
-  const { messages, profile, dataStream, isLargeModel } = config
+  const { messages, profile, dataStream, isLargeModel } = config;
   const { systemPrompt, selectedModel } = await getProviderConfig(
     isLargeModel,
-    profile
-  )
+    profile,
+  );
 
   try {
     const { fullStream } = streamText({
       model: perplexity(selectedModel),
       messages: [
         {
-          role: "system",
-          content: systemPrompt
+          role: 'system',
+          content: systemPrompt,
         },
-        ...toVercelChatMessages(messages)
+        ...toVercelChatMessages(messages),
       ],
-      maxTokens: 4096
-    })
+      maxTokens: 4096,
+    });
 
-    const citations: string[] = []
-    let hasFirstTextDelta = false
-    let thinkingStartTime: number | null = null
-    let isThinking = false
+    const citations: string[] = [];
+    let hasFirstTextDelta = false;
+    let thinkingStartTime: number | null = null;
+    let isThinking = false;
 
     for await (const delta of fullStream) {
-      if (delta.type === "source") {
-        if (delta.source.sourceType === "url") {
-          citations.push(delta.source.url)
+      if (delta.type === 'source') {
+        if (delta.source.sourceType === 'url') {
+          citations.push(delta.source.url);
         }
       }
 
-      if (delta.type === "text-delta") {
-        const { textDelta } = delta
+      if (delta.type === 'text-delta') {
+        const { textDelta } = delta;
 
-        if (!hasFirstTextDelta && textDelta.trim() !== "") {
-          dataStream.writeData({ citations })
-          hasFirstTextDelta = true
+        if (!hasFirstTextDelta && textDelta.trim() !== '') {
+          dataStream.writeData({ citations });
+          hasFirstTextDelta = true;
         }
 
-        if (textDelta.includes("<think>")) {
-          isThinking = true
-          thinkingStartTime = Date.now()
+        if (textDelta.includes('<think>')) {
+          isThinking = true;
+          thinkingStartTime = Date.now();
 
-          const [beforeThink, thinkingContent] = textDelta.split("<think>")
+          const [beforeThink, thinkingContent] = textDelta.split('<think>');
           if (beforeThink) {
             dataStream.writeData({
-              type: "text-delta",
-              content: beforeThink
-            })
+              type: 'text-delta',
+              content: beforeThink,
+            });
           }
           if (thinkingContent) {
             dataStream.writeData({
-              type: "reasoning",
-              content: thinkingContent
-            })
+              type: 'reasoning',
+              content: thinkingContent,
+            });
           }
-          continue
+          continue;
         }
 
         if (isThinking) {
-          if (textDelta.includes("</think>")) {
-            isThinking = false
+          if (textDelta.includes('</think>')) {
+            isThinking = false;
             const thinkingElapsedSecs = thinkingStartTime
               ? Math.round((Date.now() - thinkingStartTime) / 1000)
-              : null
+              : null;
 
-            const [finalThinking, afterThink] = textDelta.split("</think>")
+            const [finalThinking, afterThink] = textDelta.split('</think>');
             if (finalThinking) {
               dataStream.writeData({
-                type: "reasoning",
-                content: finalThinking
-              })
+                type: 'reasoning',
+                content: finalThinking,
+              });
             }
 
             dataStream.writeData({
-              type: "thinking-time",
-              elapsed_secs: thinkingElapsedSecs
-            })
+              type: 'thinking-time',
+              elapsed_secs: thinkingElapsedSecs,
+            });
 
             if (afterThink) {
               dataStream.writeData({
-                type: "text-delta",
-                content: afterThink
-              })
+                type: 'text-delta',
+                content: afterThink,
+              });
             }
           } else {
             dataStream.writeData({
-              type: "reasoning",
-              content: textDelta
-            })
+              type: 'reasoning',
+              content: textDelta,
+            });
           }
         } else {
           dataStream.writeData({
-            type: "text-delta",
-            content: textDelta
-          })
+            type: 'text-delta',
+            content: textDelta,
+          });
         }
       }
     }
 
-    return "Reasoning web search completed"
+    return 'Reasoning web search completed';
   } catch (error) {
-    console.error("[ReasoningWebSearch] Error:", {
-      error: error instanceof Error ? error.message : "Unknown error",
-      model: selectedModel
-    })
-    throw error
+    console.error('[ReasoningWebSearch] Error:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      model: selectedModel,
+    });
+    throw error;
   }
 }

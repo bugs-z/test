@@ -1,21 +1,21 @@
-import { tool } from "ai"
-import { z } from "zod"
+import { tool } from 'ai';
+import { z } from 'zod';
 import {
-  ToolContext,
+  type ToolContext,
   TEMPORARY_SANDBOX_TEMPLATE,
   PERSISTENT_SANDBOX_TEMPLATE,
   BASH_SANDBOX_TIMEOUT,
-  PLUGIN_COMMAND_MAP
-} from "./types"
+  PLUGIN_COMMAND_MAP,
+} from './types';
 import {
   createOrConnectTemporaryTerminal,
-  createOrConnectPersistentTerminal
-} from "@/lib/tools/e2b/sandbox"
-import { executeTerminalCommand } from "@/lib/tools/e2b/terminal-executor"
+  createOrConnectPersistentTerminal,
+} from '@/lib/tools/e2b/sandbox';
+import { executeTerminalCommand } from '@/lib/tools/e2b/terminal-executor';
 import {
   streamTerminalOutput,
-  reduceTerminalOutput
-} from "@/lib/ai/terminal-utils"
+  reduceTerminalOutput,
+} from '@/lib/ai/terminal-utils';
 
 /**
  * Creates a terminal tool for executing commands in the sandbox environment
@@ -31,16 +31,16 @@ export const createTerminalTool = (context: ToolContext) => {
     selectedPlugin,
     terminalTemplate = TEMPORARY_SANDBOX_TEMPLATE,
     setSandbox,
-    setPersistentSandbox
-  } = context
+    setPersistentSandbox,
+  } = context;
 
-  let sandbox = initialSandbox
-  let persistentSandbox = initialPersistentSandbox
+  let sandbox = initialSandbox;
+  let persistentSandbox = initialPersistentSandbox;
 
   return tool({
-    description: "Execute commands in the sandbox environment.",
+    description: 'Execute commands in the sandbox environment.',
     parameters: z.object({
-      command: z.string().describe("Command to execute")
+      command: z.string().describe('Command to execute'),
       /*...(selectedPlugin
         ? {}
         : {
@@ -52,36 +52,36 @@ export const createTerminalTool = (context: ToolContext) => {
               )
           })*/
     }),
-    execute: async args => {
-      const { command } = args
+    execute: async (args) => {
+      const { command } = args;
       // Handle usePersistentSandbox with type safety
-      const usePersistentSandbox = false
+      const usePersistentSandbox = false;
       /* selectedPlugin
         ? false
         : Boolean(args.usePersistentSandbox) */
 
       // Validate plugin-specific commands
       if (selectedPlugin) {
-        const expectedCommand = PLUGIN_COMMAND_MAP[selectedPlugin]
+        const expectedCommand = PLUGIN_COMMAND_MAP[selectedPlugin];
         if (expectedCommand && !command.trim().startsWith(expectedCommand)) {
-          return `Command must start with "${expectedCommand}" for this plugin`
+          return `Command must start with "${expectedCommand}" for this plugin`;
         }
       }
 
       // Set sandbox type
-      persistentSandbox = usePersistentSandbox
+      persistentSandbox = usePersistentSandbox;
 
       // Update the persistentSandbox value in the parent context if needed
       if (setPersistentSandbox) {
-        setPersistentSandbox(persistentSandbox)
+        setPersistentSandbox(persistentSandbox);
       }
 
       dataStream.writeData({
-        type: "sandbox-type",
+        type: 'sandbox-type',
         sandboxType: persistentSandbox
-          ? "persistent-sandbox"
-          : "temporary-sandbox"
-      })
+          ? 'persistent-sandbox'
+          : 'temporary-sandbox',
+      });
 
       // Create or connect to sandbox
       if (!sandbox) {
@@ -89,17 +89,17 @@ export const createTerminalTool = (context: ToolContext) => {
           ? await createOrConnectPersistentTerminal(
               userID,
               PERSISTENT_SANDBOX_TEMPLATE,
-              BASH_SANDBOX_TIMEOUT
+              BASH_SANDBOX_TIMEOUT,
             )
           : await createOrConnectTemporaryTerminal(
               userID,
               terminalTemplate,
-              BASH_SANDBOX_TIMEOUT
-            )
+              BASH_SANDBOX_TIMEOUT,
+            );
 
         // Update the sandbox in the parent context if needed
         if (setSandbox) {
-          setSandbox(sandbox)
+          setSandbox(sandbox);
         }
       }
 
@@ -108,19 +108,19 @@ export const createTerminalTool = (context: ToolContext) => {
         userID,
         command,
         usePersistentSandbox: persistentSandbox,
-        sandbox
-      })
+        sandbox,
+      });
 
-      let terminalOutput = ""
-      await streamTerminalOutput(terminalStream, chunk => {
+      let terminalOutput = '';
+      await streamTerminalOutput(terminalStream, (chunk) => {
         dataStream.writeData({
-          type: "text-delta",
-          content: chunk
-        })
-        terminalOutput += chunk
-      })
+          type: 'text-delta',
+          content: chunk,
+        });
+        terminalOutput += chunk;
+      });
 
-      return reduceTerminalOutput(terminalOutput)
-    }
-  })
-}
+      return reduceTerminalOutput(terminalOutput);
+    },
+  });
+};

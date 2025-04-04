@@ -1,86 +1,86 @@
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { PentestGPTContext } from "@/context/context"
-import { getBillingPortalUrl } from "@/lib/server/stripe-url"
-import { SubscriptionStatus } from "@/types/chat"
-import { IconRefresh } from "@tabler/icons-react"
-import { useRouter } from "next/navigation"
-import { FC, useContext, useState } from "react"
-import { toast } from "sonner"
-import { Separator } from "@/components/ui/separator"
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { PentestGPTContext } from '@/context/context';
+import { getBillingPortalUrl } from '@/lib/server/stripe-url';
+import type { SubscriptionStatus } from '@/types/chat';
+import { IconRefresh } from '@tabler/icons-react';
+import { useRouter } from 'next/navigation';
+import { type FC, useContext, useState } from 'react';
+import { toast } from 'sonner';
+import { Separator } from '@/components/ui/separator';
 
 interface SubscriptionTabProps {
-  userEmail: string
-  isMobile: boolean
+  userEmail: string;
+  isMobile: boolean;
 }
 
 export const SubscriptionTab: FC<SubscriptionTabProps> = ({
   userEmail,
-  isMobile
+  isMobile,
 }) => {
-  const router = useRouter()
-  const isLongEmail = userEmail.length > 30
-  const [loading, setLoading] = useState(false)
+  const router = useRouter();
+  const isLongEmail = userEmail.length > 30;
+  const [loading, setLoading] = useState(false);
   const {
     isPremiumSubscription,
     subscriptionStatus,
     updateSubscription,
-    fetchStartingData
-  } = useContext(PentestGPTContext)
+    fetchStartingData,
+  } = useContext(PentestGPTContext);
 
   const redirectToBillingPortal = async () => {
-    setLoading(true)
-    const checkoutUrlResult = await getBillingPortalUrl()
-    setLoading(false)
-    if (checkoutUrlResult.type === "error") {
-      toast.error(checkoutUrlResult.error.message)
+    setLoading(true);
+    const checkoutUrlResult = await getBillingPortalUrl();
+    setLoading(false);
+    if (checkoutUrlResult.type === 'error') {
+      toast.error(checkoutUrlResult.error.message);
     } else {
-      router.push(checkoutUrlResult.value)
+      router.push(checkoutUrlResult.value);
     }
-  }
+  };
 
   const handleRestoreButtonClick = async () => {
     try {
-      setLoading(true)
-      const response = await fetch("/api/stripe/restore", {
-        method: "POST",
+      setLoading(true);
+      const response = await fetch('/api/stripe/restore', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json"
-        }
-      })
+          'Content-Type': 'application/json',
+        },
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (!response.ok) {
         throw new Error(
-          data.error || "An error occurred while restoring the subscription"
-        )
+          data.error || 'An error occurred while restoring the subscription',
+        );
       }
 
-      await fetchStartingData()
+      await fetchStartingData();
 
       if (data.message) {
-        toast.warning(data.message)
+        toast.warning(data.message);
       } else if (data.subscription) {
-        toast.success("Your subscription has been restored.")
-        updateSubscription(data.subscription)
+        toast.success('Your subscription has been restored.');
+        updateSubscription(data.subscription);
       }
     } catch (error: any) {
-      console.error("Error restoring subscription:", error)
-      toast.error(error.message)
+      console.error('Error restoring subscription:', error);
+      toast.error(error.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleUpgradeClick = () => {
-    router.push("/upgrade")
-  }
+    router.push('/upgrade');
+  };
 
   const showRestoreSubscription =
-    subscriptionStatus === "free" &&
-    process.env.NEXT_PUBLIC_ENABLE_STRIPE_RESTORE === "true"
+    subscriptionStatus === 'free' &&
+    process.env.NEXT_PUBLIC_ENABLE_STRIPE_RESTORE === 'true';
 
   return (
     <div className="space-y-4">
@@ -132,8 +132,8 @@ export const SubscriptionTab: FC<SubscriptionTabProps> = ({
       <div
         className={
           isLongEmail || isMobile
-            ? "space-y-2"
-            : "flex items-center justify-between"
+            ? 'space-y-2'
+            : 'flex items-center justify-between'
         }
       >
         <Label htmlFor="email-input">Email address</Label>
@@ -145,22 +145,22 @@ export const SubscriptionTab: FC<SubscriptionTabProps> = ({
         />
       </div>
     </div>
-  )
-}
+  );
+};
 
 interface PlanNameProps {
-  subscriptionStatus: SubscriptionStatus
+  subscriptionStatus: SubscriptionStatus;
 }
 
 export const PlanName: FC<PlanNameProps> = ({ subscriptionStatus }) => {
   const planName =
-    subscriptionStatus?.charAt(0).toUpperCase() + subscriptionStatus?.slice(1)
+    subscriptionStatus?.charAt(0).toUpperCase() + subscriptionStatus?.slice(1);
 
   return (
     <span
-      className={`text-xl font-bold ${subscriptionStatus !== "free" ? "text-primary" : "text-muted-foreground"}`}
+      className={`text-xl font-bold ${subscriptionStatus !== 'free' ? 'text-primary' : 'text-muted-foreground'}`}
     >
       {planName}
     </span>
-  )
-}
+  );
+};

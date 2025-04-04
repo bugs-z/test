@@ -1,16 +1,16 @@
-import { FC } from "react"
-import { UserPlus } from "lucide-react"
+import type { FC } from 'react';
+import { UserPlus } from 'lucide-react';
 
 interface SidebarInviteButtonProps {
-  onInvite: () => void
-  title?: string
-  subtitle?: string
+  onInvite: () => void;
+  title?: string;
+  subtitle?: string;
 }
 
 export const SidebarInviteButton: FC<SidebarInviteButtonProps> = ({
   onInvite,
-  title = "Invite Members",
-  subtitle = "Add team members to your team"
+  title = 'Invite Members',
+  subtitle = 'Add team members to your team',
 }) => {
   return (
     <div className="mt-2">
@@ -27,5 +27,5 @@ export const SidebarInviteButton: FC<SidebarInviteButtonProps> = ({
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

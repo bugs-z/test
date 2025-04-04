@@ -1,11 +1,11 @@
-import { LLM } from "@/types"
+import type { LLM } from '@/types';
 
 export const Agent: LLM = {
-  modelId: "gpt-4-turbo-preview", // Not a good idea to change as it could be stored in browser and it's in the DB, carefully change this if required.
-  modelName: "PentestGPT 4o",
-  shortModelName: "PGPT-4o",
-  provider: "openai",
-  imageInput: true
-}
+  modelId: 'gpt-4-turbo-preview', // Not a good idea to change as it could be stored in browser and it's in the DB, carefully change this if required.
+  modelName: 'PentestGPT 4o',
+  shortModelName: 'PGPT-4o',
+  provider: 'openai',
+  imageInput: true,
+};
 
-export const OPENAI_LLM_LIST: LLM[] = [Agent]
+export const OPENAI_LLM_LIST: LLM[] = [Agent];

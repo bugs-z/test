@@ -1,25 +1,23 @@
-import { useChatHandler } from "@/components/chat/chat-hooks/use-chat-handler"
-import { PentestGPTContext } from "@/context/context"
-import { Tables } from "@/supabase/types"
-import { FC, useContext, useState } from "react"
-import { Message } from "../messages/message"
-import { ChatMessage } from "@/types"
+import { useChatHandler } from '@/components/chat/chat-hooks/use-chat-handler';
+import { PentestGPTContext } from '@/context/context';
+import type { Tables } from '@/supabase/types';
+import { type FC, useContext, useState } from 'react';
+import { Message } from '../messages/message';
+import type { ChatMessage } from '@/types';
 
-interface ChatMessagesProps {}
-
-export const ChatMessages: FC<ChatMessagesProps> = ({}) => {
+export const ChatMessages: FC = () => {
   const { chatMessages, temporaryChatMessages, isTemporaryChat } =
-    useContext(PentestGPTContext)
+    useContext(PentestGPTContext);
 
-  const { handleSendEdit, handleSendFeedback } = useChatHandler()
+  const { handleSendEdit, handleSendFeedback } = useChatHandler();
 
   const onSendFeedback = (
     chatMessage: ChatMessage,
-    feedback: "good" | "bad",
+    feedback: 'good' | 'bad',
     reason?: string,
     detailedFeedback?: string,
     allowSharing?: boolean,
-    allowEmail?: boolean
+    allowEmail?: boolean,
   ) => {
     handleSendFeedback(
       chatMessage,
@@ -27,21 +25,21 @@ export const ChatMessages: FC<ChatMessagesProps> = ({}) => {
       reason,
       detailedFeedback,
       allowSharing,
-      allowEmail
-    )
-  }
+      allowEmail,
+    );
+  };
 
-  const [editingMessage, setEditingMessage] = useState<Tables<"messages">>()
+  const [editingMessage, setEditingMessage] = useState<Tables<'messages'>>();
 
   const messagesToDisplay = isTemporaryChat
     ? temporaryChatMessages
-    : chatMessages
+    : chatMessages;
 
   return (
     <>
       {messagesToDisplay.map((chatMessage, index) => {
         const previousMessage =
-          index > 0 ? messagesToDisplay[index - 1].message : undefined
+          index > 0 ? messagesToDisplay[index - 1].message : undefined;
         return (
           <Message
             key={chatMessage.message.id}
@@ -53,11 +51,11 @@ export const ChatMessages: FC<ChatMessagesProps> = ({}) => {
             onCancelEdit={() => setEditingMessage(undefined)}
             onSubmitEdit={handleSendEdit}
             onSendFeedback={(
-              feedback: "good" | "bad",
+              feedback: 'good' | 'bad',
               reason?: string,
               detailedFeedback?: string,
               allowSharing?: boolean,
-              allowEmail?: boolean
+              allowEmail?: boolean,
             ) =>
               onSendFeedback(
                 chatMessage,
@@ -65,12 +63,12 @@ export const ChatMessages: FC<ChatMessagesProps> = ({}) => {
                 reason,
                 detailedFeedback,
                 allowSharing,
-                allowEmail
+                allowEmail,
               )
             }
           />
-        )
+        );
       })}
     </>
-  )
-}
+  );
+};

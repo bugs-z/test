@@ -1,100 +1,100 @@
-import { PentestGPTContext } from "@/context/context"
-import { LLM, LLMID } from "@/types"
-import { IconCircle, IconCircleCheck } from "@tabler/icons-react"
-import { FC, useContext, useEffect, useRef, useState } from "react"
-import { useRouter } from "next/navigation"
-import { ModelIcon } from "./model-icon"
-import { Button } from "../ui/button"
-import { LLM_LIST } from "@/lib/models/llm-list"
-import { LargeModel, SmallModel } from "@/lib/models/hackerai-llm-list"
-import { Agent } from "@/lib/models/openai-llm-list"
+import { PentestGPTContext } from '@/context/context';
+import type { LLM, LLMID } from '@/types';
+import { IconCircle, IconCircleCheck } from '@tabler/icons-react';
+import { type FC, useContext, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { ModelIcon } from './model-icon';
+import { Button } from '../ui/button';
+import { LLM_LIST } from '@/lib/models/llm-list';
+import { LargeModel, SmallModel } from '@/lib/models/hackerai-llm-list';
+import { Agent } from '@/lib/models/openai-llm-list';
 
 interface ModelSelectProps {
-  selectedModelId: LLMID
-  onSelectModel: (modelId: LLMID) => void
+  selectedModelId: LLMID;
+  onSelectModel: (modelId: LLMID) => void;
 }
 
 export const ModelSelect: FC<ModelSelectProps> = ({
   selectedModelId,
-  onSelectModel
+  onSelectModel,
 }) => {
-  const router = useRouter()
-  const { isPremiumSubscription, profile } = useContext(PentestGPTContext)
+  const router = useRouter();
+  const { isPremiumSubscription, profile } = useContext(PentestGPTContext);
 
-  const inputRef = useRef<HTMLInputElement>(null)
-  const [isOpen, setIsOpen] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => {
-        inputRef.current?.focus()
-      }, 100) // FIX: hacky
+        inputRef.current?.focus();
+      }, 100); // FIX: hacky
     }
-  }, [isOpen])
+  }, [isOpen]);
 
   const handleSelectModel = (modelId: LLMID) => {
-    onSelectModel(modelId)
-    setIsOpen(false)
-  }
+    onSelectModel(modelId);
+    setIsOpen(false);
+  };
 
   // Define the specific order of models
   const modelOrder: LLMID[] = [
     Agent.modelId,
     LargeModel.modelId,
-    SmallModel.modelId
-  ]
+    SmallModel.modelId,
+  ];
 
   // Sort the models based on the predefined order
   const sortedModels = LLM_LIST.sort((a, b) => {
-    const indexA = modelOrder.indexOf(a.modelId as LLMID)
-    const indexB = modelOrder.indexOf(b.modelId as LLMID)
-    return indexA - indexB
-  })
+    const indexA = modelOrder.indexOf(a.modelId as LLMID);
+    const indexB = modelOrder.indexOf(b.modelId as LLMID);
+    return indexA - indexB;
+  });
 
   // Group the sorted models by provider
   const groupedSortedModels = sortedModels.reduce<Record<string, LLM[]>>(
     (groups, model) => {
-      const key = model.provider
+      const key = model.provider;
       if (!groups[key]) {
-        groups[key] = []
+        groups[key] = [];
       }
-      groups[key].push(model)
-      return groups
+      groups[key].push(model);
+      return groups;
     },
-    {}
-  )
+    {},
+  );
 
-  if (!profile) return null
+  if (!profile) return null;
 
   const handleUpgradeClick = () => {
-    router.push("/upgrade")
-  }
+    router.push('/upgrade');
+  };
 
   const freeUserModels = [
     {
       modelId: Agent.modelId,
-      modelName: "PentestGPT Pro",
-      description: "Our smartest model & more",
-      isUpgrade: true
+      modelName: 'PentestGPT Pro',
+      description: 'Our smartest model & more',
+      isUpgrade: true,
     },
     {
       modelId: LargeModel.modelId,
-      modelName: "PentestGPT",
-      description: "Great for everyday tasks"
-    }
-  ]
+      modelName: 'PentestGPT',
+      description: 'Great for everyday tasks',
+    },
+  ];
 
   const modelDescriptions: Record<string, string> = {
-    [Agent.modelId]: "Advanced model with terminal access",
-    [LargeModel.modelId]: "Uncensored, Great for most questions",
-    [SmallModel.modelId]: "Uncensored, Faster for most questions"
-  }
+    [Agent.modelId]: 'Advanced model with terminal access',
+    [LargeModel.modelId]: 'Uncensored, Great for most questions',
+    [SmallModel.modelId]: 'Uncensored, Faster for most questions',
+  };
 
   return (
     <div className="flex size-full flex-col">
       <div className="space-y-1 overflow-y-auto p-3">
         {!isPremiumSubscription ? (
-          freeUserModels.map(model => (
+          freeUserModels.map((model) => (
             <div key={model.modelId}>
               <div
                 className="hover:bg-select flex cursor-pointer items-center justify-between space-x-2 rounded-md p-2"
@@ -131,14 +131,14 @@ export const ModelSelect: FC<ModelSelectProps> = ({
               Model
             </div>
             {Object.entries(groupedSortedModels).map(([provider, models]) => {
-              const filteredModels = models
+              const filteredModels = models;
 
-              if (filteredModels.length === 0) return null
+              if (filteredModels.length === 0) return null;
 
               return (
                 <div key={provider}>
                   <div className="space-y-2">
-                    {filteredModels.map(model => (
+                    {filteredModels.map((model) => (
                       <div
                         key={model.modelId}
                         className="hover:bg-accent flex w-full cursor-pointer items-center space-x-3 truncate rounded p-2"
@@ -151,7 +151,7 @@ export const ModelSelect: FC<ModelSelectProps> = ({
                             </div>
                             <div className="text-muted-foreground truncate text-xs">
                               {modelDescriptions[model.modelId] ||
-                                "Advanced AI model"}
+                                'Advanced AI model'}
                             </div>
                           </div>
                         </div>
@@ -166,11 +166,11 @@ export const ModelSelect: FC<ModelSelectProps> = ({
                     ))}
                   </div>
                 </div>
-              )
+              );
             })}
           </>
         )}
       </div>
     </div>
-  )
-}
+  );
+};

@@ -24,49 +24,14 @@
   }
 }
 
-@utility scrollbar-hide {
-  /* Hide scrollbar for Chrome, Safari and Opera */
-  &::-webkit-scrollbar {
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
-  /* Hide scrollbar for IE, Edge and Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
-}
 
-@utility scrollbar-show {
-  scrollbar-width: auto; /* Firefox */
-  -ms-overflow-style: auto; /* IE and Edge */
-  &::-webkit-scrollbar {
-    display: block; /* Chrome, Safari, Opera */
-  }
-}
-
-@layer utilities {
-  ::-webkit-scrollbar-track {
-    background-color: transparent;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background-color: #ccc;
-    border-radius: 10px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background-color: #aaa;
-  }
-
-  ::-webkit-scrollbar-track:hover {
-    background-color: #f2f2f2;
-  }
-
-  ::-webkit-scrollbar-corner {
-    background-color: transparent;
-  }
-
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+  .no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
   }
 }
 

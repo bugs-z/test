@@ -1,57 +1,57 @@
-"use server"
+'use server';
 
-import React from "react"
-import { createClient } from "@/lib/supabase/server"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { SharedMessage } from "@/components/chat/shared-message"
-import { Tables } from "@/supabase/types"
+import React from 'react';
+import { createClient } from '@/lib/supabase/server';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { SharedMessage } from '@/components/chat/shared-message';
+import type { Tables } from '@/supabase/types';
 
-const MAX_CHAT_NAME_LENGTH = 100
+const MAX_CHAT_NAME_LENGTH = 100;
 
 const truncateChatName = (name: string) => {
-  if (name.length <= MAX_CHAT_NAME_LENGTH) return name
-  return name.slice(0, MAX_CHAT_NAME_LENGTH) + "..."
-}
+  if (name.length <= MAX_CHAT_NAME_LENGTH) return name;
+  return `${name.slice(0, MAX_CHAT_NAME_LENGTH)}...`;
+};
 
 export default async function SharedChatPage({
-  params
+  params,
 }: {
-  params: Promise<{ share_id: string; locale: string }>
+  params: Promise<{ share_id: string; locale: string }>;
 }) {
-  const { share_id, locale } = await params
-  const supabase = await createClient()
+  const { share_id, locale } = await params;
+  const supabase = await createClient();
 
-  const result = await supabase.rpc("get_shared_chat", {
-    share_id_param: share_id
-  })
+  const result = await supabase.rpc('get_shared_chat', {
+    share_id_param: share_id,
+  });
 
   if (!result.data || result.data.length === 0 || result.error) {
-    return <ErrorUI error="Chat not found" />
+    return <ErrorUI error="Chat not found" />;
   }
 
-  const chatData = result.data[0]
+  const chatData = result.data[0];
 
   const { data: messages, error: messagesError } = await supabase.rpc(
-    "get_shared_chat_messages",
+    'get_shared_chat_messages',
     {
-      chat_id_param: chatData.id
-    }
-  )
+      chat_id_param: chatData.id,
+    },
+  );
 
   if (messagesError) {
-    console.error("messagesError", messagesError)
-    return <ErrorUI error={messagesError.message} />
+    console.error('messagesError', messagesError);
+    return <ErrorUI error={messagesError.message} />;
   }
 
   const formatDate = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = {
-      year: "numeric",
-      month: "long",
-      day: "numeric"
-    }
-    return new Date(dateString).toLocaleDateString(locale, options)
-  }
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    };
+    return new Date(dateString).toLocaleDateString(locale, options);
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -66,7 +66,7 @@ export default async function SharedChatPage({
             </div>
           </div>
           <div className="space-y-8">
-            {(messages as Tables<"messages">[]).map((message, index, array) => (
+            {(messages as Tables<'messages'>[]).map((message, index, array) => (
               <SharedMessage
                 key={message.id}
                 message={message}
@@ -87,7 +87,7 @@ export default async function SharedChatPage({
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function ErrorUI({ error }: { error: string }) {
@@ -103,5 +103,5 @@ function ErrorUI({ error }: { error: string }) {
         </Link>
       </div>
     </div>
-  )
+  );
 }

@@ -1,84 +1,84 @@
-import { FC, useState, useEffect } from "react"
-import { DialogPanel, DialogTitle } from "@headlessui/react"
-import { Button } from "@/components/ui/button"
-import { TransitionedDialog } from "@/components/ui/transitioned-dialog"
-import { Input } from "@/components/ui/input"
-import { Loader2 } from "lucide-react"
-import { useMFA } from "./use-mfa"
-import { toast } from "sonner"
+import { type FC, useState, useEffect } from 'react';
+import { DialogPanel, DialogTitle } from '@headlessui/react';
+import { Button } from '@/components/ui/button';
+import { TransitionedDialog } from '@/components/ui/transitioned-dialog';
+import { Input } from '@/components/ui/input';
+import { Loader2 } from 'lucide-react';
+import { useMFA } from './use-mfa';
+import { toast } from 'sonner';
 import {
   InputOTP,
   InputOTPGroup,
   InputOTPSeparator,
-  InputOTPSlot
-} from "../../ui/input-otp"
-import { REGEXP_ONLY_DIGITS } from "input-otp"
+  InputOTPSlot,
+} from '../../ui/input-otp';
+import { REGEXP_ONLY_DIGITS } from 'input-otp';
 
 interface MultiStepDeleteAccountDialogProps {
-  isOpen: boolean
-  onClose: () => void
-  onConfirm: () => Promise<void>
-  userEmail: string
-  isDeleting: boolean
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => Promise<void>;
+  userEmail: string;
+  isDeleting: boolean;
 }
 
 export const MultiStepDeleteAccountDialog: FC<
   MultiStepDeleteAccountDialogProps
 > = ({ isOpen, onClose, onConfirm, userEmail, isDeleting }) => {
-  const [step, setStep] = useState(1)
-  const [confirmEmail, setConfirmEmail] = useState("")
-  const [mfaCode, setMfaCode] = useState("")
-  const { factors, verifyBeforeUnenroll, fetchFactors } = useMFA()
-  const hasMFA = factors.length > 0 && factors[0]?.status === "verified"
+  const [step, setStep] = useState(1);
+  const [confirmEmail, setConfirmEmail] = useState('');
+  const [mfaCode, setMfaCode] = useState('');
+  const { factors, verifyBeforeUnenroll, fetchFactors } = useMFA();
+  const hasMFA = factors.length > 0 && factors[0]?.status === 'verified';
 
   useEffect(() => {
     if (isOpen) {
-      fetchFactors()
+      fetchFactors();
     }
-  }, [isOpen])
+  }, [isOpen]);
 
   const handleClose = () => {
     if (!isDeleting) {
       // Reset all state
-      setStep(1)
-      setConfirmEmail("")
-      setMfaCode("")
-      onClose()
+      setStep(1);
+      setConfirmEmail('');
+      setMfaCode('');
+      onClose();
     }
-  }
+  };
 
   const handleNextStep = async () => {
-    if (isDeleting || step >= 3) return
+    if (isDeleting || step >= 3) return;
 
     if (step === 2) {
       if (hasMFA) {
-        if (mfaCode.length !== 6) return
+        if (mfaCode.length !== 6) return;
         try {
-          await verifyBeforeUnenroll(mfaCode)
-          setStep(3)
-          setMfaCode("") // Clear MFA code after verification
+          await verifyBeforeUnenroll(mfaCode);
+          setStep(3);
+          setMfaCode(''); // Clear MFA code after verification
         } catch (error) {
-          return
+          return;
         }
       } else if (confirmEmail.toLowerCase() === userEmail.toLowerCase()) {
-        setStep(3)
+        setStep(3);
       }
     } else {
-      setStep(prev => Math.min(prev + 1, 3))
+      setStep((prev) => Math.min(prev + 1, 3));
     }
-  }
+  };
 
   const handleConfirm = async () => {
-    if (isDeleting) return
+    if (isDeleting) return;
 
     try {
       // Verify MFA again before final deletion if enabled
-      await onConfirm()
+      await onConfirm();
     } catch (error) {
-      toast.error("Failed to verify MFA")
-      return
+      toast.error('Failed to verify MFA');
+      return;
     }
-  }
+  };
 
   const renderStepContent = () => {
     switch (step) {
@@ -102,7 +102,7 @@ export const MultiStepDeleteAccountDialog: FC<
               </Button>
             </div>
           </>
-        )
+        );
       case 2:
         return hasMFA ? (
           <>
@@ -113,7 +113,7 @@ export const MultiStepDeleteAccountDialog: FC<
               <InputOTP
                 maxLength={6}
                 value={mfaCode}
-                onChange={value => setMfaCode(value)}
+                onChange={(value) => setMfaCode(value)}
                 disabled={isDeleting}
                 pattern={REGEXP_ONLY_DIGITS}
               >
@@ -146,13 +146,13 @@ export const MultiStepDeleteAccountDialog: FC<
         ) : (
           <>
             <p className="mb-4 text-center text-sm">
-              To confirm account deletion, please enter your email address:{" "}
+              To confirm account deletion, please enter your email address:{' '}
               {userEmail}
             </p>
             <Input
               type="email"
               value={confirmEmail}
-              onChange={e => setConfirmEmail(e.target.value)}
+              onChange={(e) => setConfirmEmail(e.target.value)}
               placeholder="Enter your email"
               className="mb-4"
               disabled={isDeleting}
@@ -173,7 +173,7 @@ export const MultiStepDeleteAccountDialog: FC<
               </Button>
             </div>
           </>
-        )
+        );
       case 3:
         return (
           <>
@@ -200,14 +200,14 @@ export const MultiStepDeleteAccountDialog: FC<
                     Deleting Account...
                   </>
                 ) : (
-                  "Delete Account"
+                  'Delete Account'
                 )}
               </Button>
             </div>
           </>
-        )
+        );
     }
-  }
+  };
 
   return (
     <TransitionedDialog isOpen={isOpen} onClose={handleClose}>
@@ -221,5 +221,5 @@ export const MultiStepDeleteAccountDialog: FC<
         {renderStepContent()}
       </DialogPanel>
     </TransitionedDialog>
-  )
-}
+  );
+};

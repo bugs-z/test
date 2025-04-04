@@ -1,28 +1,35 @@
-import { Button } from "@/components/ui/button"
+import { Button } from '@/components/ui/button';
 import {
   Sheet,
   SheetContent,
   SheetFooter,
   SheetHeader,
   SheetTitle,
-  SheetTrigger
-} from "@/components/ui/sheet"
-import { PentestGPTContext } from "@/context/context"
-import { updateChat } from "@/db/chats"
-import { updateFile } from "@/db/files"
-import { TablesUpdate } from "@/supabase/types"
-import { ContentType, DataItemType } from "@/types"
-import { FC, useContext, useEffect, useRef, useState, JSX } from "react"
-import { toast } from "sonner"
-import { SidebarDeleteItem } from "./sidebar-delete-item"
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import { PentestGPTContext } from '@/context/context';
+import { updateChat } from '@/db/chats';
+import { updateFile } from '@/db/files';
+import type { TablesUpdate } from '@/supabase/types';
+import type { ContentType, DataItemType } from '@/types';
+import {
+  type FC,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type JSX,
+} from 'react';
+import { toast } from 'sonner';
+import { SidebarDeleteItem } from './sidebar-delete-item';
 
 interface SidebarUpdateItemProps {
-  isTyping: boolean
-  item: DataItemType
-  contentType: ContentType
-  children: React.ReactNode
-  renderInputs: (renderState: any) => JSX.Element
-  updateState: any
+  isTyping: boolean;
+  item: DataItemType;
+  contentType: ContentType;
+  children: React.ReactNode;
+  renderInputs: (renderState: any) => JSX.Element;
+  updateState: any;
 }
 
 export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
@@ -31,84 +38,84 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
   children,
   renderInputs,
   updateState,
-  isTyping
+  isTyping,
 }) => {
-  const { setChats } = useContext(PentestGPTContext)
+  const { setChats } = useContext(PentestGPTContext);
 
-  const buttonRef = useRef<HTMLButtonElement>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       const fetchData = async () => {
-        const fetchDataFunction = fetchDataFunctions[contentType]
-        if (!fetchDataFunction) return
-        await fetchDataFunction(item.id)
-      }
+        const fetchDataFunction = fetchDataFunctions[contentType];
+        if (!fetchDataFunction) return;
+        await fetchDataFunction(item.id);
+      };
 
-      fetchData()
+      fetchData();
     }
-  }, [isOpen])
+  }, [isOpen]);
 
   const renderState = {
     chats: null,
     files: null,
-    tools: null
-  }
+    tools: null,
+  };
 
   const fetchDataFunctions: Record<
     ContentType,
     ((id: string) => Promise<void>) | null
   > = {
     chats: null,
-    tools: null
-  }
+    tools: null,
+  };
 
   const updateFunctions = {
     chats: updateChat,
-    files: async (fileId: string, updateState: TablesUpdate<"files">) => {
-      const updatedFile = await updateFile(fileId, updateState)
-      return updatedFile
+    files: async (fileId: string, updateState: TablesUpdate<'files'>) => {
+      const updatedFile = await updateFile(fileId, updateState);
+      return updatedFile;
     },
-    tools: updateChat
-  }
+    tools: updateChat,
+  };
 
   const stateUpdateFunctions = {
     chats: setChats,
-    tools: setChats
-  }
+    tools: setChats,
+  };
 
   const handleUpdate = async () => {
     try {
-      const updateFunction = updateFunctions[contentType]
-      const setStateFunction = stateUpdateFunctions[contentType]
+      const updateFunction = updateFunctions[contentType];
+      const setStateFunction = stateUpdateFunctions[contentType];
 
-      if (!updateFunction || !setStateFunction) return
-      if (isTyping) return // Prevent update while typing
+      if (!updateFunction || !setStateFunction) return;
+      if (isTyping) return; // Prevent update while typing
 
-      const updatedItem = await updateFunction(item.id, updateState)
+      const updatedItem = await updateFunction(item.id, updateState);
 
       setStateFunction((prevItems: any) =>
         prevItems.map((prevItem: any) =>
-          prevItem.id === item.id ? updatedItem : prevItem
-        )
-      )
+          prevItem.id === item.id ? updatedItem : prevItem,
+        ),
+      );
 
-      setIsOpen(false)
+      setIsOpen(false);
 
-      toast.success(`${contentType.slice(0, -1)} updated successfully`)
+      toast.success(`${contentType.slice(0, -1)} updated successfully`);
     } catch (error) {
-      toast.error(`Error updating ${contentType.slice(0, -1)}. ${error}`)
+      toast.error(`Error updating ${contentType.slice(0, -1)}. ${error}`);
     }
-  }
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (!isTyping && e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      buttonRef.current?.click()
+    if (!isTyping && e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      buttonRef.current?.click();
     }
-  }
+  };
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -146,5 +153,5 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
         </SheetFooter>
       </SheetContent>
     </Sheet>
-  )
-}
+  );
+};

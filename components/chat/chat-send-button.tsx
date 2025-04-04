@@ -1,19 +1,19 @@
-import { IconPlayerStopFilled, IconArrowUp } from "@tabler/icons-react"
-import { cn } from "@/lib/utils"
-import { FC } from "react"
+import { IconPlayerStopFilled, IconArrowUp } from '@tabler/icons-react';
+import { cn } from '@/lib/utils';
+import type { FC } from 'react';
 
 interface ChatSendButtonProps {
-  isGenerating: boolean
-  canSend: boolean
-  onSend: () => void
-  onStop: () => void
+  isGenerating: boolean;
+  canSend: boolean;
+  onSend: () => void;
+  onStop: () => void;
 }
 
 export const ChatSendButton: FC<ChatSendButtonProps> = ({
   isGenerating,
   canSend,
   onSend,
-  onStop
+  onStop,
 }) => {
   if (isGenerating) {
     return (
@@ -22,18 +22,18 @@ export const ChatSendButton: FC<ChatSendButtonProps> = ({
         onClick={onStop}
         size={30}
       />
-    )
+    );
   }
 
   return (
     <IconArrowUp
       className={cn(
-        "bg-primary text-secondary rounded p-1 hover:opacity-50",
-        !canSend && "cursor-not-allowed opacity-50"
+        'bg-primary text-secondary rounded p-1 hover:opacity-50',
+        !canSend && 'cursor-not-allowed opacity-50',
       )}
       stroke={2.5}
       onClick={onSend}
       size={30}
     />
-  )
-}
+  );
+};

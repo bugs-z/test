@@ -1,72 +1,72 @@
-import { FC, memo, useCallback, useMemo } from "react"
-import { Button } from "@/components/ui/button"
-import { IconDownload } from "@tabler/icons-react"
-import { CopyButton, generateRandomString } from "../message-codeblock"
-import chalk from "chalk"
-import AnsiToHtml from "ansi-to-html"
-import stripAnsi from "strip-ansi"
-import DOMPurify from "isomorphic-dompurify"
+import { type FC, memo, useCallback, useMemo } from 'react';
+import { Button } from '@/components/ui/button';
+import { IconDownload } from '@tabler/icons-react';
+import { CopyButton, generateRandomString } from '../message-codeblock';
+import chalk from 'chalk';
+import AnsiToHtml from 'ansi-to-html';
+import stripAnsi from 'strip-ansi';
+import DOMPurify from 'isomorphic-dompurify';
 
 interface MessageTerminalBlockProps {
-  value: string
+  value: string;
 }
 
 const customColors = {
-  0: "#000000",
-  1: "#FF5555",
-  2: "#50FA7B",
-  3: "#F1FA8C",
-  4: "#BD93F9",
-  5: "#FF79C6",
-  6: "#8BE9FD",
-  7: "#F8F8F2"
-}
+  0: '#000000',
+  1: '#FF5555',
+  2: '#50FA7B',
+  3: '#F1FA8C',
+  4: '#BD93F9',
+  5: '#FF79C6',
+  6: '#8BE9FD',
+  7: '#F8F8F2',
+};
 
 const converter = new AnsiToHtml({
-  fg: "#F8F8F2",
-  bg: "#282A36",
+  fg: '#F8F8F2',
+  bg: '#282A36',
   colors: customColors,
-  newline: true
-})
+  newline: true,
+});
 
 export const MessageTerminalBlock: FC<MessageTerminalBlockProps> = memo(
   ({ value }) => {
     const downloadAsFile = useCallback(() => {
-      const suggestedFileName = `terminal-output-${generateRandomString(3, true)}.txt`
-      const fileName = window.prompt("Enter file name", suggestedFileName)
-      if (!fileName) return
+      const suggestedFileName = `terminal-output-${generateRandomString(3, true)}.txt`;
+      const fileName = window.prompt('Enter file name', suggestedFileName);
+      if (!fileName) return;
 
-      const blob = new Blob([value], { type: "text/plain" })
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement("a")
-      link.href = url
-      link.download = fileName
-      link.click()
-      URL.revokeObjectURL(url)
-    }, [value])
+      const blob = new Blob([value], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      link.click();
+      URL.revokeObjectURL(url);
+    }, [value]);
 
     const formattedValue = useMemo(() => {
       const styledValue = value
         .replace(/\[(\w+)\]/g, (_, word) => chalk.blue.bold(`[${word}]`))
-        .replace(/\b(error|warning)\b/gi, match =>
-          match.toLowerCase() === "error"
+        .replace(/\b(error|warning)\b/gi, (match) =>
+          match.toLowerCase() === 'error'
             ? chalk.red.bold(match)
-            : chalk.yellow.bold(match)
-        )
+            : chalk.yellow.bold(match),
+        );
 
-      const htmlWithColors = converter.toHtml(styledValue)
+      const htmlWithColors = converter.toHtml(styledValue);
 
-      let sanitizedHtml = htmlWithColors
+      let sanitizedHtml = htmlWithColors;
       sanitizedHtml = DOMPurify.sanitize(htmlWithColors, {
-        ALLOWED_TAGS: ["span", "br"],
-        ALLOWED_ATTR: ["style"],
-        ADD_ATTR: ["target"],
+        ALLOWED_TAGS: ['span', 'br'],
+        ALLOWED_ATTR: ['style'],
+        ADD_ATTR: ['target'],
         KEEP_CONTENT: true,
-        ALLOW_DATA_ATTR: false
-      })
+        ALLOW_DATA_ATTR: false,
+      });
 
-      return sanitizedHtml
-    }, [value])
+      return sanitizedHtml;
+    }, [value]);
 
     return (
       <div className="codeblock relative w-full bg-zinc-950 font-sans">
@@ -87,12 +87,12 @@ export const MessageTerminalBlock: FC<MessageTerminalBlockProps> = memo(
         </div>
         <div
           className="whitespace-pre-wrap break-words p-4 font-mono text-sm text-white"
-          style={{ background: "transparent" }}
+          style={{ background: 'transparent' }}
           dangerouslySetInnerHTML={{ __html: formattedValue }}
         />
       </div>
-    )
-  }
-)
+    );
+  },
+);
 
-MessageTerminalBlock.displayName = "MessageTerminalBlock"
+MessageTerminalBlock.displayName = 'MessageTerminalBlock';

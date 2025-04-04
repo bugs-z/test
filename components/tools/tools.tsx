@@ -1,7 +1,7 @@
-import React from "react"
-import { IconSearch } from "@tabler/icons-react"
-import { Button } from "../ui/button"
-import { Input } from "../ui/input"
+import React from 'react';
+import { IconSearch } from '@tabler/icons-react';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
 
 export const Header = () => (
   <div className="mb-6">
@@ -15,14 +15,14 @@ export const Header = () => (
       </p>
     </div>
   </div>
-)
+);
 
 export const SearchBar = ({
   searchTerm,
-  setSearchTerm
+  setSearchTerm,
 }: {
-  searchTerm: string
-  setSearchTerm: React.Dispatch<React.SetStateAction<string>>
+  searchTerm: string;
+  setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
 }) => (
   <div className="mb-6 flex justify-center">
     <div className="relative w-full max-w-2xl">
@@ -35,35 +35,35 @@ export const SearchBar = ({
         placeholder="Search plugins"
         className="z-10 h-12 w-full rounded-xl border py-2 pl-12 pr-3 text-base font-normal outline-0 delay-100 md:h-14"
         value={searchTerm}
-        onChange={e => setSearchTerm(e.target.value)}
+        onChange={(e) => setSearchTerm(e.target.value)}
       />
     </div>
   </div>
-)
+);
 
 export const CategorySelection = ({
   filters,
   selectedFilter,
   setSelectedFilter,
-  scrollToCategory
+  scrollToCategory,
 }: {
-  filters: string[]
-  selectedFilter: string
-  setSelectedFilter: (filter: string) => void
-  scrollToCategory: (category: string) => void
+  filters: string[];
+  selectedFilter: string;
+  setSelectedFilter: (filter: string) => void;
+  scrollToCategory: (category: string) => void;
 }) => (
   <div className="mb-6 flex flex-wrap justify-center gap-2">
     {filters.map((filter: string) => (
       <Button
         key={filter}
-        variant={selectedFilter === filter ? "default" : "outline"}
+        variant={selectedFilter === filter ? 'default' : 'outline'}
         onClick={() => {
-          setSelectedFilter(filter)
-          scrollToCategory(filter)
+          setSelectedFilter(filter);
+          scrollToCategory(filter);
         }}
       >
         {filter}
       </Button>
     ))}
   </div>
-)
+);

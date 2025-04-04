@@ -1,15 +1,15 @@
-import dynamic from "next/dynamic"
-import { forwardRef, ImgHTMLAttributes, useState } from "react"
+import dynamic from 'next/dynamic';
+import { forwardRef, type ImgHTMLAttributes, useState } from 'react';
 
-const DynamicFilePreview = dynamic(() => import("../ui/file-preview"), {
-  ssr: false
-})
+const DynamicFilePreview = dynamic(() => import('../ui/file-preview'), {
+  ssr: false,
+});
 
 const ImageWithPreview = forwardRef<
   HTMLImageElement,
   ImgHTMLAttributes<HTMLImageElement>
 >(({ src, ...props }, ref) => {
-  const [showImagePreview, setShowImagePreview] = useState(false)
+  const [showImagePreview, setShowImagePreview] = useState(false);
 
   return (
     <>
@@ -24,22 +24,22 @@ const ImageWithPreview = forwardRef<
         <DynamicFilePreview
           type="image"
           item={{
-            messageId: "",
-            path: "",
-            base64: "",
+            messageId: '',
+            path: '',
+            base64: '',
             url: src as string,
-            file: null
+            file: null,
           }}
           isOpen={showImagePreview}
           onOpenChange={(isOpen: boolean) => {
-            setShowImagePreview(isOpen)
+            setShowImagePreview(isOpen);
           }}
         />
       )}
     </>
-  )
-})
+  );
+});
 
-ImageWithPreview.displayName = "ImageWithPreview"
+ImageWithPreview.displayName = 'ImageWithPreview';
 
-export { ImageWithPreview }
+export { ImageWithPreview };

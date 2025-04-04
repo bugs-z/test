@@ -1,11 +1,8 @@
-import { Sandbox, SandboxInfo } from "@e2b/code-interpreter"
-import { createClient } from "@supabase/supabase-js"
-import { waitUntil } from "@vercel/functions"
+import { createSupabaseAdminClient } from '@/lib/server/server-utils';
+import { Sandbox, type SandboxInfo } from '@e2b/code-interpreter';
+import { waitUntil } from '@vercel/functions';
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+const supabaseAdmin = createSupabaseAdminClient();
 
 /**
  * Creates or connects to a temporary sandbox instance
@@ -19,29 +16,29 @@ const supabaseAdmin = createClient(
 export async function createOrConnectTemporaryTerminal(
   userID: string,
   template: string,
-  timeoutMs: number
+  timeoutMs: number,
 ): Promise<Sandbox> {
-  const allSandboxes = await Sandbox.list()
+  const allSandboxes = await Sandbox.list();
   const sandboxInfo = allSandboxes.find(
     (sbx: SandboxInfo) =>
-      sbx.metadata?.userID === userID && sbx.metadata?.template === template
-  )
+      sbx.metadata?.userID === userID && sbx.metadata?.template === template,
+  );
 
   if (!sandboxInfo) {
     try {
       return await Sandbox.create(template, {
         metadata: { template, userID },
-        timeoutMs
-      })
+        timeoutMs,
+      });
     } catch (e) {
-      console.error("Error creating sandbox", e)
-      throw e
+      console.error('Error creating sandbox', e);
+      throw e;
     }
   }
 
-  const sandbox = await Sandbox.connect(sandboxInfo.sandboxId)
-  await sandbox.setTimeout(timeoutMs)
-  return sandbox
+  const sandbox = await Sandbox.connect(sandboxInfo.sandboxId);
+  await sandbox.setTimeout(timeoutMs);
+  return sandbox;
 }
 
 /**
@@ -63,93 +60,93 @@ export async function createOrConnectTemporaryTerminal(
 export async function createOrConnectPersistentTerminal(
   userID: string,
   template: string,
-  timeoutMs: number
+  timeoutMs: number,
 ): Promise<Sandbox> {
   try {
     // Only check DB for persistent sandboxes
     const { data: existingSandbox } = await supabaseAdmin
-      .from("e2b_sandboxes")
-      .select("sandbox_id, status")
-      .eq("user_id", userID)
-      .eq("template", template)
+      .from('e2b_sandboxes')
+      .select('sandbox_id, status')
+      .eq('user_id', userID)
+      .eq('template', template)
       .gt(
-        "updated_at",
-        new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+        'updated_at',
+        new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
       )
-      .single()
+      .single();
 
     if (existingSandbox?.sandbox_id) {
-      let currentStatus = existingSandbox.status
+      let currentStatus = existingSandbox.status;
 
-      if (currentStatus === "pausing") {
+      if (currentStatus === 'pausing') {
         for (let i = 0; i < 5; i++) {
           const { data: updatedSandbox } = await supabaseAdmin
-            .from("e2b_sandboxes")
-            .select("status")
-            .eq("sandbox_id", existingSandbox.sandbox_id)
-            .single()
+            .from('e2b_sandboxes')
+            .select('status')
+            .eq('sandbox_id', existingSandbox.sandbox_id)
+            .single();
 
-          if (updatedSandbox?.status === "paused") {
-            currentStatus = "paused"
-            break
+          if (updatedSandbox?.status === 'paused') {
+            currentStatus = 'paused';
+            break;
           }
 
-          await new Promise(resolve => setTimeout(resolve, 5000))
+          await new Promise((resolve) => setTimeout(resolve, 5000));
         }
 
-        if (currentStatus === "pausing") {
+        if (currentStatus === 'pausing') {
           // Try to resume the sandbox if it's stuck in pausing state
           try {
             const sandbox = await Sandbox.resume(existingSandbox.sandbox_id, {
-              timeoutMs
-            })
+              timeoutMs,
+            });
 
             await supabaseAdmin
-              .from("e2b_sandboxes")
-              .update({ status: "active" })
-              .eq("sandbox_id", existingSandbox.sandbox_id)
+              .from('e2b_sandboxes')
+              .update({ status: 'active' })
+              .eq('sandbox_id', existingSandbox.sandbox_id);
 
-            return sandbox
+            return sandbox;
           } catch (e) {
             console.error(
               `[${existingSandbox.sandbox_id}] Failed to recover sandbox from pausing state:`,
-              e
-            )
+              e,
+            );
             throw new Error(
-              "Sandbox is stuck in pausing state. Please try again later."
-            )
+              'Sandbox is stuck in pausing state. Please try again later.',
+            );
           }
         }
       }
 
-      if (currentStatus === "active" || currentStatus === "paused") {
+      if (currentStatus === 'active' || currentStatus === 'paused') {
         try {
           const sandbox = await Sandbox.resume(existingSandbox.sandbox_id, {
-            timeoutMs
-          })
+            timeoutMs,
+          });
 
           await supabaseAdmin
-            .from("e2b_sandboxes")
-            .update({ status: "active" })
-            .eq("sandbox_id", existingSandbox.sandbox_id)
+            .from('e2b_sandboxes')
+            .update({ status: 'active' })
+            .eq('sandbox_id', existingSandbox.sandbox_id);
 
-          return sandbox
+          return sandbox;
         } catch (e: any) {
           // Handle sandbox not found error (expired/deleted)
-          if (e.name === "NotFoundError" || e.message?.includes("not found")) {
+          if (e.name === 'NotFoundError' || e.message?.includes('not found')) {
             console.log(
-              `[${userID}] Sandbox ${existingSandbox.sandbox_id} expired/deleted, creating new one`
-            )
+              `[${userID}] Sandbox ${existingSandbox.sandbox_id} expired/deleted, creating new one`,
+            );
             // Delete the expired sandbox record
             await supabaseAdmin
-              .from("e2b_sandboxes")
+              .from('e2b_sandboxes')
               .delete()
-              .eq("sandbox_id", existingSandbox.sandbox_id)
+              .eq('sandbox_id', existingSandbox.sandbox_id);
           } else {
             console.error(
               `[${userID}] Failed to resume sandbox ${existingSandbox.sandbox_id}:`,
-              e
-            )
+              e,
+            );
           }
         }
       }
@@ -157,25 +154,25 @@ export async function createOrConnectPersistentTerminal(
 
     // Create new persistent sandbox
     const sandbox = await Sandbox.create(template, {
-      timeoutMs
-    })
+      timeoutMs,
+    });
 
-    await supabaseAdmin.from("e2b_sandboxes").upsert(
+    await supabaseAdmin.from('e2b_sandboxes').upsert(
       {
         user_id: userID,
         sandbox_id: sandbox.sandboxId,
         template,
-        status: "active"
+        status: 'active',
       },
       {
-        onConflict: "user_id,template"
-      }
-    )
+        onConflict: 'user_id,template',
+      },
+    );
 
-    return sandbox
+    return sandbox;
   } catch (error) {
-    console.error(`[${userID}] Error in createOrConnectTerminal:`, error)
-    throw error
+    console.error(`[${userID}] Error in createOrConnectTerminal:`, error);
+    throw error;
   }
 }
 
@@ -196,15 +193,15 @@ export async function createOrConnectPersistentTerminal(
  */
 export async function pauseSandbox(sandbox: Sandbox): Promise<string | null> {
   if (!sandbox?.sandboxId) {
-    console.error("Background: No sandbox ID provided for pausing")
-    return null
+    console.error('Background: No sandbox ID provided for pausing');
+    return null;
   }
 
   // Update status to pausing
   await supabaseAdmin
-    .from("e2b_sandboxes")
-    .update({ status: "pausing" })
-    .eq("sandbox_id", sandbox.sandboxId)
+    .from('e2b_sandboxes')
+    .update({ status: 'pausing' })
+    .eq('sandbox_id', sandbox.sandboxId);
 
   // Start background task and return immediately
   waitUntil(
@@ -212,21 +209,21 @@ export async function pauseSandbox(sandbox: Sandbox): Promise<string | null> {
       .pause()
       .then(async () => {
         await supabaseAdmin
-          .from("e2b_sandboxes")
-          .update({ status: "paused" })
-          .eq("sandbox_id", sandbox.sandboxId)
+          .from('e2b_sandboxes')
+          .update({ status: 'paused' })
+          .eq('sandbox_id', sandbox.sandboxId);
       })
-      .catch(async error => {
+      .catch(async (error) => {
         console.error(
           `Background: Error pausing sandbox ${sandbox.sandboxId}:`,
-          error
-        )
+          error,
+        );
         await supabaseAdmin
-          .from("e2b_sandboxes")
-          .update({ status: "active" })
-          .eq("sandbox_id", sandbox.sandboxId)
-      })
-  )
+          .from('e2b_sandboxes')
+          .update({ status: 'active' })
+          .eq('sandbox_id', sandbox.sandboxId);
+      }),
+  );
 
-  return sandbox.sandboxId
+  return sandbox.sandboxId;
 }

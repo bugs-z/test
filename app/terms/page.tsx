@@ -1,21 +1,21 @@
-import { Metadata } from "next"
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: "Terms of Use | PentestGPT",
-  description: "Terms of Use and conditions for PentestGPT services.",
+  title: 'Terms of Use | PentestGPT',
+  description: 'Terms of Use and conditions for PentestGPT services.',
   openGraph: {
-    title: "Terms of Use | PentestGPT",
-    description: "Terms of Use and conditions for PentestGPT services.",
-    type: "website"
+    title: 'Terms of Use | PentestGPT',
+    description: 'Terms of Use and conditions for PentestGPT services.',
+    type: 'website',
   },
   twitter: {
-    card: "summary",
-    title: "Terms of Use | PentestGPT",
-    description: "Terms of Use and conditions for PentestGPT services."
-  }
-}
+    card: 'summary',
+    title: 'Terms of Use | PentestGPT',
+    description: 'Terms of Use and conditions for PentestGPT services.',
+  },
+};
 
-export const dynamic = "force-static"
+export const dynamic = 'force-static';
 
 export default function TermsOfUsePage() {
   return (
@@ -88,5 +88,5 @@ export default function TermsOfUsePage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -1,4 +1,4 @@
-import { Tables } from "@/supabase/types"
+import type { Tables } from '@/supabase/types';
 import {
   IconFileFilled,
   IconFileTypeCsv,
@@ -8,17 +8,17 @@ import {
   IconJson,
   IconLoader2,
   IconMarkdown,
-  IconX
-} from "@tabler/icons-react"
-import { FC } from "react"
-import { WithTooltip } from "../ui/with-tooltip"
+  IconX,
+} from '@tabler/icons-react';
+import type { FC } from 'react';
+import { WithTooltip } from '../ui/with-tooltip';
 
 interface FileItemProps {
-  file: Tables<"files">
-  isLoading?: boolean
-  showRemoveButton: boolean
-  onRemove?: (fileId: string) => void
-  onClick?: () => void
+  file: Tables<'files'>;
+  isLoading?: boolean;
+  showRemoveButton: boolean;
+  onRemove?: (fileId: string) => void;
+  onClick?: () => void;
 }
 
 export const ChatFileItem: FC<FileItemProps> = ({
@@ -26,30 +26,30 @@ export const ChatFileItem: FC<FileItemProps> = ({
   isLoading,
   showRemoveButton,
   onRemove,
-  onClick
+  onClick,
 }) => {
   const getFileIcon = () => {
-    const fileExtension = file.type?.includes("/")
-      ? file.type.split("/")[1]
-      : file.type
+    const fileExtension = file.type?.includes('/')
+      ? file.type.split('/')[1]
+      : file.type;
 
     switch (fileExtension) {
-      case "pdf":
-        return <IconFileTypePdf />
-      case "markdown":
-        return <IconMarkdown />
-      case "txt":
-        return <IconFileTypeTxt />
-      case "json":
-        return <IconJson />
-      case "csv":
-        return <IconFileTypeCsv />
-      case "docx":
-        return <IconFileTypeDocx />
+      case 'pdf':
+        return <IconFileTypePdf />;
+      case 'markdown':
+        return <IconMarkdown />;
+      case 'txt':
+        return <IconFileTypeTxt />;
+      case 'json':
+        return <IconJson />;
+      case 'csv':
+        return <IconFileTypeCsv />;
+      case 'docx':
+        return <IconFileTypeDocx />;
       default:
-        return <IconFileFilled />
+        return <IconFileFilled />;
     }
-  }
+  };
 
   if (isLoading) {
     return (
@@ -62,7 +62,7 @@ export const ChatFileItem: FC<FileItemProps> = ({
           <div className="truncate opacity-50">{file.type}</div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -84,14 +84,14 @@ export const ChatFileItem: FC<FileItemProps> = ({
           trigger={
             <IconX
               className="bg-secondary border-primary absolute right-[-6px] top-[-6px] flex size-5 cursor-pointer items-center justify-center rounded-full border text-[10px] hover:border-red-500 hover:bg-white hover:text-red-500"
-              onClick={e => {
-                e.stopPropagation()
-                onRemove?.(file.id)
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove?.(file.id);
               }}
             />
           }
         />
       )}
     </div>
-  )
-}
+  );
+};

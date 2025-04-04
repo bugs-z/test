@@ -1,21 +1,21 @@
-"use client"
+'use client';
 
 import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle
-} from "@/components/ui/dialog"
-import { useAlertContext } from "@/context/alert-context"
-import { IconX } from "@tabler/icons-react"
-import { Button } from "@/components/ui/button"
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { useAlertContext } from '@/context/alert-context';
+import { IconX } from '@tabler/icons-react';
+import { Button } from '@/components/ui/button';
 
 export const GlobalAlertDialog = () => {
-  const { state, dispatch } = useAlertContext()
+  const { state, dispatch } = useAlertContext();
 
   const handleOpenChange = () => {
-    dispatch({ type: "HIDE" })
-  }
+    dispatch({ type: 'HIDE' });
+  };
 
   return (
     <Dialog open={!!state.message} onOpenChange={handleOpenChange}>
@@ -25,7 +25,7 @@ export const GlobalAlertDialog = () => {
       >
         <DialogHeader>
           <div className="flex justify-between">
-            <DialogTitle>{state.title || "Alert"}</DialogTitle>
+            <DialogTitle>{state.title || 'Alert'}</DialogTitle>
             <IconX
               className="cursor-pointer text-gray-500 hover:opacity-50"
               size={24}
@@ -49,5 +49,5 @@ export const GlobalAlertDialog = () => {
         </div>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};

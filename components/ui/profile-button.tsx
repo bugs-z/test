@@ -1,12 +1,12 @@
-import Image from "next/image"
-import { FC } from "react"
+import Image from 'next/image';
+import type { FC } from 'react';
 
 interface ProfileButtonProps {
-  imageUrl?: string
-  onClick: () => void
-  userEmail?: string
-  showEmail?: boolean
-  iconSize?: number
+  imageUrl?: string;
+  onClick: () => void;
+  userEmail?: string;
+  showEmail?: boolean;
+  iconSize?: number;
 }
 
 export const ProfileButton: FC<ProfileButtonProps> = ({
@@ -14,13 +14,13 @@ export const ProfileButton: FC<ProfileButtonProps> = ({
   onClick,
   userEmail,
   showEmail = false,
-  iconSize = 32
+  iconSize = 32,
 }) => {
   return (
     <button
       onClick={onClick}
       className={`flex items-center gap-2 hover:opacity-50 ${
-        showEmail ? "hover:bg-accent -mb-2 mt-2 rounded-lg p-2" : ""
+        showEmail ? 'hover:bg-accent -mb-2 mt-2 rounded-lg p-2' : ''
       }`}
     >
       {imageUrl ? (
@@ -30,12 +30,12 @@ export const ProfileButton: FC<ProfileButtonProps> = ({
           height={iconSize}
           width={iconSize}
           alt="Profile"
-          onError={e => {
-            const target = e.target as HTMLImageElement
-            target.style.display = "none"
-            const icon = document.createElement("div")
-            icon.innerHTML = `<IconSettings size={${iconSize}} />`
-            target.parentNode?.appendChild(icon)
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.style.display = 'none';
+            const icon = document.createElement('div');
+            icon.innerHTML = `<IconSettings size={${iconSize}} />`;
+            target.parentNode?.appendChild(icon);
           }}
         />
       ) : (
@@ -44,15 +44,15 @@ export const ProfileButton: FC<ProfileButtonProps> = ({
           style={{
             height: `${iconSize}px`,
             width: `${iconSize}px`,
-            fontSize: `${iconSize * 0.4}px`
+            fontSize: `${iconSize * 0.4}px`,
           }}
         >
-          {userEmail?.toLowerCase().startsWith("the")
+          {userEmail?.toLowerCase().startsWith('the')
             ? userEmail[3]?.toUpperCase()
-            : userEmail?.[0]?.toUpperCase() || "S"}
+            : userEmail?.[0]?.toUpperCase() || 'S'}
         </div>
       )}
       {showEmail && <span className="truncate text-sm">{userEmail}</span>}
     </button>
-  )
-}
+  );
+};

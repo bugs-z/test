@@ -1,52 +1,50 @@
-import { getAIProfile } from "@/lib/server/server-chat-helpers"
-import { ServerRuntime } from "next"
-import { buildSystemPrompt } from "@/lib/ai/prompts"
+import { getAIProfile } from '@/lib/server/server-chat-helpers';
+import { buildSystemPrompt } from '@/lib/ai/prompts';
 import {
   filterEmptyAssistantMessages,
   handleAssistantMessages,
   addAuthMessage,
   messagesIncludeImages,
   toVercelChatMessages,
-  validateMessages
-} from "@/lib/ai/message-utils"
-import { handleErrorResponse } from "@/lib/models/api-error"
-import llmConfig from "@/lib/models/llm-config"
-import { checkRatelimitOnApi } from "@/lib/server/ratelimiter"
-import { createDataStreamResponse, streamText } from "ai"
-import { getModerationResult } from "@/lib/server/moderation"
-import { PluginID } from "@/types/plugins"
-import { executeWebSearchTool } from "@/lib/ai/tools/web-search"
-import { createStreamResponse } from "@/lib/ai-helper"
-import { LargeModel } from "@/lib/models/hackerai-llm-list"
-import { executeReasonLLMTool } from "@/lib/ai/tools/reason-llm"
-import { executeReasoningWebSearchTool } from "@/lib/ai/tools/reasoning-web-search"
-import { processRag } from "@/lib/rag/rag-processor"
-import { executeDeepResearchTool } from "@/lib/ai/tools/deep-research"
-import { myProvider } from "@/lib/ai/providers"
-import { createToolSchemas } from "@/lib/ai/tools/toolSchemas"
-import { executeTerminalAgent } from "@/lib/ai/tools/terminal-agent"
-import { terminalPlugins } from "@/lib/ai/terminal-utils"
+  validateMessages,
+} from '@/lib/ai/message-utils';
+import { handleErrorResponse } from '@/lib/models/api-error';
+import llmConfig from '@/lib/models/llm-config';
+import { checkRatelimitOnApi } from '@/lib/server/ratelimiter';
+import { createDataStreamResponse, streamText } from 'ai';
+import { getModerationResult } from '@/lib/server/moderation';
+import { PluginID } from '@/types/plugins';
+import { executeWebSearchTool } from '@/lib/ai/tools/web-search';
+import { createStreamResponse } from '@/lib/ai-helper';
+import { LargeModel } from '@/lib/models/hackerai-llm-list';
+import { executeReasonLLMTool } from '@/lib/ai/tools/reason-llm';
+import { executeReasoningWebSearchTool } from '@/lib/ai/tools/reasoning-web-search';
+import { processRag } from '@/lib/rag/rag-processor';
+import { executeDeepResearchTool } from '@/lib/ai/tools/deep-research';
+import { myProvider } from '@/lib/ai/providers';
+import { createToolSchemas } from '@/lib/ai/tools/toolSchemas';
+import { executeTerminalAgent } from '@/lib/ai/tools/terminal-agent';
+import { terminalPlugins } from '@/lib/ai/terminal-utils';
 
-export const runtime: ServerRuntime = "edge"
 export const preferredRegion = [
-  "iad1",
-  "arn1",
-  "bom1",
-  "cdg1",
-  "cle1",
-  "cpt1",
-  "dub1",
-  "fra1",
-  "gru1",
-  "hnd1",
-  "icn1",
-  "kix1",
-  "lhr1",
-  "pdx1",
-  "sfo1",
-  "sin1",
-  "syd1"
-]
+  'iad1',
+  'arn1',
+  'bom1',
+  'cdg1',
+  'cle1',
+  'cpt1',
+  'dub1',
+  'fra1',
+  'gru1',
+  'hnd1',
+  'icn1',
+  'kix1',
+  'lhr1',
+  'pdx1',
+  'sfo1',
+  'sin1',
+  'syd1',
+];
 
 export async function POST(request: Request) {
   const {
@@ -56,181 +54,181 @@ export async function POST(request: Request) {
     isContinuation,
     isRagEnabled,
     selectedPlugin,
-    isTerminalContinuation
-  } = await request.json()
+    isTerminalContinuation,
+  } = await request.json();
 
   try {
-    const profile = await getAIProfile()
+    const profile = await getAIProfile();
     const config = await getProviderConfig(
       chatSettings,
       profile,
-      selectedPlugin
-    )
+      selectedPlugin,
+    );
 
     if (!config.selectedModel) {
-      throw new Error("Selected model is undefined")
+      throw new Error('Selected model is undefined');
     }
     if (config.rateLimitCheckResult !== null) {
-      return config.rateLimitCheckResult.response
+      return config.rateLimitCheckResult.response;
     }
 
     // Build system prompt
     const baseSystemPrompt = config.isLargeModel
       ? llmConfig.systemPrompts.largeModel
-      : llmConfig.systemPrompts.smallModel
+      : llmConfig.systemPrompts.smallModel;
     let systemPrompt = buildSystemPrompt(
       baseSystemPrompt,
-      profile.profile_context
-    )
+      profile.profile_context,
+    );
 
     // Process RAG
-    let ragUsed = false
-    let ragId: string | null = null
-    const shouldUseRAG = !isRetrieval && isRagEnabled
+    let ragUsed = false;
+    let ragId: string | null = null;
+    const shouldUseRAG = !isRetrieval && isRagEnabled;
 
     if (shouldUseRAG) {
       const ragResult = await processRag({
         messages,
         isContinuation,
-        profile
-      })
+        profile,
+      });
 
-      ragUsed = ragResult.ragUsed
-      ragId = ragResult.ragId
+      ragUsed = ragResult.ragUsed;
+      ragId = ragResult.ragId;
       if (ragResult.systemPrompt) {
-        systemPrompt = ragResult.systemPrompt
+        systemPrompt = ragResult.systemPrompt;
       }
     }
 
-    const includeImages = messagesIncludeImages(messages)
-    let selectedChatModel = config.selectedModel
-    let shouldUncensorResponse = false
+    const includeImages = messagesIncludeImages(messages);
+    let selectedChatModel = config.selectedModel;
+    let shouldUncensorResponse = false;
 
     const handleMessages = (shouldUncensor: boolean) => {
       if (includeImages && config.isLargeModel) {
-        selectedChatModel = "vision-model"
+        selectedChatModel = 'vision-model';
       }
 
       if (shouldUncensor) {
-        addAuthMessage(messages)
-        if (
-          !includeImages &&
-          selectedPlugin !== PluginID.WEB_SEARCH &&
-          selectedPlugin !== PluginID.REASONING &&
-          selectedPlugin !== PluginID.REASONING_WEB_SEARCH &&
-          selectedPlugin !== PluginID.DEEP_RESEARCH &&
-          !terminalPlugins.includes(selectedPlugin as PluginID)
-        ) {
-          return handleAssistantMessages(messages)
-        }
+        addAuthMessage(messages);
+        // if (
+        //   !includeImages &&
+        //   selectedPlugin !== PluginID.WEB_SEARCH &&
+        //   selectedPlugin !== PluginID.REASONING &&
+        //   selectedPlugin !== PluginID.REASONING_WEB_SEARCH &&
+        //   selectedPlugin !== PluginID.DEEP_RESEARCH &&
+        //   !terminalPlugins.includes(selectedPlugin as PluginID)
+        // ) {
+        //   return handleAssistantMessages(messages);
+        // }
       }
 
-      return filterEmptyAssistantMessages(messages)
-    }
+      return filterEmptyAssistantMessages(messages);
+    };
 
     if (llmConfig.openai.apiKey && !isContinuation) {
       const { shouldUncensorResponse: moderationResult } =
         await getModerationResult(
           messages,
-          llmConfig.openai.apiKey || "",
+          llmConfig.openai.apiKey || '',
           10,
-          config.isLargeModel
-        )
-      shouldUncensorResponse = moderationResult
+          config.isLargeModel,
+        );
+      shouldUncensorResponse = moderationResult;
     }
 
-    handleMessages(shouldUncensorResponse)
+    handleMessages(shouldUncensorResponse);
 
     if (isTerminalContinuation) {
-      return createStreamResponse(async dataStream => {
+      return createStreamResponse(async (dataStream) => {
         await executeTerminalAgent({
-          config: { messages, profile, dataStream, isTerminalContinuation }
-        })
-      })
+          config: { messages, profile, dataStream, isTerminalContinuation },
+        });
+      });
     }
 
     switch (selectedPlugin) {
       case PluginID.WEB_SEARCH:
-        return createStreamResponse(async dataStream => {
+        return createStreamResponse(async (dataStream) => {
           await executeWebSearchTool({
             config: {
               messages,
               profile,
               dataStream,
               isLargeModel: config.isLargeModel,
-              directToolCall: true
-            }
-          })
-        })
+              directToolCall: true,
+            },
+          });
+        });
 
       case PluginID.REASONING:
-        return createStreamResponse(async dataStream => {
+        return createStreamResponse(async (dataStream) => {
           await executeReasonLLMTool({
             config: {
               messages,
               profile,
               dataStream,
-              isLargeModel: config.isLargeModel
-            }
-          })
-        })
+              isLargeModel: config.isLargeModel,
+            },
+          });
+        });
 
       case PluginID.REASONING_WEB_SEARCH:
-        return createStreamResponse(async dataStream => {
+        return createStreamResponse(async (dataStream) => {
           await executeReasoningWebSearchTool({
             config: {
               messages,
               profile,
               dataStream,
-              isLargeModel: config.isLargeModel
-            }
-          })
-        })
+              isLargeModel: config.isLargeModel,
+            },
+          });
+        });
 
       case PluginID.DEEP_RESEARCH:
-        return createStreamResponse(async dataStream => {
+        return createStreamResponse(async (dataStream) => {
           await executeDeepResearchTool({
             config: {
               messages,
               profile,
-              dataStream
-            }
-          })
-        })
+              dataStream,
+            },
+          });
+        });
 
       default:
         if (terminalPlugins.includes(selectedPlugin as PluginID)) {
-          return createStreamResponse(async dataStream => {
+          return createStreamResponse(async (dataStream) => {
             await executeTerminalAgent({
               config: {
                 messages,
                 profile,
                 dataStream,
                 isTerminalContinuation,
-                selectedPlugin: selectedPlugin as PluginID
-              }
-            })
-          })
+                selectedPlugin: selectedPlugin as PluginID,
+              },
+            });
+          });
         }
     }
 
     // Remove last message if it's a continuation to remove the continue prompt
-    const cleanedMessages = isContinuation ? messages.slice(0, -1) : messages
+    const cleanedMessages = isContinuation ? messages.slice(0, -1) : messages;
 
     // Remove invalid message exchanges
-    const validatedMessages = validateMessages(cleanedMessages)
+    const validatedMessages = validateMessages(cleanedMessages);
 
     try {
       return createDataStreamResponse({
-        execute: dataStream => {
-          if (ragUsed) dataStream.writeData({ ragUsed, ragId })
+        execute: (dataStream) => {
+          if (ragUsed) dataStream.writeData({ ragUsed, ragId });
 
-          const { getSelectedSchemas } = createToolSchemas({
-            chatSettings,
-            messages,
-            profile,
-            dataStream
-          })
+          // const { getSelectedSchemas } = createToolSchemas({
+          //   chatSettings,
+          //   messages,
+          //   profile,
+          //   dataStream,
+          // });
 
           const result = streamText({
             model: myProvider.languageModel(selectedChatModel),
@@ -238,49 +236,60 @@ export async function POST(request: Request) {
             messages: toVercelChatMessages(validatedMessages, includeImages),
             maxTokens: 2048,
             abortSignal: request.signal,
-            tools:
-              config.isLargeModel && !ragUsed && !shouldUncensorResponse
-                ? getSelectedSchemas(["browser", "webSearch"])
-                : undefined
-          })
+            // tools:
+            //   config.isLargeModel && !ragUsed && !shouldUncensorResponse
+            //     ? getSelectedSchemas(['browser', 'webSearch'])
+            //     : undefined,
+            ...(config.isLargeModel
+              ? {
+                  providerOptions: {
+                    openrouter: {
+                      provider: {
+                        order: ['Parasail'],
+                      },
+                    },
+                  },
+                }
+              : {}),
+          });
 
-          result.mergeIntoDataStream(dataStream)
-        }
-      })
+          result.mergeIntoDataStream(dataStream);
+        },
+      });
     } catch (error) {
-      return handleErrorResponse(error)
+      return handleErrorResponse(error);
     }
   } catch (error: any) {
-    const errorMessage = error.message || "An unexpected error occurred"
-    const errorCode = error.status || 500
+    const errorMessage = error.message || 'An unexpected error occurred';
+    const errorCode = error.status || 500;
 
     return new Response(JSON.stringify({ message: errorMessage }), {
-      status: errorCode
-    })
+      status: errorCode,
+    });
   }
 }
 
 async function getProviderConfig(
   chatSettings: any,
   profile: any,
-  selectedPlugin: PluginID
+  selectedPlugin: PluginID,
 ) {
-  const isLargeModel = chatSettings.model === LargeModel.modelId
+  const isLargeModel = chatSettings.model === LargeModel.modelId;
 
-  const defaultModel = "chat-model-small"
-  const proModel = "chat-model-large"
+  const defaultModel = 'chat-model-small';
+  const proModel = 'chat-model-large';
 
-  const providerUrl = llmConfig.openrouter.url
-  const providerBaseUrl = llmConfig.openrouter.baseURL
+  const providerUrl = llmConfig.openrouter.url;
+  const providerBaseUrl = llmConfig.openrouter.baseURL;
 
   const providerHeaders = {
     Authorization: `Bearer ${llmConfig.openrouter.apiKey}`,
-    "Content-Type": "application/json",
-    "HTTP-Referer": `https://pentestgpt.com/${chatSettings.model}`,
-    "X-Title": chatSettings.model
-  }
+    'Content-Type': 'application/json',
+    'HTTP-Referer': `https://pentestgpt.com/${chatSettings.model}`,
+    'X-Title': chatSettings.model,
+  };
 
-  const selectedModel = isLargeModel ? proModel : defaultModel
+  const selectedModel = isLargeModel ? proModel : defaultModel;
 
   const rateLimitModel =
     selectedPlugin &&
@@ -288,13 +297,13 @@ async function getProviderConfig(
     !terminalPlugins.includes(selectedPlugin as PluginID)
       ? selectedPlugin
       : isLargeModel
-        ? "pentestgpt-pro"
-        : "pentestgpt"
+        ? 'pentestgpt-pro'
+        : 'pentestgpt';
 
   const rateLimitCheckResult = await checkRatelimitOnApi(
     profile.user_id,
-    rateLimitModel
-  )
+    rateLimitModel,
+  );
 
   return {
     providerUrl,
@@ -302,6 +311,6 @@ async function getProviderConfig(
     providerHeaders,
     selectedModel,
     rateLimitCheckResult,
-    isLargeModel
-  }
+    isLargeModel,
+  };
 }

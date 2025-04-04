@@ -1,4 +1,4 @@
-import { PluginID } from "@/types/plugins"
+import { PluginID } from '@/types/plugins';
 
 export const getPluginPrompt = (pluginID: PluginID): string => {
   switch (pluginID) {
@@ -7,7 +7,7 @@ export const getPluginPrompt = (pluginID: PluginID): string => {
 The user has selected the SQL Injection Exploiter plugin, which uses the sqlmap tool in the terminal. This tool identifies and exploits SQL injection vulnerabilities. Remember:
 1. Focus on SQL injection vulnerabilities and exploitation techniques.
 2. Provide sqlmap-specific options and explanations.
-`
+`;
     case PluginID.SSL_SCANNER:
       return `
 The user has selected the SSL Scanner plugin, which uses the testssl.sh tool in the terminal to find SSL/TLS issues like POODLE, Heartbleed, DROWN, ROBOT, etc. Remember:
@@ -20,41 +20,51 @@ The user has selected the SSL Scanner plugin, which uses the testssl.sh tool in 
  - '-p' or '--protocols' to check TLS/SSL protocols
  - '-S' or '--server-defaults' to display the server's default picks and certificate info
 5. Create and run commands using the following structure: "testssl.sh [options] [target]" or simply "testssl.sh [target]" for a basic scan.
-`
+`;
     case PluginID.DNS_SCANNER:
       return `
 The user has selected the DNS Scanner plugin, which uses the dnsrecon tool in the terminal. This tool performs DNS reconnaissance and discovers misconfigurations in DNS servers. Remember:
 1. Focus on DNS enumeration, zone transfers, and identifying potential misconfigurations.
 2. Provide dnsrecon-specific options and explanations.
-`
+`;
     case PluginID.PORT_SCANNER:
       return `
-The user has selected the Port Scanner plugin, which uses the naabu tool in the terminal. This tool performs fast port scanning to discover open ports on target systems. Remember:
-1. Focus on identifying open ports and potential services running on those ports.
-2. Provide naabu-specific options and explanations for efficient scanning.
-3. For deep scans, use '1000', and for quick/light scans, use '100'. Never use the '-p-' option; instead, use:
- - '-port' or '-p' for specific ports (e.g., '80,443,100-200')
- - '-top-ports' or '-tp' for top ports (e.g., 'full,100,1000').
-4. Naabu can scan multiple hosts at once using the '-host' option (e.g., '-host 192.168.1.1,192.168.1.2').
-`
+The user has selected the Port Scanner plugin, which uses the nmap tool in the terminal. This tool performs comprehensive port scanning to discover open ports and services on target systems. Remember:
+1. Focus on identifying open ports, services, and potential vulnerabilities on target systems.
+2. Provide nmap-specific options and explanations for efficient scanning.
+3. For different scan types, use appropriate options like:
+   - Quick scan: '-F' (fast mode, scans fewer ports)
+   - Deep scan: '-p-' (all ports) or '-p 1-65535'
+   - Service detection: '-sV' (version detection)
+   - OS detection: '-O' (requires root privileges)
+4. Common nmap options:
+   - '-sS': SYN scan (requires root privileges)
+   - '-sT': TCP connect scan
+   - '-sU': UDP scan
+   - '-sV': Version detection
+   - '-sC': Default script scan
+   - '-A': Aggressive scan (includes OS detection, version detection, script scanning, and traceroute)
+   - '-T': Timing template (0-5, where 5 is fastest, default is 3)
+5. For multiple hosts, use CIDR notation or comma-separated IPs (e.g., '192.168.1.0/24' or '192.168.1.1,192.168.1.2')
+`;
     case PluginID.WAF_DETECTOR:
       return `
 The user has selected the WAF Detector plugin, which uses the wafw00f tool in the terminal. This tool fingerprints Web Application Firewalls (WAFs) behind target applications. Remember:
 1. Focus on identifying and fingerprinting WAFs protecting the target web application.
 2. Provide wafw00f-specific options and explanations for effective WAF detection.
-`
+`;
     case PluginID.WHOIS_LOOKUP:
       return `
 The user has selected the WHOIS Lookup plugin, which uses the whois tool in the terminal. This tool retrieves domain registration information and network details. Remember:
 1. Focus on gathering domain ownership, registration dates, name servers, and other relevant information.
 2. Provide whois-specific options and explanations for effective domain information retrieval.
-`
+`;
     case PluginID.SUBDOMAIN_FINDER:
       return `
 The user has selected the Subdomain Finder plugin, which uses the subfinder tool in the terminal. This tool discovers subdomains of a given domain. Remember:
 1. Focus on efficiently enumerating subdomains of the target domain.
 2. Provide subfinder-specific options and explanations for effective subdomain discovery.
-`
+`;
     case PluginID.CVE_MAP:
       return `
 The user has selected the CVEMap plugin, which uses the cvemap tool in the terminal. This tool helps navigate and analyze Common Vulnerabilities and Exposures (CVEs). Remember:
@@ -77,7 +87,7 @@ The user has selected the CVEMap plugin, which uses the cvemap tool in the termi
 - -limit int: Limit the number of results to display (specify a different number as needed).
 5. Do not use the search flag.
 6. Always limit the number of results to 10 by default.
-`
+`;
 
     case PluginID.WORDPRESS_SCANNER:
       return `
@@ -85,7 +95,7 @@ The user has selected the WordPress Scanner plugin, which uses the wpscan tool i
 1. Focus on identifying vulnerabilities in WordPress core, themes, and plugins.
 2. Provide wpscan-specific options and explanations for effective WordPress security scanning.
 3. Don't use --banner and --format flags by default.
-`
+`;
 
     case PluginID.XSS_EXPLOITER:
       return `
@@ -93,9 +103,9 @@ The user has selected the XSS Exploiter plugin, which uses the dalfox tool in th
 1. Focus on identifying and exploiting Cross-Site Scripting (XSS) vulnerabilities.
 2. Provide dalfox-specific options and explanations for effective XSS scanning and exploitation.
 3. For simple scans of a single domain, use minimal flags. The basic command structure is just 'dalfox url [target_url]'.
-`
+`;
 
     default:
-      return ""
+      return '';
   }
-}
+};

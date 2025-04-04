@@ -1,60 +1,60 @@
-import React, { useEffect, useState } from "react"
-import Modal from "@/components/chat/dialog-portal"
-import { Button } from "../ui/button"
-import { Tables } from "@/supabase/types"
+import React, { useEffect, useState } from 'react';
+import Modal from '@/components/chat/dialog-portal';
+import { Button } from '../ui/button';
+import type { Tables } from '@/supabase/types';
 
 interface MessageDetailedFeedbackProps {
-  isOpen: boolean
-  onClose: () => void
-  feedback: Tables<"feedback">
+  isOpen: boolean;
+  onClose: () => void;
+  feedback: Tables<'feedback'>;
   onSendFeedback: (
-    feedback: "good" | "bad",
+    feedback: 'good' | 'bad',
     reason?: string,
     detailedFeedback?: string,
     allowSharing?: boolean,
-    allowEmail?: boolean
-  ) => void
+    allowEmail?: boolean,
+  ) => void;
 }
 
 const MessageDetailedFeedback: React.FC<MessageDetailedFeedbackProps> = ({
   isOpen,
   onClose,
   feedback,
-  onSendFeedback
+  onSendFeedback,
 }) => {
   const [detailedFeedback, setDetailedFeedback] = useState(
-    feedback?.detailed_feedback || ""
-  )
+    feedback?.detailed_feedback || '',
+  );
   const [allowSharing, setAllowSharing] = useState(
-    feedback?.allow_sharing || false
-  )
-  const [mayContact, setMayContact] = useState(feedback?.allow_email || false)
+    feedback?.allow_sharing || false,
+  );
+  const [mayContact, setMayContact] = useState(feedback?.allow_email || false);
 
   useEffect(() => {
-    setDetailedFeedback(feedback?.detailed_feedback ?? "")
-    setAllowSharing(feedback?.allow_sharing ?? false)
-    setMayContact(feedback?.allow_email ?? false)
+    setDetailedFeedback(feedback?.detailed_feedback ?? '');
+    setAllowSharing(feedback?.allow_sharing ?? false);
+    setMayContact(feedback?.allow_email ?? false);
   }, [
     feedback?.allow_email,
     feedback?.allow_sharing,
-    feedback?.detailed_feedback
-  ])
+    feedback?.detailed_feedback,
+  ]);
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     onSendFeedback(
-      (feedback?.feedback as "good" | "bad") ?? "bad",
-      feedback?.reason ?? "",
+      (feedback?.feedback as 'good' | 'bad') ?? 'bad',
+      feedback?.reason ?? '',
       detailedFeedback,
       allowSharing,
-      mayContact
-    )
-    onClose()
-  }
+      mayContact,
+    );
+    onClose();
+  };
 
   return (
     <Modal isOpen={isOpen}>
-      <div className="size-screen fixed inset-0 z-50 bg-black/50 backdrop-blur-xs dark:bg-black/80"></div>
+      <div className="size-screen fixed inset-0 z-50 bg-black/50 backdrop-blur-xs dark:bg-black/80" />
 
       <div className="fixed inset-0 z-50 flex items-center justify-center rounded-md  p-4 ">
         <div className="bg-background w-full max-w-lg rounded-md border p-10 shadow-lg">
@@ -67,10 +67,10 @@ const MessageDetailedFeedback: React.FC<MessageDetailedFeedbackProps> = ({
             <textarea
               id="feedback"
               value={detailedFeedback}
-              onChange={e => setDetailedFeedback(e.target.value)}
+              onChange={(e) => setDetailedFeedback(e.target.value)}
               placeholder="Tell us what prompted this feedback"
               className="mb-0 h-48 w-full rounded-md border px-2 pb-0 pt-2"
-            ></textarea>
+            />
             <span className="m-0 pt-0 text-xs opacity-50">
               Please don&apos;t include any sensitive information. For example,
               don&apos;t include passwords, credit card numbers, and personal
@@ -81,7 +81,7 @@ const MessageDetailedFeedback: React.FC<MessageDetailedFeedbackProps> = ({
                 type="checkbox"
                 id="shareConversation"
                 checked={allowSharing}
-                onChange={e => setAllowSharing(e.target.checked)}
+                onChange={(e) => setAllowSharing(e.target.checked)}
               />
               <label htmlFor="shareConversation" className="ml-2 text-sm">
                 Allow sharing the current conversation
@@ -92,7 +92,7 @@ const MessageDetailedFeedback: React.FC<MessageDetailedFeedbackProps> = ({
                 type="checkbox"
                 id="mayContact"
                 checked={mayContact}
-                onChange={e => setMayContact(e.target.checked)}
+                onChange={(e) => setMayContact(e.target.checked)}
               />
               <label htmlFor="mayContact" className="ml-2 text-sm">
                 We may email you for more information or updates
@@ -105,7 +105,7 @@ const MessageDetailedFeedback: React.FC<MessageDetailedFeedbackProps> = ({
             </span>
 
             <div className="flex justify-between">
-              <Button onClick={onClose} variant={"secondary"}>
+              <Button onClick={onClose} variant={'secondary'}>
                 Cancel
               </Button>
               <Button type="submit">Submit Feedback</Button>
@@ -114,7 +114,7 @@ const MessageDetailedFeedback: React.FC<MessageDetailedFeedbackProps> = ({
         </div>
       </div>
     </Modal>
-  )
-}
+  );
+};
 
-export default MessageDetailedFeedback
+export default MessageDetailedFeedback;

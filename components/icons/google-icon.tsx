@@ -1,8 +1,8 @@
-import React from "react"
+import React from 'react';
 
 interface GoogleIconProps extends React.SVGProps<SVGSVGElement> {
-  width?: number
-  height?: number
+  width?: number;
+  height?: number;
 }
 
 export const GoogleIcon: React.FC<GoogleIconProps> = ({
@@ -35,5 +35,5 @@ export const GoogleIcon: React.FC<GoogleIconProps> = ({
         fill="#EA4335"
       />
     </svg>
-  )
-}
+  );
+};

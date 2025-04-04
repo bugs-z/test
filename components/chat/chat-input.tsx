@@ -1,41 +1,48 @@
-import { PentestGPTContext } from "@/context/context"
-import useHotkey from "@/lib/hooks/use-hotkey"
-import { cn } from "@/lib/utils"
-import { PluginID } from "@/types/plugins"
-import { FC, RefObject, useContext, useEffect, useRef, useState } from "react"
-import { Input } from "../ui/input"
-import { TextareaAutosize } from "../ui/textarea-autosize"
-import { ChatCommandInput } from "./chat-command-input"
-import { ChatFilesDisplay } from "./chat-files-display"
-import { handleFileUpload } from "./chat-helpers/file-upload"
-import { useChatHandler } from "./chat-hooks/use-chat-handler"
-import { usePromptAndCommand } from "./chat-hooks/use-prompt-and-command"
-import { useSelectFileHandler } from "./chat-hooks/use-select-file-handler"
-import { EnhancedMenuPicker } from "./enhance-menu"
-import { UnsupportedFilesDialog } from "./unsupported-files-dialog"
-import { ToolOptions } from "./chat-tools/tool-options"
-import { useUIContext } from "@/context/ui-context"
-import { useKeyboardHandler } from "./chat-hooks/use-key-handler"
-import { ChatSendButton } from "./chat-send-button"
-import { useMessageHandler } from "./chat-hooks/use-message-handler"
-import { ChatMicButton } from "./chat-mic-button"
-import useVoiceRecording from "./chat-hooks/use-voice-recorder"
-import VoiceStatusBar from "@/components/ui/voice-status-bar"
-import ChatStarters from "./chat-starters"
+import { PentestGPTContext } from '@/context/context';
+import useHotkey from '@/lib/hooks/use-hotkey';
+import { cn } from '@/lib/utils';
+import { PluginID } from '@/types/plugins';
+import {
+  type FC,
+  type RefObject,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+import { Input } from '../ui/input';
+import { TextareaAutosize } from '../ui/textarea-autosize';
+import { ChatCommandInput } from './chat-command-input';
+import { ChatFilesDisplay } from './chat-files-display';
+import { handleFileUpload } from './chat-helpers/file-upload';
+import { useChatHandler } from './chat-hooks/use-chat-handler';
+import { usePromptAndCommand } from './chat-hooks/use-prompt-and-command';
+import { useSelectFileHandler } from './chat-hooks/use-select-file-handler';
+import { EnhancedMenuPicker } from './enhance-menu';
+import { UnsupportedFilesDialog } from './unsupported-files-dialog';
+import { ToolOptions } from './chat-tools/tool-options';
+import { useUIContext } from '@/context/ui-context';
+import { useKeyboardHandler } from './chat-hooks/use-key-handler';
+import { ChatSendButton } from './chat-send-button';
+import { useMessageHandler } from './chat-hooks/use-message-handler';
+import { ChatMicButton } from './chat-mic-button';
+import useVoiceRecording from './chat-hooks/use-voice-recorder';
+import VoiceStatusBar from '@/components/ui/voice-status-bar';
+import ChatStarters from './chat-starters';
 
 export const ChatInput: FC = () => {
-  useHotkey("l", () => {
-    handleFocusChatInput()
-  })
+  useHotkey('l', () => {
+    handleFocusChatInput();
+  });
 
-  const [isTyping, setIsTyping] = useState<boolean>(false)
+  const [isTyping, setIsTyping] = useState<boolean>(false);
   const [showConfirmationDialog, setShowConfirmationDialog] =
-    useState<boolean>(false)
-  const [pendingFiles, setPendingFiles] = useState<File[]>([])
-  const [bottomSpacingPx, setBottomSpacingPx] = useState(5)
+    useState<boolean>(false);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [bottomSpacingPx, setBottomSpacingPx] = useState(5);
 
-  const divRef = useRef<HTMLDivElement>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const divRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
     userInput,
@@ -44,48 +51,48 @@ export const ChatInput: FC = () => {
     newMessageImages,
     isPremiumSubscription,
     isMicSupported,
-    isTemporaryChat
-  } = useContext(PentestGPTContext)
+    isTemporaryChat,
+  } = useContext(PentestGPTContext);
 
   const {
     isGenerating,
     isEnhancedMenuOpen,
     setIsEnhancedMenuOpen,
     selectedPlugin,
-    isMobile
-  } = useUIContext()
+    isMobile,
+  } = useUIContext();
 
   const {
     chatInputRef,
     handleSendMessage,
     handleStopMessage,
-    handleFocusChatInput
-  } = useChatHandler()
+    handleFocusChatInput,
+  } = useChatHandler();
 
-  const { handleInputChange } = usePromptAndCommand()
+  const { handleInputChange } = usePromptAndCommand();
 
-  const { handleSelectDeviceFile } = useSelectFileHandler()
+  const { handleSelectDeviceFile } = useSelectFileHandler();
 
   const { sendMessage, stopMessage, canSend } = useMessageHandler({
     isGenerating: isGenerating,
     userInput: userInput,
     chatMessages: chatMessages,
     handleSendMessage: handleSendMessage,
-    handleStopMessage: handleStopMessage
-  })
+    handleStopMessage: handleStopMessage,
+  });
 
   const { handleKeyDown, handlePaste } = useKeyboardHandler({
     isTyping: isTyping,
     isMobile: isMobile,
     sendMessage: sendMessage,
-    handleSelectDeviceFile: handleSelectDeviceFile
-  })
+    handleSelectDeviceFile: handleSelectDeviceFile,
+  });
 
   const handleTranscriptChange = (transcript: string) => {
     if (transcript !== userInput) {
-      handleInputChange(transcript)
+      handleInputChange(transcript);
     }
-  }
+  };
 
   const {
     isListening,
@@ -97,30 +104,30 @@ export const ChatInput: FC = () => {
     hasSupportedMimeType,
     isRequestingMicAccess,
     requestMicAccess,
-    micPermissionDenied
-  } = useVoiceRecording(handleTranscriptChange)
+    micPermissionDenied,
+  } = useVoiceRecording(handleTranscriptChange);
 
   // Effect for bottom spacing
   useEffect(() => {
-    const observer = new ResizeObserver(entries => {
+    const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        setBottomSpacingPx(entry.contentRect.height + 10)
+        setBottomSpacingPx(entry.contentRect.height + 10);
       }
-    })
+    });
 
     if (divRef.current) {
-      observer.observe(divRef.current)
+      observer.observe(divRef.current);
     }
 
-    return () => observer.disconnect()
-  }, [])
+    return () => observer.disconnect();
+  }, []);
 
   // Effect for initial focus
   useEffect(() => {
     setTimeout(() => {
-      handleFocusChatInput()
-    }, 200) // FIX: hacky
-  }, [])
+      handleFocusChatInput();
+    }, 200); // FIX: hacky
+  }, []);
 
   return (
     <div className="flex w-full justify-center">
@@ -131,20 +138,20 @@ export const ChatInput: FC = () => {
             isOpen={showConfirmationDialog}
             pendingFiles={pendingFiles}
             onCancel={() => {
-              setPendingFiles([])
-              setShowConfirmationDialog(false)
+              setPendingFiles([]);
+              setShowConfirmationDialog(false);
             }}
             onConfirm={() => {
-              pendingFiles.forEach(handleSelectDeviceFile)
-              setShowConfirmationDialog(false)
-              setPendingFiles([])
+              pendingFiles.forEach(handleSelectDeviceFile);
+              setShowConfirmationDialog(false);
+              setPendingFiles([]);
             }}
           />
         )}
 
         {/* Files and Enhanced Menu Container */}
         <div
-          className={cn("mb-2 flex flex-col flex-wrap justify-center gap-2")}
+          className={cn('mb-2 flex flex-col flex-wrap justify-center gap-2')}
         >
           <ChatFilesDisplay />
 
@@ -165,19 +172,19 @@ export const ChatInput: FC = () => {
           isEnhancedMenuOpen={isEnhancedMenuOpen}
           onStop={() => setIsListening(false)}
           onCancel={() => {
-            setIsListening(false)
-            cancelListening()
+            setIsListening(false);
+            cancelListening();
           }}
         />
         {!isListening && !isSpeechToTextLoading && (
           <div className="relative flex flex-col">
             <div
               className={cn(
-                "bg-secondary border-secondary relative w-full rounded-xl border-2",
-                isTemporaryChat && "bg-tertiary border-tertiary",
+                'bg-secondary border-secondary relative w-full rounded-xl border-2',
+                isTemporaryChat && 'bg-tertiary border-tertiary',
                 selectedPlugin &&
                   selectedPlugin !== PluginID.NONE &&
-                  "border-primary"
+                  'border-primary',
               )}
               ref={divRef}
             >
@@ -194,18 +201,18 @@ export const ChatInput: FC = () => {
                 className="hidden w-0"
                 type="file"
                 multiple
-                onChange={e => {
-                  if (!e.target.files) return
+                onChange={(e) => {
+                  if (!e.target.files) return;
 
-                  const files = Array.from(e.target.files)
+                  const files = Array.from(e.target.files);
 
                   handleFileUpload(
                     files,
                     setShowConfirmationDialog,
                     setPendingFiles,
                     handleSelectDeviceFile,
-                    newMessageImages
-                  )
+                    newMessageImages,
+                  );
                 }}
                 accept="*"
               />
@@ -214,12 +221,12 @@ export const ChatInput: FC = () => {
                 <TextareaAutosize
                   textareaRef={chatInputRef as RefObject<HTMLTextAreaElement>}
                   className={cn(
-                    "ring-offset-background placeholder:text-muted-foreground text-md",
-                    "flex w-full resize-none rounded-t-xl bg-transparent",
-                    "border-none focus-visible:outline-hidden",
-                    "disabled:cursor-not-allowed disabled:opacity-50",
-                    "py-3",
-                    "px-3"
+                    'ring-offset-background placeholder:text-muted-foreground text-md',
+                    'flex w-full resize-none rounded-t-xl bg-transparent',
+                    'border-none focus-visible:outline-hidden',
+                    'disabled:cursor-not-allowed disabled:opacity-50',
+                    'py-3',
+                    'px-3',
                   )}
                   placeholder="Ask anything"
                   onValueChange={handleInputChange} // This function updates the userInput state
@@ -271,5 +278,5 @@ export const ChatInput: FC = () => {
         )}
       </div>
     </div>
-  )
-}
+  );
+};

@@ -1,11 +1,11 @@
-import { tool } from "ai"
-import { z } from "zod"
+import { tool } from 'ai';
+import { z } from 'zod';
 import {
-  ToolContext,
+  type ToolContext,
   TEMPORARY_SANDBOX_TEMPLATE,
-  BASH_SANDBOX_TIMEOUT
-} from "./types"
-import { createOrConnectTemporaryTerminal } from "@/lib/tools/e2b/sandbox"
+  BASH_SANDBOX_TIMEOUT,
+} from './types';
+import { createOrConnectTemporaryTerminal } from '@/lib/tools/e2b/sandbox';
 
 /**
  * Creates a tool for reading content from a file in the sandbox
@@ -18,71 +18,71 @@ export const createFileReadTool = (context: ToolContext) => {
     sandbox: initialSandbox,
     userID,
     terminalTemplate = TEMPORARY_SANDBOX_TEMPLATE,
-    setSandbox
-  } = context
+    setSandbox,
+  } = context;
 
-  let sandbox = initialSandbox
+  let sandbox = initialSandbox;
 
   return tool({
     description:
-      "Read file content from the sandbox. Use for checking file contents, analyzing logs, or reading configuration files.",
+      'Read file content from the sandbox. Use for checking file contents, analyzing logs, or reading configuration files.',
     parameters: z.object({
-      file: z.string().describe("Absolute path of the file to read"),
+      file: z.string().describe('Absolute path of the file to read'),
       start_line: z
         .number()
         .optional()
-        .describe("(Optional) Starting line to read from, 0-based"),
+        .describe('(Optional) Starting line to read from, 0-based'),
       end_line: z
         .number()
         .optional()
-        .describe("(Optional) Ending line number (exclusive)")
+        .describe('(Optional) Ending line number (exclusive)'),
     }),
     execute: async ({ file, start_line, end_line }) => {
       if (!sandbox) {
         try {
-          const templateToUse = terminalTemplate || TEMPORARY_SANDBOX_TEMPLATE
+          const templateToUse = terminalTemplate || TEMPORARY_SANDBOX_TEMPLATE;
 
           sandbox = await createOrConnectTemporaryTerminal(
             userID,
             templateToUse,
-            BASH_SANDBOX_TIMEOUT
-          )
+            BASH_SANDBOX_TIMEOUT,
+          );
 
           if (setSandbox) {
-            setSandbox(sandbox)
+            setSandbox(sandbox);
           }
 
           dataStream.writeData({
-            type: "sandbox-type",
-            sandboxType: "temporary-sandbox"
-          })
+            type: 'sandbox-type',
+            sandboxType: 'temporary-sandbox',
+          });
         } catch (error: unknown) {
           const errorMessage =
-            error instanceof Error ? error.message : String(error)
-          return `Failed to create sandbox: ${errorMessage}`
+            error instanceof Error ? error.message : String(error);
+          return `Failed to create sandbox: ${errorMessage}`;
         }
       }
 
       if (!sandbox) {
-        return "Error: Unable to create or access a sandbox environment. Please try using the terminal tool first."
+        return 'Error: Unable to create or access a sandbox environment. Please try using the terminal tool first.';
       }
 
       try {
-        let content = await sandbox.files.read(file)
+        let content = await sandbox.files.read(file);
 
-        if (typeof start_line === "number" || typeof end_line === "number") {
-          const lines = content.split("\n")
-          const start = start_line || 0
-          const end = end_line || lines.length
-          content = lines.slice(start, end).join("\n")
+        if (typeof start_line === 'number' || typeof end_line === 'number') {
+          const lines = content.split('\n');
+          const start = start_line || 0;
+          const end = end_line || lines.length;
+          content = lines.slice(start, end).join('\n');
         }
 
-        return content
+        return content;
       } catch (error: unknown) {
         const errorMessage =
-          error instanceof Error ? error.message : String(error)
-        return `Error processing file: ${errorMessage}`
+          error instanceof Error ? error.message : String(error);
+        return `Error processing file: ${errorMessage}`;
       }
-    }
-  })
-}
+    },
+  });
+};

@@ -1,16 +1,16 @@
-import React, { useState, useCallback } from "react"
-import { MessageMarkdown } from "./message-markdown"
-import { IconChevronDown, IconChevronUp, IconAtom } from "@tabler/icons-react"
-import { useUIContext } from "@/context/ui-context"
-import { PluginID } from "@/types/plugins"
-import { MessageCitations } from "./message-citations"
+import React, { useState, useCallback } from 'react';
+import { MessageMarkdown } from './message-markdown';
+import { IconChevronDown, IconChevronUp, IconAtom } from '@tabler/icons-react';
+import { useUIContext } from '@/context/ui-context';
+import { PluginID } from '@/types/plugins';
+import { MessageCitations } from './message-citations';
 
 interface MessageThinkingProps {
-  content: string
-  thinking_content?: string | null
-  thinking_elapsed_secs?: number | null
-  isAssistant: boolean
-  citations?: string[]
+  content: string;
+  thinking_content?: string | null;
+  thinking_elapsed_secs?: number | null;
+  isAssistant: boolean;
+  citations?: string[];
 }
 
 export const MessageThinking: React.FC<MessageThinkingProps> = ({
@@ -18,34 +18,34 @@ export const MessageThinking: React.FC<MessageThinkingProps> = ({
   thinking_content,
   thinking_elapsed_secs,
   isAssistant,
-  citations = []
+  citations = [],
 }) => {
-  const { toolInUse } = useUIContext()
-  const [closedBlocks, setClosedBlocks] = useState(new Set<number>())
+  const { toolInUse } = useUIContext();
+  const [closedBlocks, setClosedBlocks] = useState(new Set<number>());
   const toggleBlock = useCallback((index: number) => {
-    setClosedBlocks(prev => {
-      const newSet = new Set(prev)
-      newSet.has(index) ? newSet.delete(index) : newSet.add(index)
-      return newSet
-    })
-  }, [])
+    setClosedBlocks((prev) => {
+      const newSet = new Set(prev);
+      newSet.has(index) ? newSet.delete(index) : newSet.add(index);
+      return newSet;
+    });
+  }, []);
 
   const formatThinkingTime = (seconds: number | null | undefined) => {
-    if (!seconds) return "Thoughts..."
+    if (!seconds) return 'Thoughts...';
 
-    const minutes = Math.floor(seconds / 60)
-    const remainingSeconds = seconds % 60
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
 
     if (minutes === 0) {
-      return `Thought for ${seconds} seconds`
+      return `Thought for ${seconds} seconds`;
     }
 
     if (remainingSeconds === 0) {
-      return `Thought for ${minutes} minutes`
+      return `Thought for ${minutes} minutes`;
     }
 
-    return `Thought for ${minutes} minutes ${remainingSeconds} seconds`
-  }
+    return `Thought for ${minutes} minutes ${remainingSeconds} seconds`;
+  };
 
   if (!thinking_content && citations.length > 0) {
     return (
@@ -54,18 +54,18 @@ export const MessageThinking: React.FC<MessageThinkingProps> = ({
         isAssistant={isAssistant}
         citations={citations}
       />
-    )
+    );
   } else if (!thinking_content) {
-    return <MessageMarkdown content={content} isAssistant={isAssistant} />
+    return <MessageMarkdown content={content} isAssistant={isAssistant} />;
   }
 
   const isThinking =
     (toolInUse === PluginID.REASONING ||
       toolInUse === PluginID.REASONING_WEB_SEARCH) &&
-    !content
+    !content;
   const thinkingTitle = isThinking
-    ? "Thinking..."
-    : formatThinkingTime(thinking_elapsed_secs)
+    ? 'Thinking...'
+    : formatThinkingTime(thinking_elapsed_secs);
 
   return (
     <div>
@@ -78,7 +78,7 @@ export const MessageThinking: React.FC<MessageThinkingProps> = ({
           aria-controls="thinking-content"
         >
           <div
-            className={`flex items-center ${isThinking ? "animate-pulse" : ""}`}
+            className={`flex items-center ${isThinking ? 'animate-pulse' : ''}`}
           >
             <IconAtom size={20} />
             <h4 className="text-muted-foreground ml-2 mr-1">{thinkingTitle}</h4>
@@ -124,5 +124,5 @@ export const MessageThinking: React.FC<MessageThinkingProps> = ({
           <MessageMarkdown content={content} isAssistant={isAssistant} />
         ))}
     </div>
-  )
-}
+  );
+};

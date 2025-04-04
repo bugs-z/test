@@ -25,12 +25,12 @@ module.exports = {
     '^@/styles/(.*)$',
     '^@/app/(.*)$',
     '',
-    '^[./]'
+    '^[./]',
   ],
   importOrderSeparation: false,
   importOrderSortSpecifiers: true,
   importOrderBuiltinModulesToTop: true,
   importOrderParserPlugins: ['typescript', 'jsx', 'decorators-legacy'],
   importOrderMergeDuplicateImports: true,
-  importOrderCombineTypeAndValueImports: true
-}
+  importOrderCombineTypeAndValueImports: true,
+};

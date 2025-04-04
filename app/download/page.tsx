@@ -1,63 +1,63 @@
-import { Metadata } from "next"
-import Image from "next/image"
-import { IconArrowUpRight } from "@tabler/icons-react"
+import type { Metadata } from 'next';
+import Image from 'next/image';
+import { IconArrowUpRight } from '@tabler/icons-react';
 
 export const metadata: Metadata = {
-  title: "Download PentestGPT",
+  title: 'Download PentestGPT',
   description:
-    "Download PentestGPT desktop app and experience advanced AI-powered penetration testing with a native desktop experience.",
+    'Download PentestGPT desktop app and experience advanced AI-powered penetration testing with a native desktop experience.',
   openGraph: {
-    title: "Download PentestGPT Desktop App",
+    title: 'Download PentestGPT Desktop App',
     description:
-      "Get PentestGPT on your desktop for enhanced penetration testing capabilities.",
-    type: "website",
+      'Get PentestGPT on your desktop for enhanced penetration testing capabilities.',
+    type: 'website',
     images: [
       {
         url: `${process.env.NEXT_PUBLIC_BUCKET_URL}/pentestgpt-mac-app.png`,
         width: 1200,
         height: 630,
-        alt: "PentestGPT Desktop Application"
-      }
-    ]
+        alt: 'PentestGPT Desktop Application',
+      },
+    ],
   },
   twitter: {
-    card: "summary_large_image",
-    title: "Download PentestGPT Desktop App",
+    card: 'summary_large_image',
+    title: 'Download PentestGPT Desktop App',
     description:
-      "Get PentestGPT on your desktop for enhanced penetration testing capabilities.",
-    images: [`${process.env.NEXT_PUBLIC_BUCKET_URL}/pentestgpt-mac-app.png`]
-  }
-}
+      'Get PentestGPT on your desktop for enhanced penetration testing capabilities.',
+    images: [`${process.env.NEXT_PUBLIC_BUCKET_URL}/pentestgpt-mac-app.png`],
+  },
+};
 
-const BUCKET_URL = process.env.NEXT_PUBLIC_BUCKET_URL
+const BUCKET_URL = process.env.NEXT_PUBLIC_BUCKET_URL;
 
 const DOWNLOAD_OPTIONS = [
   {
-    platform: "macOS",
-    description: "For macOS 14+ with Apple Silicon",
-    filename: "PentestGPT.dmg",
-    showAsterisk: true
+    platform: 'macOS',
+    description: 'For macOS 14+ with Apple Silicon',
+    filename: 'PentestGPT.dmg',
+    showAsterisk: true,
   },
   {
-    platform: "Linux",
-    description: "For AMD64 architecture only",
-    filename: "PentestGPT.AppImage",
-    showAsterisk: false
-  }
+    platform: 'Linux',
+    description: 'For AMD64 architecture only',
+    filename: 'PentestGPT.AppImage',
+    showAsterisk: false,
+  },
   // {
   //   platform: "Windows",
   //   description: "Compatible with Windows 10 and above",
   //   filename: "PentestGPT.exe",
   //   showAsterisk: false
   // },
-]
+];
 
 interface DownloadOptionProps {
-  platform: string
-  description: string
-  filename: string
-  showAsterisk: boolean
-  isFirst?: boolean
+  platform: string;
+  description: string;
+  filename: string;
+  showAsterisk: boolean;
+  isFirst?: boolean;
 }
 
 function DownloadOption({
@@ -65,10 +65,10 @@ function DownloadOption({
   description,
   filename,
   showAsterisk,
-  isFirst
+  isFirst,
 }: DownloadOptionProps) {
   return (
-    <div className={`pt-8 ${isFirst ? "first:pt-0" : ""}`}>
+    <div className={`pt-8 ${isFirst ? 'first:pt-0' : ''}`}>
       <div className="flex flex-col items-start">
         <h3 className="text-foreground text-2xl font-semibold">{platform}</h3>
         <p className="text-muted-foreground mt-2">{description}</p>
@@ -77,7 +77,7 @@ function DownloadOption({
           className="bg-primary text-primary-foreground hover:bg-primary/90 group mt-4 inline-flex items-center gap-2 rounded-lg px-4 py-2 transition-colors"
         >
           Download for {platform}
-          {showAsterisk ? "*" : ""}
+          {showAsterisk ? '*' : ''}
           <IconArrowUpRight
             className="transition-transform group-hover:translate-x-0.5"
             size={16}
@@ -85,7 +85,7 @@ function DownloadOption({
         </a>
       </div>
     </div>
-  )
+  );
 }
 
 export default function DownloadPage() {
@@ -160,5 +160,5 @@ export default function DownloadPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -1,71 +1,71 @@
-import { PentestGPTContext } from "@/context/context"
-import { acceptTeamInvitation, rejectTeamInvitation } from "@/db/teams"
-import { DialogPanel, DialogTitle } from "@headlessui/react"
-import { IconCheck, IconX } from "@tabler/icons-react"
-import { FC, useContext } from "react"
-import { toast } from "sonner"
-import { Button } from "../ui/button"
-import { TransitionedDialog } from "../ui/transitioned-dialog"
-import { useUIContext } from "@/context/ui-context"
+import { PentestGPTContext } from '@/context/context';
+import { acceptTeamInvitation, rejectTeamInvitation } from '@/db/teams';
+import { DialogPanel, DialogTitle } from '@headlessui/react';
+import { IconCheck, IconX } from '@tabler/icons-react';
+import { type FC, useContext } from 'react';
+import { toast } from 'sonner';
+import { Button } from '../ui/button';
+import { TransitionedDialog } from '../ui/transitioned-dialog';
+import { useUIContext } from '@/context/ui-context';
 
 interface AcceptInvitationDialogProps {
-  isOpen: boolean
-  onClose: () => void
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 export const AcceptInvitationDialog: FC<AcceptInvitationDialogProps> = ({
   isOpen,
-  onClose
+  onClose,
 }) => {
-  const { membershipData, refreshTeamMembers } = useContext(PentestGPTContext)
-  const { isMobile } = useUIContext()
+  const { membershipData, refreshTeamMembers } = useContext(PentestGPTContext);
+  const { isMobile } = useUIContext();
 
-  const invitation = membershipData?.invitation_status === "pending"
+  const invitation = membershipData?.invitation_status === 'pending';
 
   const handleAccept = async () => {
     if (!invitation) {
-      toast.error("Invitation not found")
-      return
+      toast.error('Invitation not found');
+      return;
     }
 
     try {
-      await acceptTeamInvitation(membershipData?.invitation_id)
-      await refreshTeamMembers()
-      toast.success("Invitation accepted successfully")
-      onClose()
+      await acceptTeamInvitation(membershipData?.invitation_id);
+      await refreshTeamMembers();
+      toast.success('Invitation accepted successfully');
+      onClose();
     } catch (error: any) {
-      console.error("Error accepting invitation:", error)
+      console.error('Error accepting invitation:', error);
       toast.error(
-        error.message || "Failed to accept invitation. Please try again."
-      )
+        error.message || 'Failed to accept invitation. Please try again.',
+      );
     }
-  }
+  };
 
   const handleReject = async () => {
     if (!invitation) {
-      toast.error("Invitation not found")
-      return
+      toast.error('Invitation not found');
+      return;
     }
 
     try {
-      await rejectTeamInvitation(membershipData?.invitation_id)
-      await refreshTeamMembers()
-      toast.success("Invitation rejected successfully")
-      onClose()
+      await rejectTeamInvitation(membershipData?.invitation_id);
+      await refreshTeamMembers();
+      toast.success('Invitation rejected successfully');
+      onClose();
     } catch (error: any) {
-      console.error("Error rejecting invitation:", error)
+      console.error('Error rejecting invitation:', error);
       toast.error(
-        error.message || "Failed to reject invitation. Please try again."
-      )
+        error.message || 'Failed to reject invitation. Please try again.',
+      );
     }
-  }
+  };
 
   return (
     <TransitionedDialog isOpen={isOpen} onClose={onClose}>
       <DialogPanel
         className={`
           bg-popover overflow-hidden rounded-2xl p-6 text-left align-middle shadow-xl transition-all
-          ${isMobile ? "w-full" : "w-full max-w-md"}
+          ${isMobile ? 'w-full' : 'w-full max-w-md'}
           max-h-[90vh] overflow-y-auto
         `}
       >
@@ -97,5 +97,5 @@ export const AcceptInvitationDialog: FC<AcceptInvitationDialogProps> = ({
         </div>
       </DialogPanel>
     </TransitionedDialog>
-  )
-}
+  );
+};

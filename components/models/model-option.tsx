@@ -1,10 +1,10 @@
-import { LLM } from "@/types"
-import { FC } from "react"
-import { ModelIcon } from "./model-icon"
+import type { LLM } from '@/types';
+import type { FC } from 'react';
+import { ModelIcon } from './model-icon';
 
 interface ModelOptionProps {
-  model: LLM
-  onSelect: () => void
+  model: LLM;
+  onSelect: () => void;
 }
 
 export const ModelOption: FC<ModelOptionProps> = ({ model, onSelect }) => {
@@ -19,5 +19,5 @@ export const ModelOption: FC<ModelOptionProps> = ({ model, onSelect }) => {
         <div className="text-sm font-semibold">{model.shortModelName}</div>
       </div>
     </div>
-  )
-}
+  );
+};

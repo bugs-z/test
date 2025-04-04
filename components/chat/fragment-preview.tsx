@@ -1,36 +1,36 @@
-import { IconLoader2, IconReload } from "@tabler/icons-react"
-import { Button } from "@/components/ui/button"
+import { IconLoader2, IconReload } from '@tabler/icons-react';
+import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
-} from "@/components/ui/tooltip"
-import { CopyButton } from "@/components/ui/copy-button"
-import { useState } from "react"
-import { cn } from "@/lib/utils"
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { CopyButton } from '@/components/ui/copy-button';
+import { useState } from 'react';
+import { cn } from '@/lib/utils';
 
 interface FragmentPreviewProps {
-  url: string
-  isMobile: boolean
-  onReload?: () => Promise<void>
-  isReloading?: boolean
+  url: string;
+  isMobile: boolean;
+  onReload?: () => Promise<void>;
+  isReloading?: boolean;
 }
 
 export default function FragmentPreview({
   url,
   isMobile,
   onReload,
-  isReloading = false
+  isReloading = false,
 }: FragmentPreviewProps) {
-  const [iframeKey, setIframeKey] = useState(0)
+  const [iframeKey, setIframeKey] = useState(0);
 
   const handleReload = async () => {
-    if (isReloading || !onReload) return
+    if (isReloading || !onReload) return;
 
-    setIframeKey(prev => prev + 1)
-    await onReload()
-  }
+    setIframeKey((prev) => prev + 1);
+    await onReload();
+  };
 
   return (
     <div className="flex size-full flex-col">
@@ -41,6 +41,7 @@ export default function FragmentPreview({
           </div>
         )}
         <iframe
+          title="Fragment Preview"
           key={iframeKey}
           src={url}
           className="size-full"
@@ -63,7 +64,7 @@ export default function FragmentPreview({
                     disabled={isReloading}
                   >
                     <IconReload
-                      className={cn("size-4", isReloading && "animate-spin")}
+                      className={cn('size-4', isReloading && 'animate-spin')}
                     />
                   </Button>
                 </TooltipTrigger>
@@ -91,5 +92,5 @@ export default function FragmentPreview({
         </div>
       )}
     </div>
-  )
+  );
 }

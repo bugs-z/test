@@ -1,14 +1,14 @@
-import { PluginSummary } from "@/types/plugins"
-import React from "react"
+import type { PluginSummary } from '@/types/plugins';
+import React from 'react';
 
 interface ChatPluginInfoProps {
-  pluginInfo: PluginSummary | undefined
+  pluginInfo: PluginSummary | undefined;
 }
 
 export const ChatPluginInfo: React.FC<ChatPluginInfoProps> = ({
-  pluginInfo
+  pluginInfo,
 }) => {
-  if (!pluginInfo) return null
+  if (!pluginInfo) return null;
 
   return (
     <div className="text-center">
@@ -17,12 +17,12 @@ export const ChatPluginInfo: React.FC<ChatPluginInfoProps> = ({
         alt={pluginInfo.name}
         className={`mx-auto size-12 ${
           pluginInfo.invertInDarkMode
-            ? "dark:brightness-0 dark:invert"
-            : "rounded-full"
+            ? 'dark:brightness-0 dark:invert'
+            : 'rounded-full'
         }`}
       />
       <h2 className="mt-3 text-2xl font-semibold">{pluginInfo.name}</h2>
       <p className="mt-1 text-sm">{pluginInfo.description}</p>
     </div>
-  )
-}
+  );
+};

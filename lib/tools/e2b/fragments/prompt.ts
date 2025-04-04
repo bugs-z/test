@@ -1,5 +1,5 @@
-import { templatesToPrompt } from "./templates"
-import { Templates } from "./types"
+import { templatesToPrompt } from './templates';
+import type { Templates } from './types';
 
 export function toPrompt(template: Templates) {
   return `
@@ -10,5 +10,5 @@ export function toPrompt(template: Templates) {
     Do not touch project dependencies files like package.json, package-lock.json, requirements.txt, etc.
     You can use one of the following templates:
     ${templatesToPrompt(template)}
-  `
+  `;
 }

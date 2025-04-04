@@ -1,20 +1,20 @@
-import { executeWebSearchTool } from "./web-search"
-import { executeTerminalAgent } from "./terminal-agent"
-import { executeBrowserTool } from "./browser"
-import { z } from "zod"
+import { executeWebSearchTool } from './web-search';
+import { executeTerminalAgent } from './terminal-agent';
+import { executeBrowserTool } from './browser';
+import { z } from 'zod';
 
 export const createToolSchemas = ({
   chatSettings,
   messages,
   profile,
   dataStream,
-  isTerminalContinuation
+  isTerminalContinuation,
 }: {
-  chatSettings?: any
-  messages?: any
-  profile?: any
-  dataStream?: any
-  isTerminalContinuation?: boolean
+  chatSettings?: any;
+  messages?: any;
+  profile?: any;
+  dataStream?: any;
+  isTerminalContinuation?: boolean;
 }) => {
   const allSchemas = {
     browser: {
@@ -29,20 +29,20 @@ Always ensure URLs start with 'https://' and contain a valid domain name (e.g., 
       parameters: z.object({
         open_url: z
           .union([
-            z.string().url().describe("The URL of the webpage to open"),
+            z.string().url().describe('The URL of the webpage to open'),
             z
               .array(z.string().url())
               .max(3)
-              .describe("Up to 3 URLs to open simultaneously")
+              .describe('Up to 3 URLs to open simultaneously'),
           ])
-          .describe("One URL as a string or an array of up to 3 URLs to open")
+          .describe('One URL as a string or an array of up to 3 URLs to open'),
       }),
       execute: async ({ open_url }: { open_url: string | string[] }) => {
         return executeBrowserTool({
           open_url,
-          config: { chatSettings, profile, messages, dataStream }
-        })
-      }
+          config: { chatSettings, profile, messages, dataStream },
+        });
+      },
     },
     webSearch: {
       description: `Search the web for latest information. Use this tool only in specific circumstances: \
@@ -51,7 +51,7 @@ Always ensure URLs start with 'https://' and contain a valid domain name (e.g., 
 Do not use this tool to open URLs, links, or videos. \
 Do not use this tool if the human is merely asking about the possibility of searching the web.`,
       parameters: z.object({
-        search: z.boolean().describe("Set to true to search the web")
+        search: z.boolean().describe('Set to true to search the web'),
       }),
       execute: async () => {
         return executeWebSearchTool({
@@ -59,10 +59,10 @@ Do not use this tool if the human is merely asking about the possibility of sear
             messages,
             profile,
             dataStream,
-            isLargeModel: true
-          }
-        })
-      }
+            isLargeModel: true,
+          },
+        });
+      },
     },
     terminal: {
       description: `Run terminal commands. Select this tool IMMEDIATELY when any terminal operations are needed, don't say or plan anything before selecting this tool.
@@ -77,8 +77,8 @@ This tool executes Bash commands in a Debian environment with root privileges. U
         terminal: z
           .boolean()
           .describe(
-            "Set to true to use the terminal for executing bash commands. Select immediately when terminal operations are needed."
-          )
+            'Set to true to use the terminal for executing bash commands. Select immediately when terminal operations are needed.',
+          ),
         // previousMessage: z
         //   .string()
         //   .describe(
@@ -91,39 +91,39 @@ This tool executes Bash commands in a Debian environment with root privileges. U
             messages,
             profile,
             dataStream,
-            isTerminalContinuation
+            isTerminalContinuation,
             // previousMessage
-          }
-        })
-      }
-    }
-  }
+          },
+        });
+      },
+    },
+  };
 
-  type SchemaKey = keyof typeof allSchemas
+  type SchemaKey = keyof typeof allSchemas;
 
   return {
     allSchemas,
     getSelectedSchemas: (selectedPlugin: string | string[]) => {
       if (
-        selectedPlugin === "all" ||
+        selectedPlugin === 'all' ||
         !selectedPlugin ||
         selectedPlugin.length === 0
       ) {
-        return allSchemas
+        return allSchemas;
       }
-      if (typeof selectedPlugin === "string") {
+      if (typeof selectedPlugin === 'string') {
         return selectedPlugin in allSchemas
           ? {
               [selectedPlugin as SchemaKey]:
-                allSchemas[selectedPlugin as SchemaKey]
+                allSchemas[selectedPlugin as SchemaKey],
             }
-          : {}
+          : {};
       }
       return Object.fromEntries(
         Object.entries(allSchemas).filter(([key]) =>
-          selectedPlugin.includes(key)
-        )
-      )
-    }
-  }
-}
+          selectedPlugin.includes(key),
+        ),
+      );
+    },
+  };
+};

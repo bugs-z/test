@@ -1,18 +1,18 @@
-import { Button } from "@/components/ui/button"
-import { FC, useState } from "react"
-import { Label } from "../../ui/label"
-import { SharedChatsPopup } from "./shared-chats-popup"
+import { Button } from '@/components/ui/button';
+import { type FC, useState } from 'react';
+import { Label } from '../../ui/label';
+import { SharedChatsPopup } from './shared-chats-popup';
 
 interface DataControlsTabProps {
-  onDeleteAccount: () => void
-  isDeleting?: boolean
+  onDeleteAccount: () => void;
+  isDeleting?: boolean;
 }
 
 export const DataControlsTab: FC<DataControlsTabProps> = ({
   onDeleteAccount,
-  isDeleting = false
+  isDeleting = false,
 }) => {
-  const [isSharedChatsPopupOpen, setIsSharedChatsPopupOpen] = useState(false)
+  const [isSharedChatsPopupOpen, setIsSharedChatsPopupOpen] = useState(false);
 
   return (
     <div className="space-y-4">
@@ -47,5 +47,5 @@ export const DataControlsTab: FC<DataControlsTabProps> = ({
         onClose={() => setIsSharedChatsPopupOpen(false)}
       />
     </div>
-  )
-}
+  );
+};

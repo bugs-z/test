@@ -1,58 +1,58 @@
-import React, { useMemo } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog"
-import { IconBackspace, IconX } from "@tabler/icons-react"
-import { Button } from "../ui/button"
+import React, { useMemo } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { IconBackspace, IconX } from '@tabler/icons-react';
+import { Button } from '../ui/button';
 
 interface ShortcutItem {
-  key: string
-  description: string
-  icon?: React.ReactNode
+  key: string;
+  description: string;
+  icon?: React.ReactNode;
 }
 
 interface KeyboardShortcutsPopupProps {
-  isOpen: boolean
-  onClose: () => void
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 export default function KeyboardShortcutsPopup({
   isOpen,
-  onClose
+  onClose,
 }: KeyboardShortcutsPopupProps) {
   const isMac = useMemo(
     () => /macintosh|mac os x/i.test(navigator.userAgent),
-    []
-  )
+    [],
+  );
 
   const shortcuts: ShortcutItem[] = useMemo(
     () => [
       {
-        key: isMac ? "⌘ + Shift + O" : "Ctrl + Shift + O",
-        description: "Open new chat"
+        key: isMac ? '⌘ + Shift + O' : 'Ctrl + Shift + O',
+        description: 'Open new chat',
       },
       {
-        key: isMac ? "⌘ + Shift + L" : "Ctrl + Shift + L",
-        description: "Focus chat input"
+        key: isMac ? '⌘ + Shift + L' : 'Ctrl + Shift + L',
+        description: 'Focus chat input',
       },
       {
-        key: isMac ? "⌘ + Shift + S" : "Ctrl + Shift + S",
-        description: "Toggle sidebar"
+        key: isMac ? '⌘ + Shift + S' : 'Ctrl + Shift + S',
+        description: 'Toggle sidebar',
       },
       {
-        key: isMac ? "⌘ + Shift" : "Ctrl + Shift",
-        description: "Delete chat",
-        icon: <IconBackspace size={20} />
+        key: isMac ? '⌘ + Shift' : 'Ctrl + Shift',
+        description: 'Delete chat',
+        icon: <IconBackspace size={20} />,
       },
       {
-        key: isMac ? "⌘ + Shift + C" : "Ctrl + Shift + C",
-        description: "Copy last response"
+        key: isMac ? '⌘ + Shift + C' : 'Ctrl + Shift + C',
+        description: 'Copy last response',
       },
       {
-        key: isMac ? "⌘ + /" : "Ctrl + /",
-        description: "Show shortcuts"
-      }
+        key: isMac ? '⌘ + /' : 'Ctrl + /',
+        description: 'Show shortcuts',
+      },
     ],
-    [isMac]
-  )
+    [isMac],
+  );
 
   const renderShortcut = (shortcut: ShortcutItem, index: number) => (
     <div
@@ -63,7 +63,7 @@ export default function KeyboardShortcutsPopup({
         <div className="truncate">{shortcut.description}</div>
       </div>
       <div className="ml-3 flex flex-row gap-2">
-        {shortcut.key.split("+").map((key, keyIndex) => (
+        {shortcut.key.split('+').map((key, keyIndex) => (
           <div
             key={keyIndex}
             className="my-2 flex h-8 min-w-[50px] items-center justify-center rounded-md border capitalize"
@@ -78,7 +78,7 @@ export default function KeyboardShortcutsPopup({
         )}
       </div>
     </div>
-  )
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -102,5 +102,5 @@ export default function KeyboardShortcutsPopup({
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

@@ -1,19 +1,19 @@
-import { FC } from "react"
-import { DialogPanel, DialogTitle, Dialog } from "@headlessui/react"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
+import type { FC } from 'react';
+import { DialogPanel, DialogTitle, Dialog } from '@headlessui/react';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 
 interface MFAEnableModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onVerify: (code: string) => Promise<void>
-  qrCode: string
-  verifyCode: string
-  setVerifyCode: (code: string) => void
-  error: string
-  secret: string
-  showSecret: boolean
-  setShowSecret: (show: boolean) => void
+  isOpen: boolean;
+  onClose: () => void;
+  onVerify: (code: string) => Promise<void>;
+  qrCode: string;
+  verifyCode: string;
+  setVerifyCode: (code: string) => void;
+  error: string;
+  secret: string;
+  showSecret: boolean;
+  setShowSecret: (show: boolean) => void;
 }
 
 export const MFAEnableModal: FC<MFAEnableModalProps> = ({
@@ -26,7 +26,7 @@ export const MFAEnableModal: FC<MFAEnableModalProps> = ({
   error,
   secret,
   showSecret,
-  setShowSecret
+  setShowSecret,
 }) => {
   return (
     <Dialog open={isOpen} onClose={onClose} className="relative z-50">
@@ -68,7 +68,7 @@ export const MFAEnableModal: FC<MFAEnableModalProps> = ({
                 onClick={() => setShowSecret(!showSecret)}
                 className="mt-2 underline"
               >
-                {showSecret ? "Show QR code" : "Trouble scanning?"}
+                {showSecret ? 'Show QR code' : 'Trouble scanning?'}
               </Button>
             </div>
             <div className="space-y-2">
@@ -77,8 +77,8 @@ export const MFAEnableModal: FC<MFAEnableModalProps> = ({
                 id="verifyCode"
                 type="text"
                 value={verifyCode}
-                onChange={e => setVerifyCode(e.target.value.trim())}
-                className={`w-full rounded border p-2 ${error ? "border-red-500" : ""}`}
+                onChange={(e) => setVerifyCode(e.target.value.trim())}
+                className={`w-full rounded border p-2 ${error ? 'border-red-500' : ''}`}
                 placeholder="Enter 6-digit code"
               />
               {error && (
@@ -95,5 +95,5 @@ export const MFAEnableModal: FC<MFAEnableModalProps> = ({
         </DialogPanel>
       </div>
     </Dialog>
-  )
-}
+  );
+};

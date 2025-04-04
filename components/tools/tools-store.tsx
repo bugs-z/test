@@ -1,96 +1,97 @@
-import React, { useState, useEffect, useContext, useRef } from "react"
-import { PentestGPTContext } from "@/context/context"
-import { PluginID, PluginSummary } from "@/types/plugins"
-import { useChatHandler } from "../chat/chat-hooks/use-chat-handler"
-import { Header, SearchBar, CategorySelection } from "./tools"
-import { PluginCard } from "./tools-card"
-import { useUIContext } from "@/context/ui-context"
+import React, { useState, useEffect, useContext, useRef } from 'react';
+import { PentestGPTContext } from '@/context/context';
+import type { PluginID, PluginSummary } from '@/types/plugins';
+import { useChatHandler } from '../chat/chat-hooks/use-chat-handler';
+import { Header, SearchBar, CategorySelection } from './tools';
+import { PluginCard } from './tools-card';
+import { useUIContext } from '@/context/ui-context';
 
 interface PluginStorePageProps {
-  pluginsData: PluginSummary[]
-  installPlugin: (id: number) => void
-  uninstallPlugin: (id: number) => void
+  pluginsData: PluginSummary[];
+  installPlugin: (id: number) => void;
+  uninstallPlugin: (id: number) => void;
 }
 
 export default function ToolsStorePage({
   pluginsData,
   installPlugin,
-  uninstallPlugin
+  uninstallPlugin,
 }: PluginStorePageProps) {
-  const { handleNewChat } = useChatHandler()
+  const { handleNewChat } = useChatHandler();
 
-  const { setContentType, subscription } = useContext(PentestGPTContext)
+  const { setContentType, subscription } = useContext(PentestGPTContext);
 
   const { setSelectedPlugin, isEnhancedMenuOpen, setIsEnhancedMenuOpen } =
-    useUIContext()
+    useUIContext();
 
   const filters = [
-    "Free",
-    "Recon tools",
-    "Vulnerability scanners",
-    "Exploit tools",
-    "Utils",
-    "Installed"
-  ]
-  const [selectedFilter, setSelectedFilter] = useState("All")
-  const [searchTerm, setSearchTerm] = useState("")
+    'Free',
+    'Recon tools',
+    'Vulnerability scanners',
+    'Exploit tools',
+    'Utils',
+    'Installed',
+  ];
+  const [selectedFilter, setSelectedFilter] = useState('All');
+  const [searchTerm, setSearchTerm] = useState('');
   const categoryRefs = useRef<{
-    [key: string]: React.RefObject<HTMLDivElement | null>
-  }>({})
+    [key: string]: React.RefObject<HTMLDivElement | null>;
+  }>({});
 
   useEffect(() => {
-    filters.forEach(filter => {
-      categoryRefs.current[filter] = React.createRef<HTMLDivElement>()
-    })
-  }, [categoryRefs])
+    filters.forEach((filter) => {
+      categoryRefs.current[filter] = React.createRef<HTMLDivElement>();
+    });
+  }, [categoryRefs]);
 
   const scrollToCategory = (category: string) => {
     categoryRefs.current[category]?.current?.scrollIntoView({
-      behavior: "smooth"
-    })
-  }
+      behavior: 'smooth',
+    });
+  };
 
-  const excludedPluginIds = [0, 99]
+  const excludedPluginIds = [0, 99];
 
   const filteredPlugins = pluginsData
-    .filter(plugin => !excludedPluginIds.includes(plugin.id))
-    .filter(plugin => {
+    .filter((plugin) => !excludedPluginIds.includes(plugin.id))
+    .filter((plugin) => {
       const matchesSearch = plugin.name
         .toLowerCase()
-        .includes(searchTerm.toLowerCase())
-      return matchesSearch
-    })
+        .includes(searchTerm.toLowerCase());
+      return matchesSearch;
+    });
 
   const categorizedPlugins = filters.reduce(
     (acc, filter) => {
-      acc[filter] = filteredPlugins.filter(plugin => {
-        if (filter === "Installed") return plugin.isInstalled
-        if (filter === "Free") return !plugin.isPremium
-        if (filter === "Recon tools") return plugin.categories.includes("recon")
-        if (filter === "Vulnerability scanners")
-          return plugin.categories.includes("vuln-scanners")
-        if (filter === "Exploit tools")
-          return plugin.categories.includes("exploit")
-        if (filter === "Utils") return plugin.categories.includes("utils")
-        return false
-      })
-      return acc
+      acc[filter] = filteredPlugins.filter((plugin) => {
+        if (filter === 'Installed') return plugin.isInstalled;
+        if (filter === 'Free') return !plugin.isPremium;
+        if (filter === 'Recon tools')
+          return plugin.categories.includes('recon');
+        if (filter === 'Vulnerability scanners')
+          return plugin.categories.includes('vuln-scanners');
+        if (filter === 'Exploit tools')
+          return plugin.categories.includes('exploit');
+        if (filter === 'Utils') return plugin.categories.includes('utils');
+        return false;
+      });
+      return acc;
     },
-    {} as { [key: string]: PluginSummary[] }
-  )
+    {} as { [key: string]: PluginSummary[] },
+  );
 
   const startChatWithPlugin = async (pluginValue: PluginID) => {
-    setContentType("chats")
-    await handleNewChat()
+    setContentType('chats');
+    await handleNewChat();
     if (!isEnhancedMenuOpen) {
-      setIsEnhancedMenuOpen(true)
+      setIsEnhancedMenuOpen(true);
     }
-    setSelectedPlugin(pluginValue)
-  }
+    setSelectedPlugin(pluginValue);
+  };
 
   const hasPlugins = Object.values(categorizedPlugins).some(
-    category => category.length > 0
-  )
+    (category) => category.length > 0,
+  );
 
   return (
     <div className="h-full overflow-y-auto">
@@ -105,7 +106,7 @@ export default function ToolsStorePage({
         />
 
         {hasPlugins ? (
-          filters.map(filter => (
+          filters.map((filter) => (
             <div key={filter} ref={categoryRefs.current[filter]}>
               {categorizedPlugins[filter].length > 0 && (
                 <>
@@ -113,7 +114,7 @@ export default function ToolsStorePage({
                     {filter}
                   </h2>
                   <div className="mb-8 grid grid-cols-1 gap-3 md:grid-cols-2">
-                    {categorizedPlugins[filter].map(plugin => (
+                    {categorizedPlugins[filter].map((plugin) => (
                       <PluginCard
                         key={plugin.id}
                         plugin={plugin}
@@ -137,5 +138,5 @@ export default function ToolsStorePage({
         )}
       </div>
     </div>
-  )
+  );
 }

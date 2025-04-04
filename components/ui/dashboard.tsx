@@ -1,54 +1,54 @@
-"use client"
+'use client';
 
-import { handleFileUpload } from "@/components/chat/chat-helpers/file-upload"
-import { UnsupportedFilesDialog } from "@/components/chat/unsupported-files-dialog"
-import { Sidebar } from "@/components/sidebar/sidebar"
-import { Button } from "@/components/ui/button"
-import { Tabs } from "@/components/ui/tabs"
-import { PentestGPTContext } from "@/context/context"
-import useHotkey from "@/lib/hooks/use-hotkey"
-import { cn } from "@/lib/utils"
-import { ContentType } from "@/types"
+import { handleFileUpload } from '@/components/chat/chat-helpers/file-upload';
+import { UnsupportedFilesDialog } from '@/components/chat/unsupported-files-dialog';
+import { Sidebar } from '@/components/sidebar/sidebar';
+import { Button } from '@/components/ui/button';
+import { Tabs } from '@/components/ui/tabs';
+import { PentestGPTContext } from '@/context/context';
+import useHotkey from '@/lib/hooks/use-hotkey';
+import { cn } from '@/lib/utils';
+import type { ContentType } from '@/types';
 import {
   IconFileFilled,
-  IconLayoutSidebarLeftExpand
-} from "@tabler/icons-react"
-import { useSearchParams } from "next/navigation"
+  IconLayoutSidebarLeftExpand,
+} from '@tabler/icons-react';
+import { useSearchParams } from 'next/navigation';
 import {
-  FC,
+  type FC,
   useContext,
   useCallback,
   useRef,
   useState,
   useMemo,
-  useEffect
-} from "react"
-import { useSelectFileHandler } from "@/components/chat/chat-hooks/use-select-file-handler"
+  useEffect,
+} from 'react';
+import { useSelectFileHandler } from '@/components/chat/chat-hooks/use-select-file-handler';
 import {
   ActionTypes,
   getInstalledPlugins,
-  usePluginContext
-} from "../chat/chat-hooks/PluginProvider"
-import { availablePlugins } from "@/lib/tools/tool-store/available-tools"
-import { toast } from "sonner"
-import dynamic from "next/dynamic"
-import { useUIContext } from "@/context/ui-context"
-import { WithTooltip } from "./with-tooltip"
+  usePluginContext,
+} from '../chat/chat-hooks/PluginProvider';
+import { availablePlugins } from '@/lib/tools/tool-store/available-tools';
+import { toast } from 'sonner';
+import dynamic from 'next/dynamic';
+import { useUIContext } from '@/context/ui-context';
+import { WithTooltip } from './with-tooltip';
 
 const DynamicKeyboardShortcutsPopup = dynamic(
-  () => import("../chat/keyboard-shortcuts-popup"),
-  { ssr: false }
-)
+  () => import('../chat/keyboard-shortcuts-popup'),
+  { ssr: false },
+);
 
 const DynamicToolsStore = dynamic(
-  () => import("@/components/tools/tools-store"),
-  { ssr: false }
-)
+  () => import('@/components/tools/tools-store'),
+  { ssr: false },
+);
 
-export const SIDEBAR_WIDTH = 260
+export const SIDEBAR_WIDTH = 260;
 
 interface DashboardProps {
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
 export const Dashboard: FC<DashboardProps> = ({ children }) => {
@@ -56,99 +56,99 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
     isPremiumSubscription,
     contentType,
     setContentType,
-    newMessageImages
-  } = useContext(PentestGPTContext)
+    newMessageImages,
+  } = useContext(PentestGPTContext);
   const { isReadyToChat, isMobile, showSidebar, setShowSidebar } =
-    useUIContext()
+    useUIContext();
 
-  const searchParams = useSearchParams()
-  const tabValue = searchParams.get("tab") || "chats"
-
-  useEffect(() => {
-    setContentType(tabValue as ContentType)
-  }, [])
-
-  const { handleSelectDeviceFile } = useSelectFileHandler()
-  const [isDragging, setIsDragging] = useState(false)
-  const [showConfirmationDialog, setShowConfirmationDialog] = useState(false)
-  const [isKeyboardShortcutsOpen, setIsKeyboardShortcutsOpen] = useState(false)
-  const [pendingFiles, setPendingFiles] = useState<File[]>([])
-
-  const toggleButtonRef = useRef<HTMLButtonElement>(null)
+  const searchParams = useSearchParams();
+  const tabValue = searchParams.get('tab') || 'chats';
 
   useEffect(() => {
-    setContentType(tabValue as ContentType)
-    if (tabValue === "tools") {
-      setShowSidebar(false)
+    setContentType(tabValue as ContentType);
+  }, []);
+
+  const { handleSelectDeviceFile } = useSelectFileHandler();
+  const [isDragging, setIsDragging] = useState(false);
+  const [showConfirmationDialog, setShowConfirmationDialog] = useState(false);
+  const [isKeyboardShortcutsOpen, setIsKeyboardShortcutsOpen] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+
+  const toggleButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    setContentType(tabValue as ContentType);
+    if (tabValue === 'tools') {
+      setShowSidebar(false);
     }
-  }, [tabValue, isMobile, setShowSidebar])
+  }, [tabValue, isMobile, setShowSidebar]);
 
-  useHotkey("s", () => setShowSidebar(prev => !prev))
-  useHotkey("/", () => setIsKeyboardShortcutsOpen(true), { shiftKey: false })
+  useHotkey('s', () => setShowSidebar((prev) => !prev));
+  useHotkey('/', () => setIsKeyboardShortcutsOpen(true), { shiftKey: false });
 
   const handleOverlayClick = useCallback(() => {
     if (isMobile && showSidebar) {
-      setShowSidebar(false)
+      setShowSidebar(false);
     }
-  }, [isMobile, showSidebar, setShowSidebar])
+  }, [isMobile, showSidebar, setShowSidebar]);
 
-  const { state: pluginState, dispatch: pluginDispatch } = usePluginContext()
+  const { state: pluginState, dispatch: pluginDispatch } = usePluginContext();
 
   const installPlugin = (pluginId: number) => {
     pluginDispatch({
       type: ActionTypes.INSTALL_PLUGIN,
-      payload: pluginId
-    })
-  }
+      payload: pluginId,
+    });
+  };
 
   const uninstallPlugin = (pluginId: number) => {
     pluginDispatch({
       type: ActionTypes.UNINSTALL_PLUGIN,
-      payload: pluginId
-    })
-  }
+      payload: pluginId,
+    });
+  };
 
-  const installedPlugins = getInstalledPlugins(pluginState.installedPluginIds)
+  const installedPlugins = getInstalledPlugins(pluginState.installedPluginIds);
 
-  const updatedAvailablePlugins = availablePlugins.map(plugin => ({
+  const updatedAvailablePlugins = availablePlugins.map((plugin) => ({
     ...plugin,
-    isInstalled: installedPlugins.some(p => p.id === plugin.id)
-  }))
+    isInstalled: installedPlugins.some((p) => p.id === plugin.id),
+  }));
 
   const renderContent = () => {
     switch (contentType) {
-      case "tools":
+      case 'tools':
         return (
           <DynamicToolsStore
             pluginsData={updatedAvailablePlugins}
             installPlugin={installPlugin}
             uninstallPlugin={uninstallPlugin}
           />
-        )
-      case "chats":
+        );
+      case 'chats':
       default:
-        return children
+        return children;
     }
-  }
+  };
 
   const onFileDrop = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault()
+    event.preventDefault();
 
     if (!isReadyToChat) {
-      setIsDragging(false)
-      return
+      setIsDragging(false);
+      return;
     }
 
-    const items = event.dataTransfer.items
-    const files: File[] = []
+    const items = event.dataTransfer.items;
+    const files: File[] = [];
 
     if (items && isPremiumSubscription) {
       for (let i = 0; i < Math.min(items.length, 5); i++) {
-        const item = items[i]
-        if (item.kind === "file") {
-          const file = item.getAsFile()
+        const item = items[i];
+        if (item.kind === 'file') {
+          const file = item.getAsFile();
           if (file) {
-            files.push(file)
+            files.push(file);
           }
         }
       }
@@ -157,57 +157,57 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
         setShowConfirmationDialog,
         setPendingFiles,
         handleSelectDeviceFile,
-        newMessageImages
-      )
+        newMessageImages,
+      );
     }
 
     if (items.length > 4) {
-      toast.error("Maximum of 4 files can be dropped at a time.")
+      toast.error('Maximum of 4 files can be dropped at a time.');
     }
 
-    setIsDragging(false)
-  }
+    setIsDragging(false);
+  };
 
   const isDraggingEnabled =
-    contentType !== "tools" && isReadyToChat && isPremiumSubscription
+    contentType !== 'tools' && isReadyToChat && isPremiumSubscription;
 
   const handleConversionConfirmation = () => {
-    pendingFiles.forEach(file => handleSelectDeviceFile(file))
-    setShowConfirmationDialog(false)
-    setPendingFiles([])
-  }
+    pendingFiles.forEach((file) => handleSelectDeviceFile(file));
+    setShowConfirmationDialog(false);
+    setPendingFiles([]);
+  };
 
   const handleCancel = () => {
-    setPendingFiles([])
-    setShowConfirmationDialog(false)
-  }
+    setPendingFiles([]);
+    setShowConfirmationDialog(false);
+  };
 
   const handleDragEnter = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault()
-    setIsDragging(true)
-  }
+    event.preventDefault();
+    setIsDragging(true);
+  };
 
   const handleDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault()
-    setIsDragging(false)
-  }
+    event.preventDefault();
+    setIsDragging(false);
+  };
 
   const onDragOver = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault()
-  }
+    event.preventDefault();
+  };
 
   const handleToggleSidebar = () => {
-    setShowSidebar(prevState => !prevState)
-  }
+    setShowSidebar((prevState) => !prevState);
+  };
 
   const sidebarStyle = useMemo(
     () => ({
-      minWidth: showSidebar ? `${SIDEBAR_WIDTH}px` : "0px",
-      maxWidth: showSidebar ? `${SIDEBAR_WIDTH}px` : "0px",
-      width: showSidebar ? `${SIDEBAR_WIDTH}px` : "0px"
+      minWidth: showSidebar ? `${SIDEBAR_WIDTH}px` : '0px',
+      maxWidth: showSidebar ? `${SIDEBAR_WIDTH}px` : '0px',
+      width: showSidebar ? `${SIDEBAR_WIDTH}px` : '0px',
     }),
-    [showSidebar]
-  )
+    [showSidebar],
+  );
 
   return (
     <div className="flex size-full">
@@ -222,13 +222,13 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
 
       {!showSidebar && (
         <WithTooltip
-          display={"Open sidebar"}
+          display={'Open sidebar'}
           trigger={
             <Button
               ref={toggleButtonRef}
               className={cn(
-                "fixed left-[16px] z-50 size-[32px] cursor-pointer",
-                showSidebar && isMobile ? "top-1/2" : "top-3"
+                'fixed left-[16px] z-50 size-[32px] cursor-pointer',
+                showSidebar && isMobile ? 'top-1/2' : 'top-3',
               )}
               variant="ghost"
               size="icon"
@@ -250,8 +250,8 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
 
       <div
         className={cn(
-          "bg-tertiary h-full duration-200",
-          isMobile ? "fixed z-50" : "relative"
+          'bg-tertiary h-full duration-200',
+          isMobile ? 'fixed z-50' : 'relative',
         )}
         style={sidebarStyle}
       >
@@ -271,15 +271,15 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
 
       <div
         className={cn(
-          "bg-background flex min-w-0 flex-1 flex-col",
-          isDraggingEnabled && "drag-drop-zone"
+          'bg-background flex min-w-0 flex-1 flex-col',
+          isDraggingEnabled && 'drag-drop-zone',
         )}
         {...(isDraggingEnabled
           ? {
               onDrop: onFileDrop,
               onDragOver: onDragOver,
               onDragEnter: handleDragEnter,
-              onDragLeave: handleDragLeave
+              onDragLeave: handleDragLeave,
             }
           : {})}
       >
@@ -297,5 +297,5 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
         )}
       </div>
     </div>
-  )
-}
+  );
+};

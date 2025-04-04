@@ -1,24 +1,24 @@
-import { PentestGPTContext } from "@/context/context"
-import { IconAdjustmentsHorizontal } from "@tabler/icons-react"
-import { FC, useContext, useState } from "react"
-import { Button } from "../ui/button"
+import { PentestGPTContext } from '@/context/context';
+import { IconAdjustmentsHorizontal } from '@tabler/icons-react';
+import { type FC, useContext, useState } from 'react';
+import { Button } from '../ui/button';
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogTitle,
-  DialogTrigger
-} from "../ui/dialog"
-import { Label } from "../ui/label"
-import { Slider } from "../ui/slider"
-import { WithTooltip } from "../ui/with-tooltip"
+  DialogTrigger,
+} from '../ui/dialog';
+import { Label } from '../ui/label';
+import { Slider } from '../ui/slider';
+import { WithTooltip } from '../ui/with-tooltip';
 
-interface ChatRetrievalSettingsProps {}
+type ChatRetrievalSettingsProps = {};
 
 export const ChatRetrievalSettings: FC<ChatRetrievalSettingsProps> = ({}) => {
-  const { sourceCount, setSourceCount } = useContext(PentestGPTContext)
+  const { sourceCount, setSourceCount } = useContext(PentestGPTContext);
 
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -48,8 +48,8 @@ export const ChatRetrievalSettings: FC<ChatRetrievalSettingsProps> = ({}) => {
 
           <Slider
             value={[sourceCount]}
-            onValueChange={values => {
-              setSourceCount(values[0])
+            onValueChange={(values) => {
+              setSourceCount(values[0]);
             }}
             min={1}
             max={10}
@@ -64,5 +64,5 @@ export const ChatRetrievalSettings: FC<ChatRetrievalSettingsProps> = ({}) => {
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};

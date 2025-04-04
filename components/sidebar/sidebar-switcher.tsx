@@ -1,26 +1,26 @@
-import { ContentType } from "@/types"
-import { IconMessage, IconPuzzle } from "@tabler/icons-react"
-import React, { FC, useContext } from "react"
-import { Tabs, TabsList, TabsTrigger } from "../ui/tabs"
-import { PentestGPTContext } from "@/context/context"
-import { usePathname, useRouter } from "next/navigation"
+import type { ContentType } from '@/types';
+import { IconMessage, IconPuzzle } from '@tabler/icons-react';
+import React, { type FC, useContext } from 'react';
+import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
+import { PentestGPTContext } from '@/context/context';
+import { usePathname, useRouter } from 'next/navigation';
 
 interface SidebarSwitcherProps {
-  onContentTypeChange: (contentType: ContentType) => void
+  onContentTypeChange: (contentType: ContentType) => void;
 }
 
 interface LabeledSwitchItemProps {
-  onContentTypeChange: (contentType: ContentType) => void
-  icon: React.ReactNode
-  value: ContentType
-  label: string
+  onContentTypeChange: (contentType: ContentType) => void;
+  icon: React.ReactNode;
+  value: ContentType;
+  label: string;
 }
 
 const LabeledSwitchItem: FC<LabeledSwitchItemProps> = ({
   onContentTypeChange,
   icon,
   value,
-  label
+  label,
 }) => {
   return (
     <TabsTrigger
@@ -31,51 +31,51 @@ const LabeledSwitchItem: FC<LabeledSwitchItemProps> = ({
       {icon}
       <span className="text-sm">{label}</span>
     </TabsTrigger>
-  )
-}
+  );
+};
 
 export const SidebarSwitcher: FC<SidebarSwitcherProps> = ({
-  onContentTypeChange
+  onContentTypeChange,
 }) => {
-  const { isPremiumSubscription, contentType } = useContext(PentestGPTContext)
-  const router = useRouter()
-  const pathname = usePathname()
+  const { isPremiumSubscription, contentType } = useContext(PentestGPTContext);
+  const router = useRouter();
+  const pathname = usePathname();
 
   const tabs = [
     {
       icon: <IconMessage size={22} />,
-      value: "chats" as ContentType,
-      label: "Chats",
+      value: 'chats' as ContentType,
+      label: 'Chats',
       alwaysShow: true,
-      requiresPremium: false
+      requiresPremium: false,
     },
     {
       icon: <IconPuzzle size={22} />,
-      value: "tools" as ContentType,
-      label: "Explore Plugins",
+      value: 'tools' as ContentType,
+      label: 'Explore Plugins',
       alwaysShow: true,
-      requiresPremium: false
-    }
-  ]
+      requiresPremium: false,
+    },
+  ];
 
   const visibleTabs = tabs.filter(
-    tab => tab.alwaysShow || (tab.requiresPremium && isPremiumSubscription)
-  )
+    (tab) => tab.alwaysShow || (tab.requiresPremium && isPremiumSubscription),
+  );
 
   const handleTabChange = (value: ContentType) => {
-    onContentTypeChange(value)
-    router.replace(`${pathname}?tab=${value}`)
-  }
+    onContentTypeChange(value);
+    router.replace(`${pathname}?tab=${value}`);
+  };
 
   return (
     <Tabs
       value={contentType}
       defaultValue="chats"
-      className={`${visibleTabs.length === 3 ? "my-12" : "my-6"} w-full pr-2`}
-      onValueChange={value => handleTabChange(value as ContentType)}
+      className={`${visibleTabs.length === 3 ? 'my-12' : 'my-6'} w-full pr-2`}
+      onValueChange={(value) => handleTabChange(value as ContentType)}
     >
       <TabsList className="flex w-full flex-col gap-1 bg-transparent p-0">
-        {visibleTabs.map(tab => (
+        {visibleTabs.map((tab) => (
           <LabeledSwitchItem
             key={tab.value}
             icon={tab.icon}
@@ -86,5 +86,5 @@ export const SidebarSwitcher: FC<SidebarSwitcherProps> = ({
         ))}
       </TabsList>
     </Tabs>
-  )
-}
+  );
+};

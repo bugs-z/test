@@ -1,12 +1,12 @@
-"use client"
+'use client';
 
-import { TooltipProvider } from "@/components/ui/tooltip"
-import { AlertProvider } from "@/context/alert-context"
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { AlertProvider } from '@/context/alert-context';
 import {
   ThemeProvider as NextThemesProvider,
-  ThemeProviderProps
-} from "next-themes"
-import { FC } from "react"
+  type ThemeProviderProps,
+} from 'next-themes';
+import type { FC } from 'react';
 
 export const Providers: FC<ThemeProviderProps> = ({ children, ...props }) => {
   return (
@@ -15,5 +15,5 @@ export const Providers: FC<ThemeProviderProps> = ({ children, ...props }) => {
         <TooltipProvider>{children}</TooltipProvider>
       </AlertProvider>
     </NextThemesProvider>
-  )
-}
+  );
+};

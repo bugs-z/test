@@ -1,28 +1,28 @@
-"use client"
+'use client';
 
-import { FC, useEffect, useState, memo } from "react"
-import { PentestGPTSVG } from "../icons/pentestgpt-svg"
-import { useTheme } from "next-themes"
+import { type FC, useEffect, useState, memo } from 'react';
+import { PentestGPTSVG } from '../icons/pentestgpt-svg';
+import { useTheme } from 'next-themes';
 
 interface BrandProps {
-  forceTheme?: "dark" | "light"
-  scale?: number
+  forceTheme?: 'dark' | 'light';
+  scale?: number;
 }
 
 const BrandBase: FC<BrandProps> = memo(({ forceTheme, scale = 0.4 }) => {
-  const { theme, systemTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
+  const { theme, systemTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
+    setMounted(true);
+  }, []);
 
   const currentTheme = mounted
-    ? theme === "system"
+    ? theme === 'system'
       ? systemTheme
       : theme
-    : "dark"
-  const brandTheme = forceTheme || (currentTheme === "dark" ? "dark" : "light")
+    : 'dark';
+  const brandTheme = forceTheme || (currentTheme === 'dark' ? 'dark' : 'light');
 
   return (
     <div className="flex cursor-pointer flex-col items-center">
@@ -33,17 +33,17 @@ const BrandBase: FC<BrandProps> = memo(({ forceTheme, scale = 0.4 }) => {
         <div className="text-3xl font-bold tracking-wide">PentestGPT</div>
       )}
     </div>
-  )
-})
+  );
+});
 
-BrandBase.displayName = "BrandBase"
+BrandBase.displayName = 'BrandBase';
 
-export const Brand: FC<BrandProps> = props => (
+export const Brand: FC<BrandProps> = (props) => (
   <BrandBase {...props} scale={0.4} />
-)
-export const BrandSmall: FC<BrandProps> = props => (
+);
+export const BrandSmall: FC<BrandProps> = (props) => (
   <BrandBase {...props} scale={0.25} />
-)
-export const BrandLarge: FC<BrandProps> = props => (
+);
+export const BrandLarge: FC<BrandProps> = (props) => (
   <BrandBase {...props} scale={0.3} />
-)
+);

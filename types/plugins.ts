@@ -1,79 +1,79 @@
 export interface ChatStarter {
-  title: string
-  description: string
-  chatMessage: string
+  title: string;
+  description: string;
+  chatMessage: string;
 }
 
 export interface PluginSummary {
-  id: number
-  name: string
-  categories: string[]
-  value: PluginID
-  icon?: string
-  invertInDarkMode?: boolean
-  description?: string
-  githubRepoUrl?: string
-  isInstalled: boolean
-  isPremium: boolean
-  createdAt: string
-  starters: ChatStarter[]
+  id: number;
+  name: string;
+  categories: string[];
+  value: PluginID;
+  icon?: string;
+  invertInDarkMode?: boolean;
+  description?: string;
+  githubRepoUrl?: string;
+  isInstalled: boolean;
+  isPremium: boolean;
+  createdAt: string;
+  starters: ChatStarter[];
 }
 
 export interface Plugin {
-  id: PluginID
+  id: PluginID;
 }
 
 export enum PluginID {
-  NONE = "none",
-  ENHANCED_SEARCH = "enhanced-search",
-  PLUGINS_STORE = "pluginselector",
+  NONE = 'none',
+  ENHANCED_SEARCH = 'enhanced-search',
+  PLUGINS_STORE = 'pluginselector',
   // Tools
-  WEB_SEARCH = "websearch",
-  BROWSER = "browser",
-  TERMINAL = "terminal",
-  REASONING = "reasoning",
-  REASONING_WEB_SEARCH = "reasoning-web-search",
-  DEEP_RESEARCH = "deep-research",
+  WEB_SEARCH = 'websearch',
+  BROWSER = 'browser',
+  TERMINAL = 'terminal',
+  REASONING = 'reasoning',
+  REASONING_WEB_SEARCH = 'reasoning-web-search',
+  DEEP_RESEARCH = 'deep-research',
   // Pentest tools
-  SSL_SCANNER = "ssl-scanner",
-  DNS_SCANNER = "dns-scanner",
-  PORT_SCANNER = "port-scanner",
-  WAF_DETECTOR = "waf-detector",
-  WHOIS_LOOKUP = "whois-lookup",
-  SUBDOMAIN_FINDER = "subdomain-finder",
-  CVE_MAP = "cve-map",
-  WORDPRESS_SCANNER = "wordpress-scanner",
+  SSL_SCANNER = 'ssl-scanner',
+  DNS_SCANNER = 'dns-scanner',
+  PORT_SCANNER = 'port-scanner',
+  WAF_DETECTOR = 'waf-detector',
+  WHOIS_LOOKUP = 'whois-lookup',
+  SUBDOMAIN_FINDER = 'subdomain-finder',
+  CVE_MAP = 'cve-map',
+  WORDPRESS_SCANNER = 'wordpress-scanner',
 
   // Exploit Tools
-  SQLI_EXPLOITER = "sqli-exploiter",
-  XSS_EXPLOITER = "xss-exploiter",
+  SQLI_EXPLOITER = 'sqli-exploiter',
+  XSS_EXPLOITER = 'xss-exploiter',
 
   // Artifacts
-  ARTIFACTS = "artifacts"
+  ARTIFACTS = 'artifacts',
 }
 
 export const Plugins: Record<PluginID, Plugin> = Object.fromEntries(
-  Object.values(PluginID).map(id => [id, { id }])
-) as Record<PluginID, Plugin>
+  Object.values(PluginID).map((id) => [id, { id }]),
+) as Record<PluginID, Plugin>;
 
-export const PluginList = Object.values(Plugins)
+export const PluginList = Object.values(Plugins);
 
-type PluginUrls = Record<string, string>
+type PluginUrls = Record<string, string>;
 
 export const pluginUrls: PluginUrls = {
-  PENTESTGPT: "https://github.com/hackerai-tech/PentestGPT",
+  PENTESTGPT: 'https://github.com/hackerai-tech/PentestGPT',
   // Pentest tools
-  SSL_SCANNER: "https://github.com/drwetter/testssl.sh/",
-  DNS_SCANNER: "https://github.com/darkoperator/dnsrecon",
-  PORT_SCANNER: "https://github.com/projectdiscovery/naabu",
-  WAF_DETECTOR: "https://github.com/EnableSecurity/wafw00f",
-  WHOIS_LOOKUP: "https://www.whois.com/whois/",
-  SUBDOMAIN_FINDER: "https://github.com/projectdiscovery/subfinder",
-  CVE_MAP: "https://github.com/projectdiscovery/cvemap",
-  WORDPRESS_SCANNER: "https://github.com/wpscanteam/wpscan",
+  SSL_SCANNER: 'https://github.com/drwetter/testssl.sh/',
+  DNS_SCANNER: 'https://github.com/darkoperator/dnsrecon',
+  PORT_SCANNER: 'https://nmap.org',
+  WAF_DETECTOR: 'https://github.com/EnableSecurity/wafw00f',
+  WHOIS_LOOKUP: 'https://www.whois.com/whois/',
+  SUBDOMAIN_FINDER: 'https://github.com/projectdiscovery/subfinder',
+  CVE_MAP: 'https://github.com/projectdiscovery/cvemap',
+  WORDPRESS_SCANNER: 'https://github.com/wpscanteam/wpscan',
   // Exploit Tools
-  SQLI_EXPLOITER: "https://github.com/sqlmapproject/sqlmap",
-  XSS_EXPLOITER: "https://github.com/hahwul/dalfox",
+  SQLI_EXPLOITER: 'https://github.com/sqlmapproject/sqlmap',
+  XSS_EXPLOITER: 'https://github.com/hahwul/dalfox',
   // Artifacts
-  ARTIFACTS: "https://github.com/e2b-dev/fragments"
-}
+  ARTIFACTS: 'https://github.com/e2b-dev/fragments',
+};

@@ -1,144 +1,146 @@
-import { Sandbox } from "@e2b/code-interpreter"
+import type { Sandbox } from '@e2b/code-interpreter';
 
-const MAX_EXECUTION_TIME = 10 * 60 * 1000
-const ENCODER = new TextEncoder()
+const MAX_EXECUTION_TIME = 10 * 60 * 1000;
+const ENCODER = new TextEncoder();
 
 interface ExecutionError {
-  name: string
-  stderr?: string
-  value?: string
+  name: string;
+  stderr?: string;
+  value?: string;
   result?: {
-    stderr?: string
-    stdout?: string
-    exitCode?: number
-  }
+    stderr?: string;
+    stdout?: string;
+    exitCode?: number;
+  };
 }
 
 export const executeTerminalCommand = async ({
   userID,
   command,
   usePersistentSandbox = false,
-  sandbox = null
+  sandbox = null,
 }: {
-  userID: string
-  command: string
-  usePersistentSandbox?: boolean
-  sandbox?: Sandbox | null
+  userID: string;
+  command: string;
+  usePersistentSandbox?: boolean;
+  sandbox?: Sandbox | null;
 }): Promise<ReadableStream<Uint8Array>> => {
-  let hasTerminalOutput = false
-  let currentBlock: "stdout" | "stderr" | null = null
+  let hasTerminalOutput = false;
+  let currentBlock: 'stdout' | 'stderr' | null = null;
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       // Reset state for new command
-      hasTerminalOutput = false
+      hasTerminalOutput = false;
       if (currentBlock) {
-        controller.enqueue(ENCODER.encode("\n```"))
-        currentBlock = null
+        controller.enqueue(ENCODER.encode('\n```'));
+        currentBlock = null;
       }
 
-      controller.enqueue(ENCODER.encode(`\n\`\`\`terminal\n${command}\n\`\`\``))
+      controller.enqueue(
+        ENCODER.encode(`\n\`\`\`terminal\n${command}\n\`\`\``),
+      );
       console.log(`[${userID}] Starting terminal execution:
         - Command: ${command}
         - Persistent: ${usePersistentSandbox}
-        - Timeout: ${MAX_EXECUTION_TIME}ms`)
+        - Timeout: ${MAX_EXECUTION_TIME}ms`);
 
       try {
         if (!sandbox) {
-          throw new Error("Failed to create or connect to sandbox")
+          throw new Error('Failed to create or connect to sandbox');
         }
 
         const execution = await sandbox.commands.run(command, {
           timeoutMs: MAX_EXECUTION_TIME,
           onStdout: (data: string) => {
-            hasTerminalOutput = true
-            if (currentBlock !== "stdout") {
+            hasTerminalOutput = true;
+            if (currentBlock !== 'stdout') {
               if (currentBlock) {
-                controller.enqueue(ENCODER.encode("\n```"))
+                controller.enqueue(ENCODER.encode('\n```'));
               }
-              controller.enqueue(ENCODER.encode("\n```stdout\n"))
-              currentBlock = "stdout"
+              controller.enqueue(ENCODER.encode('\n```stdout\n'));
+              currentBlock = 'stdout';
             }
-            controller.enqueue(ENCODER.encode(data))
+            controller.enqueue(ENCODER.encode(data));
           },
           onStderr: (data: string) => {
-            hasTerminalOutput = true
-            if (currentBlock !== "stderr") {
+            hasTerminalOutput = true;
+            if (currentBlock !== 'stderr') {
               if (currentBlock) {
-                controller.enqueue(ENCODER.encode("\n```"))
+                controller.enqueue(ENCODER.encode('\n```'));
               }
-              controller.enqueue(ENCODER.encode("\n```stderr\n"))
-              currentBlock = "stderr"
+              controller.enqueue(ENCODER.encode('\n```stderr\n'));
+              currentBlock = 'stderr';
             }
-            controller.enqueue(ENCODER.encode(data))
-          }
-        })
+            controller.enqueue(ENCODER.encode(data));
+          },
+        });
 
         // Close any open block at the end
         if (currentBlock) {
-          controller.enqueue(ENCODER.encode("\n```"))
-          currentBlock = null
+          controller.enqueue(ENCODER.encode('\n```'));
+          currentBlock = null;
         }
 
         // Handle any execution errors
         if (execution.error) {
-          console.error(`[${userID}] Execution error:`, execution.error)
+          console.error(`[${userID}] Execution error:`, execution.error);
           const error =
-            typeof execution.error === "object"
+            typeof execution.error === 'object'
               ? (execution.error as ExecutionError)
-              : { name: "UnknownError" }
-          const errorMessage = error.name.includes("TimeoutError")
+              : { name: 'UnknownError' };
+          const errorMessage = error.name.includes('TimeoutError')
             ? `Command timed out after ${MAX_EXECUTION_TIME / 1000} seconds. Try a shorter command or split it.`
             : error.result?.stderr ||
               error.stderr ||
               error.value ||
-              "Unknown error"
+              'Unknown error';
           controller.enqueue(
-            ENCODER.encode(`\n\`\`\`stderr\n${errorMessage}\n\`\`\``)
-          )
+            ENCODER.encode(`\n\`\`\`stderr\n${errorMessage}\n\`\`\``),
+          );
         }
       } catch (error) {
-        console.error(`[${userID}] Error:`, error)
+        console.error(`[${userID}] Error:`, error);
         if (error instanceof Error && isConnectionError(error)) {
-          sandbox?.kill()
+          sandbox?.kill();
           controller.enqueue(
             ENCODER.encode(
-              `\n\`\`\`stderr\nThe Terminal is currently unavailable. Our team is working on a fix. Please try again later.\n\`\`\``
-            )
-          )
+              `\n\`\`\`stderr\nThe Terminal is currently unavailable. Our team is working on a fix. Please try again later.\n\`\`\``,
+            ),
+          );
         }
       } finally {
         // Ensure any open block is closed before ending the stream
         if (currentBlock) {
-          controller.enqueue(ENCODER.encode("\n```"))
-          currentBlock = null
+          controller.enqueue(ENCODER.encode('\n```'));
+          currentBlock = null;
         }
-        controller.close()
+        controller.close();
       }
-    }
-  })
+    },
+  });
 
-  return stream
-}
+  return stream;
+};
 
 function isConnectionError(error: Error): boolean {
   return (
-    (error.name === "TimeoutError" &&
-      error.message.includes("Cannot connect to sandbox")) ||
-    error.message.includes("503 Service Unavailable") ||
-    error.message.includes("504 Gateway Timeout") ||
-    error.message.includes("502 Bad Gateway")
-  )
+    (error.name === 'TimeoutError' &&
+      error.message.includes('Cannot connect to sandbox')) ||
+    error.message.includes('503 Service Unavailable') ||
+    error.message.includes('504 Gateway Timeout') ||
+    error.message.includes('502 Bad Gateway')
+  );
 }
 
 class CustomExecutionError extends Error {
-  value: string
-  traceback: string
+  value: string;
+  traceback: string;
 
   constructor(name: string, value: string, traceback: string) {
-    super(name)
-    this.name = name
-    this.value = value
-    this.traceback = traceback
+    super(name);
+    this.name = name;
+    this.value = value;
+    this.traceback = traceback;
   }
 }

@@ -1,15 +1,13 @@
-import { FC } from "react"
-import { usePromptAndCommand } from "./chat-hooks/use-prompt-and-command"
-import { ToolPicker } from "./tool-picker"
-import { useUIContext } from "@/context/ui-context"
+import type { FC } from 'react';
+import { usePromptAndCommand } from './chat-hooks/use-prompt-and-command';
+import { ToolPicker } from './tool-picker';
+import { useUIContext } from '@/context/ui-context';
 
-interface ChatCommandInputProps {}
-
-export const ChatCommandInput: FC<ChatCommandInputProps> = ({}) => {
+export const ChatCommandInput: FC = () => {
   const { isToolPickerOpen, setIsToolPickerOpen, slashCommand, focusTool } =
-    useUIContext()
+    useUIContext();
 
-  const { handleSelectTool } = usePromptAndCommand()
+  const { handleSelectTool } = usePromptAndCommand();
 
   return (
     <>
@@ -23,5 +21,5 @@ export const ChatCommandInput: FC<ChatCommandInputProps> = ({}) => {
         />
       </div>
     </>
-  )
-}
+  );
+};
