@@ -186,15 +186,15 @@ export const UpgradePlan: FC = () => {
             onButtonClick={() => handleUpgradeClick('pro')}
             savingsNote={getYearlySavingsNote('pro')}
           >
+            <PlanStatement>Access to smarter models</PlanStatement>
             <PlanStatement>
-              Access to additional PentestGPT models
+              Extended limits on messaging, web search, reasoning, and plugins
             </PlanStatement>
             <PlanStatement>
-              Access to file uploads, vision, web search, browsing and deep
-              research
+              Access to file uploads, vision, browsing, and deep research
             </PlanStatement>
             <PlanStatement>Access to advanced plugins</PlanStatement>
-            <PlanStatement>Access to Terminal</PlanStatement>
+            <PlanStatement>Access to terminal</PlanStatement>
             <PlanStatement>Opportunities to test new features</PlanStatement>
           </PlanCard>
 
