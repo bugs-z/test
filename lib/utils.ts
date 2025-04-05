@@ -144,3 +144,5 @@ export const sortByDateCategory = <T extends DateSortable>(
         new Date(a.updated_at || a.created_at).getTime(),
     );
 };
+
+export const isProductionEnvironment = process.env.NODE_ENV === 'production';

@@ -6,6 +6,7 @@ const config: NextConfig = require('@ducanh2912/next-pwa').default({
   skipWaiting: true,
 })({
   reactStrictMode: true,
+  skipTrailingSlashRedirect: true,
   images: {
     remotePatterns: [
       {
@@ -24,6 +25,22 @@ const config: NextConfig = require('@ducanh2912/next-pwa').default({
     unoptimized: true,
   },
   serverExternalPackages: ['sharp', 'onnxruntime-node'],
+  async rewrites() {
+    return [
+      {
+        source: '/ingest/static/:path*',
+        destination: 'https://us-assets.i.posthog.com/static/:path*',
+      },
+      {
+        source: '/ingest/:path*',
+        destination: 'https://us.i.posthog.com/:path*',
+      },
+      {
+        source: '/ingest/decide',
+        destination: 'https://us.i.posthog.com/decide',
+      },
+    ];
+  },
   async headers() {
     return [
       {

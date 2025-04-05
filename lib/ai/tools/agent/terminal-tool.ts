@@ -28,11 +28,10 @@ export const createTerminalTool = (context: ToolContext) => {
     dataStream,
     sandbox: initialSandbox,
     userID,
-    persistentSandbox: initialPersistentSandbox = false,
+    persistentSandbox: initialPersistentSandbox = true,
     selectedPlugin,
     terminalTemplate = TEMPORARY_SANDBOX_TEMPLATE,
     setSandbox,
-    setPersistentSandbox,
   } = context;
 
   let sandbox = initialSandbox;
@@ -42,24 +41,16 @@ export const createTerminalTool = (context: ToolContext) => {
     description: 'Execute commands in the sandbox environment.',
     parameters: z.object({
       command: z.string().describe('Command to execute'),
-      /*...(selectedPlugin
+      ...(selectedPlugin
         ? {}
         : {
-            usePersistentSandbox: z
+            useTemporarySandbox: z
               .boolean()
-              .optional()
-              .describe(
-                "Use persistent sandbox (30-day storage) instead of temporary"
-              )
-          })*/
+              .describe('Use temporary sandbox (15-minute timeout).'),
+          }),
     }),
     execute: async (args) => {
-      const { command } = args;
-      // Handle usePersistentSandbox with type safety
-      const usePersistentSandbox = false;
-      /* selectedPlugin
-        ? false
-        : Boolean(args.usePersistentSandbox) */
+      const { command, useTemporarySandbox } = args;
 
       // Validate plugin-specific commands
       if (selectedPlugin) {
@@ -70,11 +61,10 @@ export const createTerminalTool = (context: ToolContext) => {
       }
 
       // Set sandbox type
-      persistentSandbox = usePersistentSandbox;
-
-      // Update the persistentSandbox value in the parent context if needed
-      if (setPersistentSandbox) {
-        setPersistentSandbox(persistentSandbox);
+      if (selectedPlugin) {
+        persistentSandbox = false; // Always use temporary sandbox for plugins
+      } else {
+        persistentSandbox = !Boolean(useTemporarySandbox);
       }
 
       dataStream.writeData({
@@ -108,7 +98,9 @@ export const createTerminalTool = (context: ToolContext) => {
       if (posthog) {
         posthog.capture({
           distinctId: userID,
-          event: 'terminal_executed',
+          event: selectedPlugin
+            ? `${selectedPlugin}_executed`
+            : 'terminal_executed',
           properties: {
             command: command,
             persistentSandbox: persistentSandbox,

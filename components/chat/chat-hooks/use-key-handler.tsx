@@ -1,4 +1,7 @@
 import { useUIContext } from '@/context/ui-context';
+import { PentestGPTContext } from '@/context/context';
+import { useContext } from 'react';
+import { toast } from 'sonner';
 
 interface UseKeyboardHandlerProps {
   isTyping: boolean;
@@ -14,6 +17,7 @@ export const useKeyboardHandler = ({
   handleSelectDeviceFile,
 }: UseKeyboardHandlerProps) => {
   const { isToolPickerOpen, focusTool, setFocusTool } = useUIContext();
+  const { isPremiumSubscription } = useContext(PentestGPTContext);
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
     // Handle send message on Enter
@@ -36,6 +40,12 @@ export const useKeyboardHandler = ({
     const items = event.clipboardData.items;
     for (const item of items) {
       if (item.type.indexOf('image') === 0) {
+        if (!isPremiumSubscription) {
+          toast.error(
+            'Image uploads are only available for pro and team users. Please upgrade to upload images.',
+          );
+          return;
+        }
         const file = item.getAsFile();
         if (!file) return;
         handleSelectDeviceFile(file);

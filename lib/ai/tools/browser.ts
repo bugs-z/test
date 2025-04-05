@@ -170,7 +170,7 @@ export async function executeBrowserTool({
 
   const { profile, messages, dataStream } = config;
   const { systemPrompt, model } = await getProviderConfig(profile);
-  
+
   const posthog = PostHogClient();
   if (posthog) {
     posthog.capture({

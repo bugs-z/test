@@ -1,7 +1,8 @@
 import { PostHog } from 'posthog-node';
+import { isProductionEnvironment } from '@/lib/utils';
 
 export default function PostHogClient() {
-  if (!process.env.NEXT_PUBLIC_POSTHOG_KEY) {
+  if (!process.env.NEXT_PUBLIC_POSTHOG_KEY || !isProductionEnvironment) {
     return null;
   }
 

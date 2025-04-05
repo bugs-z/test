@@ -7,7 +7,7 @@ import {
 import llmConfig from '@/lib/models/llm-config';
 import { checkRatelimitOnApi } from '@/lib/server/ratelimiter';
 import { getAIProfile } from '@/lib/server/server-chat-helpers';
-import { createDataStreamResponse, streamText } from 'ai';
+import { createDataStreamResponse, smoothStream, streamText } from 'ai';
 import { createToolSchemas } from '@/lib/ai/tools/toolSchemas';
 import { PluginID } from '@/types/plugins';
 import { executeWebSearchTool } from '@/lib/ai/tools/web-search';
@@ -20,6 +20,7 @@ import { executeDeepResearchTool } from '@/lib/ai/tools/deep-research';
 import { myProvider } from '@/lib/ai/providers';
 import { terminalPlugins } from '@/lib/ai/terminal-utils';
 import { getModerationResult } from '@/lib/server/moderation';
+import PostHogClient from '@/app/posthog';
 
 export const preferredRegion = [
   'iad1',
@@ -188,6 +189,14 @@ export async function POST(request: Request) {
         }
     }
 
+    const posthog = PostHogClient();
+    if (posthog) {
+      posthog.capture({
+        distinctId: profile.user_id,
+        event: 'chat-model-gpt-large',
+      });
+    }
+
     return createDataStreamResponse({
       execute: (dataStream) => {
         if (ragUsed) dataStream.writeData({ ragUsed, ragId });
@@ -206,6 +215,7 @@ export async function POST(request: Request) {
           maxTokens: 2048,
           abortSignal: request.signal,
           tools: getSelectedSchemas(['browser', 'webSearch', 'terminal']),
+          experimental_transform: smoothStream({ chunking: 'word' }),
         });
 
         result.mergeIntoDataStream(dataStream);

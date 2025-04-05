@@ -129,8 +129,8 @@ function determineShouldUncensorResponse(
     forbiddenCategories.includes(category),
   );
 
-  const minModerationLevel = 0.4;
-  const maxModerationLevel = 1.0;
+  const minModerationLevel = 0.1;
+  const maxModerationLevel = 0.9;
   return (
     moderationLevel >= minModerationLevel &&
     moderationLevel <= maxModerationLevel &&

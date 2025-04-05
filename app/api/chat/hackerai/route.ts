@@ -3,7 +3,6 @@ import { buildSystemPrompt } from '@/lib/ai/prompts';
 import {
   filterEmptyAssistantMessages,
   handleAssistantMessages,
-  addAuthMessage,
   messagesIncludeImages,
   toVercelChatMessages,
   validateMessages,
@@ -11,7 +10,7 @@ import {
 import { handleErrorResponse } from '@/lib/models/api-error';
 import llmConfig from '@/lib/models/llm-config';
 import { checkRatelimitOnApi } from '@/lib/server/ratelimiter';
-import { createDataStreamResponse, streamText } from 'ai';
+import { createDataStreamResponse, smoothStream, streamText } from 'ai';
 import { getModerationResult } from '@/lib/server/moderation';
 import { PluginID } from '@/types/plugins';
 import { executeWebSearchTool } from '@/lib/ai/tools/web-search';
@@ -22,9 +21,11 @@ import { executeReasoningWebSearchTool } from '@/lib/ai/tools/reasoning-web-sear
 import { processRag } from '@/lib/rag/rag-processor';
 import { executeDeepResearchTool } from '@/lib/ai/tools/deep-research';
 import { myProvider } from '@/lib/ai/providers';
-import { createToolSchemas } from '@/lib/ai/tools/toolSchemas';
+// import { createToolSchemas } from '@/lib/ai/tools/toolSchemas';
 import { executeTerminalAgent } from '@/lib/ai/tools/terminal-agent';
 import { terminalPlugins } from '@/lib/ai/terminal-utils';
+import { geolocation } from '@vercel/functions';
+import PostHogClient from '@/app/posthog';
 
 export const preferredRegion = [
   'iad1',
@@ -105,28 +106,33 @@ export async function POST(request: Request) {
     let shouldUncensorResponse = false;
 
     const handleMessages = (shouldUncensor: boolean) => {
-      if (includeImages && config.isLargeModel) {
-        selectedChatModel = 'vision-model';
-      }
+      // if (includeImages && config.isLargeModel) {
+      //   selectedChatModel = 'vision-model';
+      // }
 
       if (shouldUncensor) {
-        addAuthMessage(messages);
-        // if (
-        //   !includeImages &&
-        //   selectedPlugin !== PluginID.WEB_SEARCH &&
-        //   selectedPlugin !== PluginID.REASONING &&
-        //   selectedPlugin !== PluginID.REASONING_WEB_SEARCH &&
-        //   selectedPlugin !== PluginID.DEEP_RESEARCH &&
-        //   !terminalPlugins.includes(selectedPlugin as PluginID)
-        // ) {
-        //   return handleAssistantMessages(messages);
-        // }
+        if (
+          !includeImages &&
+          selectedPlugin !== PluginID.WEB_SEARCH &&
+          selectedPlugin !== PluginID.REASONING &&
+          selectedPlugin !== PluginID.REASONING_WEB_SEARCH &&
+          selectedPlugin !== PluginID.DEEP_RESEARCH &&
+          !terminalPlugins.includes(selectedPlugin as PluginID)
+        ) {
+          return handleAssistantMessages(messages);
+        }
       }
 
       return filterEmptyAssistantMessages(messages);
     };
+    const { region } = geolocation(request);
 
-    if (llmConfig.openai.apiKey && !isContinuation) {
+    if (
+      llmConfig.openai.apiKey &&
+      !isContinuation &&
+      region !== 'bom1' &&
+      region !== 'cpt1'
+    ) {
       const { shouldUncensorResponse: moderationResult } =
         await getModerationResult(
           messages,
@@ -218,6 +224,14 @@ export async function POST(request: Request) {
     // Remove invalid message exchanges
     const validatedMessages = validateMessages(cleanedMessages);
 
+    const posthog = PostHogClient();
+    if (posthog) {
+      posthog.capture({
+        distinctId: profile.user_id,
+        event: selectedChatModel,
+      });
+    }
+
     try {
       return createDataStreamResponse({
         execute: (dataStream) => {
@@ -236,21 +250,11 @@ export async function POST(request: Request) {
             messages: toVercelChatMessages(validatedMessages, includeImages),
             maxTokens: 2048,
             abortSignal: request.signal,
+            experimental_transform: smoothStream({ chunking: 'word' }),
             // tools:
             //   config.isLargeModel && !ragUsed && !shouldUncensorResponse
             //     ? getSelectedSchemas(['browser', 'webSearch'])
             //     : undefined,
-            ...(config.isLargeModel
-              ? {
-                  providerOptions: {
-                    openrouter: {
-                      provider: {
-                        order: ['Parasail'],
-                      },
-                    },
-                  },
-                }
-              : {}),
           });
 
           result.mergeIntoDataStream(dataStream);

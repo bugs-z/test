@@ -20,6 +20,7 @@ interface TerminalBlock {
   command: string;
   stdout: string;
   stderr: string;
+  error?: string;
 }
 
 interface ContentBlock {
@@ -104,7 +105,11 @@ export const MessageTerminal: React.FC<MessageTerminalProps> = ({
           >
             <div className="mt-4">
               <MessageMarkdown
-                content={`\`\`\`terminal\n${block.command}\n\`\`\``}
+                content={
+                  block.command.startsWith('<terminal-command')
+                    ? block.command
+                    : `\`\`\`terminal\n${block.command}\n\`\`\``
+                }
                 isAssistant={true}
               />
               {block.stdout && (
@@ -115,6 +120,11 @@ export const MessageTerminal: React.FC<MessageTerminalProps> = ({
               {block.stderr && (
                 <div className="mt-2">
                   {renderContent(`\`\`\`stderr\n${block.stderr}\n\`\`\``)}
+                </div>
+              )}
+              {block.error && (
+                <div className="mt-2 text-red-500">
+                  {renderContent(`\`\`\`stderr\n${block.error}\n\`\`\``)}
                 </div>
               )}
             </div>
@@ -146,10 +156,13 @@ export const MessageTerminal: React.FC<MessageTerminalProps> = ({
 const parseContent = (content: string): ContentBlock[] => {
   const blocks: ContentBlock[] = [];
   const blockRegex =
-    /(```terminal\n[\s\S]*?```(?:\n```(?:stdout|stderr)[\s\S]*?(?:```|$))*)/g;
-  const terminalRegex = /```terminal\n([\s\S]*?)```/;
+    /((?:<terminal-command[^>]*>[\s\S]*?<\/terminal-command>|```terminal\n[\s\S]*?```)(?:\n```(?:stdout|stderr)[\s\S]*?(?:```|$))*(?:\s*<terminal-error>[\s\S]*?<\/terminal-error>)?)/g;
+  const terminalXmlRegex =
+    /<terminal-command(?:\s+[^>]*)?>([\s\S]*?)<\/terminal-command>/;
+  const terminalMarkdownRegex = /```terminal\n([\s\S]*?)```/;
   const stdoutRegex = /```stdout\n([\s\S]*?)(?:```|$)/;
   const stderrRegex = /```stderr\n([\s\S]*?)(?:```|$)/;
+  const errorRegex = /<terminal-error>([\s\S]*?)<\/terminal-error>/;
 
   let lastIndex = 0;
   let match;
@@ -163,17 +176,24 @@ const parseContent = (content: string): ContentBlock[] => {
     }
 
     const block = match[1];
-    const terminalMatch = block.match(terminalRegex);
+    const terminalXmlMatch = block.match(terminalXmlRegex);
+    const terminalMarkdownMatch = block.match(terminalMarkdownRegex);
     const stdoutMatch = block.match(stdoutRegex);
     const stderrMatch = block.match(stderrRegex);
+    const errorMatch = block.match(errorRegex);
 
-    if (terminalMatch) {
+    if (terminalXmlMatch || terminalMarkdownMatch) {
       blocks.push({
         type: 'terminal',
         content: {
-          command: terminalMatch[1].trim(),
+          command: (
+            terminalXmlMatch?.[1] ||
+            terminalMarkdownMatch?.[1] ||
+            ''
+          ).trim(),
           stdout: stdoutMatch ? stdoutMatch[1].trim() : '',
           stderr: stderrMatch ? stderrMatch[1].trim() : '',
+          error: errorMatch ? errorMatch[1].trim() : undefined,
         },
       });
     }

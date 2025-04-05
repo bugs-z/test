@@ -12,7 +12,6 @@ import { isFreePlugin } from '@/lib/tools/tool-store/tools-helper';
 import { getToolsWithAnswerPrompt } from '@/lib/tools/tool-store/prompts/system-prompt';
 import { getTerminalTemplate } from '@/lib/tools/tool-store/tools-helper';
 import { myProvider } from '@/lib/ai/providers';
-import PostHogClient from '@/app/posthog';
 
 // Constants
 const TEMPORARY_SANDBOX_TEMPLATE = 'temporary-sandbox';
@@ -83,17 +82,6 @@ export async function executeTerminalAgent({
     const cleanedMessages = isTerminalContinuation
       ? messages.slice(0, -1)
       : messages;
-
-    const posthog = PostHogClient();
-    if (posthog) {
-      posthog.capture({
-        distinctId: profile.user_id,
-        event: 'terminal_agent_executed',
-        properties: {
-          model: selectedChatModel,
-        },
-      });
-    }
 
     // Functions to update sandbox and persistentSandbox from tools
     const setSandbox = (newSandbox: Sandbox) => {

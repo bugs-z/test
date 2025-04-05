@@ -35,7 +35,7 @@ export async function executeReasonLLMTool({
 
   const { messages, profile, dataStream } = config;
   const { systemPrompt, model } = await getProviderConfig(profile);
-  
+
   const posthog = PostHogClient();
   if (posthog) {
     posthog.capture({

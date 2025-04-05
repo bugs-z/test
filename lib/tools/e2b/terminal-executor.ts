@@ -38,7 +38,9 @@ export const executeTerminalCommand = async ({
       }
 
       controller.enqueue(
-        ENCODER.encode(`\n\`\`\`terminal\n${command}\n\`\`\``),
+        ENCODER.encode(
+          `<terminal-command sandbox-type="${usePersistentSandbox ? 'persistent' : 'temporary'}">${command}</terminal-command>`,
+        ),
       );
 
       try {
@@ -61,12 +63,12 @@ export const executeTerminalCommand = async ({
           },
           onStderr: (data: string) => {
             hasTerminalOutput = true;
-            if (currentBlock !== 'stderr') {
+            if (currentBlock !== 'stdout') {
               if (currentBlock) {
                 controller.enqueue(ENCODER.encode('\n```'));
               }
-              controller.enqueue(ENCODER.encode('\n```stderr\n'));
-              currentBlock = 'stderr';
+              controller.enqueue(ENCODER.encode('\n```stdout\n'));
+              currentBlock = 'stdout';
             }
             controller.enqueue(ENCODER.encode(data));
           },
@@ -92,7 +94,7 @@ export const executeTerminalCommand = async ({
               error.value ||
               'Unknown error';
           controller.enqueue(
-            ENCODER.encode(`\n\`\`\`stderr\n${errorMessage}\n\`\`\``),
+            ENCODER.encode(`<terminal-error>${errorMessage}</terminal-error>`),
           );
         }
       } catch (error) {
@@ -101,7 +103,7 @@ export const executeTerminalCommand = async ({
           sandbox?.kill();
           controller.enqueue(
             ENCODER.encode(
-              `\n\`\`\`stderr\nThe Terminal is currently unavailable. Our team is working on a fix. Please try again later.\n\`\`\``,
+              `<terminal-error>The Terminal is currently unavailable. Our team is working on a fix. Please try again later.</terminal-error>`,
             ),
           );
         }

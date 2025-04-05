@@ -9,6 +9,7 @@ import { PluginProvider } from '@/components/chat/chat-hooks/PluginProvider';
 import { createClient } from '@/lib/supabase/server';
 import { UIState } from '@/components/utility/ui-state';
 import { Toaster } from '@/components/ui/sonner';
+import { PostHogProvider } from '@/app/providers';
 
 const inter = Inter({ subsets: ['latin'] });
 const APP_NAME = 'PentestGPT';
@@ -107,21 +108,23 @@ export default async function RootLayout({ children }: RootLayoutProps) {
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body className={`${inter.className} h-full`}>
-        <Providers attribute="class" defaultTheme="dark">
-          <Toaster richColors position="top-center" duration={3000} />
-          <div className="bg-background text-foreground flex h-dvh flex-col items-center overflow-x-auto">
-            {user ? (
-              <PluginProvider>
-                <GlobalState user={user}>
-                  <UIState>{children}</UIState>
-                </GlobalState>
-              </PluginProvider>
-            ) : (
-              children
-            )}
-          </div>
-          <GlobalAlertDialog />
-        </Providers>
+        <PostHogProvider>
+          <Providers attribute="class" defaultTheme="dark">
+            <Toaster richColors position="top-center" duration={3000} />
+            <div className="bg-background text-foreground flex h-dvh flex-col items-center overflow-x-auto">
+              {user ? (
+                <PluginProvider>
+                  <GlobalState user={user}>
+                    <UIState>{children}</UIState>
+                  </GlobalState>
+                </PluginProvider>
+              ) : (
+                children
+              )}
+            </div>
+            <GlobalAlertDialog />
+          </Providers>
+        </PostHogProvider>
       </body>
     </html>
   );
