@@ -78,7 +78,7 @@ export const ModelSelect: FC<ModelSelectProps> = ({
       isUpgrade: true,
     },
     {
-      modelId: LargeModel.modelId,
+      modelId: SmallModel.modelId,
       modelName: 'PentestGPT',
       description: 'Great for everyday tasks',
     },
