@@ -130,7 +130,8 @@ function determineShouldUncensorResponse(
   );
 
   const minModerationLevel = 0.1;
-  const maxModerationLevel = isLargeModel ? 0.9 : 1.0;
+  // NEVER RAISE HIGHER THAN 0.9
+  const maxModerationLevel = 0.9;
   return (
     moderationLevel >= minModerationLevel &&
     moderationLevel <= maxModerationLevel &&

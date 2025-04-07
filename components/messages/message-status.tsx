@@ -49,11 +49,15 @@ export const MessageStatus: FC<MessageStatusProps> = ({ finish_reason }) => {
     <div className="relative mb-4 flex justify-start">
       <Badge
         variant="outline"
-        className={cn('rounded-full border-0 px-3 py-1.5 text-sm', bgClass)}
+        className={cn(
+          'rounded-full border-0 px-3 py-1.5 text-sm max-w-full',
+          'whitespace-normal break-words',
+          bgClass,
+        )}
         style={{ color }}
       >
-        <Icon className="mr-1" style={{ color }} />
-        {text}
+        <Icon className="mr-1 shrink-0" style={{ color }} />
+        <span className="break-words">{text}</span>
       </Badge>
     </div>
   );

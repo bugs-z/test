@@ -85,9 +85,9 @@ export async function POST(request: Request) {
     let shouldUncensorResponse = false;
 
     const handleMessages = (shouldUncensor: boolean) => {
-      // if (includeImages && config.isLargeModel) {
-      //   selectedChatModel = 'vision-model';
-      // }
+      if (includeImages && config.isLargeModel) {
+        selectedChatModel = 'vision-model';
+      }
 
       if (shouldUncensor) {
         addAuthMessage(messages);
@@ -106,13 +106,15 @@ export async function POST(request: Request) {
 
       return filterEmptyAssistantMessages(messages);
     };
-    const { region } = geolocation(request);
 
+    const { region } = geolocation(request);
     if (
       llmConfig.openai.apiKey &&
       !isContinuation &&
       region !== 'bom1' &&
-      region !== 'cpt1'
+      region !== 'cpt1' &&
+      !terminalPlugins.includes(selectedPlugin as PluginID) &&
+      !isTerminalContinuation
     ) {
       const { shouldUncensorResponse: moderationResult } =
         await getModerationResult(
@@ -150,6 +152,19 @@ export async function POST(request: Request) {
               dataStream,
               isLargeModel: config.isLargeModel,
               directToolCall: true,
+            },
+          });
+        });
+
+      case PluginID.TERMINAL:
+        return createStreamResponse(async (dataStream) => {
+          await executeTerminalAgent({
+            config: {
+              messages,
+              profile,
+              dataStream,
+              isTerminalContinuation,
+              abortSignal: request.signal,
             },
           });
         });

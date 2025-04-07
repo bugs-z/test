@@ -43,17 +43,11 @@ export const handleHostedChat = async (
   const { provider } = modelData;
   let apiEndpoint = `/api/chat/${provider}`;
 
-  // TODO: This way not work as expected because of free plugins
-  if (selectedPlugin === PluginID.TERMINAL) {
-    apiEndpoint = '/api/chat/openai';
-    setToolInUse(PluginID.TERMINAL);
-  } else {
-    setToolInUse(
-      selectedPlugin && selectedPlugin !== PluginID.NONE
-        ? selectedPlugin
-        : 'none',
-    );
-  }
+  setToolInUse(
+    selectedPlugin && selectedPlugin !== PluginID.NONE
+      ? selectedPlugin
+      : 'none',
+  );
 
   const formattedMessages = await buildFinalMessages(payload, chatImages);
 

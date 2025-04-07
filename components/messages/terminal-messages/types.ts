@@ -1,0 +1,40 @@
+export interface MessageTerminalProps {
+  content: string;
+  messageId?: string;
+  isAssistant: boolean;
+}
+
+export interface TerminalBlock {
+  command: string;
+  stdout: string;
+  stderr: string;
+  error?: string;
+}
+
+export interface FileContentBlock {
+  path: string;
+  content: string;
+}
+
+export type ContentBlock =
+  | {
+      type: 'text';
+      content: string;
+    }
+  | {
+      type: 'terminal';
+      content: TerminalBlock;
+    }
+  | {
+      type: 'file-content';
+      content: FileContentBlock;
+    };
+
+export interface ShowMoreButtonProps {
+  isExpanded: boolean;
+  onClick: () => void;
+  remainingLines: number;
+}
+
+export const MAX_VISIBLE_LINES = 20;
+export const COMMAND_LENGTH_THRESHOLD = 40; // Threshold for when to switch to full terminal view

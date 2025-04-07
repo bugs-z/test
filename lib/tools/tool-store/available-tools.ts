@@ -45,42 +45,42 @@ export const availablePlugins: PluginSummary[] = [
       'Execute Bash commands, install and configure tools, and perform advanced pentesting tasks',
     githubRepoUrl: pluginUrls.PENTESTGPT,
     isInstalled: false,
-    isPremium: true,
+    isPremium: false,
     createdAt: '2024-10-04',
     starters: [],
   },
-  {
-    id: 9,
-    name: 'CVE Map',
-    value: PluginID.CVE_MAP,
-    categories: ['utils'],
-    icon: 'https://cdn-icons-png.flaticon.com/128/4337/4337922.png',
-    invertInDarkMode: true,
-    description: 'Navigate the CVE jungle with ease',
-    githubRepoUrl: pluginUrls.CVE_MAP,
-    isInstalled: false,
-    isPremium: false,
-    createdAt: '2024-03-13',
-    starters: [
-      {
-        title: 'Provide Me With',
-        description: 'the latest CVEs with the severity of critical',
-        chatMessage:
-          'Provide me with the latest CVEs with the severity of critical.',
-      },
-      {
-        title: 'Provide Information About',
-        description: 'CVE-2024-23897 (critical LFI in Jenkins)',
-        chatMessage:
-          'Provide information about CVE-2024-23897 (critical LFI in Jenkins).',
-      },
-      {
-        title: 'CVEMap Help',
-        description: 'How does the CVEMap plugin work?',
-        chatMessage: 'How does the CVEMap plugin work?',
-      },
-    ],
-  },
+  // {
+  //   id: 9,
+  //   name: 'CVE Map',
+  //   value: PluginID.CVE_MAP,
+  //   categories: ['utils'],
+  //   icon: 'https://cdn-icons-png.flaticon.com/128/4337/4337922.png',
+  //   invertInDarkMode: true,
+  //   description: 'Navigate the CVE jungle with ease',
+  //   githubRepoUrl: pluginUrls.CVE_MAP,
+  //   isInstalled: false,
+  //   isPremium: false,
+  //   createdAt: '2024-03-13',
+  //   starters: [
+  //     {
+  //       title: 'Provide Me With',
+  //       description: 'the latest CVEs with the severity of critical',
+  //       chatMessage:
+  //         'Provide me with the latest CVEs with the severity of critical.',
+  //     },
+  //     {
+  //       title: 'Provide Information About',
+  //       description: 'CVE-2024-23897 (critical LFI in Jenkins)',
+  //       chatMessage:
+  //         'Provide information about CVE-2024-23897 (critical LFI in Jenkins).',
+  //     },
+  //     {
+  //       title: 'CVEMap Help',
+  //       description: 'How does the CVEMap plugin work?',
+  //       chatMessage: 'How does the CVEMap plugin work?',
+  //     },
+  //   ],
+  // },
   // Recon tools id 10-19
   {
     id: 10,

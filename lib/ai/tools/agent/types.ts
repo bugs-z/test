@@ -13,6 +13,7 @@ export interface ToolContext {
   terminalTemplate?: string;
   setSandbox?: (sandbox: Sandbox) => void;
   setPersistentSandbox?: (isPersistent: boolean) => void;
+  isPremiumUser?: boolean;
 }
 
 // Constants for sandbox creation

@@ -6,7 +6,7 @@ const options: Intl.DateTimeFormatOptions = {
   month: 'long',
   day: 'numeric',
 };
-const currentDateTime = `${new Date().toLocaleDateString('en-US', options)}`;
+export const currentDateTime = `${new Date().toLocaleDateString('en-US', options)}`;
 
 export function getPentestGPTInfo(
   includeKnowledgeCutOff = true,

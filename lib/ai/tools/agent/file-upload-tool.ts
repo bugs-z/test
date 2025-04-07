@@ -49,16 +49,12 @@ export const createFileUploadTool = (context: ToolContext) => {
             userID,
             templateToUse,
             BASH_SANDBOX_TIMEOUT,
+            dataStream,
           );
 
           if (setSandbox) {
             setSandbox(sandbox);
           }
-
-          dataStream.writeData({
-            type: 'sandbox-type',
-            sandboxType: 'temporary-sandbox',
-          });
         } catch (error: unknown) {
           const errorMessage =
             error instanceof Error ? error.message : String(error);

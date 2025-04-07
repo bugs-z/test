@@ -6,7 +6,7 @@ import { MessageCodeBlock } from './message-codeblock';
 import { defaultUrlTransform } from 'react-markdown';
 import { ImageWithPreview } from '@/components/image/image-with-preview';
 import { Table, Th, Td } from '@/components/ui/table-components';
-import { MessageTerminalBlock } from './e2b-messages/message-terminal-block';
+import { MessageTerminalBlock } from './terminal-messages/message-terminal-block';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import { DownloadCSVTable } from '@/components/ui/download-csv-table';
 

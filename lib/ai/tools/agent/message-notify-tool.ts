@@ -17,6 +17,11 @@ export const createMessageNotifyTool = (context: ToolContext) => {
     }),
     execute: async ({ text }) => {
       dataStream.writeData({
+        type: 'tool-call',
+        content: 'message_notify_user',
+      });
+
+      dataStream.writeData({
         type: 'text-delta',
         content: `${text}\n\n`,
       });

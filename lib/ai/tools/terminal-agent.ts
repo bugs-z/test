@@ -58,20 +58,18 @@ export async function executeTerminalAgent({
       return 'Rate limit exceeded';
     }
 
+    const subscriptionInfo = await getSubscriptionInfo(userID);
+    const isPremiumUser = subscriptionInfo.isPremium;
+
     // Handle plugin-specific setup
     if (selectedPlugin) {
-      const subscriptionInfo = await getSubscriptionInfo(userID);
-
-      if (!isFreePlugin(selectedPlugin) && !subscriptionInfo.isPremium) {
+      if (!isFreePlugin(selectedPlugin) && !isPremiumUser) {
         dataStream.writeData({
           type: 'error',
           content: `Access Denied to ${selectedPlugin}: The plugin you are trying to use is exclusive to Pro and Team members. Please upgrade to access this plugin.`,
         });
         return 'Access Denied to plugin';
       }
-
-      if (!subscriptionInfo.isPremium)
-        selectedChatModel = 'chat-model-gpt-large';
 
       systemPrompt = getToolsWithAnswerPrompt(selectedPlugin);
       terminalTemplate = getTerminalTemplate(selectedPlugin);
@@ -88,7 +86,12 @@ export async function executeTerminalAgent({
     };
 
     const setPersistentSandbox = (isPersistent: boolean) => {
-      persistentSandbox = isPersistent;
+      // Prevent setting persistent sandbox for non-premium users
+      if (!isPremiumUser) {
+        persistentSandbox = false;
+      } else {
+        persistentSandbox = isPersistent;
+      }
     };
 
     const { fullStream, finishReason } = streamText({
@@ -105,8 +108,9 @@ export async function executeTerminalAgent({
         terminalTemplate,
         setSandbox,
         setPersistentSandbox,
+        isPremiumUser,
       }),
-      maxSteps: 10,
+      maxSteps: 5,
       toolChoice: 'required',
       abortSignal: config.abortSignal,
     });
@@ -120,11 +124,6 @@ export async function executeTerminalAgent({
           content: chunk.textDelta,
         });
       } else if (chunk.type === 'tool-call') {
-        dataStream.writeData({
-          type: 'tool-call',
-          content: chunk.toolName,
-        });
-
         if (chunk.toolName === 'idle') {
           dataStream.writeData({ finishReason: 'idle' });
           shouldStop = true;

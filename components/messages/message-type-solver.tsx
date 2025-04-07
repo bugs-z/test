@@ -3,7 +3,7 @@ import { PluginID } from '@/types/plugins';
 import type { FC } from 'react';
 import { MessageMarkdown } from './message-markdown';
 import { MessagePluginFile } from './message-plugin-file';
-import { MessageTerminal } from './e2b-messages/message-terminal';
+import { MessageTerminal } from './terminal-messages/message-terminal';
 import { MessageCitations } from './message-citations';
 import { MessageThinking } from './message-thinking';
 
@@ -23,7 +23,7 @@ interface MessageTypeResolverProps {
 //   return filenameMatch ? filenameMatch[1].trim() : undefined
 // }
 
-export const terminalPlugins = [
+export const allTerminalPlugins = [
   PluginID.TERMINAL,
   PluginID.SQLI_EXPLOITER,
   PluginID.SSL_SCANNER,
@@ -58,13 +58,13 @@ export const MessageTypeResolver: FC<MessageTypeResolverProps> = ({
   // })
 
   if (
-    (isPluginOutput && terminalPlugins.includes(message.plugin as PluginID)) ||
-    terminalPlugins.includes(toolInUse as PluginID)
+    (isPluginOutput &&
+      allTerminalPlugins.includes(message.plugin as PluginID)) ||
+    allTerminalPlugins.includes(toolInUse as PluginID)
   ) {
     return (
       <MessageTerminal
         content={message.content}
-        messageId={message.id}
         isAssistant={message.role === 'assistant'}
       />
     );

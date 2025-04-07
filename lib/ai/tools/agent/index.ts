@@ -3,7 +3,7 @@ import { createTerminalTool } from './terminal-tool';
 import { createMessageNotifyTool } from './message-notify-tool';
 import { createMessageAskTool } from './message-ask-tool';
 // import { createFileWriteTool } from "./file-write-tool"
-// import { createFileReadTool } from "./file-read-tool"
+import { createFileReadTool } from './file-read-tool';
 import { createIdleTool } from './idle-tool';
 import { createFileUploadTool } from './file-upload-tool';
 
@@ -18,8 +18,10 @@ export function createAgentTools(context: ToolContext) {
     message_notify_user: createMessageNotifyTool(context),
     message_ask_user: createMessageAskTool(),
     // file_write: createFileWriteTool(context),
-    file_upload: createFileUploadTool(context),
-    // file_read: createFileReadTool(context),
+    file_read: createFileReadTool(context),
+    ...(context.isPremiumUser
+      ? { file_upload: createFileUploadTool(context) }
+      : {}),
     idle: createIdleTool(),
   };
 }

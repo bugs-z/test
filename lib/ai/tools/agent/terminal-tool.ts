@@ -32,6 +32,7 @@ export const createTerminalTool = (context: ToolContext) => {
     terminalTemplate = SANDBOX_TEMPLATE,
     setSandbox,
     setPersistentSandbox,
+    isPremiumUser,
   } = context;
 
   let sandbox = initialSandbox;
@@ -41,7 +42,7 @@ export const createTerminalTool = (context: ToolContext) => {
     description: 'Execute commands in the sandbox environment.',
     parameters: z.object({
       command: z.string().describe('Command to execute'),
-      ...(selectedPlugin
+      ...(selectedPlugin || !isPremiumUser
         ? {}
         : {
             useTemporarySandbox: z
@@ -60,8 +61,10 @@ export const createTerminalTool = (context: ToolContext) => {
         }
       }
 
-      // Set sandbox type
-      if (selectedPlugin) {
+      // Set sandbox type - force temporary sandbox for non-premium users
+      if (!isPremiumUser) {
+        persistentSandbox = false;
+      } else if (selectedPlugin) {
         persistentSandbox = false; // Always use temporary sandbox for plugins
       } else {
         persistentSandbox = !Boolean(useTemporarySandbox);
@@ -72,13 +75,6 @@ export const createTerminalTool = (context: ToolContext) => {
         setPersistentSandbox(persistentSandbox);
       }
 
-      dataStream.writeData({
-        type: 'sandbox-type',
-        sandboxType: persistentSandbox
-          ? 'persistent-sandbox'
-          : 'temporary-sandbox',
-      });
-
       // Create or connect to sandbox
       if (!sandbox) {
         sandbox = persistentSandbox
@@ -86,11 +82,13 @@ export const createTerminalTool = (context: ToolContext) => {
               userID,
               SANDBOX_TEMPLATE,
               BASH_SANDBOX_TIMEOUT,
+              dataStream,
             )
           : await createOrConnectTemporaryTerminal(
               userID,
               terminalTemplate,
               BASH_SANDBOX_TIMEOUT,
+              dataStream,
             );
 
         // Update the sandbox in the parent context if needed
@@ -112,6 +110,11 @@ export const createTerminalTool = (context: ToolContext) => {
           },
         });
       }
+
+      dataStream.writeData({
+        type: 'tool-call',
+        content: 'terminal',
+      });
 
       // Execute command
       const terminalStream = await executeTerminalCommand({

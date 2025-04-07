@@ -1,5 +1,4 @@
-import { type FC, memo, useCallback, useMemo } from 'react';
-import { generateRandomString } from '../message-codeblock';
+import { type FC, memo, useMemo } from 'react';
 import chalk from 'chalk';
 import AnsiToHtml from 'ansi-to-html';
 import DOMPurify from 'isomorphic-dompurify';
@@ -28,20 +27,6 @@ const converter = new AnsiToHtml({
 
 export const MessageTerminalBlock: FC<MessageTerminalBlockProps> = memo(
   ({ value }) => {
-    const downloadAsFile = useCallback(() => {
-      const suggestedFileName = `terminal-output-${generateRandomString(3, true)}.txt`;
-      const fileName = window.prompt('Enter file name', suggestedFileName);
-      if (!fileName) return;
-
-      const blob = new Blob([value], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      link.click();
-      URL.revokeObjectURL(url);
-    }, [value]);
-
     const formattedValue = useMemo(() => {
       const styledValue = value
         .replace(/\[(\w+)\]/g, (_, word) => chalk.blue.bold(`[${word}]`))
