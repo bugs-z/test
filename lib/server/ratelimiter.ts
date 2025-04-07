@@ -119,11 +119,6 @@ function _getLimit(model: string, subscriptionInfo: SubscriptionInfo): number {
   const isPaid = subscriptionInfo.isPremium || subscriptionInfo.isTeam;
   const suffix = isPaid ? '_PREMIUM' : '_FREE';
 
-  // Handle special cases first
-  if (model === 'fragments-reload') {
-    return getValidatedLimit(process.env.FRAGMENTS_RELOAD_LIMIT, 100);
-  }
-
   if (model === 'generate-title') {
     return isPaid
       ? getValidatedLimit(process.env.GENERATE_TITLE_LIMIT_PREMIUM, 100)
@@ -281,8 +276,6 @@ function getModelName(model: string): string {
     terminal: 'terminal',
     'tts-1': 'text-to-speech',
     'stt-1': 'speech-to-text',
-    'fragments-reload': 'fragment reloads',
-    fragments: 'artifacts',
     reasoning: 'reasoning model',
     'reasoning-web-search': 'reasoning web search model',
   };

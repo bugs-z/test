@@ -3,7 +3,6 @@
 import type { AlertAction } from '@/context/alert-context';
 import { createChat } from '@/db/chats';
 import { buildFinalMessages } from '@/lib/build-prompt';
-import type { Fragment } from '@/lib/tools/e2b/fragments/types';
 import type { Tables } from '@/supabase/types';
 import {
   type ChatMessage,
@@ -29,7 +28,6 @@ export const handleHostedChat = async (
   modelData: LLM,
   tempAssistantChatMessage: ChatMessage,
   isRegeneration: boolean,
-  isRagEnabled: boolean,
   isContinuation: boolean,
   isTerminalContinuation: boolean,
   newAbortController: AbortController,
@@ -40,7 +38,6 @@ export const handleHostedChat = async (
   setToolInUse: Dispatch<SetStateAction<string>>,
   alertDispatch: Dispatch<AlertAction>,
   selectedPlugin: PluginID,
-  setFragment: (fragment: Fragment | null, chatMessage?: ChatMessage) => void,
   setAgentStatus: Dispatch<SetStateAction<AgentStatusState | null>>,
 ) => {
   const { provider } = modelData;
@@ -50,16 +47,11 @@ export const handleHostedChat = async (
   if (selectedPlugin === PluginID.TERMINAL) {
     apiEndpoint = '/api/chat/openai';
     setToolInUse(PluginID.TERMINAL);
-  } else if (selectedPlugin === PluginID.ARTIFACTS) {
-    apiEndpoint = '/api/chat/tools/fragments';
-    setToolInUse(PluginID.ARTIFACTS);
   } else {
     setToolInUse(
-      isRagEnabled
-        ? 'Enhanced Search'
-        : selectedPlugin && selectedPlugin !== PluginID.NONE
-          ? selectedPlugin
-          : 'none',
+      selectedPlugin && selectedPlugin !== PluginID.NONE
+        ? selectedPlugin
+        : 'none',
     );
   }
 
@@ -68,10 +60,7 @@ export const handleHostedChat = async (
   const requestBody = {
     messages: formattedMessages,
     chatSettings: payload.chatSettings,
-    isRetrieval:
-      payload.retrievedFileItems && payload.retrievedFileItems.length > 0,
     isContinuation,
-    isRagEnabled,
     selectedPlugin,
     isTerminalContinuation,
   };
@@ -104,7 +93,6 @@ export const handleHostedChat = async (
     alertDispatch,
     selectedPlugin,
     isContinuation,
-    setFragment,
     setAgentStatus,
   );
 };

@@ -9,7 +9,6 @@ import { countTokens } from 'gpt-tokenizer';
 import { Agent } from './models/openai-llm-list';
 import { SmallModel, LargeModel } from './models/hackerai-llm-list';
 import { toast } from 'sonner';
-import type { Fragment } from './tools/e2b/fragments/types';
 
 export async function buildFinalMessages(
   payload: ChatPayload,
@@ -66,18 +65,6 @@ export async function buildFinalMessages(
         content: `${documentsText}\n\n${chatMessage.message.content}`,
       };
       returnMessage.fileItems = [];
-    }
-
-    if (
-      chatMessage.message.fragment &&
-      typeof chatMessage.message.fragment === 'string'
-    ) {
-      const fragment: Fragment = JSON.parse(chatMessage.message.fragment);
-
-      returnMessage.message = {
-        ...returnMessage.message,
-        content: `Fragment: "${fragment.code}"` as string,
-      };
     }
 
     return returnMessage;

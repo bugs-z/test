@@ -72,6 +72,10 @@
 
     --select: 0 0% 92.55%;
 
+    --function-error: #eb4d4d;
+    --function-success: #5eb92d;
+    --function-warning: #ffbf36;
+
     --chart-1: 12 76% 61%;
 
     --chart-2: 173 58% 39%;

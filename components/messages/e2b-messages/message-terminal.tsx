@@ -4,11 +4,16 @@ import {
   IconChevronDown,
   IconChevronUp,
   IconTerminal2,
+  IconArrowDown,
+  IconArrowUp,
 } from '@tabler/icons-react';
 import { PluginID } from '@/types/plugins';
-import { MessageTooLong } from '../message-too-long';
 import { terminalPlugins } from '../message-type-solver';
 import { useUIContext } from '@/context/ui-context';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { CopyButton } from '../message-codeblock';
+import stripAnsi from 'strip-ansi';
 
 interface MessageTerminalProps {
   content: string;
@@ -28,16 +33,53 @@ interface ContentBlock {
   content: string | TerminalBlock;
 }
 
+const MAX_VISIBLE_LINES = 20;
+const COMMAND_LENGTH_THRESHOLD = 40; // Threshold for when to switch to full terminal view
+
+const ShowMoreButton = ({
+  isExpanded,
+  onClick,
+  remainingLines,
+}: {
+  isExpanded: boolean;
+  onClick: () => void;
+  remainingLines: number;
+}) => (
+  <div className="flex justify-center py-1">
+    <Button
+      variant="ghost"
+      size="sm"
+      className="h-7 px-2 text-xs"
+      onClick={onClick}
+    >
+      {isExpanded ? (
+        <>
+          <IconArrowUp size={14} className="mr-1" />
+          Show Less
+        </>
+      ) : (
+        <>
+          <IconArrowDown size={14} className="mr-1" />
+          Show More ({remainingLines} more lines)
+        </>
+      )}
+    </Button>
+  </div>
+);
+
 export const MessageTerminal: React.FC<MessageTerminalProps> = ({
   content,
   messageId,
   isAssistant,
 }) => {
-  const { showTerminalOutput, toolInUse } = useUIContext();
+  const { showTerminalOutput, toolInUse, isMobile } = useUIContext();
   const contentBlocks = useMemo(() => parseContent(content), [content]);
 
   const [closedBlocks, setClosedBlocks] = useState(() => new Set<number>());
   const [userInteracted, setUserInteracted] = useState(() => new Set<number>());
+  const [expandedOutputs, setExpandedOutputs] = useState(
+    () => new Set<number>(),
+  );
 
   useEffect(() => {
     setClosedBlocks((prev) => {
@@ -64,75 +106,163 @@ export const MessageTerminal: React.FC<MessageTerminalProps> = ({
     });
   }, []);
 
-  const renderContent = (content: string) =>
-    content.length > 12000 ? (
-      <div className="mt-4">
-        <MessageTooLong
-          content={content}
-          plugin={PluginID.TERMINAL}
-          id={messageId || ''}
-        />
-      </div>
-    ) : (
-      <MessageMarkdown content={content} isAssistant={true} />
-    );
+  const toggleExpanded = useCallback((index: number) => {
+    setExpandedOutputs((prev) => {
+      const newSet = new Set(prev);
+      newSet.has(index) ? newSet.delete(index) : newSet.add(index);
+      return newSet;
+    });
+  }, []);
+
+  const renderContent = (content: string) => (
+    // content.length > 12000 ? (
+    //   <div className="mt-4">
+    //     <MessageTooLong
+    //       content={content}
+    //       plugin={PluginID.TERMINAL}
+    //       id={messageId || ''}
+    //     />
+    //   </div>
+    // ) : (
+    <MessageMarkdown content={content} isAssistant={true} />
+  );
+  // );
 
   const renderTerminalBlock = useCallback(
-    (block: TerminalBlock, index: number) => (
-      <div className={`overflow-hidden ${index === 1 ? 'mb-3' : 'my-3'}`}>
-        <button
-          className="flex w-full items-center justify-between transition-colors duration-200"
-          onClick={() => toggleBlock(index)}
-          aria-expanded={!closedBlocks.has(index)}
-          aria-controls={`terminal-content-${index}`}
+    (block: TerminalBlock, index: number) => {
+      const hasOutput = block.stdout || block.stderr || block.error;
+      const outputContent = [block.stdout, block.stderr, block.error]
+        .filter(Boolean)
+        .join('\n');
+
+      const lines = outputContent.split('\n');
+      const shouldShowMore = lines.length > MAX_VISIBLE_LINES;
+      const isExpanded = expandedOutputs.has(index);
+      const displayedContent = isExpanded
+        ? outputContent
+        : lines.slice(0, MAX_VISIBLE_LINES).join('\n');
+
+      const isLongCommand =
+        block.command.length > COMMAND_LENGTH_THRESHOLD || isMobile;
+      const showFullTerminalView = isLongCommand;
+
+      return (
+        <div
+          className={`overflow-hidden rounded-lg border border-border ${index === 1 ? 'mb-3' : 'my-3'}`}
         >
-          <div
-            className={`flex items-center ${contentBlocks.length - 1 === index && terminalPlugins.includes(toolInUse as PluginID) ? 'animate-pulse' : ''}`}
-          >
-            <IconTerminal2 size={20} />
-            <h4 className="ml-2 mr-1 text-lg">Terminal</h4>
-            {closedBlocks.has(index) ? (
-              <IconChevronDown size={16} />
-            ) : (
-              <IconChevronUp size={16} />
-            )}
-          </div>
-        </button>
-        {!closedBlocks.has(index) && (
-          <div
-            id={`terminal-content-${index}`}
-            className="max-h-[12000px] opacity-100 transition-all duration-300 ease-in-out"
-          >
-            <div className="mt-4">
-              <MessageMarkdown
-                content={
-                  block.command.startsWith('<terminal-command')
-                    ? block.command
-                    : `\`\`\`terminal\n${block.command}\n\`\`\``
-                }
-                isAssistant={true}
-              />
-              {block.stdout && (
-                <div className="mt-2">
-                  {renderContent(`\`\`\`stdout\n${block.stdout}\n\`\`\``)}
-                </div>
-              )}
-              {block.stderr && (
-                <div className="mt-2">
-                  {renderContent(`\`\`\`stderr\n${block.stderr}\n\`\`\``)}
-                </div>
-              )}
-              {block.error && (
-                <div className="mt-2 text-red-500">
-                  {renderContent(`\`\`\`stderr\n${block.error}\n\`\`\``)}
+          <div className="flex items-center justify-between border-b border-border bg-muted px-4 py-2">
+            <div className="flex items-center flex-1 min-w-0">
+              <div
+                className={cn('flex items-center shrink-0 mr-2', {
+                  'animate-pulse':
+                    contentBlocks.length - 1 === index &&
+                    terminalPlugins.includes(toolInUse as PluginID),
+                })}
+              >
+                <IconTerminal2 size={16} className="mr-2" />
+                <span>Executing command</span>
+              </div>
+              {!showFullTerminalView && (
+                <div className="min-w-0 flex-1">
+                  <code className="truncate block font-mono text-muted-foreground text-sm">
+                    {block.command}
+                  </code>
                 </div>
               )}
             </div>
+            <div className="flex items-center ml-4">
+              {hasOutput && (
+                <>
+                  <CopyButton value={stripAnsi(outputContent)} />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => toggleBlock(index)}
+                    aria-expanded={!closedBlocks.has(index)}
+                    aria-controls={`terminal-content-${index}`}
+                  >
+                    {closedBlocks.has(index) ? (
+                      <IconChevronDown size={18} />
+                    ) : (
+                      <IconChevronUp size={18} />
+                    )}
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
-        )}
-      </div>
-    ),
-    [closedBlocks, contentBlocks, renderContent, toggleBlock, toolInUse],
+          {!closedBlocks.has(index) && (
+            <div
+              id={`terminal-content-${index}`}
+              className="bg-foreground dark:bg-background
+            "
+            >
+              {showFullTerminalView && (
+                <div className="font-mono text-foreground/80">
+                  {renderContent(
+                    `\`\`\`stdout\nubuntu@sandbox:~$ ${block.command}\n\`\`\``,
+                  )}
+                </div>
+              )}
+              {block.stdout && (
+                <div className="font-mono text-foreground/80">
+                  {renderContent(
+                    `\`\`\`stdout\n${shouldShowMore ? displayedContent : block.stdout}\n\`\`\``,
+                  )}
+                  {shouldShowMore &&
+                    block.stdout.split('\n').length > MAX_VISIBLE_LINES && (
+                      <ShowMoreButton
+                        isExpanded={expandedOutputs.has(index)}
+                        onClick={() => toggleExpanded(index)}
+                        remainingLines={lines.length - MAX_VISIBLE_LINES}
+                      />
+                    )}
+                </div>
+              )}
+              {block.stderr && (
+                <div className="font-mono text-destructive/90">
+                  {renderContent(
+                    `\`\`\`stderr\n${shouldShowMore ? displayedContent : block.stderr}\n\`\`\``,
+                  )}
+                  {shouldShowMore &&
+                    block.stderr.split('\n').length > MAX_VISIBLE_LINES && (
+                      <ShowMoreButton
+                        isExpanded={expandedOutputs.has(index)}
+                        onClick={() => toggleExpanded(index)}
+                        remainingLines={lines.length - MAX_VISIBLE_LINES}
+                      />
+                    )}
+                </div>
+              )}
+              {block.error && (
+                <div className="font-mono text-destructive/90">
+                  {renderContent(
+                    `\`\`\`stderr\n${shouldShowMore ? displayedContent : block.error}\n\`\`\``,
+                  )}
+                  {shouldShowMore &&
+                    block.error.split('\n').length > MAX_VISIBLE_LINES && (
+                      <ShowMoreButton
+                        isExpanded={expandedOutputs.has(index)}
+                        onClick={() => toggleExpanded(index)}
+                        remainingLines={lines.length - MAX_VISIBLE_LINES}
+                      />
+                    )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    },
+    [
+      closedBlocks,
+      expandedOutputs,
+      renderContent,
+      toggleBlock,
+      toolInUse,
+      isMobile,
+    ],
   );
 
   return (

@@ -15,7 +15,6 @@ import { LLM_LIST } from '../../../lib/models/llm-list';
 
 import { useUIContext } from '@/context/ui-context';
 import { createMessageFeedback } from '@/db/message-feedback';
-import type { Fragment } from '@/lib/tools/e2b/fragments/types';
 import {
   createTempMessages,
   generateChatTitle,
@@ -24,7 +23,6 @@ import {
   handleHostedChat,
   validateChatSettings,
 } from '../chat-helpers';
-import { useFragments } from './use-fragments';
 import { getMessageFileItemsByMessageId } from '@/db/message-file-items';
 import { useRetrievalLogic } from './retrieval-logic';
 
@@ -68,11 +66,10 @@ export const useChatHandler = () => {
     setIsReadyToChat,
     setSelectedPlugin,
     setAgentStatus,
+    toolInUse,
   } = useUIContext();
 
   let { selectedPlugin } = useUIContext();
-
-  const { setFragment } = useFragments();
 
   const isGeneratingRef = useRef(isGenerating);
 
@@ -133,8 +130,6 @@ export const useChatHandler = () => {
     setAgentStatus(null);
     setSelectedPlugin(PluginID.NONE);
 
-    setFragment(null);
-
     setIsReadyToChat(true);
     return router.push(`/c`);
   };
@@ -150,6 +145,30 @@ export const useChatHandler = () => {
         await new Promise((resolve) => setTimeout(resolve, 100));
       }
       await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Update chat's finish reason to 'aborted' when terminal in use
+      if (
+        selectedChat &&
+        (toolInUse === 'temporary-sandbox' ||
+          toolInUse === 'persistent-sandbox')
+      ) {
+        const updatedChat = await updateChat(selectedChat.id, {
+          updated_at: new Date().toISOString(),
+          finish_reason: 'aborted',
+        });
+
+        // Only update state if we're still on the same chat
+        if (selectedChat.id === updatedChat.id) {
+          setChats((prevChats) => {
+            const updatedChats = prevChats.map((prevChat) =>
+              prevChat.id === updatedChat.id ? updatedChat : prevChat,
+            );
+            return updatedChats;
+          });
+
+          setSelectedChat(updatedChat);
+        }
+      }
     }
   };
 
@@ -216,7 +235,6 @@ export const useChatHandler = () => {
     isTerminalContinuation = false,
   ) => {
     const isEdit = editSequenceNumber !== undefined;
-    const isRagEnabled = selectedPlugin === PluginID.ENHANCED_SEARCH;
 
     // Simpler model handling
     const baseModel = (model?.split(':')[0] as LLMID) || chatSettings?.model;
@@ -364,29 +382,22 @@ export const useChatHandler = () => {
       let thinkingText = '';
       let thinkingElapsedSecs: number | null = null;
       let finishReason = '';
-      let ragUsed = false;
-      let ragId = null;
       let assistantGeneratedImages: string[] = [];
       let citations: string[] = [];
-      let fragment: Fragment | null = null;
 
       const {
         fullText,
         thinkingText: thinkingTextFromResponse,
         thinkingElapsedSecs: thinkingElapsedSecsFromResponse,
         finishReason: finishReasonFromResponse,
-        ragUsed: ragUsedFromResponse,
-        ragId: ragIdFromResponse,
         selectedPlugin: updatedSelectedPlugin,
         assistantGeneratedImages: assistantGeneratedImagesFromResponse,
         citations: citationsFromResponse,
-        fragment: fragmentFromResponse,
       } = await handleHostedChat(
         payload,
         modelData!,
         tempAssistantChatMessage,
         isRegeneration,
-        isRagEnabled,
         isContinuation,
         isTerminalContinuation,
         newAbortController,
@@ -397,22 +408,15 @@ export const useChatHandler = () => {
         setToolInUse,
         alertDispatch,
         selectedPlugin,
-        setFragment,
         setAgentStatus,
       );
       generatedText = fullText;
       thinkingText = thinkingTextFromResponse;
       thinkingElapsedSecs = thinkingElapsedSecsFromResponse;
       finishReason = finishReasonFromResponse;
-      ragUsed = ragUsedFromResponse;
-      ragId = ragIdFromResponse;
       selectedPlugin = updatedSelectedPlugin;
       assistantGeneratedImages = assistantGeneratedImagesFromResponse;
       citations = citationsFromResponse;
-      fragment =
-        Object.keys(fragmentFromResponse || {}).length === 0
-          ? null
-          : fragmentFromResponse;
 
       if (isTemporaryChat) {
         // Update temporary chat messages with the generated response
@@ -427,7 +431,6 @@ export const useChatHandler = () => {
                   thinking_enabled: !!thinkingText,
                   thinking_elapsed_secs: thinkingElapsedSecs,
                   citations: citations || [],
-                  fragment: fragment ? JSON.stringify(fragment) : null,
                 },
               }
             : msg,
@@ -514,12 +517,8 @@ export const useChatHandler = () => {
           selectedPlugin,
           assistantGeneratedImages,
           editSequenceNumber,
-          ragUsed,
-          ragId,
           isTemporaryChat,
           citations,
-          fragment,
-          setFragment,
           thinkingText,
           thinkingElapsedSecs,
           newMessageFiles,

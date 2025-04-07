@@ -1,10 +1,7 @@
 import { type FC, memo, useCallback, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
-import { IconDownload } from '@tabler/icons-react';
-import { CopyButton, generateRandomString } from '../message-codeblock';
+import { generateRandomString } from '../message-codeblock';
 import chalk from 'chalk';
 import AnsiToHtml from 'ansi-to-html';
-import stripAnsi from 'strip-ansi';
 import DOMPurify from 'isomorphic-dompurify';
 
 interface MessageTerminalBlockProps {
@@ -69,22 +66,7 @@ export const MessageTerminalBlock: FC<MessageTerminalBlockProps> = memo(
     }, [value]);
 
     return (
-      <div className="codeblock relative w-full bg-zinc-950 font-sans">
-        <div className="sticky top-0 flex w-full items-center justify-between bg-zinc-700 px-4 text-white">
-          <span className="text-xs lowercase">Terminal Output</span>
-          <div className="flex items-center space-x-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="hover:bg-zinc-800 focus-visible:ring-1 focus-visible:ring-slate-700 focus-visible:ring-offset-0"
-              onClick={downloadAsFile}
-              title="Download as file"
-            >
-              <IconDownload size={16} />
-            </Button>
-            <CopyButton value={stripAnsi(value)} />
-          </div>
-        </div>
+      <div className="codeblock relative w-full bg-foreground dark:bg-background font-sans">
         <div
           className="whitespace-pre-wrap break-words p-4 font-mono text-sm text-white"
           style={{ background: 'transparent' }}

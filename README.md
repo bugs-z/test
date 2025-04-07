@@ -12,7 +12,7 @@ Thank you for being part of the HackerAI family.
 
 The primary purpose of this GitHub repo is to show what's behind PentestGPT in order to build trust.
 
-You can run PentestGPT locally, but the RAG system, plugins, and more will only work with proper and complex configuration.
+You can run PentestGPT locally, but the plugins and more will only work with proper and complex configuration.
 
 ## Local Quickstart
 

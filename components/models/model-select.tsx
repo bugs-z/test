@@ -86,8 +86,8 @@ export const ModelSelect: FC<ModelSelectProps> = ({
 
   const modelDescriptions: Record<string, string> = {
     [Agent.modelId]: 'Advanced model with terminal access',
-    [LargeModel.modelId]: 'Uncensored, Great for most questions',
-    [SmallModel.modelId]: 'Uncensored, Faster for most questions',
+    [LargeModel.modelId]: 'Great for most questions',
+    [SmallModel.modelId]: 'Faster for most questions',
   };
 
   return (

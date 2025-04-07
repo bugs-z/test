@@ -44,19 +44,6 @@ const llmConfig = {
     reasoningWebSearch: `${getPentestGPTInfo(false, 'October 2023', 'reasoningModel')}\n${systemPromptEnding}`,
     // For reasoning tool
     pentestGPTReasoning: `${getPentestGPTInfo(true, 'October 2023', 'reasoningModel')}\n${systemPromptEnding}`,
-    // For fragment tool
-    pentestGPTFragment: `${getPentestGPTInfo(true, 'October 2024', 'GPT-4o')}}`,
-  },
-  hackerRAG: {
-    enabled:
-      (process.env.HACKER_RAG_ENABLED?.toLowerCase() || 'false') === 'true',
-    endpoint: process.env.HACKER_RAG_ENDPOINT,
-    getDataEndpoint: process.env.HACKER_RAG_GET_DATA_ENDPOINT,
-    apiKey: process.env.HACKER_RAG_API_KEY,
-    messageLength: {
-      min: Number.parseInt(process.env.MIN_LAST_MESSAGE_LENGTH || '25', 10),
-      max: Number.parseInt(process.env.MAX_LAST_MESSAGE_LENGTH || '1000', 10),
-    },
   },
 };
 

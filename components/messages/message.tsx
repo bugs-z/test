@@ -20,13 +20,12 @@ import { MessageQuickFeedback } from './message-quick-feedback';
 import { MessageTypeResolver } from './message-type-solver';
 import useHotkey from '@/lib/hooks/use-hotkey';
 import { toast } from 'sonner';
-import type { Fragment } from '@/lib/tools/e2b/fragments/types';
-import { MessageFragment } from './message-fragment';
 import { LoadingState } from './loading-states';
 import dynamic from 'next/dynamic';
 import { useUIContext } from '@/context/ui-context';
 import { ChatFileItem } from '../chat/chat-file-item';
 import { AgentStatus, isValidAgentStatus } from './agent-status';
+import { MessageStatus } from './message-status';
 
 const DynamicFilePreview = dynamic(() => import('../ui/file-preview'), {
   ssr: false,
@@ -65,6 +64,7 @@ export const Message: FC<MessageProps> = ({
     isTemporaryChat,
     chatImages,
     chatFiles,
+    selectedChat,
   } = useContext(PentestGPTContext);
 
   const {
@@ -77,10 +77,6 @@ export const Message: FC<MessageProps> = ({
   } = useUIContext();
 
   const { message, feedback } = chatMessage;
-
-  const fragment = (
-    message.fragment ? JSON.parse(message.fragment as string) : null
-  ) as Fragment | null;
 
   const messagesToDisplay = isTemporaryChat
     ? temporaryChatMessages
@@ -324,10 +320,6 @@ export const Message: FC<MessageProps> = ({
           isLast &&
           message.role === 'assistant' && <AgentStatus state={agentStatus} />}
 
-        {fragment && (
-          <MessageFragment fragment={fragment} chatMessage={chatMessage} />
-        )}
-
         <div className="mt-3 flex flex-wrap gap-2" />
 
         {isEditing && (
@@ -339,6 +331,10 @@ export const Message: FC<MessageProps> = ({
               Send
             </Button>
           </div>
+        )}
+
+        {!isGenerating && isLast && message.role === 'assistant' && (
+          <MessageStatus finish_reason={selectedChat?.finish_reason} />
         )}
 
         {!quickFeedback && !sendReportQuery && !isEditing && (

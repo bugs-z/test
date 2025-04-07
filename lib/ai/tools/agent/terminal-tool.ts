@@ -2,8 +2,7 @@ import { tool } from 'ai';
 import { z } from 'zod';
 import {
   type ToolContext,
-  TEMPORARY_SANDBOX_TEMPLATE,
-  PERSISTENT_SANDBOX_TEMPLATE,
+  SANDBOX_TEMPLATE,
   BASH_SANDBOX_TIMEOUT,
   PLUGIN_COMMAND_MAP,
 } from './types';
@@ -30,8 +29,9 @@ export const createTerminalTool = (context: ToolContext) => {
     userID,
     persistentSandbox: initialPersistentSandbox = true,
     selectedPlugin,
-    terminalTemplate = TEMPORARY_SANDBOX_TEMPLATE,
+    terminalTemplate = SANDBOX_TEMPLATE,
     setSandbox,
+    setPersistentSandbox,
   } = context;
 
   let sandbox = initialSandbox;
@@ -67,6 +67,11 @@ export const createTerminalTool = (context: ToolContext) => {
         persistentSandbox = !Boolean(useTemporarySandbox);
       }
 
+      // Update persistent sandbox state in parent context
+      if (setPersistentSandbox) {
+        setPersistentSandbox(persistentSandbox);
+      }
+
       dataStream.writeData({
         type: 'sandbox-type',
         sandboxType: persistentSandbox
@@ -79,7 +84,7 @@ export const createTerminalTool = (context: ToolContext) => {
         sandbox = persistentSandbox
           ? await createOrConnectPersistentTerminal(
               userID,
-              PERSISTENT_SANDBOX_TEMPLATE,
+              SANDBOX_TEMPLATE,
               BASH_SANDBOX_TIMEOUT,
             )
           : await createOrConnectTemporaryTerminal(

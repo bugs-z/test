@@ -2,7 +2,7 @@ import { tool } from 'ai';
 import { z } from 'zod';
 import {
   type ToolContext,
-  TEMPORARY_SANDBOX_TEMPLATE,
+  SANDBOX_TEMPLATE,
   BASH_SANDBOX_TIMEOUT,
 } from './types';
 import { createOrConnectTemporaryTerminal } from '@/lib/tools/e2b/sandbox';
@@ -18,7 +18,7 @@ export const createFileUploadTool = (context: ToolContext) => {
     dataStream,
     sandbox: initialSandbox,
     userID,
-    terminalTemplate = TEMPORARY_SANDBOX_TEMPLATE,
+    terminalTemplate = SANDBOX_TEMPLATE,
     setSandbox,
   } = context;
 
@@ -43,7 +43,7 @@ export const createFileUploadTool = (context: ToolContext) => {
     execute: async ({ files }) => {
       if (!sandbox) {
         try {
-          const templateToUse = terminalTemplate || TEMPORARY_SANDBOX_TEMPLATE;
+          const templateToUse = terminalTemplate || SANDBOX_TEMPLATE;
 
           sandbox = await createOrConnectTemporaryTerminal(
             userID,

@@ -16,8 +16,7 @@ export interface ToolContext {
 }
 
 // Constants for sandbox creation
-export const TEMPORARY_SANDBOX_TEMPLATE = 'temporary-sandbox';
-export const PERSISTENT_SANDBOX_TEMPLATE = 'persistent-sandbox';
+export const SANDBOX_TEMPLATE = 'terminal-agent-sandbox';
 export const BASH_SANDBOX_TIMEOUT = 15 * 60 * 1000;
 
 // Plugin command mapping

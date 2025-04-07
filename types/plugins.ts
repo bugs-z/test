@@ -74,6 +74,4 @@ export const pluginUrls: PluginUrls = {
   // Exploit Tools
   SQLI_EXPLOITER: 'https://github.com/sqlmapproject/sqlmap',
   XSS_EXPLOITER: 'https://github.com/hahwul/dalfox',
-  // Artifacts
-  ARTIFACTS: 'https://github.com/e2b-dev/fragments',
 };

@@ -26,7 +26,6 @@ import type { User } from '@supabase/supabase-js';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { type FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { FragmentsProvider } from '../chat/chat-hooks/use-fragments';
 
 const MESSAGES_PER_FETCH = 20;
 
@@ -420,7 +419,7 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
         setUserEmail,
       }}
     >
-      <FragmentsProvider>{children}</FragmentsProvider>
+      {children}
     </PentestGPTContext.Provider>
   );
 };

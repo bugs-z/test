@@ -5,7 +5,6 @@ import useHotkey from '@/lib/hooks/use-hotkey';
 import {
   IconInfoCircle,
   IconMessageOff,
-  IconPlayerTrackNext,
   IconRefresh,
 } from '@tabler/icons-react';
 import { useParams } from 'next/navigation';
@@ -20,7 +19,6 @@ import {
 } from 'react';
 import { Button } from '../ui/button';
 import { WithTooltip } from '../ui/with-tooltip';
-import { ChatFragment } from './chat-fragment';
 import { ChatHelp } from './chat-help';
 import { useScroll } from './chat-hooks/use-scroll';
 import { ChatInput } from './chat-input';
@@ -29,10 +27,10 @@ import { ChatScrollButtons } from './chat-scroll-buttons';
 import { ChatSecondaryButtons } from './chat-secondary-buttons';
 import { ChatSettings } from './chat-settings';
 import { GlobalDeleteChatDialog } from './global-delete-chat-dialog';
-import { useFragments } from './chat-hooks/use-fragments';
 import { Settings } from '../utility/settings';
 import { ShareChatButton } from './chat-share-button';
 import { useUIContext } from '@/context/ui-context';
+import { ChatContinueButton } from './chat-continue-button';
 
 type ChatUIProps = {};
 
@@ -74,12 +72,9 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
   const [loading, setLoading] = useState(true);
   const previousHeightRef = useRef<number | null>(null);
 
-  const { resetFragment } = useFragments();
-
   useEffect(() => {
     const fetchData = async () => {
       if (!isTemporaryChat) {
-        resetFragment();
         await Promise.all([
           fetchMessages(params.chatid as string),
           fetchChat(params.chatid as string),
@@ -170,7 +165,6 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
   );
 
   const handleCleanChat = () => {
-    resetFragment();
     setTemporaryChatMessages([]);
   };
 
@@ -241,9 +235,6 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
         <ChatSettings handleCleanChat={handleCleanChat} />
 
         <div className="flex min-h-0 flex-1 flex-col gap-2 lg:flex-row-reverse">
-          {/* Fragments */}
-          <ChatFragment />
-
           {/* Chat messages container */}
           <div className="relative flex h-[45%] flex-1 flex-col overflow-hidden lg:h-auto lg:w-2/5">
             {/* Chat messages */}
@@ -266,24 +257,12 @@ export const ChatUI: FC<ChatUIProps> = ({}) => {
                 />
               </div>
 
-              {!isGenerating &&
-                (selectedChat?.finish_reason === 'length' ||
-                  selectedChat?.finish_reason === 'terminal-calls') && (
-                  <div className="flex w-full justify-center p-2">
-                    <Button
-                      onClick={
-                        selectedChat?.finish_reason === 'terminal-calls'
-                          ? handleSendTerminalContinuation
-                          : handleSendContinuation
-                      }
-                      variant="secondary"
-                      className="flex items-center space-x-1 px-4 py-2"
-                    >
-                      <IconPlayerTrackNext size={16} />
-                      <span>Continue generating</span>
-                    </Button>
-                  </div>
-                )}
+              <ChatContinueButton
+                isGenerating={isGenerating}
+                finishReason={selectedChat?.finish_reason}
+                onTerminalContinue={handleSendTerminalContinuation}
+                onContinue={handleSendContinuation}
+              />
             </div>
 
             <ChatInput />

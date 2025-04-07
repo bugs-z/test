@@ -15,7 +15,6 @@ import { createStreamResponse } from '@/lib/ai-helper';
 import { executeTerminalAgent } from '@/lib/ai/tools/terminal-agent';
 import { executeReasonLLMTool } from '@/lib/ai/tools/reason-llm';
 import { executeReasoningWebSearchTool } from '@/lib/ai/tools/reasoning-web-search';
-import { processRag } from '@/lib/rag/rag-processor';
 import { executeDeepResearchTool } from '@/lib/ai/tools/deep-research';
 import { myProvider } from '@/lib/ai/providers';
 import { terminalPlugins } from '@/lib/ai/terminal-utils';
@@ -47,9 +46,7 @@ export async function POST(request: Request) {
     const {
       messages,
       chatSettings,
-      isRetrieval,
       isContinuation,
-      isRagEnabled,
       selectedPlugin,
       isTerminalContinuation,
     } = await request.json();
@@ -74,25 +71,6 @@ export async function POST(request: Request) {
       llmConfig.systemPrompts.agent,
       profile.profile_context,
     );
-
-    // Process RAG
-    let ragUsed = false;
-    let ragId: string | null = null;
-    const shouldUseRAG = !isRetrieval && isRagEnabled;
-
-    if (shouldUseRAG) {
-      const ragResult = await processRag({
-        messages,
-        isContinuation,
-        profile,
-      });
-
-      ragUsed = ragResult.ragUsed;
-      ragId = ragResult.ragId;
-      if (ragResult.systemPrompt) {
-        systemPrompt = ragResult.systemPrompt;
-      }
-    }
 
     let shouldUncensorResponse = false;
 
@@ -125,7 +103,13 @@ export async function POST(request: Request) {
     if (isTerminalContinuation) {
       return createStreamResponse(async (dataStream) => {
         await executeTerminalAgent({
-          config: { messages, profile, dataStream, isTerminalContinuation },
+          config: {
+            messages,
+            profile,
+            dataStream,
+            isTerminalContinuation,
+            abortSignal: request.signal,
+          },
         });
       });
     }
@@ -148,7 +132,13 @@ export async function POST(request: Request) {
       case PluginID.TERMINAL:
         return createStreamResponse(async (dataStream) => {
           await executeTerminalAgent({
-            config: { messages, profile, dataStream, isTerminalContinuation },
+            config: {
+              messages,
+              profile,
+              dataStream,
+              isTerminalContinuation,
+              abortSignal: request.signal,
+            },
           });
         });
 
@@ -183,6 +173,7 @@ export async function POST(request: Request) {
                 dataStream,
                 isTerminalContinuation,
                 selectedPlugin: selectedPlugin as PluginID,
+                abortSignal: request.signal,
               },
             });
           });
@@ -199,14 +190,13 @@ export async function POST(request: Request) {
 
     return createDataStreamResponse({
       execute: (dataStream) => {
-        if (ragUsed) dataStream.writeData({ ragUsed, ragId });
-
         const { getSelectedSchemas } = createToolSchemas({
           chatSettings,
           messages,
           profile,
           dataStream,
           isTerminalContinuation,
+          abortSignal: request.signal,
         });
 
         const result = streamText({

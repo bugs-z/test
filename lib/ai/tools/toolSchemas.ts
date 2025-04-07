@@ -9,12 +9,14 @@ export const createToolSchemas = ({
   profile,
   dataStream,
   isTerminalContinuation,
+  abortSignal,
 }: {
   chatSettings?: any;
   messages?: any;
   profile?: any;
   dataStream?: any;
   isTerminalContinuation?: boolean;
+  abortSignal?: AbortSignal;
 }) => {
   const allSchemas = {
     browser: {
@@ -92,6 +94,7 @@ This tool executes Bash commands in a Debian environment with root privileges. U
             profile,
             dataStream,
             isTerminalContinuation,
+            abortSignal,
             // previousMessage
           },
         });

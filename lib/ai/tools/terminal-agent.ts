@@ -12,9 +12,7 @@ import { isFreePlugin } from '@/lib/tools/tool-store/tools-helper';
 import { getToolsWithAnswerPrompt } from '@/lib/tools/tool-store/prompts/system-prompt';
 import { getTerminalTemplate } from '@/lib/tools/tool-store/tools-helper';
 import { myProvider } from '@/lib/ai/providers';
-
-// Constants
-const TEMPORARY_SANDBOX_TEMPLATE = 'temporary-sandbox';
+import { SANDBOX_TEMPLATE } from '@/lib/ai/tools/agent/types';
 
 interface TerminalToolConfig {
   messages: any[];
@@ -23,6 +21,7 @@ interface TerminalToolConfig {
   isTerminalContinuation?: boolean;
   selectedPlugin?: PluginID;
   previousMessage?: string;
+  abortSignal?: AbortSignal;
 }
 
 export async function executeTerminalAgent({
@@ -42,7 +41,7 @@ export async function executeTerminalAgent({
   let persistentSandbox = false;
   const userID = profile.user_id;
   let systemPrompt = PENTESTGPT_AGENT_SYSTEM_PROMPT;
-  let terminalTemplate = TEMPORARY_SANDBOX_TEMPLATE;
+  let terminalTemplate = SANDBOX_TEMPLATE;
   let selectedChatModel = 'chat-model-agent';
 
   try {
@@ -107,8 +106,9 @@ export async function executeTerminalAgent({
         setSandbox,
         setPersistentSandbox,
       }),
-      maxSteps: 5,
+      maxSteps: 10,
       toolChoice: 'required',
+      abortSignal: config.abortSignal,
     });
 
     // Handle stream
@@ -120,25 +120,22 @@ export async function executeTerminalAgent({
           content: chunk.textDelta,
         });
       } else if (chunk.type === 'tool-call') {
-        if (
-          chunk.toolName === 'idle' ||
-          chunk.toolName === 'message_ask_user'
-        ) {
-          dataStream.writeData({ finishReason: 'stop' });
-          shouldStop = true;
-
-          if (chunk.toolName === 'message_ask_user') {
-            dataStream.writeData({
-              type: 'text-delta',
-              content: chunk.args?.text,
-            });
-          }
-        }
-
         dataStream.writeData({
           type: 'tool-call',
           content: chunk.toolName,
         });
+
+        if (chunk.toolName === 'idle') {
+          dataStream.writeData({ finishReason: 'idle' });
+          shouldStop = true;
+        } else if (chunk.toolName === 'message_ask_user') {
+          dataStream.writeData({
+            type: 'text-delta',
+            content: chunk.args?.text,
+          });
+          dataStream.writeData({ finishReason: 'message_ask_user' });
+          shouldStop = true;
+        }
       }
     }
 
