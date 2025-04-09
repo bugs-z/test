@@ -1,4 +1,8 @@
 import endent from 'endent';
+import {
+  getPentestGPTInfo,
+  systemPromptEnding,
+} from '@/lib/models/llm-prompting';
 
 export function buildSystemPrompt(
   basePrompt: string,
@@ -16,3 +20,21 @@ export function buildSystemPrompt(
 
   return `${basePrompt}\n\n${profilePrompt}`.trim();
 }
+
+const modelPromptMap: Record<string, string> = {
+  'chat-model-small': `${getPentestGPTInfo(true, 'October 2023', 'Small Model')}\n${systemPromptEnding}`,
+  'chat-model-large': `${getPentestGPTInfo(true, 'October 2023', 'Large Model')}${systemPromptEnding}`,
+  'chat-model-gpt-large': `${getPentestGPTInfo(true, 'October 2023', 'PentestGPT 4o')}\n${systemPromptEnding}`,
+  'vision-model': `${getPentestGPTInfo(true, 'October 2023', 'Vision Model')}\n${systemPromptEnding}`,
+};
+
+export const systemPrompt = ({
+  selectedChatModel,
+  profileContext,
+}: {
+  selectedChatModel: string;
+  profileContext?: string;
+}): string => {
+  const basePrompt = modelPromptMap[selectedChatModel];
+  return buildSystemPrompt(basePrompt, profileContext);
+};

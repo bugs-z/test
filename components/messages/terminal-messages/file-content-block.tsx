@@ -1,10 +1,8 @@
-import React from 'react';
-import { FileContentBlock } from './types';
+import React, { useState } from 'react';
+import type { FileContentBlock } from './types';
 import { MessageMarkdown } from '../message-markdown';
 import { Button } from '@/components/ui/button';
 import { IconChevronDown, IconChevronUp, IconFile } from '@tabler/icons-react';
-import { CopyButton } from '../message-codeblock';
-import { MAX_VISIBLE_LINES } from './types';
 import { ShowMoreButton } from './show-more-button';
 
 interface FileContentBlockComponentProps {
@@ -17,11 +15,18 @@ interface FileContentBlockComponentProps {
 export const FileContentBlockComponent: React.FC<
   FileContentBlockComponentProps
 > = ({ block, index, isClosed, onToggleBlock }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const MAX_VISIBLE_LINES = 12;
   const lines = block.content.split('\n');
   const shouldShowMore = lines.length > MAX_VISIBLE_LINES;
-  const displayedContent = shouldShowMore
-    ? lines.slice(0, MAX_VISIBLE_LINES).join('\n')
-    : block.content;
+  const displayedContent =
+    shouldShowMore && !isExpanded
+      ? lines.slice(0, MAX_VISIBLE_LINES).join('\n')
+      : block.content;
+
+  const handleToggleExpanded = () => {
+    setIsExpanded(!isExpanded);
+  };
 
   return (
     <div
@@ -31,7 +36,7 @@ export const FileContentBlockComponent: React.FC<
         <div className="flex items-center flex-1 min-w-0">
           <div className="flex items-center shrink-0 mr-2">
             <IconFile size={16} className="mr-2" />
-            <span>Reading file</span>
+            <span>{block.isWrite ? 'Writing to file' : 'Reading file'}</span>
           </div>
           <div className="min-w-0 flex-1">
             <code className="truncate block font-mono text-muted-foreground text-sm">
@@ -68,8 +73,8 @@ export const FileContentBlockComponent: React.FC<
             />
             {shouldShowMore && (
               <ShowMoreButton
-                isExpanded={false}
-                onClick={() => {}}
+                isExpanded={isExpanded}
+                onClick={handleToggleExpanded}
                 remainingLines={lines.length - MAX_VISIBLE_LINES}
               />
             )}

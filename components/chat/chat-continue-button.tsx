@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { IconPlayerTrackNext } from '@tabler/icons-react';
-import { type FC } from 'react';
+import type { FC } from 'react';
 
 interface ChatContinueButtonProps {
   isGenerating: boolean;

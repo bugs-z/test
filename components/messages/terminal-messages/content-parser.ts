@@ -1,14 +1,16 @@
-import { ContentBlock } from './types';
+import type { ContentBlock } from './types';
 
 export const parseContent = (content: string): ContentBlock[] => {
   const blocks: ContentBlock[] = [];
   const blockRegex =
-    /((?:<terminal-command[^>]*>[\s\S]*?<\/terminal-command>|```terminal\n[\s\S]*?```|<file-content[^>]*>[\s\S]*?<\/file-content>)(?:\n```(?:stdout|stderr)[\s\S]*?(?:```|$))*(?:\s*<terminal-error>[\s\S]*?<\/terminal-error>)?)/g;
+    /((?:<terminal-command[^>]*>[\s\S]*?<\/terminal-command>|```terminal\n[\s\S]*?```|<file-content[^>]*>[\s\S]*?<\/file-content>|<file-write[^>]*>[\s\S]*?<\/file-write>)(?:\n```(?:stdout|stderr)[\s\S]*?(?:```|$))*(?:\s*<terminal-error>[\s\S]*?<\/terminal-error>)?)/g;
   const terminalXmlRegex =
     /<terminal-command(?:\s+[^>]*)?>([\s\S]*?)<\/terminal-command>/;
   const terminalMarkdownRegex = /```terminal\n([\s\S]*?)```/;
   const fileContentRegex =
     /<file-content(?:\s+path="([^"]*)")?>([\s\S]*?)<\/file-content>/;
+  const fileWriteRegex =
+    /<file-write(?:\s+file="([^"]*)")?>([\s\S]*?)<\/file-write>/;
   const stdoutRegex = /```stdout\n([\s\S]*?)(?:```|$)/;
   const stderrRegex = /```stderr\n([\s\S]*?)(?:```|$)/;
   const errorRegex = /<terminal-error>([\s\S]*?)<\/terminal-error>/;
@@ -28,6 +30,7 @@ export const parseContent = (content: string): ContentBlock[] => {
     const terminalXmlMatch = block.match(terminalXmlRegex);
     const terminalMarkdownMatch = block.match(terminalMarkdownRegex);
     const fileContentMatch = block.match(fileContentRegex);
+    const fileWriteMatch = block.match(fileWriteRegex);
     const stdoutMatch = block.match(stdoutRegex);
     const stderrMatch = block.match(stderrRegex);
     const errorMatch = block.match(errorRegex);
@@ -52,6 +55,16 @@ export const parseContent = (content: string): ContentBlock[] => {
         content: {
           path: fileContentMatch[1] || '',
           content: fileContentMatch[2].trim(),
+          isWrite: false,
+        },
+      });
+    } else if (fileWriteMatch) {
+      blocks.push({
+        type: 'file-content',
+        content: {
+          path: fileWriteMatch[1] || '',
+          content: fileWriteMatch[2].trim(),
+          isWrite: true,
         },
       });
     }

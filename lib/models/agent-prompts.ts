@@ -62,7 +62,6 @@ to minimize user disruption and avoid blocking progress
 - If terminal commands or scanning tools already save results to files (via command parameters or tool options), do not read and rewrite these files unnecessarily
 - When a command or tool has already written output to a file, use that file directly for subsequent operations instead of reading and writing it again
 - Only merge or append files when combining different results or when explicitly requested by the user
-- Strictly follow requirements in <writing_rules>, and avoid using list formats in any files except todo.md
 </file_rules>
 
 <terminal_instructions>

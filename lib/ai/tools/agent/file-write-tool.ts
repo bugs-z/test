@@ -1,6 +1,59 @@
 import { tool } from 'ai';
 import { z } from 'zod';
 import type { ToolContext } from './types';
+import {
+  handleFileError,
+  getSandboxTemplate,
+  getSandboxTimeout,
+  ensureSandboxConnection,
+} from './utils/sandbox-utils';
+
+const writeFileContent = async (
+  sandbox: any,
+  file: string,
+  content: string,
+  append: boolean,
+  leading_newline: boolean,
+  trailing_newline: boolean,
+  dataStream: any,
+): Promise<string> => {
+  try {
+    dataStream.writeData({
+      type: 'tool-call',
+      content: 'file_write',
+    });
+
+    let finalContent = content;
+
+    if (leading_newline) {
+      finalContent = `\n${finalContent}`;
+    }
+    if (trailing_newline) {
+      finalContent = `${finalContent}\n`;
+    }
+
+    if (append) {
+      try {
+        const existingContent = await sandbox.files.read(file);
+        finalContent = existingContent + finalContent;
+      } catch {
+        // File doesn't exist yet, continue with just the new content
+      }
+    }
+
+    await sandbox.files.write(file, finalContent);
+
+    const wrappedContent = `<file-write file="${file}">${finalContent}</file-write>\n\n`;
+    dataStream.writeData({
+      type: 'text-delta',
+      content: wrappedContent,
+    });
+
+    return `Successfully ${append ? 'appended to' : 'wrote'} file: ${file}`;
+  } catch (error) {
+    return handleFileError(error, 'writing to file');
+  }
+};
 
 /**
  * Creates a tool for writing content to files
@@ -8,7 +61,16 @@ import type { ToolContext } from './types';
  * @returns The file write tool
  */
 export const createFileWriteTool = (context: ToolContext) => {
-  const { sandbox } = context;
+  const {
+    sandbox: initialSandbox,
+    userID,
+    terminalTemplate,
+    setSandbox,
+    persistentSandbox,
+    dataStream,
+  } = context;
+
+  let sandbox = initialSandbox;
 
   return tool({
     description:
@@ -25,6 +87,13 @@ export const createFileWriteTool = (context: ToolContext) => {
         .boolean()
         .optional()
         .describe('Whether to add a trailing newline'),
+      ...(sandbox
+        ? {}
+        : {
+            useTemporarySandbox: z
+              .boolean()
+              .describe('Use temporary sandbox (15-minute timeout).'),
+          }),
     }),
     execute: async ({
       file,
@@ -32,37 +101,31 @@ export const createFileWriteTool = (context: ToolContext) => {
       append,
       leading_newline,
       trailing_newline,
+      useTemporarySandbox,
     }) => {
-      if (!sandbox) {
-        return 'Error: No sandbox environment available. Please try using the terminal tool first.';
-      }
-
       try {
-        let finalContent = content;
+        // Ensure sandbox connection
+        sandbox = await ensureSandboxConnection(
+          sandbox,
+          userID,
+          getSandboxTemplate(terminalTemplate),
+          getSandboxTimeout(),
+          dataStream,
+          setSandbox,
+          persistentSandbox && !useTemporarySandbox,
+        );
 
-        if (leading_newline) {
-          finalContent = `\n${finalContent}`;
-        }
-        if (trailing_newline) {
-          finalContent = `${finalContent}\n`;
-        }
-
-        if (append) {
-          // For append mode, first read existing content if file exists
-          try {
-            const existingContent = await sandbox.files.read(file);
-            finalContent = existingContent + finalContent;
-          } catch {
-            // File doesn't exist yet, continue with just the new content
-          }
-        }
-
-        await sandbox.files.write(file, finalContent);
-        return `Successfully ${append ? 'appended to' : 'wrote'} file: ${file}`;
-      } catch (error: unknown) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        return `Error writing to file: ${errorMessage}`;
+        return writeFileContent(
+          sandbox,
+          file,
+          content,
+          append ?? false,
+          leading_newline ?? false,
+          trailing_newline ?? false,
+          dataStream,
+        );
+      } catch (error) {
+        return handleFileError(error, 'connecting to sandbox');
       }
     },
   });

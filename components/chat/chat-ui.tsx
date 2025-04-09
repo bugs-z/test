@@ -17,7 +17,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import { Button } from '../ui/button';
 import { WithTooltip } from '../ui/with-tooltip';
 import { ChatHelp } from './chat-help';
 import { useScroll } from './chat-hooks/use-scroll';
@@ -32,9 +31,7 @@ import { ShareChatButton } from './chat-share-button';
 import { useUIContext } from '@/context/ui-context';
 import { ChatContinueButton } from './chat-continue-button';
 
-type ChatUIProps = {};
-
-export const ChatUI: FC<ChatUIProps> = ({}) => {
+export const ChatUI: FC = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   useHotkey('o', () => handleNewChat());

@@ -1,4 +1,3 @@
-import { handleRetrieval } from '../chat-helpers';
 import { supabase } from '../../../lib/supabase/browser-client';
 import type { ChatMessage } from '@/types';
 import type { Tables } from '@/supabase/types';
@@ -122,121 +121,47 @@ export const useRetrievalLogic = () => {
     // Get all files that need to be processed
     const filesToProcess = [...(editedMessageFiles || []), ...newMessageFiles];
 
-    // Calculate total tokens for these files
-    const totalTokens = filesToProcess.reduce(
-      (acc, file) => acc + file.tokens,
-      0,
-    );
+    // Process each file separately to maintain proper ordering
+    let allFileItems: Tables<'file_items'>[] = [];
 
-    // Log file processing info
-    console.log(
-      `File processing: ${filesToProcess.length} files, ${totalTokens} tokens`,
-    );
+    // Process files in batches to avoid too many parallel requests
+    const BATCH_SIZE = 5;
+    for (let i = 0; i < filesToProcess.length; i += BATCH_SIZE) {
+      const batch = filesToProcess.slice(i, i + BATCH_SIZE);
 
-    // If total tokens are within our limit, bypass the retrieval agent
-    if (totalTokens <= MAX_FILE_CONTENT_TOKENS) {
-      console.log(
-        `Direct file access: ${totalTokens}/${MAX_FILE_CONTENT_TOKENS} tokens`,
-      );
+      // Process batch in parallel
+      const batchResults = await Promise.all(
+        batch.map(async (file) => {
+          try {
+            const { data, error } = await supabase
+              .from('file_items')
+              .select('*')
+              .eq('file_id', file.id)
+              .order('sequence_number', { ascending: true });
 
-      // Process each file separately to maintain proper ordering
-      let allFileItems: Tables<'file_items'>[] = [];
-
-      // Process files in batches to avoid too many parallel requests
-      const BATCH_SIZE = 5;
-      for (let i = 0; i < filesToProcess.length; i += BATCH_SIZE) {
-        const batch = filesToProcess.slice(i, i + BATCH_SIZE);
-
-        // Process batch in parallel
-        const batchResults = await Promise.all(
-          batch.map(async (file) => {
-            try {
-              const { data, error } = await supabase
-                .from('file_items')
-                .select('*')
-                .eq('file_id', file.id)
-                .order('sequence_number', { ascending: true });
-
-              if (error) {
-                console.error(
-                  `File retrieval error (${file.id}): ${error.message}`,
-                );
-                return [];
-              }
-
-              return data || [];
-            } catch (e) {
-              console.error(`Unexpected error retrieving file ${file.id}:`, e);
+            if (error) {
+              console.error(
+                `File retrieval error (${file.id}): ${error.message}`,
+              );
               return [];
             }
-          }),
-        );
 
-        // Combine results
-        allFileItems = [...allFileItems, ...batchResults.flat()];
-      }
+            return data || [];
+          } catch (e) {
+            console.error(`Unexpected error retrieving file ${file.id}:`, e);
+            return [];
+          }
+        }),
+      );
 
-      // Log result summary
-      console.log(`Retrieved ${allFileItems.length} file items directly`);
-
-      // Update chat files
-      setChatFiles([
-        ...existingFiles,
-        ...newMessageFiles.map((file) => ({
-          ...file,
-          chat_id: selectedChat?.id ?? null,
-          message_id: messages[messages.length - 2].message.id,
-        })),
-      ]);
-      setNewMessageFiles([]);
-
-      // Sort by file_id to ensure consistent ordering between files
-      return allFileItems.sort((a, b) => {
-        if (a.file_id !== b.file_id) {
-          return a.file_id < b.file_id ? -1 : 1;
-        }
-        return 0; // sequence_number already sorted by database
-      });
+      // Combine results
+      allFileItems = [...allFileItems, ...batchResults.flat()];
     }
 
-    // For larger files, use the existing retrieval logic
-    console.log(
-      `Using AI retrieval: ${totalTokens}/${MAX_FILE_CONTENT_TOKENS} tokens`,
-    );
+    // Log result summary
+    console.log(`Retrieved ${allFileItems.length} file items directly`);
 
-    const lastMessages = messages.slice(-4, -1);
-    const userInputForRetrieval = lastMessages
-      .map((msg) => {
-        const attachedFiles = existingFiles.filter(
-          (file) => file.message_id === msg.message.id,
-        );
-        const filesStr =
-          attachedFiles.length > 0
-            ? `\nAttached files: ${attachedFiles.map((f) => f.id).join(', ')}`
-            : '';
-        return `<${msg.message.role}>\n${msg.message.content}\n${filesStr}</${msg.message.role}>`;
-      })
-      .join('\n\n');
-
-    const { chunks } = await handleRetrieval(
-      userInputForRetrieval,
-      editedMessageFiles || newMessageFiles,
-      existingFiles,
-      sourceCount,
-    );
-
-    const { data: retrievedFileItemsData, error: retrievedFileItemsError } =
-      await supabase.from('file_items').select('*').in('id', chunks);
-
-    if (retrievedFileItemsError) {
-      console.error(retrievedFileItemsError);
-      return [];
-    }
-
-    const retrievedItems = await rehydrateRetrievedFileItems(
-      retrievedFileItemsData || [],
-    );
-
+    // Update chat files
     setChatFiles([
       ...existingFiles,
       ...newMessageFiles.map((file) => ({
@@ -247,7 +172,13 @@ export const useRetrievalLogic = () => {
     ]);
     setNewMessageFiles([]);
 
-    return retrievedItems;
+    // Sort by file_id to ensure consistent ordering between files
+    return allFileItems.sort((a, b) => {
+      if (a.file_id !== b.file_id) {
+        return a.file_id < b.file_id ? -1 : 1;
+      }
+      return 0; // sequence_number already sorted by database
+    });
   };
 
   // Return the function so it can be used by other components

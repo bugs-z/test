@@ -14,6 +14,7 @@ export interface TerminalBlock {
 export interface FileContentBlock {
   path: string;
   content: string;
+  isWrite?: boolean;
 }
 
 export type ContentBlock =
@@ -36,5 +37,5 @@ export interface ShowMoreButtonProps {
   remainingLines: number;
 }
 
-export const MAX_VISIBLE_LINES = 20;
+export const MAX_VISIBLE_LINES = 12;
 export const COMMAND_LENGTH_THRESHOLD = 40; // Threshold for when to switch to full terminal view

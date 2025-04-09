@@ -67,7 +67,7 @@ export const createTerminalTool = (context: ToolContext) => {
       } else if (selectedPlugin) {
         persistentSandbox = false; // Always use temporary sandbox for plugins
       } else {
-        persistentSandbox = !Boolean(useTemporarySandbox);
+        persistentSandbox = !useTemporarySandbox;
       }
 
       // Update persistent sandbox state in parent context

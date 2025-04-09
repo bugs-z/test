@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { MessageMarkdown } from '../message-markdown';
 import { useUIContext } from '@/context/ui-context';
-import { MessageTerminalProps } from './types';
+import type { MessageTerminalProps } from './types';
 import { parseContent } from './content-parser';
 import { TerminalBlockComponent } from './terminal-block';
 import { FileContentBlockComponent } from './file-content-block';

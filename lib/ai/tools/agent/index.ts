@@ -2,7 +2,7 @@ import type { ToolContext } from './types';
 import { createTerminalTool } from './terminal-tool';
 import { createMessageNotifyTool } from './message-notify-tool';
 import { createMessageAskTool } from './message-ask-tool';
-// import { createFileWriteTool } from "./file-write-tool"
+import { createFileWriteTool } from './file-write-tool';
 import { createFileReadTool } from './file-read-tool';
 import { createIdleTool } from './idle-tool';
 import { createFileUploadTool } from './file-upload-tool';
@@ -17,7 +17,7 @@ export function createAgentTools(context: ToolContext) {
     terminal: createTerminalTool(context),
     message_notify_user: createMessageNotifyTool(context),
     message_ask_user: createMessageAskTool(),
-    // file_write: createFileWriteTool(context),
+    file_write: createFileWriteTool(context),
     file_read: createFileReadTool(context),
     ...(context.isPremiumUser
       ? { file_upload: createFileUploadTool(context) }

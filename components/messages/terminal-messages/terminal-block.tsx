@@ -5,14 +5,14 @@ import {
   IconChevronUp,
   IconTerminal2,
 } from '@tabler/icons-react';
-import { PluginID } from '@/types/plugins';
+import type { PluginID } from '@/types/plugins';
 import { allTerminalPlugins } from '../message-type-solver';
 import { useUIContext } from '@/context/ui-context';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { CopyButton } from '../message-codeblock';
 import {
-  TerminalBlock,
+  type TerminalBlock,
   MAX_VISIBLE_LINES,
   COMMAND_LENGTH_THRESHOLD,
 } from './types';

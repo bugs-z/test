@@ -16,8 +16,8 @@ export enum AgentStatusState {
 export const AgentStatusLabels: Record<AgentStatusState, string> = {
   [AgentStatusState.THINKING]: 'Thinking',
   [AgentStatusState.TERMINAL]: 'Using terminal',
-  [AgentStatusState.FILE_WRITE]: 'Uploading files',
-  [AgentStatusState.FILE_READ]: 'Reading files',
+  [AgentStatusState.FILE_WRITE]: 'Writing to file',
+  [AgentStatusState.FILE_READ]: 'Reading file',
   [AgentStatusState.WEB_SEARCH]: 'Searching the web',
   [AgentStatusState.BROWSER]: 'Browsing the web',
 };

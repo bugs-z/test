@@ -23,10 +23,17 @@ export async function POST(request: Request) {
   let receivedEvent;
   try {
     const stripe = getStripe();
+    if (!signature) {
+      throw new Error('No signature found in request headers');
+    }
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SIGNING_SECRET;
+    if (!webhookSecret) {
+      throw new Error('Missing Stripe webhook signing secret');
+    }
     receivedEvent = await stripe.webhooks.constructEventAsync(
       body,
-      signature!,
-      process.env.STRIPE_WEBHOOK_SIGNING_SECRET!,
+      signature,
+      webhookSecret,
       undefined,
       cryptoProvider,
     );
@@ -43,15 +50,17 @@ export async function POST(request: Request) {
       // Payment is successful and the subscription is created.
       // You should provision the subscription and save the customer ID to your database.
       case 'checkout.session.completed':
-      // Continue to provision the subscription as payments continue to be made.
-      // Store the status in your database and check when a user accesses your service.
-      // This approach helps you avoid hitting rate limits.
-      case 'invoice.paid':
-        await upsertSubscription(
-          receivedEvent.data.object.subscription as string,
-          receivedEvent.data.object.customer as string,
-        );
+      case 'invoice.paid': {
+        const subscriptionId = receivedEvent.data.object.subscription;
+        const customerId = receivedEvent.data.object.customer;
+        if (
+          typeof subscriptionId === 'string' &&
+          typeof customerId === 'string'
+        ) {
+          await upsertSubscription(subscriptionId, customerId);
+        }
         break;
+      }
       case 'customer.subscription.updated':
         await upsertSubscription(
           receivedEvent.data.object.id as string,
@@ -89,10 +98,14 @@ async function upsertSubscription(
   customerId: string,
   attempt = 0,
 ) {
-  const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  );
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Missing Supabase credentials');
+  }
+
+  const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
 
   const stripe = getStripe();
   const customer = await stripe.customers.retrieve(customerId);
@@ -156,10 +169,14 @@ async function upsertSubscription(
 }
 
 async function deleteSubscription(subscription: Stripe.Subscription) {
-  const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  );
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Missing Supabase credentials');
+  }
+
+  const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
   return supabaseAdmin
     .from('subscriptions')
     .delete()

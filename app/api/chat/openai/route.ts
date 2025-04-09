@@ -67,7 +67,7 @@ export async function POST(request: Request) {
       return rateLimitCheckResult.response;
     }
 
-    let systemPrompt = buildSystemPrompt(
+    const systemPrompt = buildSystemPrompt(
       llmConfig.systemPrompts.agent,
       profile.profile_context,
     );
@@ -202,7 +202,8 @@ export async function POST(request: Request) {
 
         const result = streamText({
           model: myProvider.languageModel('chat-model-gpt-large'),
-          messages: toVercelChatMessages(messages, true, systemPrompt),
+          system: systemPrompt,
+          messages: toVercelChatMessages(messages, true),
           maxTokens: 2048,
           abortSignal: request.signal,
           tools: getSelectedSchemas(['browser', 'webSearch', 'terminal']),

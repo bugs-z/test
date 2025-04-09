@@ -13,9 +13,7 @@ import { Label } from '../ui/label';
 import { Slider } from '../ui/slider';
 import { WithTooltip } from '../ui/with-tooltip';
 
-type ChatRetrievalSettingsProps = {};
-
-export const ChatRetrievalSettings: FC<ChatRetrievalSettingsProps> = ({}) => {
+export const ChatRetrievalSettings: FC = () => {
   const { sourceCount, setSourceCount } = useContext(PentestGPTContext);
 
   const [isOpen, setIsOpen] = useState(false);

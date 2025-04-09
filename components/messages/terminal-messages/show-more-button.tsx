@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { IconArrowDown, IconArrowUp } from '@tabler/icons-react';
-import { ShowMoreButtonProps } from './types';
+import type { ShowMoreButtonProps } from './types';
 
 export const ShowMoreButton: React.FC<ShowMoreButtonProps> = ({
   isExpanded,

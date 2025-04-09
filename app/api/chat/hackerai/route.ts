@@ -21,7 +21,6 @@ import { executeReasonLLMTool } from '@/lib/ai/tools/reason-llm';
 import { executeReasoningWebSearchTool } from '@/lib/ai/tools/reasoning-web-search';
 import { executeDeepResearchTool } from '@/lib/ai/tools/deep-research';
 import { myProvider } from '@/lib/ai/providers';
-// import { createToolSchemas } from '@/lib/ai/tools/toolSchemas';
 import { executeTerminalAgent } from '@/lib/ai/tools/terminal-agent';
 import { terminalPlugins } from '@/lib/ai/terminal-utils';
 import { geolocation } from '@vercel/functions';
@@ -75,7 +74,7 @@ export async function POST(request: Request) {
     const baseSystemPrompt = config.isLargeModel
       ? llmConfig.systemPrompts.largeModel
       : llmConfig.systemPrompts.smallModel;
-    let systemPrompt = buildSystemPrompt(
+    const systemPrompt = buildSystemPrompt(
       baseSystemPrompt,
       profile.profile_context,
     );
@@ -238,13 +237,6 @@ export async function POST(request: Request) {
     try {
       return createDataStreamResponse({
         execute: (dataStream) => {
-          // const { getSelectedSchemas } = createToolSchemas({
-          //   chatSettings,
-          //   messages,
-          //   profile,
-          //   dataStream,
-          // });
-
           const result = streamText({
             model: myProvider.languageModel(selectedChatModel),
             system: systemPrompt,
@@ -252,10 +244,6 @@ export async function POST(request: Request) {
             maxTokens: 2048,
             abortSignal: request.signal,
             experimental_transform: smoothStream({ chunking: 'word' }),
-            // tools:
-            //   config.isLargeModel && !shouldUncensorResponse
-            //     ? getSelectedSchemas(['browser', 'webSearch'])
-            //     : undefined,
           });
 
           result.mergeIntoDataStream(dataStream);
@@ -284,16 +272,6 @@ async function getProviderConfig(
   const defaultModel = 'chat-model-small';
   const proModel = 'chat-model-large';
 
-  const providerUrl = llmConfig.openrouter.url;
-  const providerBaseUrl = llmConfig.openrouter.baseURL;
-
-  const providerHeaders = {
-    Authorization: `Bearer ${llmConfig.openrouter.apiKey}`,
-    'Content-Type': 'application/json',
-    'HTTP-Referer': `https://pentestgpt.com/${chatSettings.model}`,
-    'X-Title': chatSettings.model,
-  };
-
   const selectedModel = isLargeModel ? proModel : defaultModel;
 
   const rateLimitModel =
@@ -311,9 +289,6 @@ async function getProviderConfig(
   );
 
   return {
-    providerUrl,
-    providerBaseUrl,
-    providerHeaders,
     selectedModel,
     rateLimitCheckResult,
     isLargeModel,

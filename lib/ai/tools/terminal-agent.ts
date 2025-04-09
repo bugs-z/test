@@ -42,7 +42,7 @@ export async function executeTerminalAgent({
   const userID = profile.user_id;
   let systemPrompt = PENTESTGPT_AGENT_SYSTEM_PROMPT;
   let terminalTemplate = SANDBOX_TEMPLATE;
-  let selectedChatModel = 'chat-model-agent';
+  const selectedChatModel = 'chat-model-agent';
 
   try {
     // Check rate limit
