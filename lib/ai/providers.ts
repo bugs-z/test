@@ -27,6 +27,6 @@ export const myProvider = customProvider({
     'deep-research': perplexity('sonar-deep-research'),
     'vision-model': mistral('mistral-small-latest'),
     'title-model': mistral('mistral-small-latest'),
-    'standalone-question-model': mistral('mistral-small-latest'),
+    'standalone-question-model': openrouter('google/gemini-2.0-flash-001'),
   },
 });
