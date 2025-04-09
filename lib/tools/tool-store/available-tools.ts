@@ -35,6 +35,21 @@ export const availablePlugins: PluginSummary[] = [
     ],
   },
   {
+    id: 1,
+    name: 'Enhanced Search',
+    value: PluginID.ENHANCED_SEARCH,
+    categories: ['utils'],
+    icon: 'https://cdn-icons-png.flaticon.com/128/11751/11751689.png',
+    invertInDarkMode: true,
+    description:
+      'Enhances the model with curated PentestGPT knowledge, including popular guides, techniques, and tools related to pentesting, bug bounty, and cybersecurity (RAG)',
+    githubRepoUrl: pluginUrls.PENTESTGPT,
+    isInstalled: false,
+    isPremium: false,
+    createdAt: '2024-07-26',
+    starters: [],
+  },
+  {
     id: 2,
     name: 'Terminal',
     value: PluginID.TERMINAL,

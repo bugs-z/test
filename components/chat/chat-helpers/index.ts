@@ -26,6 +26,7 @@ export const handleHostedChat = async (
   payload: ChatPayload,
   tempAssistantChatMessage: ChatMessage,
   isRegeneration: boolean,
+  isRagEnabled: boolean,
   isContinuation: boolean,
   isTerminalContinuation: boolean,
   newAbortController: AbortController,
@@ -52,6 +53,7 @@ export const handleHostedChat = async (
     isContinuation,
     selectedPlugin,
     isTerminalContinuation,
+    isRagEnabled,
   };
 
   const chatResponse = await fetchChatResponse(

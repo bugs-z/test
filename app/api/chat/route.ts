@@ -1,5 +1,5 @@
 import { getAIProfile } from '@/lib/server/server-chat-helpers';
-import { systemPrompt } from '@/lib/ai/prompts';
+import { getSystemPrompt } from '@/lib/ai/prompts';
 import {
   filterEmptyAssistantMessages,
   handleAssistantMessages,
@@ -20,6 +20,7 @@ import { geolocation } from '@vercel/functions';
 import PostHogClient from '@/app/posthog';
 import { handleToolExecution } from '@/lib/ai/tool-handler';
 import { createToolSchemas } from '@/lib/ai/tools/toolSchemas';
+import { processRag } from '@/lib/ai/rag-processor';
 
 export const preferredRegion = [
   'iad1',
@@ -49,6 +50,7 @@ export async function POST(request: Request) {
       isContinuation,
       selectedPlugin,
       isTerminalContinuation,
+      isRagEnabled,
     } = await request.json();
 
     const profile = await getAIProfile();
@@ -105,7 +107,8 @@ export async function POST(request: Request) {
           selectedPlugin !== PluginID.REASONING &&
           selectedPlugin !== PluginID.REASONING_WEB_SEARCH &&
           selectedPlugin !== PluginID.DEEP_RESEARCH &&
-          !terminalPlugins.includes(selectedPlugin as PluginID)
+          !terminalPlugins.includes(selectedPlugin as PluginID) &&
+          !isRagEnabled
         ) {
           return handleAssistantMessages(messages);
         }
@@ -127,9 +130,31 @@ export async function POST(request: Request) {
       isLargeModel: config.isLargeModel,
       abortSignal: request.signal,
     });
-
     if (toolResponse) {
       return toolResponse;
+    }
+
+    let systemPrompt = getSystemPrompt({
+      selectedChatModel,
+      profileContext: profile.profile_context,
+    });
+
+    // Process RAG
+    let ragUsed = false;
+    let ragId: string | null = null;
+    if (isRagEnabled) {
+      const ragResult = await processRag({
+        messages,
+        isContinuation,
+        profile,
+        selectedChatModel,
+      });
+
+      ragUsed = ragResult.ragUsed;
+      ragId = ragResult.ragId;
+      if (ragResult.systemPrompt) {
+        systemPrompt = ragResult.systemPrompt;
+      }
     }
 
     const posthog = PostHogClient();
@@ -140,35 +165,39 @@ export async function POST(request: Request) {
       });
     }
 
+    const addActiveTools =
+      selectedChatModel === 'chat-model-gpt-large' && !ragUsed;
+    if (addActiveTools) {
+      selectedChatModel = 'chat-model-gpt-large-with-tools';
+    }
+
     try {
       return createDataStreamResponse({
         execute: (dataStream) => {
+          dataStream.writeData({ ragUsed, ragId });
+
           const baseConfig = {
             model: myProvider.languageModel(selectedChatModel),
-            system: systemPrompt({
-              selectedChatModel,
-              profileContext: profile.profile_context,
-            }),
+            system: systemPrompt,
             messages: toVercelChatMessages(validatedMessages, supportsImages),
             maxTokens: 2048,
             abortSignal: request.signal,
             experimental_transform: smoothStream({ chunking: 'word' }),
           };
 
-          const result =
-            selectedChatModel === 'chat-model-gpt-large'
-              ? streamText({
-                  ...baseConfig,
-                  tools: createToolSchemas({
-                    chatSettings,
-                    messages: validatedMessages,
-                    profile,
-                    dataStream,
-                    isTerminalContinuation,
-                    abortSignal: request.signal,
-                  }).getSelectedSchemas(['browser', 'webSearch', 'terminal']),
-                })
-              : streamText(baseConfig);
+          const result = addActiveTools
+            ? streamText({
+                ...baseConfig,
+                tools: createToolSchemas({
+                  chatSettings,
+                  messages: validatedMessages,
+                  profile,
+                  dataStream,
+                  isTerminalContinuation,
+                  abortSignal: request.signal,
+                }).getSelectedSchemas(['browser', 'webSearch', 'terminal']),
+              })
+            : streamText(baseConfig);
 
           result.mergeIntoDataStream(dataStream);
         },

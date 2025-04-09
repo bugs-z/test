@@ -1,7 +1,7 @@
 import { checkRatelimitOnApi } from '@/lib/server/ratelimiter';
 import { getAIProfile } from '@/lib/server/server-chat-helpers';
 import { generateObject } from 'ai';
-import { DEFAULT_TITLE_GENERATION_PROMPT_TEMPLATE } from '@/lib/backend-config';
+import { DEFAULT_TITLE_GENERATION_PROMPT_TEMPLATE } from '@/lib/ai/prompts';
 import { z } from 'zod';
 import { myProvider } from '@/lib/ai/providers';
 

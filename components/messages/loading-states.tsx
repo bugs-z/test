@@ -6,6 +6,7 @@ import {
   IconWorld,
   IconAtom,
   IconSearch,
+  IconBrain,
 } from '@tabler/icons-react';
 import { PluginID } from '@/types/plugins';
 
@@ -29,6 +30,10 @@ export const loadingStates = {
   [PluginID.REASONING]: {
     icon: <IconAtom size={20} />,
     text: 'Thinking...',
+  },
+  [PluginID.ENHANCED_SEARCH]: {
+    icon: <IconBrain size={20} />,
+    text: 'Retrieving relevant knowledge...',
   },
   [PluginID.REASONING_WEB_SEARCH]: {
     icon: <IconAtom size={20} />,
