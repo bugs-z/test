@@ -20,6 +20,8 @@ const errorMessages: Record<string, string> = {
   '7': 'Your password must include both uppercase and lowercase letters.',
   '8': 'Your password must include at least one number.',
   '9': 'Your password must include at least one special character (e.g., !@#$%^&*()).',
+  password_requirements:
+    'Password must be 8+ chars with uppercase, lowercase, number, and special character (!@#$%^&*)',
   '10': 'Password reset email sent. Check your email to continue.',
   '11': 'The email address is not in a valid format.',
   '12': 'Password recovery requires an email.',
@@ -45,6 +47,7 @@ const messageTypes: Record<string, 'error' | 'success' | 'warning'> = {
   '7': 'error',
   '8': 'error',
   '9': 'error',
+  password_requirements: 'error',
   '10': 'success',
   '11': 'error',
   '12': 'error',
@@ -190,10 +193,9 @@ export default async function Login({
       },
     ];
 
-    for (const check of passwordChecks) {
-      if (!check.test) {
-        return redirect(`/login?message=${check.message}`);
-      }
+    const failedChecks = passwordChecks.filter((check) => !check.test);
+    if (failedChecks.length > 0) {
+      return redirect(`/login?message=password_requirements`);
     }
 
     let emailDomainWhitelist: string[] = [];

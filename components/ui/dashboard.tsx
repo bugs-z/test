@@ -9,10 +9,7 @@ import { PentestGPTContext } from '@/context/context';
 import useHotkey from '@/lib/hooks/use-hotkey';
 import { cn } from '@/lib/utils';
 import type { ContentType } from '@/types';
-import {
-  IconFileFilled,
-  IconLayoutSidebarLeftExpand,
-} from '@tabler/icons-react';
+import { IconFileFilled, IconLayoutSidebar } from '@tabler/icons-react';
 import { useSearchParams } from 'next/navigation';
 import {
   type FC,
@@ -234,7 +231,7 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
               size="icon"
               onClick={handleToggleSidebar}
             >
-              <IconLayoutSidebarLeftExpand size={24} />
+              <IconLayoutSidebar size={24} />
             </Button>
           }
           side="bottomRight"

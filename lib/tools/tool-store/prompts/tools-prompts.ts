@@ -21,12 +21,6 @@ The user has selected the SSL Scanner plugin, which uses the testssl.sh tool in 
  - '-S' or '--server-defaults' to display the server's default picks and certificate info
 5. Create and run commands using the following structure: "testssl.sh [options] [target]" or simply "testssl.sh [target]" for a basic scan.
 `;
-    case PluginID.DNS_SCANNER:
-      return `
-The user has selected the DNS Scanner plugin, which uses the dnsrecon tool in the terminal. This tool performs DNS reconnaissance and discovers misconfigurations in DNS servers. Remember:
-1. Focus on DNS enumeration, zone transfers, and identifying potential misconfigurations.
-2. Provide dnsrecon-specific options and explanations.
-`;
     case PluginID.PORT_SCANNER:
       return `
 The user has selected the Port Scanner plugin, which uses the nmap tool in the terminal. This tool performs comprehensive port scanning to discover open ports and services on target systems. Remember:

@@ -3,6 +3,7 @@ import type {
   ChatMessage,
   ChatPayload,
   MessageImage,
+  LLMID,
 } from '@/types';
 import type { Tables } from '@/supabase/types';
 import { countTokens } from 'gpt-tokenizer';
@@ -12,16 +13,17 @@ import { toast } from 'sonner';
 
 export async function buildFinalMessages(
   payload: ChatPayload,
+  model: LLMID,
   chatImages: MessageImage[],
 ): Promise<BuiltChatMessage[]> {
-  const { chatSettings, chatMessages, retrievedFileItems } = payload;
+  const { chatMessages, retrievedFileItems } = payload;
 
   let CHUNK_SIZE = 12000;
-  if (chatSettings.model === Agent.modelId) {
+  if (model === Agent.modelId) {
     CHUNK_SIZE = 32000 - 4000; // -4000 for the system prompt, custom instructions, and more
-  } else if (chatSettings.model === LargeModel.modelId) {
+  } else if (model === LargeModel.modelId) {
     CHUNK_SIZE = 22000 - 4000; // -4000 for the system prompt, custom instructions, and more
-  } else if (chatSettings.model === SmallModel.modelId) {
+  } else if (model === SmallModel.modelId) {
     CHUNK_SIZE = 12000 - 4000; // -4000 for the system prompt, custom instructions, and more
   }
 

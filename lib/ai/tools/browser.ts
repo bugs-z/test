@@ -7,7 +7,6 @@ import FirecrawlApp, { type ScrapeResponse } from '@mendable/firecrawl-js';
 import PostHogClient from '@/app/posthog';
 
 interface BrowserToolConfig {
-  chatSettings: any;
   profile: any;
   messages: any[];
   dataStream: any;

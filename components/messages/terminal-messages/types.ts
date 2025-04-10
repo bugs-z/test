@@ -7,8 +7,8 @@ export interface MessageTerminalProps {
 export interface TerminalBlock {
   command: string;
   stdout: string;
-  stderr: string;
   error?: string;
+  exec_dir?: string;
 }
 
 export interface FileContentBlock {

@@ -5,6 +5,10 @@ import type {
   CoreUserMessage,
 } from 'ai';
 import type { BuiltChatMessage } from '@/types/chat-message';
+import { PluginID } from '@/types/plugins';
+import { terminalPlugins } from '@/lib/ai/terminal-utils';
+import { getModerationResult } from '@/lib/server/moderation';
+import { getSystemPrompt } from './prompts';
 
 /**
  * Filters out empty assistant messages from the message array
@@ -236,4 +240,94 @@ export function removeLastSureMessage(messages: any[]) {
   }
 
   return messages;
+}
+
+/**
+ * Processes chat messages and handles model selection, uncensoring, and validation
+ * @param messages - Array of messages to process
+ * @param selectedModel - The initially selected model
+ * @param selectedPlugin - The selected plugin ID
+ * @param isRagEnabled - Whether RAG is enabled
+ * @param isContinuation - Whether this is a continuation request
+ * @param isTerminalContinuation - Whether this is a terminal continuation request
+ * @param region - The request region
+ * @param apiKey - The OpenAI API key
+ * @param isLargeModel - Whether the model is large
+ * @returns Object containing the processed messages and model information
+ */
+export async function processChatMessages(
+  messages: BuiltChatMessage[],
+  selectedModel: string,
+  selectedPlugin: PluginID,
+  isRagEnabled: boolean,
+  isContinuation: boolean,
+  isTerminalContinuation: boolean,
+  region: string | undefined,
+  apiKey: string | undefined,
+  isLargeModel: boolean,
+  profileContext: string,
+): Promise<{
+  messages: BuiltChatMessage[];
+  selectedModel: string;
+  supportsImages: boolean;
+  systemPrompt: string;
+}> {
+  let selectedChatModel = selectedModel;
+  let supportsImages = true;
+  let shouldUncensor = false;
+
+  // Check if we should uncensor the response
+  if (
+    apiKey &&
+    !isContinuation &&
+    !isTerminalContinuation &&
+    !terminalPlugins.includes(selectedPlugin as PluginID) &&
+    selectedPlugin !== PluginID.TERMINAL &&
+    selectedChatModel !== 'chat-model-large' &&
+    region !== 'bom1' &&
+    region !== 'cpt1'
+  ) {
+    const { shouldUncensorResponse: moderationResult } =
+      await getModerationResult(messages, apiKey, 10, isLargeModel);
+    shouldUncensor = moderationResult;
+  }
+
+  // Handle vision support for large model
+  if (selectedChatModel === 'chat-model-large') {
+    supportsImages = messagesIncludeImages(messages);
+    if (supportsImages) {
+      selectedChatModel = 'vision-model';
+    }
+  }
+
+  if (shouldUncensor) {
+    addAuthMessage(messages);
+    if (
+      selectedPlugin !== PluginID.WEB_SEARCH &&
+      selectedPlugin !== PluginID.REASONING &&
+      selectedPlugin !== PluginID.REASONING_WEB_SEARCH &&
+      selectedPlugin !== PluginID.DEEP_RESEARCH &&
+      !terminalPlugins.includes(selectedPlugin as PluginID) &&
+      !isRagEnabled
+    ) {
+      handleAssistantMessages(messages);
+    }
+  }
+
+  filterEmptyAssistantMessages(messages);
+
+  // Remove invalid message exchanges
+  const validatedMessages = validateMessages(messages);
+
+  let systemPrompt = getSystemPrompt({
+    selectedChatModel: selectedChatModel,
+    profileContext: profileContext,
+  });
+
+  return {
+    messages: validatedMessages,
+    selectedModel: selectedChatModel,
+    supportsImages,
+    systemPrompt,
+  };
 }

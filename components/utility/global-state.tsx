@@ -65,7 +65,6 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
   >([]);
   const [chatSettings, setChatSettings] = useState<ChatSettings>({
     model: 'mistral-medium',
-    includeProfileContext: false,
   });
   const [selectedChat, setSelectedChat] = useState<Tables<'chats'> | null>(
     null,
@@ -324,7 +323,6 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
       setSelectedChat(chat);
       setChatSettings({
         model: chat.model as LLMID,
-        includeProfileContext: chat.include_profile_context,
       });
     } catch (error) {
       console.error('Error fetching chat:', error);

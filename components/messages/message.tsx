@@ -255,6 +255,7 @@ export const Message: FC<MessageProps> = ({
                 <TextareaAutosize
                   textareaRef={editInputRef as RefObject<HTMLTextAreaElement>}
                   className="text-md w-full"
+                  maxRows={isMobile ? 8 : 10}
                   value={editedMessage}
                   onValueChange={setEditedMessage}
                 />

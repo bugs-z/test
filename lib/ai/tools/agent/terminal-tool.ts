@@ -39,9 +39,15 @@ export const createTerminalTool = (context: ToolContext) => {
   let persistentSandbox = initialPersistentSandbox;
 
   return tool({
-    description: 'Execute commands in the sandbox environment.',
+    description:
+      'Execute commands in the sandbox environment. Use for running code, installing packages, or managing files.',
     parameters: z.object({
-      command: z.string().describe('Command to execute'),
+      exec_dir: z
+        .string()
+        .describe(
+          'Working directory for command execution (must use absolute path)',
+        ),
+      command: z.string().describe('Shell command to execute'),
       ...(selectedPlugin || !isPremiumUser
         ? {}
         : {
@@ -51,7 +57,7 @@ export const createTerminalTool = (context: ToolContext) => {
           }),
     }),
     execute: async (args) => {
-      const { command, useTemporarySandbox } = args;
+      const { exec_dir, command, useTemporarySandbox } = args;
 
       // Validate plugin-specific commands
       if (selectedPlugin) {
@@ -120,6 +126,7 @@ export const createTerminalTool = (context: ToolContext) => {
       const terminalStream = await executeTerminalCommand({
         userID,
         command,
+        exec_dir,
         usePersistentSandbox: persistentSandbox,
         sandbox,
       });

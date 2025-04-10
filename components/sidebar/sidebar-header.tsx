@@ -1,4 +1,4 @@
-import { IconLayoutSidebarRightExpand } from '@tabler/icons-react';
+import { IconLayoutSidebar } from '@tabler/icons-react';
 import type { FC } from 'react';
 import type { ContentType } from '@/types';
 import { SidebarCreateButtons } from './sidebar-create-buttons';
@@ -28,7 +28,7 @@ export const SidebarHeader: FC<SidebarHeaderProps> = ({
               className="size-10 p-0"
               onClick={handleToggleSidebar}
             >
-              <IconLayoutSidebarRightExpand size={SIDEBAR_ICON_SIZE} />
+              <IconLayoutSidebar size={SIDEBAR_ICON_SIZE} />
             </Button>
           }
           side="right"

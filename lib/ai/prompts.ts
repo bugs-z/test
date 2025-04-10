@@ -41,24 +41,17 @@ export const getSystemPrompt = ({
 };
 
 export const DEFAULT_TITLE_GENERATION_PROMPT_TEMPLATE = (
-  messages: ChatMessage[],
+  message: string,
 ) => `### Task:
-You are a helpful assistant that generates concise chat titles. Use the chatName tool to generate a title.
+You are a helpful assistant that generates short, concise chat titles based on the first user message.
 
 ### Instructions:
-1. Use the chatName tool to generate a concise title (3-5 words)
-2. The title should clearly represent the main theme of the conversation
+1. Generate a short title (3-5 words) based on the user's first message
+2. Use the chatName tool to generate the title
 3. Use the chat's primary language (default to English if multilingual)
 
-### Important:
-- You MUST use the chatName tool to generate the title
-- Do not generate the title directly in your response
-- Do not add any additional text or explanations
-
-### Chat History:
-<chat_history>
-${messages.map((message) => `${message.message.role}: ${message.message.content}`).join('\n')}
-</chat_history>`;
+### User Message:
+${message}`;
 
 export const RAG_SYSTEM_PROMPT = `Given the following conversation, relevant context, and \
 a follow-up question, reply with an answer to the current question the user is asking. \

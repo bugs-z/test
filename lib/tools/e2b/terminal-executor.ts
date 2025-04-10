@@ -17,16 +17,18 @@ interface ExecutionError {
 export const executeTerminalCommand = async ({
   userID,
   command,
+  exec_dir,
   usePersistentSandbox = false,
   sandbox = null,
 }: {
   userID: string;
   command: string;
+  exec_dir: string;
   usePersistentSandbox?: boolean;
   sandbox?: Sandbox | null;
 }): Promise<ReadableStream<Uint8Array>> => {
   let hasTerminalOutput = false;
-  let currentBlock: 'stdout' | 'stderr' | null = null;
+  let currentBlock: 'stdout' | null = null;
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -39,7 +41,7 @@ export const executeTerminalCommand = async ({
 
       controller.enqueue(
         ENCODER.encode(
-          `<terminal-command sandbox-type="${usePersistentSandbox ? 'persistent' : 'temporary'}">${command}</terminal-command>`,
+          `<terminal-command sandbox-type="${usePersistentSandbox ? 'persistent' : 'temporary'}" exec-dir="${exec_dir}">${command}</terminal-command>`,
         ),
       );
 
@@ -50,6 +52,7 @@ export const executeTerminalCommand = async ({
 
         const execution = await sandbox.commands.run(command, {
           timeoutMs: MAX_EXECUTION_TIME,
+          cwd: exec_dir,
           onStdout: (data: string) => {
             hasTerminalOutput = true;
             if (currentBlock !== 'stdout') {
@@ -129,16 +132,4 @@ function isConnectionError(error: Error): boolean {
     error.message.includes('504 Gateway Timeout') ||
     error.message.includes('502 Bad Gateway')
   );
-}
-
-class CustomExecutionError extends Error {
-  value: string;
-  traceback: string;
-
-  constructor(name: string, value: string, traceback: string) {
-    super(name);
-    this.name = name;
-    this.value = value;
-    this.traceback = traceback;
-  }
 }

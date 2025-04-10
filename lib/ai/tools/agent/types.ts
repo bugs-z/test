@@ -24,7 +24,6 @@ export const BASH_SANDBOX_TIMEOUT = 15 * 60 * 1000;
 export const PLUGIN_COMMAND_MAP: Partial<Record<PluginID, string>> = {
   [PluginID.SQLI_EXPLOITER]: 'sqlmap',
   [PluginID.SSL_SCANNER]: 'testssl.sh',
-  [PluginID.DNS_SCANNER]: 'dnsrecon',
   [PluginID.PORT_SCANNER]: 'nmap',
   [PluginID.WAF_DETECTOR]: 'wafw00f',
   [PluginID.WHOIS_LOOKUP]: 'whois',

@@ -4,14 +4,12 @@ import { executeBrowserTool } from './browser';
 import { z } from 'zod';
 
 export const createToolSchemas = ({
-  chatSettings,
   messages,
   profile,
   dataStream,
   isTerminalContinuation,
   abortSignal,
 }: {
-  chatSettings?: any;
   messages?: any;
   profile?: any;
   dataStream?: any;
@@ -42,7 +40,7 @@ Always ensure URLs start with 'https://' and contain a valid domain name (e.g., 
       execute: async ({ open_url }: { open_url: string | string[] }) => {
         return executeBrowserTool({
           open_url,
-          config: { chatSettings, profile, messages, dataStream },
+          config: { profile, messages, dataStream },
         });
       },
     },

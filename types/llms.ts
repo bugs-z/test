@@ -1,4 +1,5 @@
 import type { ModelProvider } from './models';
+import type { PluginID } from './plugins';
 
 export const VALID_MODEL_IDS = [
   'gpt-4-turbo-preview',
@@ -17,3 +18,10 @@ export interface LLM {
 }
 
 export type ModelWithWebSearch = LLMID | `${LLMID}:websearch`;
+
+export interface ModelParams {
+  isContinuation: boolean;
+  isTerminalContinuation: boolean;
+  isRagEnabled: boolean;
+  selectedPlugin: PluginID;
+}

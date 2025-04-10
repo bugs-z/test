@@ -68,6 +68,7 @@ export const processResponse = async (
     let toolExecuted = false;
     let citations: string[] = [];
     let shouldSkipFirstChunk = false;
+    let chatTitle: string | null = null;
 
     try {
       await processDataStream({
@@ -254,6 +255,11 @@ export const processResponse = async (
                 firstValue.ragId !== null ? String(firstValue.ragId) : null;
             }
 
+            // Handle chatTitle
+            if (firstValue?.chatTitle) {
+              chatTitle = firstValue.chatTitle;
+            }
+
             // Handle finishReason
             if (firstValue?.finishReason) {
               if (firstValue.finishReason === 'tool-calls') {
@@ -319,6 +325,7 @@ export const processResponse = async (
       selectedPlugin: updatedPlugin,
       assistantGeneratedImages,
       citations,
+      chatTitle,
     };
   } else {
     throw new Error('Response body is null');

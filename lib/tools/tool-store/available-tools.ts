@@ -269,37 +269,6 @@ export const availablePlugins: PluginSummary[] = [
     ],
   },
   {
-    id: 21,
-    name: 'DNS Scanner',
-    value: PluginID.DNS_SCANNER,
-    categories: ['vuln-scanners'],
-    icon: 'https://cdn-icons-png.flaticon.com/128/1183/1183697.png',
-    invertInDarkMode: true,
-    description:
-      'Perform DNS recon and discover misconfigurations in DNS servers',
-    githubRepoUrl: pluginUrls.DNS_SCANNER,
-    isInstalled: false,
-    isPremium: true,
-    createdAt: '2024-08-05',
-    starters: [
-      {
-        title: 'Enumerate DNS Records',
-        description: 'for owasp.org',
-        chatMessage: 'Enumerate DNS Records for owasp.org',
-      },
-      {
-        title: 'Attempt Zone Transfer',
-        description: 'on tryhackme.com',
-        chatMessage: 'Attempt Zone Transfer on tryhackme.com',
-      },
-      {
-        title: 'DNS Scanner Help',
-        description: 'How does the DNS Scanner plugin work?',
-        chatMessage: 'How does the DNS Scanner plugin work?',
-      },
-    ],
-  },
-  {
     id: 22,
     name: 'SSL/TLS Scanner',
     value: PluginID.SSL_SCANNER,

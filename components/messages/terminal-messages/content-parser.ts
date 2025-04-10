@@ -3,7 +3,7 @@ import type { ContentBlock } from './types';
 export const parseContent = (content: string): ContentBlock[] => {
   const blocks: ContentBlock[] = [];
   const blockRegex =
-    /((?:<terminal-command[^>]*>[\s\S]*?<\/terminal-command>|```terminal\n[\s\S]*?```|<file-content[^>]*>[\s\S]*?<\/file-content>|<file-write[^>]*>[\s\S]*?<\/file-write>)(?:\n```(?:stdout|stderr)[\s\S]*?(?:```|$))*(?:\s*<terminal-error>[\s\S]*?<\/terminal-error>)?)/g;
+    /((?:<terminal-command[^>]*>[\s\S]*?<\/terminal-command>|```terminal\n[\s\S]*?```|<file-content[^>]*>[\s\S]*?<\/file-content>|<file-write[^>]*>[\s\S]*?<\/file-write>)(?:\n```(?:stdout)[\s\S]*?(?:```|$))*(?:\s*<terminal-error>[\s\S]*?<\/terminal-error>)?)/g;
   const terminalXmlRegex =
     /<terminal-command(?:\s+[^>]*)?>([\s\S]*?)<\/terminal-command>/;
   const terminalMarkdownRegex = /```terminal\n([\s\S]*?)```/;
@@ -12,8 +12,8 @@ export const parseContent = (content: string): ContentBlock[] => {
   const fileWriteRegex =
     /<file-write(?:\s+file="([^"]*)")?>([\s\S]*?)<\/file-write>/;
   const stdoutRegex = /```stdout\n([\s\S]*?)(?:```|$)/;
-  const stderrRegex = /```stderr\n([\s\S]*?)(?:```|$)/;
   const errorRegex = /<terminal-error>([\s\S]*?)<\/terminal-error>/;
+  const execDirRegex = /exec-dir="([^"]*)"/;
 
   let lastIndex = 0;
   let match;
@@ -32,8 +32,8 @@ export const parseContent = (content: string): ContentBlock[] => {
     const fileContentMatch = block.match(fileContentRegex);
     const fileWriteMatch = block.match(fileWriteRegex);
     const stdoutMatch = block.match(stdoutRegex);
-    const stderrMatch = block.match(stderrRegex);
     const errorMatch = block.match(errorRegex);
+    const execDirMatch = terminalXmlMatch ? block.match(execDirRegex) : null;
 
     if (terminalXmlMatch || terminalMarkdownMatch) {
       blocks.push({
@@ -45,8 +45,8 @@ export const parseContent = (content: string): ContentBlock[] => {
             ''
           ).trim(),
           stdout: stdoutMatch ? stdoutMatch[1].trim() : '',
-          stderr: stderrMatch ? stderrMatch[1].trim() : '',
           error: errorMatch ? errorMatch[1].trim() : undefined,
+          exec_dir: execDirMatch ? execDirMatch[1] : undefined,
         },
       });
     } else if (fileContentMatch) {

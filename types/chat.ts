@@ -3,11 +3,9 @@ import type { ChatMessage, LLMID } from '.';
 
 export interface ChatSettings {
   model: LLMID;
-  includeProfileContext: boolean;
 }
 
 export interface ChatPayload {
-  chatSettings: ChatSettings;
   chatMessages: ChatMessage[];
   retrievedFileItems: Tables<'file_items'>[];
 }
@@ -30,4 +28,8 @@ export type SubscriptionInfo = {
   isPremium: boolean;
   isTeam: boolean;
   status: SubscriptionStatus;
+};
+
+export type ChatMetadata = {
+  newChat: boolean;
 };

@@ -7,10 +7,11 @@ import type { Tables } from '@/supabase/types';
 import {
   type ChatMessage,
   type ChatPayload,
-  type ChatSettings,
-  type LLM,
+  type ModelParams,
   type MessageImage,
   PluginID,
+  LLMID,
+  ChatMetadata,
 } from '@/types';
 import type { Dispatch, SetStateAction } from 'react';
 import { toast } from 'sonner';
@@ -26,9 +27,6 @@ export const handleHostedChat = async (
   payload: ChatPayload,
   tempAssistantChatMessage: ChatMessage,
   isRegeneration: boolean,
-  isRagEnabled: boolean,
-  isContinuation: boolean,
-  isTerminalContinuation: boolean,
   newAbortController: AbortController,
   chatImages: MessageImage[],
   setIsGenerating: Dispatch<SetStateAction<boolean>>,
@@ -36,24 +34,28 @@ export const handleHostedChat = async (
   setChatMessages: Dispatch<SetStateAction<ChatMessage[]>>,
   setToolInUse: Dispatch<SetStateAction<string>>,
   alertDispatch: Dispatch<AlertAction>,
-  selectedPlugin: PluginID,
   setAgentStatus: Dispatch<SetStateAction<AgentStatusState | null>>,
+  model: LLMID,
+  modelParams: ModelParams,
+  chatMetadata: ChatMetadata,
 ) => {
   setToolInUse(
-    selectedPlugin && selectedPlugin !== PluginID.NONE
-      ? selectedPlugin
-      : 'none',
+    modelParams.selectedPlugin && modelParams.selectedPlugin !== PluginID.NONE
+      ? modelParams.selectedPlugin
+      : PluginID.NONE,
   );
 
-  const formattedMessages = await buildFinalMessages(payload, chatImages);
+  const formattedMessages = await buildFinalMessages(
+    payload,
+    model,
+    chatImages,
+  );
 
   const requestBody = {
     messages: formattedMessages,
-    chatSettings: payload.chatSettings,
-    isContinuation,
-    selectedPlugin,
-    isTerminalContinuation,
-    isRagEnabled,
+    model,
+    modelParams,
+    chatMetadata,
   };
 
   const chatResponse = await fetchChatResponse(
@@ -65,9 +67,9 @@ export const handleHostedChat = async (
   );
 
   const lastMessage =
-    isRegeneration || isContinuation
+    isRegeneration || modelParams.isContinuation
       ? payload.chatMessages[
-          payload.chatMessages.length - (isContinuation ? 2 : 1)
+          payload.chatMessages.length - (modelParams.isContinuation ? 2 : 1)
         ]
       : tempAssistantChatMessage;
 
@@ -81,8 +83,8 @@ export const handleHostedChat = async (
     requestBody,
     setIsGenerating,
     alertDispatch,
-    selectedPlugin,
-    isContinuation,
+    modelParams.selectedPlugin,
+    modelParams.isContinuation,
     setAgentStatus,
   );
 };
@@ -94,7 +96,7 @@ export const fetchChatResponse = async (
   setChatMessages: Dispatch<SetStateAction<ChatMessage[]>>,
   alertDispatch: Dispatch<AlertAction>,
 ) => {
-  const response = await fetch(`/api/chat`, {
+  const response = await fetch(`/api/v2/chat`, {
     method: 'POST',
     body: JSON.stringify(body),
     signal: controller.signal,
@@ -136,19 +138,20 @@ export const fetchChatResponse = async (
 };
 
 export const handleCreateChat = async (
-  chatSettings: ChatSettings,
+  model: LLMID,
   profile: Tables<'profiles'>,
   messageContent: string,
   finishReason: string,
   setSelectedChat: Dispatch<SetStateAction<Tables<'chats'> | null>>,
   setChats: Dispatch<SetStateAction<Tables<'chats'>[]>>,
+  chatTitle?: string | null,
 ) => {
   // Create chat first with a temporary chat name
   const createdChat = await createChat({
     user_id: profile.user_id,
-    include_profile_context: chatSettings.includeProfileContext,
-    model: chatSettings.model,
-    name: messageContent.substring(0, 100),
+    include_profile_context: true,
+    model,
+    name: chatTitle || messageContent.substring(0, 100),
     finish_reason: finishReason,
   });
 
@@ -156,23 +159,4 @@ export const handleCreateChat = async (
   setChats((chats) => [createdChat, ...chats]);
 
   return createdChat;
-};
-
-export const generateChatTitle = async (
-  messages: { message: { content: string; role: string } }[],
-) => {
-  try {
-    const response = await fetch('/api/chat/generate-title', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages }),
-    });
-
-    if (!response.ok) return null;
-    const data = await response.json();
-    return data.name || null;
-  } catch (error) {
-    console.error('Error generating chat name:', error);
-    return null;
-  }
 };

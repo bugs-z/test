@@ -9,10 +9,12 @@ import { myProvider } from '@/lib/ai/providers';
 import { terminalPlugins } from '@/lib/ai/terminal-utils';
 import { geolocation } from '@vercel/functions';
 import PostHogClient from '@/app/posthog';
-import { handleToolExecution } from '@/lib/ai/tool-handler';
+import { handleToolExecution } from '@/lib/ai/tool-handler-v2';
 import { createToolSchemas } from '@/lib/ai/tools/toolSchemas';
 import { processRag } from '@/lib/ai/rag-processor';
 import { processChatMessages } from '@/lib/ai/message-utils';
+import { LLMID } from '@/types';
+import { generateTitleFromUserMessage } from '@/lib/ai/actions';
 
 export const preferredRegion = [
   'iad1',
@@ -36,20 +38,13 @@ export const preferredRegion = [
 
 export async function POST(request: Request) {
   try {
-    const {
-      messages,
-      chatSettings,
-      isContinuation,
-      selectedPlugin,
-      isTerminalContinuation,
-      isRagEnabled,
-    } = await request.json();
+    const { messages, model, modelParams, chatMetadata } = await request.json();
 
     const profile = await getAIProfile();
     const config = await getProviderConfig(
-      chatSettings,
+      model,
       profile,
-      selectedPlugin,
+      modelParams.selectedPlugin,
     );
 
     if (config.rateLimitCheckResult !== null) {
@@ -65,23 +60,32 @@ export async function POST(request: Request) {
     } = await processChatMessages(
       messages,
       config.selectedModel,
-      selectedPlugin,
-      isRagEnabled,
-      isContinuation,
-      isTerminalContinuation,
+      modelParams.selectedPlugin,
+      modelParams.isRagEnabled,
+      modelParams.isContinuation,
+      modelParams.isTerminalContinuation,
       region,
       llmConfig.openai.apiKey,
       config.isLargeModel,
       profile.profile_context,
     );
 
+    const title = generateTitleFromUserMessage({
+      message:
+        messages.find((m: { role: string }) => m.role === 'user') ||
+        messages[messages.length - 1],
+      abortSignal: request.signal,
+    });
+
     const toolResponse = await handleToolExecution({
       messages: validatedMessages,
       profile,
-      isTerminalContinuation,
-      selectedPlugin,
+      isTerminalContinuation: modelParams.isTerminalContinuation,
+      selectedPlugin: modelParams.selectedPlugin,
       isLargeModel: config.isLargeModel,
       abortSignal: request.signal,
+      chatMetadata,
+      title,
     });
     if (toolResponse) {
       return toolResponse;
@@ -90,10 +94,10 @@ export async function POST(request: Request) {
     // Process RAG
     let ragUsed = false;
     let ragId: string | null = null;
-    if (isRagEnabled) {
+    if (modelParams.isRagEnabled) {
       const ragResult = await processRag({
         messages,
-        isContinuation,
+        isContinuation: modelParams.isContinuation,
         profile,
         selectedChatModel: finalSelectedModel,
       });
@@ -123,7 +127,7 @@ export async function POST(request: Request) {
 
     try {
       return createDataStreamResponse({
-        execute: (dataStream) => {
+        execute: async (dataStream) => {
           dataStream.writeData({ ragUsed, ragId });
 
           const baseConfig = {
@@ -139,7 +143,7 @@ export async function POST(request: Request) {
             messages: validatedMessages,
             profile,
             dataStream,
-            isTerminalContinuation,
+            isTerminalContinuation: modelParams.isTerminalContinuation,
             abortSignal: request.signal,
           };
 
@@ -156,7 +160,16 @@ export async function POST(request: Request) {
               : {}),
           });
 
-          result.mergeIntoDataStream(dataStream);
+          // Run title generation and streamText in parallel
+          await Promise.all([
+            result.mergeIntoDataStream(dataStream),
+            (async () => {
+              if (chatMetadata.newChat) {
+                const generatedTitle = await title;
+                dataStream.writeData({ chatTitle: generatedTitle });
+              }
+            })(),
+          ]);
         },
       });
     } catch (error) {
@@ -173,7 +186,7 @@ export async function POST(request: Request) {
 }
 
 async function getProviderConfig(
-  chatSettings: any,
+  model: LLMID,
   profile: any,
   selectedPlugin: PluginID,
 ) {
@@ -189,17 +202,17 @@ async function getProviderConfig(
     'gpt-4-turbo-preview': 'gpt4o',
   };
 
-  const selectedModel = modelMap[chatSettings.model];
+  const selectedModel = modelMap[model];
   if (!selectedModel) {
     throw new Error('Selected model is undefined');
   }
-  const isLargeModel = chatSettings.model.includes('large');
+  const isLargeModel = model.includes('large');
 
   const rateLimitModel =
     selectedPlugin !== PluginID.NONE &&
     !terminalPlugins.includes(selectedPlugin as PluginID)
       ? selectedPlugin
-      : rateLimitModelMap[chatSettings.model] || chatSettings.model;
+      : rateLimitModelMap[model] || model;
 
   const rateLimitCheckResult = await checkRatelimitOnApi(
     profile.user_id,

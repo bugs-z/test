@@ -65,7 +65,6 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
 
         setChatSettings({
           model: modelId,
-          includeProfileContext: true,
         });
 
         // Reset all chat-specific states

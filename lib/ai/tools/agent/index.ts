@@ -14,7 +14,7 @@ import { createFileUploadTool } from './file-upload-tool';
  */
 export function createAgentTools(context: ToolContext) {
   return {
-    terminal: createTerminalTool(context),
+    shell_exec: createTerminalTool(context),
     message_notify_user: createMessageNotifyTool(context),
     message_ask_user: createMessageAskTool(),
     file_write: createFileWriteTool(context),

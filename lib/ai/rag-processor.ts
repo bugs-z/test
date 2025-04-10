@@ -79,6 +79,7 @@ export async function processRag({
     body: JSON.stringify({
       query: standaloneQuestion,
       partition: 'test',
+      rerank: true,
     }),
   });
 
@@ -89,18 +90,13 @@ export async function processRag({
     Array.isArray(data.scored_chunks) &&
     data.scored_chunks.length > 0
   ) {
-    // Filter out chunks with score lower than 0.1
-    const filteredChunks = data.scored_chunks.filter(
-      (chunk) => chunk.score >= 0.08,
-    );
-
-    // If no chunks remain after filtering, return early
-    if (filteredChunks.length === 0) {
+    // If no chunks found, return early
+    if (data.scored_chunks.length === 0) {
       return result;
     }
 
     // Combine the text from all chunks
-    const ragContent = filteredChunks
+    const ragContent = data.scored_chunks
       .map((chunk) => chunk.text)
       .join('\n\n---\n\n');
 
@@ -112,7 +108,7 @@ export async function processRag({
         profile.profile_context,
       );
       // Use the ID of the first (highest scoring) chunk
-      result.ragId = filteredChunks[0].id;
+      result.ragId = data.scored_chunks[0].id;
     }
   }
 

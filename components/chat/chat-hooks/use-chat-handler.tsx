@@ -4,8 +4,10 @@ import { updateChat } from '@/db/chats';
 import type { Tables, TablesInsert } from '@/supabase/types';
 import type {
   ChatMessage,
+  ChatMetadata,
   ChatPayload,
   LLMID,
+  ModelParams,
   ModelWithWebSearch,
 } from '@/types';
 import { PluginID } from '@/types/plugins';
@@ -17,7 +19,6 @@ import { useUIContext } from '@/context/ui-context';
 import { createMessageFeedback } from '@/db/message-feedback';
 import {
   createTempMessages,
-  generateChatTitle,
   handleCreateChat,
   handleCreateMessages,
   handleHostedChat,
@@ -373,13 +374,16 @@ export const useChatHandler = () => {
       }
 
       const payload: ChatPayload = {
-        chatSettings: {
-          ...chatSettings!,
-          model: baseModel,
-        },
         chatMessages: sentChatMessages,
         retrievedFileItems: retrievedFileItems,
       };
+      const modelParams: ModelParams = {
+        isContinuation,
+        isTerminalContinuation,
+        isRagEnabled,
+        selectedPlugin,
+      };
+      const chatMetadata: ChatMetadata = { newChat: !currentChat };
 
       let generatedText = '';
       let thinkingText = '';
@@ -389,6 +393,7 @@ export const useChatHandler = () => {
       let ragId = null;
       let assistantGeneratedImages: string[] = [];
       let citations: string[] = [];
+      let chatTitle: string | null = null;
 
       const {
         fullText,
@@ -400,13 +405,11 @@ export const useChatHandler = () => {
         selectedPlugin: updatedSelectedPlugin,
         assistantGeneratedImages: assistantGeneratedImagesFromResponse,
         citations: citationsFromResponse,
+        chatTitle: chatTitleFromResponse,
       } = await handleHostedChat(
         payload,
         tempAssistantChatMessage,
         isRegeneration,
-        isRagEnabled,
-        isContinuation,
-        isTerminalContinuation,
         newAbortController,
         chatImages,
         setIsGenerating,
@@ -414,8 +417,10 @@ export const useChatHandler = () => {
         isTemporaryChat ? setTemporaryChatMessages : setChatMessages,
         setToolInUse,
         alertDispatch,
-        selectedPlugin,
         setAgentStatus,
+        baseModel,
+        modelParams,
+        chatMetadata,
       );
       generatedText = fullText;
       thinkingText = thinkingTextFromResponse;
@@ -426,6 +431,7 @@ export const useChatHandler = () => {
       selectedPlugin = updatedSelectedPlugin;
       assistantGeneratedImages = assistantGeneratedImagesFromResponse;
       citations = citationsFromResponse;
+      chatTitle = chatTitleFromResponse;
 
       if (isTemporaryChat) {
         // Update temporary chat messages with the generated response
@@ -448,48 +454,31 @@ export const useChatHandler = () => {
       } else {
         if (!currentChat) {
           currentChat = await handleCreateChat(
-            chatSettings!,
+            baseModel!,
             profile!,
             messageContent || '',
             finishReason,
             setSelectedChat,
             setChats,
+            chatTitle,
           );
 
           // Update URL without triggering a page reload or new history entry
-          // This replaces the current URL with the chat ID after chat creation
-          // Allows starting from home screen and seamlessly transitioning to chat URL
           window.history.replaceState({}, '', `/c/${currentChat.id}`);
 
-          generateChatTitle([
-            {
-              message: {
-                content: messageContent || '',
-                role: 'user',
-              },
-            },
-            {
-              message: {
-                content: generatedText,
-                role: 'assistant',
-              },
-            },
-          ])
-            .then((chatTitle) => {
-              if (chatTitle !== null && currentChat) {
-                updateChat(currentChat.id, { name: chatTitle })
-                  .then((updatedChat) => {
-                    setSelectedChat(updatedChat);
-                    setChats((prevChats) =>
-                      prevChats.map((chat) =>
-                        chat.id === updatedChat.id ? updatedChat : chat,
-                      ),
-                    );
-                  })
-                  .catch(console.error);
-              }
-            })
-            .catch(console.error);
+          // Remove the old title generation since we now get it from the API
+          if (chatTitle && currentChat) {
+            updateChat(currentChat.id, { name: chatTitle })
+              .then((updatedChat) => {
+                setSelectedChat(updatedChat);
+                setChats((prevChats) =>
+                  prevChats.map((chat) =>
+                    chat.id === updatedChat.id ? updatedChat : chat,
+                  ),
+                );
+              })
+              .catch(console.error);
+          }
         } else {
           const updatedChat = await updateChat(currentChat.id, {
             updated_at: new Date().toISOString(),
