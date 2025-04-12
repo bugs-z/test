@@ -16,6 +16,8 @@ import { processChatMessages } from '@/lib/ai/message-utils';
 import { LLMID } from '@/types';
 import { generateTitleFromUserMessage } from '@/lib/ai/actions';
 
+export const maxDuration = 600;
+
 export const preferredRegion = [
   'iad1',
   'arn1',
@@ -210,7 +212,8 @@ async function getProviderConfig(
 
   const rateLimitModel =
     selectedPlugin !== PluginID.NONE &&
-    !terminalPlugins.includes(selectedPlugin as PluginID)
+    !terminalPlugins.includes(selectedPlugin as PluginID) &&
+    selectedPlugin !== PluginID.ENHANCED_SEARCH
       ? selectedPlugin
       : rateLimitModelMap[model] || model;
 

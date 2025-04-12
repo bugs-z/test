@@ -49,7 +49,7 @@ export async function generateStandaloneQuestion(
 
   try {
     const result = await generateText({
-      model: myProvider.languageModel('standalone-question-model'),
+      model: myProvider.languageModel('chat-model-small'),
       maxTokens: 512,
       messages: [
         {

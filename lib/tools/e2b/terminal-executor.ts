@@ -1,6 +1,7 @@
 import type { Sandbox } from '@e2b/code-interpreter';
 
-const MAX_EXECUTION_TIME = 10 * 60 * 1000;
+const MAX_EXECUTION_TIME = 5 * 60 * 1000;
+const CUSTOM_TIMEOUT = 1 * 60 * 1000; // 1 minute custom timeout
 const ENCODER = new TextEncoder();
 
 interface ExecutionError {
@@ -29,6 +30,8 @@ export const executeTerminalCommand = async ({
 }): Promise<ReadableStream<Uint8Array>> => {
   let hasTerminalOutput = false;
   let currentBlock: 'stdout' | null = null;
+  let timeoutId: NodeJS.Timeout;
+  let isStreamClosed = false;
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -50,10 +53,29 @@ export const executeTerminalCommand = async ({
           throw new Error('Failed to create or connect to sandbox');
         }
 
+        // Set up custom timeout
+        timeoutId = setTimeout(() => {
+          if (!isStreamClosed) {
+            // Close any open block before sending timeout message
+            if (currentBlock) {
+              controller.enqueue(ENCODER.encode('\n```'));
+              currentBlock = null;
+            }
+            controller.enqueue(
+              ENCODER.encode(
+                `<terminal-error>The command's output stream has been paused after ${CUSTOM_TIMEOUT / 1000} seconds. The command may continue running in the background, but its output will no longer be streamed.</terminal-error>`,
+              ),
+            );
+            controller.close();
+            isStreamClosed = true;
+          }
+        }, CUSTOM_TIMEOUT);
+
         const execution = await sandbox.commands.run(command, {
           timeoutMs: MAX_EXECUTION_TIME,
           cwd: exec_dir,
           onStdout: (data: string) => {
+            if (isStreamClosed) return;
             hasTerminalOutput = true;
             if (currentBlock !== 'stdout') {
               if (currentBlock) {
@@ -65,6 +87,7 @@ export const executeTerminalCommand = async ({
             controller.enqueue(ENCODER.encode(data));
           },
           onStderr: (data: string) => {
+            if (isStreamClosed) return;
             hasTerminalOutput = true;
             if (currentBlock !== 'stdout') {
               if (currentBlock) {
@@ -77,14 +100,17 @@ export const executeTerminalCommand = async ({
           },
         });
 
+        // Clear the timeout if command completes before timeout
+        clearTimeout(timeoutId);
+
         // Close any open block at the end
-        if (currentBlock) {
+        if (currentBlock && !isStreamClosed) {
           controller.enqueue(ENCODER.encode('\n```'));
           currentBlock = null;
         }
 
         // Handle any execution errors
-        if (execution.error) {
+        if (execution.error && !isStreamClosed) {
           console.error(`[${userID}] Execution error:`, execution.error);
           const error =
             typeof execution.error === 'object'
@@ -101,22 +127,32 @@ export const executeTerminalCommand = async ({
           );
         }
       } catch (error) {
-        console.error(`[${userID}] Error:`, error);
-        if (error instanceof Error && isConnectionError(error)) {
-          sandbox?.kill();
-          controller.enqueue(
-            ENCODER.encode(
-              `<terminal-error>The Terminal is currently unavailable. Our team is working on a fix. Please try again later.</terminal-error>`,
-            ),
-          );
+        if (!isStreamClosed) {
+          console.error(`[${userID}] Error:`, error);
+          if (error instanceof Error && isConnectionError(error)) {
+            // Close any open block before sending error message
+            if (currentBlock) {
+              controller.enqueue(ENCODER.encode('\n```'));
+              currentBlock = null;
+            }
+            controller.enqueue(
+              ENCODER.encode(
+                `<terminal-error>The Terminal is currently unavailable. Our team is working on a fix. Please try again later.</terminal-error>`,
+              ),
+            );
+          }
         }
       } finally {
+        // Clear timeout in case it's still pending
+        clearTimeout(timeoutId);
         // Ensure any open block is closed before ending the stream
-        if (currentBlock) {
+        if (currentBlock && !isStreamClosed) {
           controller.enqueue(ENCODER.encode('\n```'));
           currentBlock = null;
         }
-        controller.close();
+        if (!isStreamClosed) {
+          controller.close();
+        }
       }
     },
   });

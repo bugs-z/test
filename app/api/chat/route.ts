@@ -14,6 +14,8 @@ import { createToolSchemas } from '@/lib/ai/tools/toolSchemas';
 import { processRag } from '@/lib/ai/rag-processor';
 import { processChatMessages } from '@/lib/ai/message-utils';
 
+export const maxDuration = 600;
+
 export const preferredRegion = [
   'iad1',
   'arn1',
@@ -197,7 +199,8 @@ async function getProviderConfig(
 
   const rateLimitModel =
     selectedPlugin !== PluginID.NONE &&
-    !terminalPlugins.includes(selectedPlugin as PluginID)
+    !terminalPlugins.includes(selectedPlugin as PluginID) &&
+    selectedPlugin !== PluginID.ENHANCED_SEARCH
       ? selectedPlugin
       : rateLimitModelMap[chatSettings.model] || chatSettings.model;
 

@@ -43,7 +43,7 @@ const llmConfig = {
     // For ReasoningWebSearch tool
     reasoningWebSearch: `${getPentestGPTInfo(false, 'October 2023', 'reasoningModel')}\n${systemPromptEnding}`,
     // For reasoning tool
-    pentestGPTReasoning: `${getPentestGPTInfo(true, 'October 2023', 'reasoningModel')}\n${systemPromptEnding}`,
+    pentestGPTReasoning: `${getPentestGPTInfo(true, 'November 17, 2024', 'reasoningModel')}\n${systemPromptEnding}`,
   },
 };
 

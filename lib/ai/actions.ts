@@ -13,7 +13,7 @@ export async function generateTitleFromUserMessage({
   const {
     object: { title },
   } = await generateObject({
-    model: myProvider.languageModel('title-model'),
+    model: myProvider.languageModel('chat-model-small'),
     schema: z.object({
       title: z.string().describe('The generated title (3-5 words)'),
     }),

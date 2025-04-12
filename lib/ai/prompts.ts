@@ -3,7 +3,6 @@ import {
   getPentestGPTInfo,
   systemPromptEnding,
 } from '@/lib/models/llm-prompting';
-import type { ChatMessage } from '@/types/chat-message';
 
 export function buildSystemPrompt(
   basePrompt: string,
@@ -24,7 +23,7 @@ export function buildSystemPrompt(
 
 const modelPromptMap: Record<string, string> = {
   'chat-model-small': `${getPentestGPTInfo(true, 'October 2023', 'Small Model')}\n${systemPromptEnding}`,
-  'chat-model-large': `${getPentestGPTInfo(true, 'October 2023', 'Large Model')}${systemPromptEnding}`,
+  'chat-model-large': `${getPentestGPTInfo(true, 'November 17, 2024', 'Large Model')}${systemPromptEnding}`,
   'chat-model-gpt-large': `${getPentestGPTInfo(true, 'October 2023', 'PentestGPT 4o')}\n${systemPromptEnding}`,
   'vision-model': `${getPentestGPTInfo(true, 'October 2023', 'Vision Model')}\n${systemPromptEnding}`,
 };

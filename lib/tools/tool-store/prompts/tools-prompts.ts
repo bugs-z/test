@@ -2,25 +2,6 @@ import { PluginID } from '@/types/plugins';
 
 export const getPluginPrompt = (pluginID: PluginID): string => {
   switch (pluginID) {
-    case PluginID.SQLI_EXPLOITER:
-      return `
-The user has selected the SQL Injection Exploiter plugin, which uses the sqlmap tool in the terminal. This tool identifies and exploits SQL injection vulnerabilities. Remember:
-1. Focus on SQL injection vulnerabilities and exploitation techniques.
-2. Provide sqlmap-specific options and explanations.
-`;
-    case PluginID.SSL_SCANNER:
-      return `
-The user has selected the SSL Scanner plugin, which uses the testssl.sh tool in the terminal to find SSL/TLS issues like POODLE, Heartbleed, DROWN, ROBOT, etc. Remember:
-1. Focus on SSL/TLS vulnerabilities and scanning techniques.
-2. Pay special attention to well-known vulnerabilities like POODLE, Heartbleed, DROWN, and ROBOT.
-3. Provide clear explanations of any SSL/TLS issues discovered during the scan.
-4. For deep scans, use a combination of options to provide comprehensive results, such as:
- - '--full' for including tests for implementation bugs and cipher per protocol
- - '-U' or '--vulnerable' to test for all applicable vulnerabilities
- - '-p' or '--protocols' to check TLS/SSL protocols
- - '-S' or '--server-defaults' to display the server's default picks and certificate info
-5. Create and run commands using the following structure: "testssl.sh [options] [target]" or simply "testssl.sh [target]" for a basic scan.
-`;
     case PluginID.PORT_SCANNER:
       return `
 The user has selected the Port Scanner plugin, which uses the nmap tool in the terminal. This tool performs comprehensive port scanning to discover open ports and services on target systems. Remember:
@@ -81,22 +62,6 @@ The user has selected the CVEMap plugin, which uses the cvemap tool in the termi
 - -limit int: Limit the number of results to display (specify a different number as needed).
 5. Do not use the search flag.
 6. Always limit the number of results to 10 by default.
-`;
-
-    case PluginID.WORDPRESS_SCANNER:
-      return `
-The user has selected the WordPress Scanner plugin, which uses the wpscan tool in the terminal. This tool scans WordPress installations for outdated plugins, core vulnerabilities, user enumeration, and more. Remember:
-1. Focus on identifying vulnerabilities in WordPress core, themes, and plugins.
-2. Provide wpscan-specific options and explanations for effective WordPress security scanning.
-3. Don't use --banner and --format flags by default.
-`;
-
-    case PluginID.XSS_EXPLOITER:
-      return `
-The user has selected the XSS Exploiter plugin, which uses the dalfox tool in the terminal. This tool is designed to find and verify XSS vulnerabilities in web applications. Remember:
-1. Focus on identifying and exploiting Cross-Site Scripting (XSS) vulnerabilities.
-2. Provide dalfox-specific options and explanations for effective XSS scanning and exploitation.
-3. For simple scans of a single domain, use minimal flags. The basic command structure is just 'dalfox url [target_url]'.
 `;
 
     default:

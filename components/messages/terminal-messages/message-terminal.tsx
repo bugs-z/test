@@ -5,6 +5,7 @@ import type { MessageTerminalProps } from './types';
 import { parseContent } from './content-parser';
 import { TerminalBlockComponent } from './terminal-block';
 import { FileContentBlockComponent } from './file-content-block';
+import { ShellWaitBlockComponent } from './shell-wait-block';
 
 export const MessageTerminal: React.FC<MessageTerminalProps> = ({
   content,
@@ -70,6 +71,8 @@ export const MessageTerminal: React.FC<MessageTerminalProps> = ({
               onToggleBlock={toggleBlock}
               onToggleExpanded={toggleExpanded}
             />
+          ) : block.type === 'shell-wait' ? (
+            <ShellWaitBlockComponent block={block.content} />
           ) : (
             <FileContentBlockComponent
               block={block.content}

@@ -1,6 +1,6 @@
 import { encode, decode } from 'gpt-tokenizer';
 import { PluginID } from '@/types/plugins';
-const MAX_TOKENS = 32000;
+const MAX_TOKENS = 8000;
 const INITIAL_TOKENS = 1000;
 
 export async function streamTerminalOutput(
@@ -30,13 +30,9 @@ export function reduceTerminalOutput(output: string): string {
 }
 
 export const terminalPlugins = [
-  PluginID.SQLI_EXPLOITER,
-  PluginID.SSL_SCANNER,
   PluginID.PORT_SCANNER,
   PluginID.WAF_DETECTOR,
   PluginID.WHOIS_LOOKUP,
   PluginID.SUBDOMAIN_FINDER,
   PluginID.CVE_MAP,
-  PluginID.WORDPRESS_SCANNER,
-  PluginID.XSS_EXPLOITER,
 ];

@@ -23,12 +23,9 @@ export const BASH_SANDBOX_TIMEOUT = 15 * 60 * 1000;
 // Plugin command mapping
 export const PLUGIN_COMMAND_MAP: Partial<Record<PluginID, string>> = {
   [PluginID.SQLI_EXPLOITER]: 'sqlmap',
-  [PluginID.SSL_SCANNER]: 'testssl.sh',
   [PluginID.PORT_SCANNER]: 'nmap',
   [PluginID.WAF_DETECTOR]: 'wafw00f',
   [PluginID.WHOIS_LOOKUP]: 'whois',
   [PluginID.SUBDOMAIN_FINDER]: 'subfinder',
   [PluginID.CVE_MAP]: 'cvemap',
-  [PluginID.WORDPRESS_SCANNER]: 'wpscan',
-  [PluginID.XSS_EXPLOITER]: 'dalfox',
 };

@@ -8,6 +8,8 @@ export enum AgentStatusState {
   FILE_READ = 'file_read',
   WEB_SEARCH = 'websearch',
   BROWSER = 'browser',
+  SHELL_WAIT = 'shell_wait',
+  SHELL_KILL_PROCESS = 'shell_kill_process',
 }
 
 /**
@@ -20,6 +22,8 @@ export const AgentStatusLabels: Record<AgentStatusState, string> = {
   [AgentStatusState.FILE_READ]: 'Reading file',
   [AgentStatusState.WEB_SEARCH]: 'Searching the web',
   [AgentStatusState.BROWSER]: 'Browsing the web',
+  [AgentStatusState.SHELL_WAIT]: 'Waiting for terminal',
+  [AgentStatusState.SHELL_KILL_PROCESS]: 'Terminating process',
 };
 
 /**
@@ -52,6 +56,14 @@ const AgentStatusColors: Record<
   [AgentStatusState.BROWSER]: {
     ping: 'bg-orange-400',
     base: 'bg-orange-500',
+  },
+  [AgentStatusState.SHELL_WAIT]: {
+    ping: 'bg-yellow-400',
+    base: 'bg-yellow-500',
+  },
+  [AgentStatusState.SHELL_KILL_PROCESS]: {
+    ping: 'bg-red-400',
+    base: 'bg-red-500',
   },
 };
 

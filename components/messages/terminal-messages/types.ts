@@ -11,6 +11,10 @@ export interface TerminalBlock {
   exec_dir?: string;
 }
 
+export interface ShellWaitBlock {
+  seconds: string;
+}
+
 export interface FileContentBlock {
   path: string;
   content: string;
@@ -25,6 +29,10 @@ export type ContentBlock =
   | {
       type: 'terminal';
       content: TerminalBlock;
+    }
+  | {
+      type: 'shell-wait';
+      content: ShellWaitBlock;
     }
   | {
       type: 'file-content';

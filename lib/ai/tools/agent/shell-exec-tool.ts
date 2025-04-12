@@ -22,7 +22,7 @@ import PostHogClient from '@/app/posthog';
  * @param context - The context needed for tool execution
  * @returns The terminal tool
  */
-export const createTerminalTool = (context: ToolContext) => {
+export const createShellExecTool = (context: ToolContext) => {
   const {
     dataStream,
     sandbox: initialSandbox,

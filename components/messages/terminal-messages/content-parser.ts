@@ -3,7 +3,7 @@ import type { ContentBlock } from './types';
 export const parseContent = (content: string): ContentBlock[] => {
   const blocks: ContentBlock[] = [];
   const blockRegex =
-    /((?:<terminal-command[^>]*>[\s\S]*?<\/terminal-command>|```terminal\n[\s\S]*?```|<file-content[^>]*>[\s\S]*?<\/file-content>|<file-write[^>]*>[\s\S]*?<\/file-write>)(?:\n```(?:stdout)[\s\S]*?(?:```|$))*(?:\s*<terminal-error>[\s\S]*?<\/terminal-error>)?)/g;
+    /((?:<terminal-command[^>]*>[\s\S]*?<\/terminal-command>|```terminal\n[\s\S]*?```|<file-content[^>]*>[\s\S]*?<\/file-content>|<file-write[^>]*>[\s\S]*?<\/file-write>|<shell-wait[^>]*>[\s\S]*?<\/shell-wait>)(?:\n```(?:stdout)[\s\S]*?(?:```|$))*(?:\s*<terminal-error>[\s\S]*?<\/terminal-error>)?)/g;
   const terminalXmlRegex =
     /<terminal-command(?:\s+[^>]*)?>([\s\S]*?)<\/terminal-command>/;
   const terminalMarkdownRegex = /```terminal\n([\s\S]*?)```/;
@@ -11,6 +11,7 @@ export const parseContent = (content: string): ContentBlock[] => {
     /<file-content(?:\s+path="([^"]*)")?>([\s\S]*?)<\/file-content>/;
   const fileWriteRegex =
     /<file-write(?:\s+file="([^"]*)")?>([\s\S]*?)<\/file-write>/;
+  const shellWaitRegex = /<shell-wait[^>]*>([\s\S]*?)<\/shell-wait>/;
   const stdoutRegex = /```stdout\n([\s\S]*?)(?:```|$)/;
   const errorRegex = /<terminal-error>([\s\S]*?)<\/terminal-error>/;
   const execDirRegex = /exec-dir="([^"]*)"/;
@@ -31,11 +32,19 @@ export const parseContent = (content: string): ContentBlock[] => {
     const terminalMarkdownMatch = block.match(terminalMarkdownRegex);
     const fileContentMatch = block.match(fileContentRegex);
     const fileWriteMatch = block.match(fileWriteRegex);
+    const shellWaitMatch = block.match(shellWaitRegex);
     const stdoutMatch = block.match(stdoutRegex);
     const errorMatch = block.match(errorRegex);
     const execDirMatch = terminalXmlMatch ? block.match(execDirRegex) : null;
 
-    if (terminalXmlMatch || terminalMarkdownMatch) {
+    if (shellWaitMatch) {
+      blocks.push({
+        type: 'shell-wait',
+        content: {
+          seconds: shellWaitMatch[1].trim(),
+        },
+      });
+    } else if (terminalXmlMatch || terminalMarkdownMatch) {
       blocks.push({
         type: 'terminal',
         content: {

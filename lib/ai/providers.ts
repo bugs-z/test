@@ -3,14 +3,19 @@ import {
   wrapLanguageModel,
   extractReasoningMiddleware,
 } from 'ai';
-import { mistral } from '@ai-sdk/mistral';
 import { openai } from '@ai-sdk/openai';
 import { openrouter } from '@openrouter/ai-sdk-provider';
 import { perplexity } from '@ai-sdk/perplexity';
 
 export const myProvider = customProvider({
   languageModels: {
-    'chat-model-small': mistral('mistral-small-latest'),
+    'chat-model-small': openrouter('mistralai/mistral-small-3.1-24b-instruct', {
+      extraBody: {
+        provider: {
+          order: ['Mistral'],
+        },
+      },
+    }),
     'chat-model-large': openrouter('x-ai/grok-3-beta'),
     'chat-model-gpt-small': openai('gpt-4o-mini'),
     'chat-model-gpt-large': openai('gpt-4o-2024-11-20'),
@@ -21,12 +26,20 @@ export const myProvider = customProvider({
       parallelToolCalls: false,
     }),
     'chat-model-reasoning': wrapLanguageModel({
-      model: openrouter('x-ai/grok-3-mini-beta'),
+      model: openrouter('x-ai/grok-3-mini-beta', {
+        extraBody: {
+          reasoning: { effort: 'high' },
+        },
+      }),
       middleware: extractReasoningMiddleware({ tagName: 'think' }),
     }),
     'deep-research': perplexity('sonar-deep-research'),
-    'vision-model': mistral('mistral-small-latest'),
-    'title-model': mistral('mistral-small-latest'),
-    'standalone-question-model': mistral('mistral-small-latest'),
+    'vision-model': openrouter('mistralai/mistral-small-3.1-24b-instruct', {
+      extraBody: {
+        provider: {
+          order: ['Mistral'],
+        },
+      },
+    }),
   },
 });
