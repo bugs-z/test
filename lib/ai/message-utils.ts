@@ -262,7 +262,6 @@ export async function processChatMessages(
   isRagEnabled: boolean,
   isContinuation: boolean,
   isTerminalContinuation: boolean,
-  region: string | undefined,
   apiKey: string | undefined,
   isLargeModel: boolean,
   profileContext: string,
@@ -281,11 +280,7 @@ export async function processChatMessages(
     apiKey &&
     !isContinuation &&
     !isTerminalContinuation &&
-    !terminalPlugins.includes(selectedPlugin as PluginID) &&
-    selectedPlugin !== PluginID.TERMINAL &&
-    selectedChatModel !== 'chat-model-large' &&
-    region !== 'bom1' &&
-    region !== 'cpt1'
+    !terminalPlugins.includes(selectedPlugin as PluginID)
   ) {
     const { shouldUncensorResponse: moderationResult } =
       await getModerationResult(messages, apiKey, 10, isLargeModel);
@@ -307,8 +302,10 @@ export async function processChatMessages(
       selectedPlugin !== PluginID.REASONING &&
       selectedPlugin !== PluginID.REASONING_WEB_SEARCH &&
       selectedPlugin !== PluginID.DEEP_RESEARCH &&
-      !terminalPlugins.includes(selectedPlugin as PluginID) &&
-      !isRagEnabled
+      selectedPlugin !== PluginID.TERMINAL &&
+      !isRagEnabled &&
+      selectedChatModel !== 'chat-model-large' &&
+      selectedChatModel !== 'chat-model-gpt-large'
     ) {
       handleAssistantMessages(messages);
     }

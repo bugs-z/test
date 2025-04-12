@@ -7,7 +7,6 @@ import { createDataStreamResponse, smoothStream, streamText } from 'ai';
 import { PluginID } from '@/types/plugins';
 import { myProvider } from '@/lib/ai/providers';
 import { terminalPlugins } from '@/lib/ai/terminal-utils';
-import { geolocation } from '@vercel/functions';
 import PostHogClient from '@/app/posthog';
 import { handleToolExecution } from '@/lib/ai/tool-handler-v2';
 import { createToolSchemas } from '@/lib/ai/tools/toolSchemas';
@@ -53,7 +52,6 @@ export async function POST(request: Request) {
       return config.rateLimitCheckResult.response;
     }
 
-    const { region } = geolocation(request);
     let {
       messages: validatedMessages,
       selectedModel: finalSelectedModel,
@@ -66,7 +64,6 @@ export async function POST(request: Request) {
       modelParams.isRagEnabled,
       modelParams.isContinuation,
       modelParams.isTerminalContinuation,
-      region,
       llmConfig.openai.apiKey,
       config.isLargeModel,
       profile.profile_context,
