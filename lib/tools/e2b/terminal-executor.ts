@@ -12,6 +12,7 @@ interface ExecutionError {
     stderr?: string;
     stdout?: string;
     exitCode?: number;
+    error?: string;
   };
 }
 
@@ -128,7 +129,6 @@ export const executeTerminalCommand = async ({
         }
       } catch (error) {
         if (!isStreamClosed) {
-          console.error(`[${userID}] Error:`, error);
           if (error instanceof Error && isConnectionError(error)) {
             // Close any open block before sending error message
             if (currentBlock) {
@@ -140,7 +140,19 @@ export const executeTerminalCommand = async ({
                 `<terminal-error>The Terminal is currently unavailable. Our team is working on a fix. Please try again later.</terminal-error>`,
               ),
             );
+          } else if (
+            error instanceof Error &&
+            error.name === 'CommandExitError'
+          ) {
+            const exitError = error as ExecutionError;
+            const errorMessage = exitError.result?.error || 'Command failed';
+            controller.enqueue(
+              ENCODER.encode(
+                `<terminal-error>${errorMessage}</terminal-error>`,
+              ),
+            );
           }
+          console.error(`[${userID}] Error:`, error);
         }
       } finally {
         // Clear timeout in case it's still pending

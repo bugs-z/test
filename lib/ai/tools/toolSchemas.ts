@@ -7,13 +7,11 @@ export const createToolSchemas = ({
   messages,
   profile,
   dataStream,
-  isTerminalContinuation,
   abortSignal,
 }: {
   messages?: any;
   profile?: any;
   dataStream?: any;
-  isTerminalContinuation?: boolean;
   abortSignal?: AbortSignal;
 }) => {
   const allSchemas = {
@@ -91,7 +89,6 @@ This tool executes Bash commands in a Debian environment with root privileges. U
             messages,
             profile,
             dataStream,
-            isTerminalContinuation,
             abortSignal,
             // previousMessage
           },

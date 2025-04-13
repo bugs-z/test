@@ -142,7 +142,6 @@ export async function POST(request: Request) {
             messages: validatedMessages,
             profile,
             dataStream,
-            isTerminalContinuation: modelParams.isTerminalContinuation,
             abortSignal: request.signal,
           };
 

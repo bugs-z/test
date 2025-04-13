@@ -280,7 +280,12 @@ export async function processChatMessages(
     apiKey &&
     !isContinuation &&
     !isTerminalContinuation &&
-    !terminalPlugins.includes(selectedPlugin as PluginID)
+    !terminalPlugins.includes(selectedPlugin as PluginID) &&
+    // Only skip uncensoring when both plugin is NONE and model is large
+    !(
+      selectedPlugin === PluginID.NONE &&
+      selectedChatModel === 'chat-model-large'
+    )
   ) {
     const { shouldUncensorResponse: moderationResult } =
       await getModerationResult(messages, apiKey, 10, isLargeModel);

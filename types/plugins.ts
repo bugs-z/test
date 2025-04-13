@@ -35,18 +35,14 @@ export enum PluginID {
   REASONING_WEB_SEARCH = 'reasoning-web-search',
   DEEP_RESEARCH = 'deep-research',
   // Pentest tools
-  SSL_SCANNER = 'ssl-scanner',
-  DNS_SCANNER = 'dns-scanner',
   PORT_SCANNER = 'port-scanner',
   WAF_DETECTOR = 'waf-detector',
   WHOIS_LOOKUP = 'whois-lookup',
   SUBDOMAIN_FINDER = 'subdomain-finder',
   CVE_MAP = 'cve-map',
-  WORDPRESS_SCANNER = 'wordpress-scanner',
 
   // Exploit Tools
   SQLI_EXPLOITER = 'sqli-exploiter',
-  XSS_EXPLOITER = 'xss-exploiter',
 
   // Artifacts
   ARTIFACTS = 'artifacts',
@@ -63,15 +59,22 @@ type PluginUrls = Record<string, string>;
 export const pluginUrls: PluginUrls = {
   PENTESTGPT: 'https://github.com/hackerai-tech/PentestGPT',
   // Pentest tools
-  SSL_SCANNER: 'https://github.com/drwetter/testssl.sh/',
-  DNS_SCANNER: 'https://github.com/darkoperator/dnsrecon',
   PORT_SCANNER: 'https://nmap.org',
   WAF_DETECTOR: 'https://github.com/EnableSecurity/wafw00f',
   WHOIS_LOOKUP: 'https://www.whois.com/whois/',
   SUBDOMAIN_FINDER: 'https://github.com/projectdiscovery/subfinder',
   CVE_MAP: 'https://github.com/projectdiscovery/cvemap',
-  WORDPRESS_SCANNER: 'https://github.com/wpscanteam/wpscan',
   // Exploit Tools
   SQLI_EXPLOITER: 'https://github.com/sqlmapproject/sqlmap',
-  XSS_EXPLOITER: 'https://github.com/hahwul/dalfox',
+};
+
+export const PLUGINS_WITHOUT_IMAGE_SUPPORT: PluginID[] = [
+  PluginID.WEB_SEARCH,
+  PluginID.REASONING,
+  PluginID.REASONING_WEB_SEARCH,
+  PluginID.DEEP_RESEARCH,
+];
+
+export const isPluginWithoutImageSupport = (pluginId: PluginID): boolean => {
+  return PLUGINS_WITHOUT_IMAGE_SUPPORT.includes(pluginId);
 };

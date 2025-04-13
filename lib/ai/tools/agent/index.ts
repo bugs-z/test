@@ -2,8 +2,8 @@ import type { ToolContext } from './types';
 import { createShellExecTool } from './shell-exec-tool';
 import { createMessageNotifyTool } from './message-notify-tool';
 import { createMessageAskTool } from './message-ask-tool';
-// import { createFileWriteTool } from './file-write-tool';
-// import { createFileReadTool } from './file-read-tool';
+import { createFileWriteTool } from './file-write-tool';
+import { createFileReadTool } from './file-read-tool';
 import { createIdleTool } from './idle-tool';
 import { createShellWaitTool } from './shell-wait-tool';
 
@@ -18,11 +18,8 @@ export function createAgentTools(context: ToolContext) {
     shell_wait: createShellWaitTool(context),
     message_notify_user: createMessageNotifyTool(context),
     message_ask_user: createMessageAskTool(),
-    // TODO: File operations are currently disabled due to sandbox state management issues.
-    // The shell-exec tool creates a sandbox, but file operations create their own instances.
-    // We need to implement proper sandbox state sharing between tools to enable file operations.
-    // file_write: createFileWriteTool(context),
-    // file_read: createFileReadTool(context),
+    file_write: createFileWriteTool(context),
+    file_read: createFileReadTool(context),
     idle: createIdleTool(),
   };
 }

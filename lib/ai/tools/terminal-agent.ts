@@ -18,7 +18,6 @@ interface TerminalToolConfig {
   messages: any[];
   profile: any;
   dataStream: any;
-  isTerminalContinuation?: boolean;
   selectedPlugin?: PluginID;
   previousMessage?: string;
   abortSignal?: AbortSignal;
@@ -29,13 +28,7 @@ export async function executeTerminalAgent({
 }: {
   config: TerminalToolConfig;
 }) {
-  const {
-    messages,
-    profile,
-    dataStream,
-    isTerminalContinuation,
-    selectedPlugin,
-  } = config;
+  const { messages, profile, dataStream, selectedPlugin } = config;
 
   let sandbox: Sandbox | null = null;
   let persistentSandbox = false;
@@ -75,11 +68,6 @@ export async function executeTerminalAgent({
       terminalTemplate = getTerminalTemplate(selectedPlugin);
     }
 
-    // Continue assistant message from previous terminal call
-    const cleanedMessages = isTerminalContinuation
-      ? messages.slice(0, -1)
-      : messages;
-
     // Functions to update sandbox and persistentSandbox from tools
     const setSandbox = (newSandbox: Sandbox) => {
       sandbox = newSandbox;
@@ -98,7 +86,7 @@ export async function executeTerminalAgent({
       model: myProvider.languageModel(selectedChatModel),
       maxTokens: 2048,
       system: systemPrompt,
-      messages: toVercelChatMessages(cleanedMessages, true),
+      messages: toVercelChatMessages(messages, true),
       tools: createAgentTools({
         dataStream,
         sandbox,

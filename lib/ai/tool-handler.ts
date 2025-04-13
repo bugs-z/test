@@ -33,7 +33,6 @@ export async function handleToolExecution(config: ToolHandlerConfig) {
           messages,
           profile,
           dataStream,
-          isTerminalContinuation,
           abortSignal,
         },
       });
@@ -61,7 +60,6 @@ export async function handleToolExecution(config: ToolHandlerConfig) {
             messages,
             profile,
             dataStream,
-            isTerminalContinuation,
             abortSignal,
           },
         });
@@ -110,7 +108,6 @@ export async function handleToolExecution(config: ToolHandlerConfig) {
               messages,
               profile,
               dataStream,
-              isTerminalContinuation,
               selectedPlugin: selectedPlugin as PluginID,
               abortSignal,
             },

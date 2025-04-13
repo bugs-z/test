@@ -4,6 +4,16 @@ import {
   createOrConnectPersistentTerminal,
 } from '@/lib/tools/e2b/sandbox';
 
+export interface SandboxContext {
+  userID: string;
+  dataStream: any;
+  isPremiumUser?: boolean;
+  selectedPlugin?: string;
+  terminalTemplate?: string;
+  setSandbox?: (sandbox: any) => void;
+  setPersistentSandbox?: (persistent: boolean) => void;
+}
+
 export const handleFileError = (error: unknown, context: string): string => {
   const errorMessage = error instanceof Error ? error.message : String(error);
   return `Error ${context}: ${errorMessage}`;
@@ -64,30 +74,64 @@ export const getSandboxTimeout = (): number => {
 };
 
 export const ensureSandboxConnection = async (
-  sandbox: any,
-  userID: string,
-  template: string,
-  timeout: number,
-  dataStream: any,
-  setSandbox?: (sandbox: any) => void,
-  persistentSandbox = true,
-): Promise<any> => {
+  context: SandboxContext,
+  options: {
+    initialSandbox?: any;
+    initialPersistentSandbox?: boolean;
+    useTemporarySandbox?: boolean;
+  } = {},
+): Promise<{ sandbox: any; persistentSandbox: boolean }> => {
+  const {
+    userID,
+    dataStream,
+    isPremiumUser = true,
+    selectedPlugin,
+    terminalTemplate = SANDBOX_TEMPLATE,
+    setSandbox,
+    setPersistentSandbox,
+  } = context;
+
+  const {
+    initialSandbox,
+    initialPersistentSandbox = true,
+    useTemporarySandbox,
+  } = options;
+
+  let sandbox = initialSandbox;
+  let persistentSandbox = initialPersistentSandbox;
+
+  // Determine sandbox type based on context
+  if (!isPremiumUser) {
+    persistentSandbox = false;
+  } else if (selectedPlugin) {
+    persistentSandbox = false; // Always use temporary sandbox for plugins
+  } else {
+    persistentSandbox = !useTemporarySandbox;
+  }
+
+  // Update persistent sandbox state in parent context
+  if (setPersistentSandbox) {
+    setPersistentSandbox(persistentSandbox);
+  }
+
+  // Create or connect to sandbox
   if (!sandbox) {
-    return persistentSandbox
+    sandbox = persistentSandbox
       ? await createPersistentSandbox(
           userID,
-          template,
-          timeout,
+          terminalTemplate,
+          BASH_SANDBOX_TIMEOUT,
           dataStream,
           setSandbox,
         )
       : await createTemporarySandbox(
           userID,
-          template,
-          timeout,
+          terminalTemplate,
+          BASH_SANDBOX_TIMEOUT,
           dataStream,
           setSandbox,
         );
   }
-  return sandbox;
+
+  return { sandbox, persistentSandbox };
 };

@@ -43,7 +43,22 @@ export const createShellWaitTool = (context: ToolContext) => {
       });
 
       // Wait for specified duration
-      await new Promise((resolve) => setTimeout(resolve, waitTimeMs));
+      const startTime = Date.now();
+      const endTime = startTime + waitTimeMs;
+
+      while (Date.now() < endTime) {
+        const remainingTime = Math.ceil((endTime - Date.now()) / 1000);
+        dataStream.writeData({
+          type: 'shell-wait',
+          content: `${remainingTime} seconds remaining`,
+        });
+
+        // Wait for 15 seconds or until the end time
+        const nextUpdate = Math.min(15000, endTime - Date.now());
+        if (nextUpdate > 0) {
+          await new Promise((resolve) => setTimeout(resolve, nextUpdate));
+        }
+      }
 
       return `Waited for ${seconds} seconds`;
     },

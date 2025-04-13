@@ -3,8 +3,6 @@ import { z } from 'zod';
 import type { ToolContext } from './types';
 import {
   handleFileError,
-  getSandboxTemplate,
-  getSandboxTimeout,
   ensureSandboxConnection,
 } from './utils/sandbox-utils';
 
@@ -61,11 +59,11 @@ export const createFileReadTool = (context: ToolContext) => {
     sandbox: initialSandbox,
     userID,
     terminalTemplate,
+    persistentSandbox: initialPersistentSandbox = true,
     setSandbox,
-    persistentSandbox,
+    setPersistentSandbox,
+    isPremiumUser,
   } = context;
-
-  let sandbox = initialSandbox;
 
   return tool({
     description:
@@ -80,7 +78,7 @@ export const createFileReadTool = (context: ToolContext) => {
         .number()
         .optional()
         .describe('(Optional) Ending line number (exclusive)'),
-      ...(sandbox
+      ...(initialSandbox
         ? {}
         : {
             useTemporarySandbox: z
@@ -88,17 +86,30 @@ export const createFileReadTool = (context: ToolContext) => {
               .describe('Use temporary sandbox (15-minute timeout).'),
           }),
     }),
-    execute: async ({ file, start_line, end_line, useTemporarySandbox }) => {
+    execute: async (args) => {
+      const { file, start_line, end_line, useTemporarySandbox } = args as {
+        file: string;
+        start_line?: number;
+        end_line?: number;
+        useTemporarySandbox?: boolean;
+      };
+
       try {
         // Ensure sandbox connection
-        sandbox = await ensureSandboxConnection(
-          sandbox,
-          userID,
-          getSandboxTemplate(terminalTemplate),
-          getSandboxTimeout(),
-          dataStream,
-          setSandbox,
-          persistentSandbox && !useTemporarySandbox,
+        const { sandbox } = await ensureSandboxConnection(
+          {
+            userID,
+            dataStream,
+            isPremiumUser,
+            terminalTemplate,
+            setSandbox,
+            setPersistentSandbox,
+          },
+          {
+            initialSandbox,
+            initialPersistentSandbox,
+            useTemporarySandbox,
+          },
         );
 
         return readAndProcessFile(

@@ -12,6 +12,7 @@ import {
 import { useContext } from 'react';
 import { WithTooltip } from '../../ui/with-tooltip';
 import { useUIContext } from '@/context/ui-context';
+import { PLUGINS_WITHOUT_IMAGE_SUPPORT } from '@/types/plugins';
 
 interface ToolOptionsProps {
   fileInputRef: React.RefObject<HTMLInputElement>;
@@ -36,6 +37,17 @@ export const ToolOptions = ({
   } = useUIContext();
 
   const hasImageAttached = newMessageImages.length > 0;
+
+  const handleFileClick = () => {
+    // Deselect all plugins when uploading files
+    if (
+      selectedPlugin &&
+      PLUGINS_WITHOUT_IMAGE_SUPPORT.includes(selectedPlugin)
+    ) {
+      setSelectedPlugin(PluginID.NONE);
+    }
+    fileInputRef.current?.click();
+  };
 
   const handleWebSearchToggle = () => {
     if (hasImageAttached) return;
@@ -95,17 +107,6 @@ export const ToolOptions = ({
     if (isEnhancedMenuOpen) {
       setIsEnhancedMenuOpen(false);
     }
-  };
-
-  const handleFileClick = () => {
-    // Deselect plugins when user attempts to upload a file
-    if (
-      selectedPlugin === PluginID.WEB_SEARCH ||
-      (isPremiumSubscription && selectedPlugin === PluginID.REASONING)
-    ) {
-      setSelectedPlugin(PluginID.NONE);
-    }
-    fileInputRef.current?.click();
   };
 
   const handleDeepSearchToggle = () => {
