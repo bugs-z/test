@@ -2,26 +2,6 @@ import { PluginID } from '@/types/plugins';
 
 export const getPluginPrompt = (pluginID: PluginID): string => {
   switch (pluginID) {
-    case PluginID.PORT_SCANNER:
-      return `
-The user has selected the Port Scanner plugin, which uses the nmap tool in the terminal. This tool performs comprehensive port scanning to discover open ports and services on target systems. Remember:
-1. Focus on identifying open ports, services, and potential vulnerabilities on target systems.
-2. Provide nmap-specific options and explanations for efficient scanning.
-3. For different scan types, use appropriate options like:
-   - Quick scan: '-F' (fast mode, scans fewer ports)
-   - Deep scan: '-p-' (all ports) or '-p 1-65535'
-   - Service detection: '-sV' (version detection)
-   - OS detection: '-O' (requires root privileges)
-4. Common nmap options:
-   - '-sS': SYN scan (requires root privileges)
-   - '-sT': TCP connect scan
-   - '-sU': UDP scan
-   - '-sV': Version detection
-   - '-sC': Default script scan
-   - '-A': Aggressive scan (includes OS detection, version detection, script scanning, and traceroute)
-   - '-T': Timing template (0-5, where 5 is fastest, default is 3)
-5. For multiple hosts, use CIDR notation or comma-separated IPs (e.g., '192.168.1.0/24' or '192.168.1.1,192.168.1.2')
-`;
     case PluginID.WAF_DETECTOR:
       return `
 The user has selected the WAF Detector plugin, which uses the wafw00f tool in the terminal. This tool fingerprints Web Application Firewalls (WAFs) behind target applications. Remember:

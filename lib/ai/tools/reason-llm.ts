@@ -57,7 +57,7 @@ export async function executeReasonLLMTool({
         },
         ...toVercelChatMessages(messages),
       ],
-      maxTokens: 4096,
+      maxTokens: 8192,
     });
 
     let thinkingStartTime: number | null = null;

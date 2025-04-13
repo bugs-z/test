@@ -89,10 +89,13 @@ export const ToolOptions = ({
   const handleReasonLLMToggle = () => {
     if (hasImageAttached) return;
 
-    if (selectedPlugin === PluginID.WEB_SEARCH) {
+    if (isPremiumSubscription && selectedPlugin === PluginID.WEB_SEARCH) {
       // If web search is active, clicking reason LLM will enable combined mode
       setSelectedPlugin(PluginID.REASONING_WEB_SEARCH);
-    } else if (selectedPlugin === PluginID.REASONING_WEB_SEARCH) {
+    } else if (
+      isPremiumSubscription &&
+      selectedPlugin === PluginID.REASONING_WEB_SEARCH
+    ) {
       // If in combined mode, keep web search active
       setSelectedPlugin(PluginID.WEB_SEARCH);
     } else {

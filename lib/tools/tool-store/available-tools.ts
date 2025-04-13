@@ -134,42 +134,6 @@ export const availablePlugins: PluginSummary[] = [
     ],
   },
   {
-    id: 11,
-    name: 'Port Scanner',
-    value: PluginID.PORT_SCANNER,
-    categories: ['recon'],
-    icon: 'https://cdn-icons-png.flaticon.com/128/7338/7338907.png',
-    invertInDarkMode: true,
-    description: 'Detect open ports and fingerprint services',
-    githubRepoUrl: pluginUrls.PORT_SCANNER,
-    isInstalled: false,
-    isPremium: true,
-    createdAt: '2024-06-29',
-    starters: [
-      {
-        title: 'Perform Light Port Scan',
-        description: 'on hackerone.com (top 100 ports)',
-        chatMessage: 'Perform a light port scan on hackerone.com',
-      },
-      {
-        title: 'Scan Specific Ports',
-        description: '80, 443, 8080 on hackerone.com and subdomains',
-        chatMessage:
-          'Scan ports 80, 443, and 8080 on hackerone.com and its subdomains: api.hackerone.com, docs.hackerone.com, resources.hackerone.com, gslink.hackerone.com',
-      },
-      {
-        title: 'Conduct Deep Port Scan',
-        description: 'on hackerone.com (top 1000 ports)',
-        chatMessage: 'Conduct a deep port scan on hackerone.com',
-      },
-      {
-        title: 'Port Scanner Help',
-        description: 'How does the Port Scanner plugin work?',
-        chatMessage: 'How does the Port Scanner plugin work?',
-      },
-    ],
-  },
-  {
     id: 12,
     name: 'WAF Detector',
     value: PluginID.WAF_DETECTOR,

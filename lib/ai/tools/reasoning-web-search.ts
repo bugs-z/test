@@ -64,7 +64,7 @@ export async function executeReasoningWebSearchTool({
         },
         ...toVercelChatMessages(messages),
       ],
-      maxTokens: 4096,
+      maxTokens: 8192,
     });
 
     const citations: string[] = [];

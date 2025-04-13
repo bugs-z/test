@@ -9,7 +9,6 @@ export const getFreePlugins = (): PluginID[] => [
 ];
 
 export const getTerminalPlugins = (): PluginID[] => [
-  PluginID.PORT_SCANNER,
   PluginID.WAF_DETECTOR,
   PluginID.WHOIS_LOOKUP,
   PluginID.SUBDOMAIN_FINDER,

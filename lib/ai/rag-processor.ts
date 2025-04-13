@@ -78,7 +78,7 @@ export async function processRag({
     },
     body: JSON.stringify({
       query: standaloneQuestion,
-      partition: 'test',
+      partition: 'production',
       rerank: true,
     }),
   });

@@ -28,7 +28,6 @@ export function LoginForm({
   messageType?: 'error' | 'success' | 'warning';
 }) {
   const [captchaToken, setCaptchaToken] = useState<string>('');
-  const [isSignUp, setIsSignUp] = useState(false);
 
   const getMessageStyles = (type: 'error' | 'success' | 'warning') => {
     switch (type) {
@@ -51,7 +50,7 @@ export function LoginForm({
       >
         <BrandLarge />
         <span className="text-center text-xl font-bold">
-          {isSignUp ? 'Sign up to PentestGPT' : 'Login to PentestGPT'}
+          Welcome to PentestGPT
         </span>
         <Button variant="default" className="mt-4" type="submit">
           <GoogleIcon className="mr-2" width={16} height={16} />
@@ -75,10 +74,7 @@ export function LoginForm({
         <div className="grow border-t border-gray-300" />
       </div>
 
-      <form
-        action={isSignUp ? onSignUp : onSignIn}
-        className="animate-in mt-4 flex w-full flex-1 flex-col justify-center gap-3"
-      >
+      <form className="animate-in mt-4 flex w-full flex-1 flex-col justify-center gap-3">
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input
@@ -123,50 +119,38 @@ export function LoginForm({
           value={captchaToken}
         />
 
-        <Button
-          type="submit"
-          data-testid={isSignUp ? 'signup-button' : 'signin-button'}
-        >
-          {isSignUp ? 'Sign Up' : 'Login'}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            type="submit"
+            formAction={onSignIn}
+            data-testid="signin-button"
+            className="flex-1"
+          >
+            Sign In
+          </Button>
+          <Button
+            type="submit"
+            formAction={onSignUp}
+            data-testid="signup-button"
+            variant="outline"
+            className="flex-1"
+          >
+            Sign Up
+          </Button>
+        </div>
 
         <div className="text-muted-foreground mt-2 text-center text-sm">
-          {isSignUp ? (
-            <>
-              <span>Already have an account? </span>
-              <Button
-                variant="link"
-                className="p-0 text-sm"
-                onClick={() => setIsSignUp(false)}
-              >
-                Login
-              </Button>
-            </>
-          ) : (
-            <>
-              <div>
-                <span>Don&apos;t have an account? </span>
-                <Button
-                  variant="link"
-                  className="p-0 text-sm"
-                  onClick={() => setIsSignUp(true)}
-                >
-                  Sign Up
-                </Button>
-              </div>
-              <div className="mt-2">
-                <span>Forgot your password? </span>
-                <Button
-                  variant="link"
-                  className="p-0 text-sm"
-                  formAction={onResetPassword}
-                  data-testid="reset-password-button"
-                >
-                  Reset
-                </Button>
-              </div>
-            </>
-          )}
+          <div className="mt-2">
+            <span>Forgot your password? </span>
+            <Button
+              variant="link"
+              className="p-0 text-sm"
+              formAction={onResetPassword}
+              data-testid="reset-password-button"
+            >
+              Reset
+            </Button>
+          </div>
         </div>
 
         <div className="text-muted-foreground mt-2 text-center text-sm sm:px-0">

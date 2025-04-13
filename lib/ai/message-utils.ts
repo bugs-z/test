@@ -136,28 +136,6 @@ export const toVercelChatMessages = (
 };
 
 /**
- * Handles empty or missing assistant messages by adding "Sure, " as content
- * @param messages - Array of messages to process
- * @param onlyLast - Whether to only process the last assistant message
- */
-export function handleAssistantMessages(messages: any[], onlyLast = false) {
-  let foundAssistant = false;
-  for (let i = messages.length - 1; i >= 0; i--) {
-    if (messages[i].role === 'assistant') {
-      foundAssistant = true;
-      if (messages[i].content.trim() === '') {
-        messages[i].content = 'Sure, ';
-      }
-      if (onlyLast) break;
-    }
-  }
-
-  if (!foundAssistant) {
-    messages.push({ role: 'assistant', content: 'Sure, ' });
-  }
-}
-
-/**
  * Adds authorization message to the last user message
  * @param messages - Array of messages to process
  */
@@ -281,7 +259,9 @@ export async function processChatMessages(
     !isContinuation &&
     !isTerminalContinuation &&
     !terminalPlugins.includes(selectedPlugin as PluginID) &&
-    // Only skip uncensoring when both plugin is NONE and model is large
+    // Skip uncensoring for reasoning plugin as it uses xAI model
+    selectedPlugin !== PluginID.REASONING &&
+    // Skip uncensoring for xAI model when no specific plugin is selected
     !(
       selectedPlugin === PluginID.NONE &&
       selectedChatModel === 'chat-model-large'
@@ -302,18 +282,6 @@ export async function processChatMessages(
 
   if (shouldUncensor) {
     addAuthMessage(messages);
-    if (
-      selectedPlugin !== PluginID.WEB_SEARCH &&
-      selectedPlugin !== PluginID.REASONING &&
-      selectedPlugin !== PluginID.REASONING_WEB_SEARCH &&
-      selectedPlugin !== PluginID.DEEP_RESEARCH &&
-      selectedPlugin !== PluginID.TERMINAL &&
-      !isRagEnabled &&
-      selectedChatModel !== 'chat-model-large' &&
-      selectedChatModel !== 'chat-model-gpt-large'
-    ) {
-      handleAssistantMessages(messages);
-    }
   }
 
   filterEmptyAssistantMessages(messages);

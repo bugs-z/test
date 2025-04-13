@@ -131,8 +131,7 @@ function determineShouldUncensorResponse(
 
   // NEVER LOWER THAN 0.2
   const minModerationLevel = 0.2;
-  // NEVER RAISE HIGHER THAN 0.9
-  const maxModerationLevel = 0.9;
+  const maxModerationLevel = 1.0;
   return (
     moderationLevel >= minModerationLevel &&
     moderationLevel <= maxModerationLevel &&

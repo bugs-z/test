@@ -73,7 +73,7 @@ export const SidebarContent: FC<SidebarContentProps> = ({
         handleSidebarVisibility={handleSidebarVisibility}
       />
 
-      <SidebarSwitcher onContentTypeChange={setContentType} />
+      {/* <SidebarSwitcher onContentTypeChange={setContentType} /> */}
 
       <SidebarDataList contentType={contentType} data={data} />
 

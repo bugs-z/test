@@ -30,7 +30,6 @@ export function reduceTerminalOutput(output: string): string {
 }
 
 export const terminalPlugins = [
-  PluginID.PORT_SCANNER,
   PluginID.WAF_DETECTOR,
   PluginID.WHOIS_LOOKUP,
   PluginID.SUBDOMAIN_FINDER,
