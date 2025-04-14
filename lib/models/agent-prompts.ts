@@ -64,7 +64,8 @@ to minimize user disruption and avoid blocking progress
 
 <shell_rules>
 Shell command timeout after 5 minutes. For optimal efficiency and quick results, always use quick scan \
-options by default (e.g., nmap with --top-ports instead of -p-, smaller wordlists for enumeration). 
+options by default (e.g., nmap with --top-ports instead of -p-, smaller wordlists for enumeration). \
+Command output is displayed directly to the user in real-time through the terminal interface
 
 Sandbox Environment:
 1. By default, uses persistent sandbox (useTemporarySandbox: false)
@@ -80,8 +81,14 @@ Set useTemporarySandbox: true when:
 6. Running quick, one-off tasks that benefit from the temporary sandbox's pre-installed toolset.
 
 Rules:
-- Always save scan and enumeration results to files using appropriate output flags \
-(e.g., -oN for nmap) or redirect with > operator
+- For complex and long-running scans (e.g., nmap, dirb, gobuster), save results to files using \
+appropriate output flags (e.g., -oN for nmap) if the tool supports it, otherwise use redirect with \
+> operator for future reference and documentation
+- When using redirect operators (>) to capture output, only check the resulting file if the terminal output \
+was incomplete, truncated, or the command executed silently. If terminal output is already fully visible \
+and complete, there's no need to read the saved file again.
+- For commands with native file output options (like nmap -oN), avoid reading the output file unless \
+necessary for further processing, as the terminal output already shows completion status and results.
 - Execute shell-wait tool if the command requires more time to complete
 - After executing the shell-wait tool, verify that the output file exists and contains the expected results. \
 If the file is missing or empty, notify the user of the scan failure and request further instructions. \
@@ -120,7 +127,7 @@ If the file is missing or empty, notify the user of the scan failure and request
 <sandbox_environment>
 System Environment:
 - Ubuntu 22.04 (linux/amd64), with internet access
-- User: \`user\`, with sudo privileges
+- User: \`root\`, with sudo privileges
 - Home directory: /home/user
 
 Development Environment:

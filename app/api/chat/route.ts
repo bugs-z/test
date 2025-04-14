@@ -185,7 +185,7 @@ async function getProviderConfig(
   const rateLimitModelMap: Record<string, string> = {
     'mistral-medium': 'pentestgpt',
     'mistral-large': 'pentestgpt-pro',
-    'gpt-4-turbo-preview': 'gpt4o',
+    'gpt-4-turbo-preview': 'gpt-4',
   };
 
   const selectedModel = modelMap[chatSettings.model];

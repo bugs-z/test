@@ -75,6 +75,7 @@ export const executeTerminalCommand = async ({
         const execution = await sandbox.commands.run(command, {
           timeoutMs: MAX_EXECUTION_TIME,
           cwd: exec_dir,
+          user: 'root',
           onStdout: (data: string) => {
             if (isStreamClosed) return;
             hasTerminalOutput = true;
@@ -145,12 +146,15 @@ export const executeTerminalCommand = async ({
             error.name === 'CommandExitError'
           ) {
             const exitError = error as ExecutionError;
-            const errorMessage = exitError.result?.error || 'Command failed';
-            controller.enqueue(
-              ENCODER.encode(
-                `<terminal-error>${errorMessage}</terminal-error>`,
-              ),
-            );
+            // Only show exit error if there's no stderr output
+            if (!exitError.result?.stderr) {
+              const errorMessage = exitError.result?.error || 'Command failed';
+              controller.enqueue(
+                ENCODER.encode(
+                  `<terminal-error>${errorMessage}</terminal-error>`,
+                ),
+              );
+            }
           }
           console.error(`[${userID}] Error:`, error);
         }

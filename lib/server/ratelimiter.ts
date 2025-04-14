@@ -149,7 +149,7 @@ function _getLimit(model: string, subscriptionInfo: SubscriptionInfo): number {
   // Standard model handling
   const fixedModelName = _getFixedModelName(model);
   const limitKey = `RATELIMITER_LIMIT_${fixedModelName}${suffix}`;
-  const defaultLimit = isPaid ? 30 : 0;
+  const defaultLimit = 0;
   const limit = getValidatedLimit(process.env[limitKey], defaultLimit);
 
   if (subscriptionInfo.isTeam) {
@@ -209,12 +209,7 @@ function _getFixedModelName(model: string): string {
 
 function _makeStorageKey(userId: string, model: string): string {
   // Pro queries group (reasoning and web search related plugins)
-  const proQueryModels = [
-    'reasoning',
-    'websearch',
-    'reasoning-web-search',
-    'web-search',
-  ];
+  const proQueryModels = ['websearch', 'reasoning-web-search', 'web-search'];
 
   // Use a common key for all pro query models
   if (proQueryModels.includes(model)) {
@@ -244,17 +239,17 @@ export function getRateLimitErrorMessage(
 
   if (premium) {
     if (model === 'pentestgpt') {
-      message += `\n\nIn the meantime, you can use Large Model or PentestGPT 4o`;
+      message += `\n\nIn the meantime, you can use Large Model or PentestGPT 4.1`;
     } else if (model === 'pentestgpt-pro') {
-      message += `\n\nIn the meantime, you can use PentestGPT 4o or Small Model`;
+      message += `\n\nIn the meantime, you can use PentestGPT 4.1 or Small Model`;
     } else if (model === 'gpt-4') {
       message += `\n\nIn the meantime, you can use Large Model or Small Model`;
     }
   } else {
     message += `\n\n🔓 Want more? Upgrade to Pro or Team and unlock a world of features:
 - Access to smarter models
-- Extended limits on messaging, web search, reasoning, and terminal
-- Access to file uploads, vision, browsing, and deep research
+- Extended limits on messaging, reasoning, and terminal
+- Access to file uploads, vision, web search, and deep research
 - Opportunities to test new features`;
   }
 
@@ -265,7 +260,7 @@ function getModelName(model: string): string {
   const modelNames: { [key: string]: string } = {
     pentestgpt: 'Small Model',
     'pentestgpt-pro': 'Large Model',
-    'gpt-4': 'PentestGPT 4o',
+    'gpt-4': 'PentestGPT 4.1',
     terminal: 'terminal',
     'tts-1': 'text-to-speech',
     'stt-1': 'speech-to-text',
