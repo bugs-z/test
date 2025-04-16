@@ -1,6 +1,6 @@
 import { encode, decode } from 'gpt-tokenizer';
 import { PluginID } from '@/types/plugins';
-const MAX_TOKENS = 8000;
+const MAX_TOKENS = 4000;
 const INITIAL_TOKENS = 1000;
 
 export async function streamTerminalOutput(

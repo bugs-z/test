@@ -1,7 +1,7 @@
 import type { Sandbox } from '@e2b/code-interpreter';
 
-const MAX_EXECUTION_TIME = 5 * 60 * 1000;
-const CUSTOM_TIMEOUT = 1 * 60 * 1000; // 1 minute custom timeout
+const MAX_COMMAND_EXECUTION_TIME = 6 * 60 * 1000;
+const STREAM_TIMEOUT = 1 * 60 * 1000;
 const ENCODER = new TextEncoder();
 
 interface ExecutionError {
@@ -20,13 +20,11 @@ export const executeTerminalCommand = async ({
   userID,
   command,
   exec_dir,
-  usePersistentSandbox = false,
   sandbox = null,
 }: {
   userID: string;
   command: string;
   exec_dir: string;
-  usePersistentSandbox?: boolean;
   sandbox?: Sandbox | null;
 }): Promise<ReadableStream<Uint8Array>> => {
   let hasTerminalOutput = false;
@@ -43,12 +41,6 @@ export const executeTerminalCommand = async ({
         currentBlock = null;
       }
 
-      controller.enqueue(
-        ENCODER.encode(
-          `<terminal-command sandbox-type="${usePersistentSandbox ? 'persistent' : 'temporary'}" exec-dir="${exec_dir}">${command}</terminal-command>`,
-        ),
-      );
-
       try {
         if (!sandbox) {
           throw new Error('Failed to create or connect to sandbox');
@@ -64,16 +56,16 @@ export const executeTerminalCommand = async ({
             }
             controller.enqueue(
               ENCODER.encode(
-                `<terminal-error>The command's output stream has been paused after ${CUSTOM_TIMEOUT / 1000} seconds. The command may continue running in the background, but its output will no longer be streamed.</terminal-error>`,
+                `<terminal-error>The command's output stream has been paused after ${STREAM_TIMEOUT / 1000} seconds. The command may continue running in the background, but its output will no longer be streamed.</terminal-error>`,
               ),
             );
             controller.close();
             isStreamClosed = true;
           }
-        }, CUSTOM_TIMEOUT);
+        }, STREAM_TIMEOUT);
 
         const execution = await sandbox.commands.run(command, {
-          timeoutMs: MAX_EXECUTION_TIME,
+          timeoutMs: MAX_COMMAND_EXECUTION_TIME,
           cwd: exec_dir,
           user: 'root',
           onStdout: (data: string) => {
@@ -119,7 +111,7 @@ export const executeTerminalCommand = async ({
               ? (execution.error as ExecutionError)
               : { name: 'UnknownError' };
           const errorMessage = error.name.includes('TimeoutError')
-            ? `Command timed out after ${MAX_EXECUTION_TIME / 1000} seconds. Try a shorter command or split it.`
+            ? `Command timed out after ${MAX_COMMAND_EXECUTION_TIME / 1000} seconds. Try a shorter command or split it.`
             : error.result?.stderr ||
               error.stderr ||
               error.value ||

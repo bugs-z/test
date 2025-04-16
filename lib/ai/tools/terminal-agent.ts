@@ -13,13 +13,16 @@ import { getToolsWithAnswerPrompt } from '@/lib/tools/tool-store/prompts/system-
 import { getTerminalTemplate } from '@/lib/tools/tool-store/tools-helper';
 import { myProvider } from '@/lib/ai/providers';
 import { SANDBOX_TEMPLATE } from '@/lib/ai/tools/agent/types';
+import { AgentMode } from '@/types/llms';
+import { executeTerminalCommandWithConfig } from './terminal-command-executor';
 
 interface TerminalToolConfig {
   messages: any[];
   profile: any;
   dataStream: any;
+  agentMode: AgentMode;
+  confirmTerminalCommand: boolean;
   selectedPlugin?: PluginID;
-  previousMessage?: string;
   abortSignal?: AbortSignal;
 }
 
@@ -28,7 +31,8 @@ export async function executeTerminalAgent({
 }: {
   config: TerminalToolConfig;
 }) {
-  const { messages, profile, dataStream, selectedPlugin } = config;
+  const { profile, dataStream, agentMode, selectedPlugin } = config;
+  let messages = config.messages;
 
   let sandbox: Sandbox | null = null;
   let persistentSandbox = false;
@@ -74,14 +78,35 @@ export async function executeTerminalAgent({
     };
 
     const setPersistentSandbox = (isPersistent: boolean) => {
-      // Prevent setting persistent sandbox for non-premium users
+      // Enforce persistent sandbox for pro users and temporary for free users
       if (!isPremiumUser) {
         persistentSandbox = false;
       } else {
-        persistentSandbox = isPersistent;
+        persistentSandbox = true;
       }
     };
 
+    // Try to execute terminal command if confirmTerminalCommand is true
+    if (config.confirmTerminalCommand) {
+      const { messages: updatedMessages } =
+        await executeTerminalCommandWithConfig({
+          userID,
+          dataStream,
+          isPremiumUser,
+          selectedPlugin,
+          terminalTemplate,
+          setSandbox,
+          setPersistentSandbox,
+          initialSandbox: sandbox || undefined,
+          initialPersistentSandbox: persistentSandbox,
+          messages,
+        });
+
+      // Update messages with the terminal output
+      messages = updatedMessages;
+    }
+
+    // Always run the agent after terminal command execution
     const { fullStream, finishReason } = streamText({
       model: myProvider.languageModel(selectedChatModel),
       maxTokens: 2048,
@@ -97,8 +122,9 @@ export async function executeTerminalAgent({
         setSandbox,
         setPersistentSandbox,
         isPremiumUser,
+        agentMode,
       }),
-      maxSteps: 10,
+      maxSteps: 5,
       toolChoice: 'required',
       abortSignal: config.abortSignal,
     });
@@ -121,6 +147,17 @@ export async function executeTerminalAgent({
             content: chunk.args?.text,
           });
           dataStream.writeData({ finishReason: 'message_ask_user' });
+          shouldStop = true;
+        } else if (
+          agentMode === 'ask-every-time' &&
+          chunk.toolName === 'shell_exec'
+        ) {
+          const { exec_dir, command } = chunk.args;
+          dataStream.writeData({
+            type: 'text-delta',
+            content: `<terminal-command exec-dir="${exec_dir}">${command}</terminal-command>`,
+          });
+          dataStream.writeData({ finishReason: 'terminal_command_ask_user' });
           shouldStop = true;
         }
       }

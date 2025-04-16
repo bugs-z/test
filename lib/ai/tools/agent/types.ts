@@ -1,5 +1,6 @@
 import type { Sandbox } from '@e2b/code-interpreter';
 import { PluginID } from '@/types/plugins';
+import { AgentMode } from '@/types/llms';
 
 /**
  * Interface for tools that need access to the data stream
@@ -14,6 +15,7 @@ export interface ToolContext {
   setSandbox?: (sandbox: Sandbox) => void;
   setPersistentSandbox?: (isPersistent: boolean) => void;
   isPremiumUser?: boolean;
+  agentMode: AgentMode;
 }
 
 // Constants for sandbox creation

@@ -237,7 +237,6 @@ export async function processChatMessages(
   messages: BuiltChatMessage[],
   selectedModel: string,
   selectedPlugin: PluginID,
-  isRagEnabled: boolean,
   isContinuation: boolean,
   isTerminalContinuation: boolean,
   apiKey: string | undefined,

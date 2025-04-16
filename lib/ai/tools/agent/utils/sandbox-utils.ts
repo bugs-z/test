@@ -78,35 +78,30 @@ export const ensureSandboxConnection = async (
   options: {
     initialSandbox?: any;
     initialPersistentSandbox?: boolean;
-    useTemporarySandbox?: boolean;
   } = {},
 ): Promise<{ sandbox: any; persistentSandbox: boolean }> => {
   const {
     userID,
     dataStream,
-    isPremiumUser = true,
+    isPremiumUser = false,
     selectedPlugin,
     terminalTemplate = SANDBOX_TEMPLATE,
     setSandbox,
     setPersistentSandbox,
   } = context;
 
-  const {
-    initialSandbox,
-    initialPersistentSandbox = true,
-    useTemporarySandbox,
-  } = options;
+  const { initialSandbox, initialPersistentSandbox = true } = options;
 
   let sandbox = initialSandbox;
   let persistentSandbox = initialPersistentSandbox;
 
   // Determine sandbox type based on context
-  if (!isPremiumUser) {
-    persistentSandbox = false;
-  } else if (selectedPlugin) {
+  if (selectedPlugin) {
     persistentSandbox = false; // Always use temporary sandbox for plugins
+  } else if (!isPremiumUser) {
+    persistentSandbox = false; // Free users get temporary sandbox
   } else {
-    persistentSandbox = !useTemporarySandbox;
+    persistentSandbox = true; // Pro users get persistent sandbox
   }
 
   // Update persistent sandbox state in parent context
@@ -114,7 +109,6 @@ export const ensureSandboxConnection = async (
     setPersistentSandbox(persistentSandbox);
   }
 
-  // Create or connect to sandbox
   if (!sandbox) {
     sandbox = persistentSandbox
       ? await createPersistentSandbox(

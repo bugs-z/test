@@ -2,17 +2,22 @@ import { executeWebSearchTool } from './web-search';
 import { executeTerminalAgent } from './terminal-agent';
 import { executeBrowserTool } from './browser';
 import { z } from 'zod';
+import { AgentMode } from '@/types/llms';
 
 export const createToolSchemas = ({
   messages,
   profile,
+  agentMode,
+  confirmTerminalCommand,
   dataStream,
   abortSignal,
 }: {
-  messages?: any;
-  profile?: any;
-  dataStream?: any;
-  abortSignal?: AbortSignal;
+  messages: any;
+  profile: any;
+  agentMode: AgentMode;
+  confirmTerminalCommand: boolean;
+  dataStream: any;
+  abortSignal: AbortSignal;
 }) => {
   const allSchemas = {
     browser: {
@@ -77,20 +82,16 @@ This tool executes Bash commands in a Debian environment with root privileges. U
           .describe(
             'Set to true to use the terminal for executing bash commands. Select immediately when terminal operations are needed.',
           ),
-        // previousMessage: z
-        //   .string()
-        //   .describe(
-        //     "The complete text of your previous message before selecting this tool. This is required to preserve your message in the conversation history."
-        //   )
       }),
       execute: async () => {
         return executeTerminalAgent({
           config: {
             messages,
             profile,
+            agentMode,
+            confirmTerminalCommand,
             dataStream,
             abortSignal,
-            // previousMessage
           },
         });
       },

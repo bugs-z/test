@@ -85,13 +85,6 @@ export const createFileWriteTool = (context: ToolContext) => {
         .boolean()
         .optional()
         .describe('Whether to add a trailing newline'),
-      ...(initialSandbox
-        ? {}
-        : {
-            useTemporarySandbox: z
-              .boolean()
-              .describe('Use temporary sandbox (15-minute timeout).'),
-          }),
     }),
     execute: async (args) => {
       const {
@@ -100,14 +93,12 @@ export const createFileWriteTool = (context: ToolContext) => {
         append = false,
         leading_newline = false,
         trailing_newline = false,
-        useTemporarySandbox,
       } = args as {
         file: string;
         content: string;
         append?: boolean;
         leading_newline?: boolean;
         trailing_newline?: boolean;
-        useTemporarySandbox?: boolean;
       };
 
       try {
@@ -124,7 +115,6 @@ export const createFileWriteTool = (context: ToolContext) => {
           {
             initialSandbox,
             initialPersistentSandbox,
-            useTemporarySandbox,
           },
         );
 

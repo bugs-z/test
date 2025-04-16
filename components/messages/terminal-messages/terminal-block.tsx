@@ -18,6 +18,9 @@ import {
 } from './types';
 import { ShowMoreButton } from './show-more-button';
 import stripAnsi from 'strip-ansi';
+import { useContext } from 'react';
+import { PentestGPTContext } from '@/context/context';
+import { AskTerminalCommandBlock } from './ask-terminal-command-block';
 
 interface TerminalBlockProps {
   block: TerminalBlock;
@@ -26,6 +29,7 @@ interface TerminalBlockProps {
   isExpanded: boolean;
   onToggleBlock: (index: number) => void;
   onToggleExpanded: (index: number) => void;
+  totalBlocks: number;
 }
 
 const renderContent = (content: string) => (
@@ -39,8 +43,12 @@ export const TerminalBlockComponent: React.FC<TerminalBlockProps> = ({
   isExpanded,
   onToggleBlock,
   onToggleExpanded,
+  totalBlocks,
 }) => {
-  const { toolInUse, isMobile } = useUIContext();
+  const { toolInUse, isMobile, isGenerating } = useUIContext();
+  const { selectedChat } = useContext(PentestGPTContext);
+
+  const isAskUser = selectedChat?.finish_reason === 'terminal_command_ask_user';
   const hasOutput = block.stdout || block.error;
   const outputContent = [block.stdout, block.error].filter(Boolean).join('\n');
 
@@ -54,6 +62,17 @@ export const TerminalBlockComponent: React.FC<TerminalBlockProps> = ({
     block.command.length > COMMAND_LENGTH_THRESHOLD || isMobile;
   const showFullTerminalView = isLongCommand;
 
+  const isLastBlock = index === totalBlocks - 1;
+
+  if (!isGenerating && isAskUser && isLastBlock) {
+    return (
+      <AskTerminalCommandBlock
+        command={block.command}
+        execDir={block.exec_dir || '/'}
+      />
+    );
+  }
+
   return (
     <div
       className={`overflow-hidden rounded-lg border border-border ${index === 1 ? 'mb-3' : 'my-3'}`}
@@ -63,7 +82,7 @@ export const TerminalBlockComponent: React.FC<TerminalBlockProps> = ({
           <div
             className={cn('flex items-center shrink-0 mr-2', {
               'animate-pulse':
-                index === 0 &&
+                isLastBlock &&
                 allTerminalPlugins.includes(toolInUse as PluginID),
             })}
           >

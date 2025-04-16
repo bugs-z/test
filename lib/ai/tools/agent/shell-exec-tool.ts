@@ -41,19 +41,11 @@ export const createShellExecTool = (context: ToolContext) => {
           'Working directory for command execution (must use absolute path)',
         ),
       command: z.string().describe('Shell command to execute'),
-      ...(selectedPlugin || !isPremiumUser
-        ? {}
-        : {
-            useTemporarySandbox: z
-              .boolean()
-              .describe('Use temporary sandbox (15-minute timeout).'),
-          }),
     }),
     execute: async (args) => {
-      const { exec_dir, command, useTemporarySandbox } = args as {
+      const { exec_dir, command } = args as {
         exec_dir: string;
         command: string;
-        useTemporarySandbox?: boolean;
       };
 
       // Validate plugin-specific commands
@@ -78,7 +70,6 @@ export const createShellExecTool = (context: ToolContext) => {
         {
           initialSandbox,
           initialPersistentSandbox,
-          useTemporarySandbox,
         },
       );
 
@@ -101,12 +92,16 @@ export const createShellExecTool = (context: ToolContext) => {
         content: 'terminal',
       });
 
+      dataStream.writeData({
+        type: 'text-delta',
+        content: `<terminal-command exec-dir="${exec_dir}">${command}</terminal-command>`,
+      });
+
       // Execute command
       const terminalStream = await executeTerminalCommand({
         userID,
         command,
         exec_dir,
-        usePersistentSandbox: persistentSandbox,
         sandbox,
       });
 

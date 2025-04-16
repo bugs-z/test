@@ -70,6 +70,7 @@ export const MessageTerminal: React.FC<MessageTerminalProps> = ({
               isExpanded={expandedOutputs.has(index)}
               onToggleBlock={toggleBlock}
               onToggleExpanded={toggleExpanded}
+              totalBlocks={contentBlocks.length}
             />
           ) : block.type === 'shell-wait' ? (
             <ShellWaitBlockComponent block={block.content} />

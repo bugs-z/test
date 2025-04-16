@@ -9,6 +9,7 @@ import type {
   LLMID,
   ModelParams,
   ModelWithWebSearch,
+  AgentMode,
 } from '@/types';
 import { PluginID } from '@/types/plugins';
 import { useRouter } from 'next/navigation';
@@ -228,6 +229,27 @@ export const useChatHandler = () => {
     );
   };
 
+  const handleSendConfirmTerminalCommand = async () => {
+    await handleSendMessage(
+      null,
+      chatMessages,
+      false,
+      true,
+      undefined,
+      undefined,
+      false,
+      true,
+    );
+  };
+
+  const getStoredAutoRunPreference = () => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('agentMode') ||
+        'ask-every-time') as AgentMode;
+    }
+    return 'ask-every-time';
+  };
+
   const handleSendMessage = async (
     messageContent: string | null,
     chatMessages: ChatMessage[],
@@ -236,6 +258,7 @@ export const useChatHandler = () => {
     editSequenceNumber?: number,
     model?: ModelWithWebSearch,
     isTerminalContinuation = false,
+    confirmTerminalCommand = false,
   ) => {
     const isEdit = editSequenceNumber !== undefined;
     const isRagEnabled = selectedPlugin === PluginID.ENHANCED_SEARCH;
@@ -382,6 +405,8 @@ export const useChatHandler = () => {
         isTerminalContinuation,
         isRagEnabled,
         selectedPlugin,
+        agentMode: getStoredAutoRunPreference(),
+        confirmTerminalCommand,
       };
       const chatMetadata: ChatMetadata = { newChat: !currentChat };
 
@@ -561,6 +586,7 @@ export const useChatHandler = () => {
     handleStopMessage,
     handleSendContinuation,
     handleSendTerminalContinuation,
+    handleSendConfirmTerminalCommand,
     handleSendEdit,
     handleSendFeedback,
     handleSelectChat,

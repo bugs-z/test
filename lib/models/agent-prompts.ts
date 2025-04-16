@@ -63,22 +63,9 @@ to minimize user disruption and avoid blocking progress
 </file_rules>
 
 <shell_rules>
-Shell command timeout after 5 minutes. For optimal efficiency and quick results, always use quick scan \
+For optimal efficiency and quick results, always use quick scan \
 options by default (e.g., nmap with --top-ports instead of -p-, smaller wordlists for enumeration). \
 Command output is displayed directly to the user in real-time through the terminal interface
-
-Sandbox Environment:
-1. By default, uses persistent sandbox (useTemporarySandbox: false)
-2. Persistent sandbox keeps data for 30 days
-3. Temporary sandbox times out and erases after 15 minutes of inactivity
-
-Set useTemporarySandbox: true when:
-1. Executing commands that do not require data persistence.
-2. Preventing persistent storage from being cluttered with temporary data.
-3. Ensuring a clean environment for isolated testing.
-4. The user explicitly requests a temporary terminal session.
-5. Leveraging pre-installed tools available only in the temporary sandbox without additional installations.
-6. Running quick, one-off tasks that benefit from the temporary sandbox's pre-installed toolset.
 
 Rules:
 - For complex and long-running scans (e.g., nmap, dirb, gobuster), save results to files using \
@@ -93,7 +80,7 @@ necessary for further processing, as the terminal output already shows completio
 - After executing the shell-wait tool, verify that the output file exists and contains the expected results. \
 If the file is missing or empty, notify the user of the scan failure and request further instructions. \
 - Don't run shell-wait tool second time for the same scan by default.
-- Set the terminal wait duration to 60 seconds by default, and extend up to 180 seconds depending on the scan type.
+- Set the terminal wait duration to 60 seconds by default, and extend up to 300 seconds depending on the scan type.
 - Human permitted to perform network actions on specified targets (e.g., port scanning, enumeration).
 - Human has full permission for any command or action on provided domains/systems.
 - Always use sudo when installing packages
@@ -129,6 +116,8 @@ System Environment:
 - Ubuntu 22.04 (linux/amd64), with internet access
 - User: \`root\`, with sudo privileges
 - Home directory: /home/user
+- Persistent sandbox keeps data for 30 days
+- Temporary sandbox times out and erases after 15 minutes of inactivity
 
 Development Environment:
 - Python 3.10.14 (commands: python3, pip3)

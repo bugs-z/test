@@ -6,7 +6,7 @@ import { executeReasoningWebSearchTool } from '@/lib/ai/tools/reasoning-web-sear
 import { executeDeepResearchTool } from '@/lib/ai/tools/deep-research';
 import { terminalPlugins } from '@/lib/ai/terminal-utils';
 import { createStreamResponse } from '@/lib/ai-helper';
-import { generateTitleFromUserMessage } from '@/lib/ai/actions';
+import { AgentMode } from '@/types/llms';
 
 interface ToolHandlerConfig {
   messages: any[];
@@ -14,6 +14,8 @@ interface ToolHandlerConfig {
   isTerminalContinuation: boolean;
   selectedPlugin: PluginID;
   isLargeModel: boolean;
+  agentMode: AgentMode;
+  confirmTerminalCommand: boolean;
   abortSignal: AbortSignal;
   chatMetadata?: { newChat: boolean };
   title: Promise<string>;
@@ -26,30 +28,12 @@ export async function handleToolExecution(config: ToolHandlerConfig) {
     isTerminalContinuation,
     selectedPlugin,
     isLargeModel,
+    agentMode,
+    confirmTerminalCommand,
     abortSignal,
     chatMetadata,
     title,
   } = config;
-
-  if (isTerminalContinuation) {
-    return createStreamResponse(async (dataStream) => {
-      await Promise.all([
-        executeTerminalAgent({
-          config: {
-            messages,
-            profile,
-            dataStream,
-            abortSignal,
-          },
-        }),
-        (async () => {
-          if (chatMetadata?.newChat) {
-            dataStream.writeData({ chatTitle: await title });
-          }
-        })(),
-      ]);
-    });
-  }
 
   switch (selectedPlugin) {
     case PluginID.WEB_SEARCH:
@@ -80,6 +64,8 @@ export async function handleToolExecution(config: ToolHandlerConfig) {
               messages,
               profile,
               dataStream,
+              agentMode,
+              confirmTerminalCommand,
               abortSignal,
             },
           }),
@@ -148,7 +134,11 @@ export async function handleToolExecution(config: ToolHandlerConfig) {
       });
 
     default:
-      if (terminalPlugins.includes(selectedPlugin as PluginID)) {
+      if (
+        isTerminalContinuation ||
+        confirmTerminalCommand ||
+        terminalPlugins.includes(selectedPlugin as PluginID)
+      ) {
         return createStreamResponse(async (dataStream) => {
           await Promise.all([
             executeTerminalAgent({
@@ -157,6 +147,8 @@ export async function handleToolExecution(config: ToolHandlerConfig) {
                 profile,
                 dataStream,
                 selectedPlugin: selectedPlugin as PluginID,
+                agentMode,
+                confirmTerminalCommand,
                 abortSignal,
               },
             }),

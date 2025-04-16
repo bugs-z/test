@@ -78,20 +78,12 @@ export const createFileReadTool = (context: ToolContext) => {
         .number()
         .optional()
         .describe('(Optional) Ending line number (exclusive)'),
-      ...(initialSandbox
-        ? {}
-        : {
-            useTemporarySandbox: z
-              .boolean()
-              .describe('Use temporary sandbox (15-minute timeout).'),
-          }),
     }),
     execute: async (args) => {
-      const { file, start_line, end_line, useTemporarySandbox } = args as {
+      const { file, start_line, end_line } = args as {
         file: string;
         start_line?: number;
         end_line?: number;
-        useTemporarySandbox?: boolean;
       };
 
       try {
@@ -108,7 +100,6 @@ export const createFileReadTool = (context: ToolContext) => {
           {
             initialSandbox,
             initialPersistentSandbox,
-            useTemporarySandbox,
           },
         );
 

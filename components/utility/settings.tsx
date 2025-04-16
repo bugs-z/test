@@ -30,7 +30,7 @@ import { TransitionedDialog } from '../ui/transitioned-dialog';
 import { DeleteDialog } from './delete-all-chats-dialog';
 import { DataControlsTab } from './profile-tabs/data-controls-tab';
 import { PersonalizationTab } from './profile-tabs/personalization-tab';
-import { ProfileTab } from './profile-tabs/profile-tab';
+import { GeneralTab } from './profile-tabs/general-tab';
 import { SecurityTab } from './profile-tabs/security-tab';
 import { SubscriptionTab } from './profile-tabs/subscription-tab';
 import { TeamTab } from './profile-tabs/team-tab';
@@ -224,7 +224,7 @@ export const Settings: FC<{ showEmail?: boolean }> = ({
                 className={`${isMobile ? 'mt-2' : ''} mb-4 min-h-[300px] w-full`}
               >
                 <TabPanel>
-                  <ProfileTab
+                  <GeneralTab
                     handleDeleteAllChats={handleDeleteAllChats}
                     handleSignOut={handleSignOut}
                   />
