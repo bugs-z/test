@@ -7,7 +7,6 @@ import {
   IconPuzzleOff,
   IconWorld,
   IconAtom,
-  IconTelescope,
 } from '@tabler/icons-react';
 import { useContext } from 'react';
 import { WithTooltip } from '../../ui/with-tooltip';
@@ -114,30 +113,6 @@ export const ToolOptions = ({
     }
   };
 
-  const handleDeepSearchToggle = () => {
-    if (hasImageAttached) return;
-
-    // Disable other plugins when enabling Deep Research
-    if (selectedPlugin === PluginID.DEEP_RESEARCH) {
-      setSelectedPlugin(PluginID.NONE);
-    } else {
-      setSelectedPlugin(PluginID.DEEP_RESEARCH);
-    }
-
-    if (isEnhancedMenuOpen) {
-      setIsEnhancedMenuOpen(false);
-    }
-  };
-
-  // Check if any plugin is active that would disable Deep Research
-  const isOtherPluginActive =
-    selectedPlugin === PluginID.WEB_SEARCH ||
-    (isPremiumSubscription && selectedPlugin === PluginID.REASONING) ||
-    (isPremiumSubscription && selectedPlugin === PluginID.REASONING_WEB_SEARCH);
-
-  // Check if Deep Research is active (to disable other plugins)
-  const isDeepResearchActive = selectedPlugin === PluginID.DEEP_RESEARCH;
-
   return (
     <div className="flex space-x-1">
       {/* File Upload Button */}
@@ -213,8 +188,7 @@ export const ToolOptions = ({
                 selectedPlugin === PluginID.REASONING_WEB_SEARCH
                 ? 'bg-primary/10'
                 : 'hover:bg-black/10 dark:hover:bg-white/10',
-              (hasImageAttached || isDeepResearchActive) &&
-                'pointer-events-none opacity-50',
+              hasImageAttached && 'pointer-events-none opacity-50',
             )}
             onClick={handleReasonLLMToggle}
           >
@@ -254,14 +228,7 @@ export const ToolOptions = ({
           selectedPlugin !== PluginID.REASONING_WEB_SEARCH && (
             <div className="flex flex-col">
               {isPremiumSubscription ? (
-                <>
-                  <p className="font-medium">Search the web</p>
-                  {isDeepResearchActive && (
-                    <p className="text-xs text-gray-500">
-                      Disable Deep Research first
-                    </p>
-                  )}
-                </>
+                <p className="font-medium">Search the web</p>
               ) : (
                 <UpgradePrompt />
               )}
@@ -276,8 +243,7 @@ export const ToolOptions = ({
                 selectedPlugin === PluginID.REASONING_WEB_SEARCH
                 ? 'bg-primary/10'
                 : 'hover:bg-black/10 dark:hover:bg-white/10',
-              (hasImageAttached || isDeepResearchActive) &&
-                'pointer-events-none opacity-50',
+              hasImageAttached && 'pointer-events-none opacity-50',
               !isPremiumSubscription && 'opacity-50',
             )}
             onClick={() => {
@@ -310,64 +276,6 @@ export const ToolOptions = ({
           </div>
         }
       />
-
-      {/* Deep research Toggle - Only for Premium Users and Non-Mobile */}
-      {isPremiumSubscription && (
-        <WithTooltip
-          delayDuration={TOOLTIP_DELAY}
-          side="top"
-          display={
-            selectedPlugin !== PluginID.DEEP_RESEARCH && (
-              <div className="flex flex-col">
-                <p className="font-medium">
-                  Get detailed insights on any topic
-                </p>
-                {isOtherPluginActive && (
-                  <p className="text-xs text-gray-500">
-                    Disable other plugins first
-                  </p>
-                )}
-              </div>
-            )
-          }
-          trigger={
-            <div
-              className={cn(
-                'relative flex flex-row items-center rounded-lg transition-colors duration-300',
-                selectedPlugin === PluginID.DEEP_RESEARCH
-                  ? 'bg-primary/10'
-                  : 'hover:bg-black/10 dark:hover:bg-white/10',
-                (hasImageAttached || isOtherPluginActive) &&
-                  'pointer-events-none opacity-50',
-              )}
-              onClick={handleDeepSearchToggle}
-            >
-              <IconTelescope
-                className={cn(
-                  'cursor-pointer rounded-lg rounded-bl-xl p-1 focus-visible:outline-black dark:focus-visible:outline-white',
-                  selectedPlugin === PluginID.DEEP_RESEARCH
-                    ? 'text-primary'
-                    : 'opacity-50',
-                )}
-                size={32}
-              />
-              <div
-                className={cn(
-                  'whitespace-nowrap text-xs font-medium',
-                  'transition-all duration-300',
-                  !isMobile && 'max-w-[100px] pr-2',
-                  isMobile &&
-                    (selectedPlugin === PluginID.DEEP_RESEARCH
-                      ? 'max-w-[100px] pr-2 opacity-100'
-                      : 'max-w-0 opacity-0'),
-                )}
-              >
-                Deep research
-              </div>
-            </div>
-          }
-        />
-      )}
     </div>
   );
 };

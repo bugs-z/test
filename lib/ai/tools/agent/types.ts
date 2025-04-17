@@ -13,7 +13,6 @@ export interface ToolContext {
   selectedPlugin?: PluginID;
   terminalTemplate?: string;
   setSandbox?: (sandbox: Sandbox) => void;
-  setPersistentSandbox?: (isPersistent: boolean) => void;
   isPremiumUser?: boolean;
   agentMode: AgentMode;
 }

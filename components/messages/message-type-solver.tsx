@@ -60,6 +60,7 @@ export const MessageTypeResolver: FC<MessageTypeResolverProps> = ({
       <MessageTerminal
         content={message.content}
         isAssistant={message.role === 'assistant'}
+        isLastMessage={isLastMessage}
       />
     );
   }
@@ -85,7 +86,6 @@ export const MessageTypeResolver: FC<MessageTypeResolverProps> = ({
   if (
     toolInUse === PluginID.REASONING ||
     toolInUse === PluginID.REASONING_WEB_SEARCH ||
-    toolInUse === PluginID.DEEP_RESEARCH ||
     message.thinking_content
   ) {
     return (

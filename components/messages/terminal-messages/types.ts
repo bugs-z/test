@@ -1,7 +1,7 @@
 export interface MessageTerminalProps {
   content: string;
-  messageId?: string;
   isAssistant: boolean;
+  isLastMessage: boolean;
 }
 
 export interface TerminalBlock {

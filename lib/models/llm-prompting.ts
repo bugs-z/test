@@ -1,3 +1,7 @@
+// Note: For better caching performance, dynamic content should be placed at the end of the prompt
+// This allows static parts of the prompt to be cached more effectively
+// Cached prefixes generally remain active for 5 to 10 minutes of inactivity (up to 1 hour during off-peak)
+
 import endent from 'endent';
 
 const options: Intl.DateTimeFormatOptions = {
@@ -37,23 +41,6 @@ questions.
 
 If asked for its views or perspective or thoughts, PentestGPT can give a short response and \
 does not need to share its entire perspective on the topic or question in one go.\n\n`;
-
-    // Model-specific capabilities information
-    if (currentModel) {
-      info += `<pentestgpt_family_info>
-Here is some information about PentestGPT and HackerAI's products in case the person asks:
-
-The version of PentestGPT in this chat is ${currentModel}. Tool availability varies by model:
-- Browser & Web Search: Available to Large Model and PentestGPT 4.1
-- Terminal: Exclusive to PentestGPT 4.1
-PentestGPT notifies humans when they request a tool unsupported by the current model, \
-specifying compatible models and suggesting alternatives when applicable.
-
-If the person asks PentestGPT about how many messages they can send, costs of PentestGPT, \
-how to perform actions within the application, or other product questions related to PentestGPT \
-or HackerAI, PentestGPT should tell them it doesn't know, and point them to "https://help.hackerai.co/".
-</pentestgpt_family_info>\n\n`;
-    }
 
     // Feedback and user interaction handling
     info += `If the human person unhappy or unsatisfied with PentestGPT or PentestGPT's \
@@ -120,6 +107,23 @@ PentestGPT always responds to the person in the language they use or request. \
 If the person messages PentestGPT in French then PentestGPT responds in French, if the \
 person messages PentestGPT in Icelandic then PentestGPT responds in Icelandic, and so on \
 for any language. PentestGPT is fluent in a wide variety of world languages.`;
+
+    // Model-specific capabilities information
+    if (currentModel) {
+      info += `<pentestgpt_family_info>
+Here is some information about PentestGPT and HackerAI's products in case the person asks:
+    
+The version of PentestGPT in this chat is ${currentModel}. Tool availability varies by model:
+- Browser & Web Search: Available to Large Model and PentestGPT 4.1
+- Terminal: Exclusive to PentestGPT 4.1
+PentestGPT notifies humans when they request a tool unsupported by the current model, \
+specifying compatible models and suggesting alternatives when applicable.
+    
+If the person asks PentestGPT about how many messages they can send, costs of PentestGPT, \
+how to perform actions within the application, or other product questions related to PentestGPT \
+or HackerAI, PentestGPT should tell them it doesn't know, and point them to "https://help.hackerai.co/".
+</pentestgpt_family_info>\n\n`;
+    }
 
     // Knowledge limitations and temporal awareness
     if (includeKnowledgeCutOff) {

@@ -10,6 +10,7 @@ import { ShellWaitBlockComponent } from './shell-wait-block';
 export const MessageTerminal: React.FC<MessageTerminalProps> = ({
   content,
   isAssistant,
+  isLastMessage,
 }) => {
   const { showTerminalOutput } = useUIContext();
   const contentBlocks = useMemo(() => parseContent(content), [content]);
@@ -71,6 +72,7 @@ export const MessageTerminal: React.FC<MessageTerminalProps> = ({
               onToggleBlock={toggleBlock}
               onToggleExpanded={toggleExpanded}
               totalBlocks={contentBlocks.length}
+              isLastMessage={isLastMessage}
             />
           ) : block.type === 'shell-wait' ? (
             <ShellWaitBlockComponent block={block.content} />

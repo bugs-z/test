@@ -11,7 +11,6 @@ export interface SandboxContext {
   selectedPlugin?: string;
   terminalTemplate?: string;
   setSandbox?: (sandbox: any) => void;
-  setPersistentSandbox?: (persistent: boolean) => void;
 }
 
 export const handleFileError = (error: unknown, context: string): string => {
@@ -84,10 +83,8 @@ export const ensureSandboxConnection = async (
     userID,
     dataStream,
     isPremiumUser = false,
-    selectedPlugin,
     terminalTemplate = SANDBOX_TEMPLATE,
     setSandbox,
-    setPersistentSandbox,
   } = context;
 
   const { initialSandbox, initialPersistentSandbox = true } = options;
@@ -96,19 +93,14 @@ export const ensureSandboxConnection = async (
   let persistentSandbox = initialPersistentSandbox;
 
   // Determine sandbox type based on context
-  if (selectedPlugin) {
-    persistentSandbox = false; // Always use temporary sandbox for plugins
-  } else if (!isPremiumUser) {
+  if (!isPremiumUser) {
     persistentSandbox = false; // Free users get temporary sandbox
   } else {
     persistentSandbox = true; // Pro users get persistent sandbox
   }
 
-  // Update persistent sandbox state in parent context
-  if (setPersistentSandbox) {
-    setPersistentSandbox(persistentSandbox);
-  }
-
+  console.log('persistentSandbox', persistentSandbox);
+  console.log('terminalTemplate', terminalTemplate);
   if (!sandbox) {
     sandbox = persistentSandbox
       ? await createPersistentSandbox(

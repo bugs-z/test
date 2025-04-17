@@ -27,7 +27,6 @@ export const myProvider = customProvider({
       }),
       middleware: extractReasoningMiddleware({ tagName: 'think' }),
     }),
-    'deep-research': perplexity('sonar-deep-research'),
     'vision-model': openai('gpt-4.1-mini-2025-04-14'),
   },
 });

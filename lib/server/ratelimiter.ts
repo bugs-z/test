@@ -249,7 +249,7 @@ export function getRateLimitErrorMessage(
     message += `\n\n🔓 Want more? Upgrade to Pro or Team and unlock a world of features:
 - Access to smarter models
 - Extended limits on messaging, reasoning, and terminal
-- Access to file uploads, vision, web search, and deep research
+- Access to file uploads, vision, web search, and browsing
 - Opportunities to test new features`;
   }
 

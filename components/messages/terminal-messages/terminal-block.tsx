@@ -30,6 +30,7 @@ interface TerminalBlockProps {
   onToggleBlock: (index: number) => void;
   onToggleExpanded: (index: number) => void;
   totalBlocks: number;
+  isLastMessage: boolean;
 }
 
 const renderContent = (content: string) => (
@@ -44,6 +45,7 @@ export const TerminalBlockComponent: React.FC<TerminalBlockProps> = ({
   onToggleBlock,
   onToggleExpanded,
   totalBlocks,
+  isLastMessage,
 }) => {
   const { toolInUse, isMobile, isGenerating } = useUIContext();
   const { selectedChat } = useContext(PentestGPTContext);
@@ -64,7 +66,7 @@ export const TerminalBlockComponent: React.FC<TerminalBlockProps> = ({
 
   const isLastBlock = index === totalBlocks - 1;
 
-  if (!isGenerating && isAskUser && isLastBlock) {
+  if (isLastMessage && !isGenerating && isAskUser && isLastBlock) {
     return (
       <AskTerminalCommandBlock
         command={block.command}

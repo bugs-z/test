@@ -5,8 +5,9 @@ import {
   reduceTerminalOutput,
 } from '@/lib/ai/terminal-utils';
 import type { Sandbox } from '@e2b/code-interpreter';
-import type { PluginID } from '@/types/plugins';
+import { PluginID } from '@/types/plugins';
 import { ensureSandboxConnection } from './agent/utils/sandbox-utils';
+import { PLUGIN_COMMAND_MAP } from './agent/types';
 
 interface TerminalCommandExecutorConfig {
   userID: string;
@@ -15,7 +16,6 @@ interface TerminalCommandExecutorConfig {
   selectedPlugin?: PluginID;
   terminalTemplate: string;
   setSandbox: (sandbox: Sandbox) => void;
-  setPersistentSandbox: (isPersistent: boolean) => void;
   initialSandbox?: Sandbox;
   initialPersistentSandbox?: boolean;
   messages: any[];
@@ -28,7 +28,6 @@ export async function executeTerminalCommandWithConfig({
   selectedPlugin,
   terminalTemplate,
   setSandbox,
-  setPersistentSandbox,
   initialSandbox,
   initialPersistentSandbox,
   messages,
@@ -55,6 +54,18 @@ export async function executeTerminalCommandWithConfig({
 
   const [, exec_dir, command] = lastMatch;
 
+  // Validate plugin-specific commands
+  if (selectedPlugin && selectedPlugin !== PluginID.NONE) {
+    const expectedCommand = PLUGIN_COMMAND_MAP[selectedPlugin];
+    if (expectedCommand && !command.trim().startsWith(expectedCommand)) {
+      dataStream.writeData({
+        type: 'text-delta',
+        content: `Command must start with "${expectedCommand}" for this plugin`,
+      });
+      return `Command must start with "${expectedCommand}" for this plugin`;
+    }
+  }
+
   const { sandbox, persistentSandbox } = await ensureSandboxConnection(
     {
       userID,
@@ -63,7 +74,6 @@ export async function executeTerminalCommandWithConfig({
       selectedPlugin,
       terminalTemplate,
       setSandbox,
-      setPersistentSandbox,
     },
     {
       initialSandbox,

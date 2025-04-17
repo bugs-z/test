@@ -3,7 +3,6 @@ import { executeWebSearchTool } from '@/lib/ai/tools/web-search';
 import { executeTerminalAgent } from '@/lib/ai/tools/terminal-agent';
 import { executeReasonLLMTool } from '@/lib/ai/tools/reason-llm';
 import { executeReasoningWebSearchTool } from '@/lib/ai/tools/reasoning-web-search';
-import { executeDeepResearchTool } from '@/lib/ai/tools/deep-research';
 import { terminalPlugins } from '@/lib/ai/terminal-utils';
 import { createStreamResponse } from '@/lib/ai-helper';
 import { AgentMode } from '@/types/llms';
@@ -105,24 +104,6 @@ export async function handleToolExecution(config: ToolHandlerConfig) {
               profile,
               dataStream,
               isLargeModel,
-            },
-          }),
-          (async () => {
-            if (chatMetadata?.newChat) {
-              dataStream.writeData({ chatTitle: await title });
-            }
-          })(),
-        ]);
-      });
-
-    case PluginID.DEEP_RESEARCH:
-      return createStreamResponse(async (dataStream) => {
-        await Promise.all([
-          executeDeepResearchTool({
-            config: {
-              messages,
-              profile,
-              dataStream,
             },
           }),
           (async () => {

@@ -33,7 +33,6 @@ export enum PluginID {
   TERMINAL = 'terminal',
   REASONING = 'reasoning',
   REASONING_WEB_SEARCH = 'reasoning-web-search',
-  DEEP_RESEARCH = 'deep-research',
   // Pentest tools
   PORT_SCANNER = 'port-scanner',
   WAF_DETECTOR = 'waf-detector',
@@ -72,7 +71,6 @@ export const PLUGINS_WITHOUT_IMAGE_SUPPORT: PluginID[] = [
   PluginID.WEB_SEARCH,
   PluginID.REASONING,
   PluginID.REASONING_WEB_SEARCH,
-  PluginID.DEEP_RESEARCH,
 ];
 
 export const isPluginWithoutImageSupport = (pluginId: PluginID): boolean => {

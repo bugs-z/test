@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -11,6 +11,8 @@ import { IconTerminal2 } from '@tabler/icons-react';
 import { useUIContext } from '@/context/ui-context';
 import { useAgentModePreference } from './use-auto-run-preference';
 import { useChatHandler } from '@/components/chat/chat-hooks/use-chat-handler';
+import { Textarea } from '@/components/ui/textarea';
+import { PentestGPTContext } from '@/context/context';
 
 interface AskTerminalCommandBlockProps {
   command: string;
@@ -21,12 +23,28 @@ export const AskTerminalCommandBlock: React.FC<
   AskTerminalCommandBlockProps
 > = ({ command, execDir }) => {
   const { isMobile } = useUIContext();
+  const { isPremiumSubscription } = useContext(PentestGPTContext);
   const { agentMode, setAgentMode } = useAgentModePreference();
   const { handleSendConfirmTerminalCommand } = useChatHandler();
 
-  const handleConfirm = async () => {
-    await handleSendConfirmTerminalCommand();
+  const extractCommand = (content: string) => {
+    const matches = [
+      ...content.matchAll(
+        /<terminal-command[^>]*>([^<]*)<\/terminal-command>/g,
+      ),
+    ];
+    return matches.length ? matches[matches.length - 1][1].trim() : content;
   };
+  const [editedCommand, setEditedCommand] = useState(extractCommand(command));
+
+  useEffect(() => {
+    setEditedCommand(extractCommand(command));
+  }, [command]);
+
+  const handleConfirm = () =>
+    editedCommand.trim() && handleSendConfirmTerminalCommand(editedCommand);
+  const handleKeyDown = (e: React.KeyboardEvent) =>
+    e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleConfirm());
 
   return (
     <div className="overflow-hidden rounded-lg border border-border my-3">
@@ -36,9 +54,16 @@ export const AskTerminalCommandBlock: React.FC<
           <span>{execDir}</span>
         </div>
         <div className="text-sm">
-          <code className="font-mono text-foreground/80 break-all whitespace-pre-wrap">
-            {command}
-          </code>
+          <Textarea
+            value={editedCommand}
+            onChange={(e) =>
+              isPremiumSubscription && setEditedCommand(e.target.value)
+            }
+            onKeyDown={handleKeyDown}
+            className="font-mono text-foreground/80 break-all whitespace-pre-wrap bg-transparent border-0 p-0 resize-none focus-visible:ring-0 focus-visible:ring-offset-0 min-h-[1.5rem]"
+            rows={1}
+            readOnly={!isPremiumSubscription}
+          />
         </div>
       </div>
       <div className="flex items-center justify-between px-4 py-2 bg-muted">
