@@ -1,10 +1,9 @@
 import { cn } from '@/lib/utils';
 import type { LLMID } from '@/types';
-import { IconSparkles, IconBolt } from '@tabler/icons-react';
+import { IconBolt } from '@tabler/icons-react';
 import { Sparkles, Sparkle } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import type { FC, HTMLAttributes } from 'react';
-import { GPT4 } from '@/lib/models/openai-llm-list';
 import { SmallModel, LargeModel } from '@/lib/models/hackerai-llm-list';
 
 interface ModelIconProps extends HTMLAttributes<HTMLDivElement> {
@@ -13,10 +12,9 @@ interface ModelIconProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export const iconMap = {
-  [GPT4.modelId]: Sparkles,
   [SmallModel.modelId]: IconBolt,
   [LargeModel.modelId]: Sparkle,
-  default: IconSparkles,
+  default: Sparkles,
 };
 
 export const ModelIcon: FC<ModelIconProps> = ({ modelId, size, ...props }) => {

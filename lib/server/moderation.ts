@@ -2,6 +2,12 @@ import OpenAI from 'openai';
 
 const MODERATION_CHAR_LIMIT = 1000;
 
+interface MessageContentItem {
+  type: string;
+  text?: string;
+  image_url?: string;
+}
+
 export async function getModerationResult(
   messages: any[],
   openaiApiKey: string,
@@ -41,8 +47,8 @@ export async function getModerationResult(
     //   JSON.stringify(moderation, null, 2),
     //   moderationLevel,
     //   hazardCategories,
-    //   shouldUncensorResponse
-    // )
+    //   shouldUncensorResponse,
+    // );
 
     return { shouldUncensorResponse };
   } catch (error: any) {
@@ -58,12 +64,27 @@ function findTargetMessage(messages: any[], minLength: number): any | null {
     const message = messages[i];
     if (message.role === 'user') {
       userMessagesChecked++;
+
+      // Handle string content
       if (
         typeof message.content === 'string' &&
         message.content.length > minLength
       ) {
         return message;
       }
+
+      // Handle array content with text and image_url
+      if (Array.isArray(message.content)) {
+        const textContent = message.content
+          .filter((item: MessageContentItem) => item.type === 'text')
+          .map((item: MessageContentItem) => item.text)
+          .join(' ');
+
+        if (textContent.length > minLength) {
+          return message;
+        }
+      }
+
       if (userMessagesChecked >= 3) {
         break; // Stop after checking three user messages
       }

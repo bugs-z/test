@@ -1,6 +1,7 @@
 'use client';
 
 import { PentestGPTContext } from '@/context/context';
+import { LargeModel } from '@/lib/models/hackerai-llm-list';
 import { useContext, useEffect, useState } from 'react';
 
 const MAX_TITLE_LENGTH = 50;
@@ -17,8 +18,16 @@ export default function ChatLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { selectedChat } = useContext(PentestGPTContext);
+  const { selectedChat, setSelectedChat } = useContext(PentestGPTContext);
   const [mounted, setMounted] = useState(false);
+
+  // Add useEffect to check and change model on load
+  // TODO: Remove in future
+  useEffect(() => {
+    if (selectedChat?.model === 'gpt-4-turbo-preview') {
+      setSelectedChat({ ...selectedChat, model: LargeModel.modelId });
+    }
+  }, [selectedChat, setSelectedChat]);
 
   useEffect(() => {
     setMounted(true);

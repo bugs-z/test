@@ -38,11 +38,6 @@ export enum PluginID {
   WAF_DETECTOR = 'waf-detector',
   WHOIS_LOOKUP = 'whois-lookup',
   SUBDOMAIN_FINDER = 'subdomain-finder',
-  CVE_MAP = 'cve-map',
-
-  // Exploit Tools
-  SQLI_EXPLOITER = 'sqli-exploiter',
-
   // Artifacts
   ARTIFACTS = 'artifacts',
 }
@@ -58,13 +53,9 @@ type PluginUrls = Record<string, string>;
 export const pluginUrls: PluginUrls = {
   PENTESTGPT: 'https://github.com/hackerai-tech/PentestGPT',
   // Pentest tools
-  PORT_SCANNER: 'https://nmap.org',
   WAF_DETECTOR: 'https://github.com/EnableSecurity/wafw00f',
   WHOIS_LOOKUP: 'https://www.whois.com/whois/',
   SUBDOMAIN_FINDER: 'https://github.com/projectdiscovery/subfinder',
-  CVE_MAP: 'https://github.com/projectdiscovery/cvemap',
-  // Exploit Tools
-  SQLI_EXPLOITER: 'https://github.com/sqlmapproject/sqlmap',
 };
 
 export const PLUGINS_WITHOUT_IMAGE_SUPPORT: PluginID[] = [

@@ -8,7 +8,6 @@ import { InviteMembersDialog } from '@/components/utility/invite-members-dialog'
 import { AcceptInvitationDialog } from '@/components/utility/accept-invitation-dialog';
 import { isTeamAdmin } from '@/lib/team-utils';
 import { SidebarHeader } from './sidebar-header';
-import { SidebarSwitcher } from './sidebar-switcher';
 import { WithTooltip } from '../ui/with-tooltip';
 import { Settings } from '../utility/settings';
 import { useUIContext } from '@/context/ui-context';

@@ -1,6 +1,6 @@
 import { tool } from 'ai';
 import { z } from 'zod';
-import { type ToolContext } from './types';
+import type { ToolContext } from './types';
 /**
  * Creates a terminal tool for executing commands in the sandbox environment with user confirmation
  * @param context - The context needed for tool execution

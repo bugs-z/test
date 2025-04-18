@@ -11,7 +11,7 @@ import PostHogClient from '@/app/posthog';
 import { handleToolExecution } from '@/lib/ai/tool-handler-v2';
 import { createToolSchemas } from '@/lib/ai/tools/toolSchemas';
 import { processRag } from '@/lib/ai/rag-processor';
-import { processChatMessages } from '@/lib/ai/message-utils';
+import { processChatMessages } from '@/lib/ai/message-utils-v1';
 import type { LLMID } from '@/types';
 import { generateTitleFromUserMessage } from '@/lib/ai/actions';
 
@@ -55,7 +55,6 @@ export async function POST(request: Request) {
     let {
       messages: validatedMessages,
       selectedModel: finalSelectedModel,
-      supportsImages,
       systemPrompt,
     } = await processChatMessages(
       messages,
@@ -117,12 +116,10 @@ export async function POST(request: Request) {
       });
     }
 
-    const isGptLargeModel = finalSelectedModel === 'chat-model-gpt-large';
-    const shouldUseTools =
-      (finalSelectedModel === 'chat-model-large' || isGptLargeModel) &&
-      !ragUsed;
-    if (shouldUseTools && isGptLargeModel) {
-      finalSelectedModel = 'chat-model-gpt-large-with-tools';
+    if (!ragUsed) {
+      finalSelectedModel = config.isLargeModel
+        ? 'chat-model-gpt-large-with-tools'
+        : 'chat-model-gpt-small-with-tools';
     }
 
     try {
@@ -133,7 +130,7 @@ export async function POST(request: Request) {
           const baseConfig = {
             model: myProvider.languageModel(finalSelectedModel),
             system: systemPrompt,
-            messages: toVercelChatMessages(validatedMessages, supportsImages),
+            messages: toVercelChatMessages(validatedMessages, true),
             maxTokens: 2048,
             abortSignal: request.signal,
             experimental_transform: smoothStream({ chunking: 'word' }),
@@ -150,10 +147,10 @@ export async function POST(request: Request) {
 
           const result = streamText({
             ...baseConfig,
-            ...(shouldUseTools
+            ...(!ragUsed
               ? {
                   tools: createToolSchemas(toolConfig).getSelectedSchemas(
-                    isGptLargeModel
+                    config.isLargeModel
                       ? ['browser', 'webSearch', 'terminal']
                       : ['browser', 'webSearch'],
                   ),
@@ -191,23 +188,24 @@ async function getProviderConfig(
   profile: any,
   selectedPlugin: PluginID,
 ) {
+  // Moving away from chat-model-large to chat-model-gpt-large
   const modelMap: Record<string, string> = {
     'mistral-medium': 'chat-model-small',
-    'mistral-large': 'chat-model-large',
+    'mistral-large': 'chat-model-gpt-large',
     'gpt-4-turbo-preview': 'chat-model-gpt-large',
   };
-
+  // Moving away from gpt-4-turbo-preview to pentestgpt-pro
   const rateLimitModelMap: Record<string, string> = {
     'mistral-medium': 'pentestgpt',
     'mistral-large': 'pentestgpt-pro',
-    'gpt-4-turbo-preview': 'gpt-4',
+    'gpt-4-turbo-preview': 'pentestgpt-pro',
   };
 
   const selectedModel = modelMap[model];
   if (!selectedModel) {
     throw new Error('Selected model is undefined');
   }
-  const isLargeModel = model.includes('large');
+  const isLargeModel = selectedModel.includes('large');
 
   const rateLimitModel =
     selectedPlugin !== PluginID.NONE &&

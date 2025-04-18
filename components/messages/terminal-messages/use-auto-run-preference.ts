@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { AgentMode } from '@/types/llms';
+import type { AgentMode } from '@/types/llms';
 
 const agentModeKey = 'agentMode';
 

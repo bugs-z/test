@@ -2,13 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import type { Tables } from '@/supabase/types';
-import { LLM_LIST } from '@/lib/models/llm-list';
-import { ModelIcon } from '../models/model-icon';
 import { MessageTypeResolver } from '@/components/messages/message-type-solver';
 import { bulkFetchImageData } from './chat-helpers';
 import Image from 'next/image';
-
-const ICON_SIZE = 28;
 
 interface SharedMessageProps {
   message: Tables<'messages'>;
@@ -21,9 +17,6 @@ export const SharedMessage: React.FC<SharedMessageProps> = ({
   previousMessage,
   isLast,
 }) => {
-  const modelDetails = LLM_LIST.find(
-    (model) => model.modelId === message.model,
-  );
   const [imageUrls, setImageUrls] = useState<(string | null)[]>([]);
 
   useEffect(() => {
@@ -41,14 +34,6 @@ export const SharedMessage: React.FC<SharedMessageProps> = ({
     <div className="flex w-full justify-center">
       <div className="relative flex w-full flex-col px-0 py-6 sm:w-[550px] sm:px-4 md:w-[650px] xl:w-[800px]">
         <div className="flex space-x-3">
-          {message.role === 'assistant' && (
-            <div className="shrink-0">
-              <ModelIcon
-                modelId={modelDetails?.modelId || 'custom'}
-                size={ICON_SIZE}
-              />
-            </div>
-          )}
           <div
             className={`min-w-0 grow ${message.role === 'user' ? 'flex justify-end' : ''}`}
           >

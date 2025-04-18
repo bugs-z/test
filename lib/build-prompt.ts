@@ -7,7 +7,6 @@ import type {
 } from '@/types';
 import type { Tables } from '@/supabase/types';
 import { countTokens } from 'gpt-tokenizer';
-import { GPT4 } from './models/openai-llm-list';
 import { SmallModel, LargeModel } from './models/hackerai-llm-list';
 import { toast } from 'sonner';
 
@@ -19,10 +18,8 @@ export async function buildFinalMessages(
   const { chatMessages, retrievedFileItems } = payload;
 
   let CHUNK_SIZE = 12000;
-  if (model === GPT4.modelId) {
+  if (model === LargeModel.modelId) {
     CHUNK_SIZE = 32000 - 4000; // -4000 for the system prompt, custom instructions, and more
-  } else if (model === LargeModel.modelId) {
-    CHUNK_SIZE = 22000 - 4000; // -4000 for the system prompt, custom instructions, and more
   } else if (model === SmallModel.modelId) {
     CHUNK_SIZE = 12000 - 4000; // -4000 for the system prompt, custom instructions, and more
   }

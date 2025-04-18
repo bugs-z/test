@@ -2,7 +2,7 @@ import { executeWebSearchTool } from './web-search';
 import { executeTerminalAgent } from './terminal-agent';
 import { executeBrowserTool } from './browser';
 import { z } from 'zod';
-import { AgentMode } from '@/types/llms';
+import type { AgentMode } from '@/types/llms';
 
 export const createToolSchemas = ({
   messages,

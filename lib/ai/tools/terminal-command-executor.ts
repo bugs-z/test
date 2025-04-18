@@ -121,7 +121,7 @@ export async function executeTerminalCommandWithConfig({
   const updatedMessages = [...messages];
   const lastMessage = updatedMessages[updatedMessages.length - 1];
   if (lastMessage) {
-    lastMessage.content = (lastMessage.content || '') + '\n\n' + reducedOutput;
+    lastMessage.content = `${lastMessage.content || ''}\n\n${reducedOutput}`;
   }
 
   return { messages: updatedMessages };

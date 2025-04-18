@@ -99,8 +99,6 @@ export const ensureSandboxConnection = async (
     persistentSandbox = true; // Pro users get persistent sandbox
   }
 
-  console.log('persistentSandbox', persistentSandbox);
-  console.log('terminalTemplate', terminalTemplate);
   if (!sandbox) {
     sandbox = persistentSandbox
       ? await createPersistentSandbox(

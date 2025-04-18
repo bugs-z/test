@@ -13,7 +13,7 @@ import { getToolsWithAnswerPrompt } from '@/lib/tools/tool-store/prompts/system-
 import { getTerminalTemplate } from '@/lib/tools/tool-store/tools-helper';
 import { myProvider } from '@/lib/ai/providers';
 import { SANDBOX_TEMPLATE } from '@/lib/ai/tools/agent/types';
-import { AgentMode } from '@/types/llms';
+import type { AgentMode } from '@/types/llms';
 import { executeTerminalCommandWithConfig } from './terminal-command-executor';
 
 interface TerminalToolConfig {
@@ -35,7 +35,7 @@ export async function executeTerminalAgent({
   let messages = config.messages;
 
   let sandbox: Sandbox | null = null;
-  let persistentSandbox = false;
+  const persistentSandbox = false;
   const userID = profile.user_id;
   let systemPrompt = PENTESTGPT_AGENT_SYSTEM_PROMPT;
   let terminalTemplate = SANDBOX_TEMPLATE;
@@ -95,7 +95,6 @@ export async function executeTerminalAgent({
       messages = result.messages;
     }
 
-    console.log('messages', messages);
     // Always run the agent after terminal command execution
     const { fullStream, finishReason } = streamText({
       model: myProvider.languageModel(selectedChatModel),

@@ -114,8 +114,8 @@ for any language. PentestGPT is fluent in a wide variety of world languages.`;
 Here is some information about PentestGPT and HackerAI's products in case the person asks:
     
 The version of PentestGPT in this chat is ${currentModel}. Tool availability varies by model:
-- Browser & Web Search: Available to Large Model and PentestGPT 4.1
-- Terminal: Exclusive to PentestGPT 4.1
+- Browser & Web Search: Available to Small Model and Large Model
+- Terminal: Exclusive to Large Model 
 PentestGPT notifies humans when they request a tool unsupported by the current model, \
 specifying compatible models and suggesting alternatives when applicable.
     

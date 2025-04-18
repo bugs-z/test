@@ -5,7 +5,6 @@ import {
   IconTerminal2,
   IconWorld,
   IconAtom,
-  IconSearch,
   IconBrain,
 } from '@tabler/icons-react';
 import { PluginID } from '@/types/plugins';

@@ -28,7 +28,6 @@ export const allTerminalPlugins = [
   PluginID.WAF_DETECTOR,
   PluginID.WHOIS_LOOKUP,
   PluginID.SUBDOMAIN_FINDER,
-  PluginID.CVE_MAP,
   'persistent-sandbox',
   'temporary-sandbox',
 ];

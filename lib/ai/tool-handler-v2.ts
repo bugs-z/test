@@ -5,7 +5,7 @@ import { executeReasonLLMTool } from '@/lib/ai/tools/reason-llm';
 import { executeReasoningWebSearchTool } from '@/lib/ai/tools/reasoning-web-search';
 import { terminalPlugins } from '@/lib/ai/terminal-utils';
 import { createStreamResponse } from '@/lib/ai-helper';
-import { AgentMode } from '@/types/llms';
+import type { AgentMode } from '@/types/llms';
 
 interface ToolHandlerConfig {
   messages: any[];

@@ -10,8 +10,8 @@ import {
   type ModelParams,
   type MessageImage,
   PluginID,
-  LLMID,
-  ChatMetadata,
+  type LLMID,
+  type ChatMetadata,
 } from '@/types';
 import type { Dispatch, SetStateAction } from 'react';
 import { toast } from 'sonner';
@@ -96,7 +96,7 @@ export const fetchChatResponse = async (
   setChatMessages: Dispatch<SetStateAction<ChatMessage[]>>,
   alertDispatch: Dispatch<AlertAction>,
 ) => {
-  const response = await fetch(`/api/v2/chat`, {
+  const response = await fetch(`/api/chat`, {
     method: 'POST',
     body: JSON.stringify(body),
     signal: controller.signal,

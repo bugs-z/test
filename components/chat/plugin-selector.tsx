@@ -5,12 +5,7 @@ import {
   DropdownMenuItem,
   DropdownMenuContent,
 } from '../ui/dropdown-menu';
-import {
-  IconChevronUp,
-  IconLock,
-  IconBuildingStore,
-  IconMessage,
-} from '@tabler/icons-react';
+import { IconChevronUp, IconLock, IconMessage } from '@tabler/icons-react';
 import { PluginID, type PluginSummary } from '@/types/plugins';
 import { PentestGPTContext } from '@/context/context';
 import {
@@ -20,7 +15,7 @@ import {
 import { availablePlugins } from '@/lib/tools/tool-store/available-tools';
 import { TransitionedDialog } from '../ui/transitioned-dialog';
 import { DialogPanel } from '@headlessui/react';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useUIContext } from '@/context/ui-context';
 
 interface PluginSelectorProps {
@@ -28,12 +23,8 @@ interface PluginSelectorProps {
 }
 
 const PluginSelector: React.FC<PluginSelectorProps> = ({ onPluginSelect }) => {
-  const {
-    isPremiumSubscription,
-    chatSettings,
-    setContentType,
-    isTemporaryChat,
-  } = useContext(PentestGPTContext);
+  const { isPremiumSubscription, chatSettings, isTemporaryChat } =
+    useContext(PentestGPTContext);
 
   const { setSelectedPlugin, selectedPlugin } = useUIContext();
 
@@ -47,9 +38,8 @@ const PluginSelector: React.FC<PluginSelectorProps> = ({ onPluginSelect }) => {
   const { state: pluginState } = usePluginContext();
 
   const router = useRouter();
-  const pathname = usePathname();
 
-  const defaultPluginIds = [0, 99];
+  const defaultPluginIds = [0];
 
   const handleUpgradeToPlus = () => {
     setShowLockedPluginDialog(false);
@@ -76,24 +66,15 @@ const PluginSelector: React.FC<PluginSelectorProps> = ({ onPluginSelect }) => {
     (plugin) => plugin.isInstalled || defaultPluginIds.includes(plugin.id),
   );
 
-  const handleOpenGPTsStore = () => {
-    setContentType('tools');
-    router.replace(`${pathname}?tab=tools`);
-  };
-
   const renderPluginOptions = () => {
     return selectorPlugins.map((plugin) => (
       <DropdownMenuItem
         key={plugin.id}
         onSelect={() => {
           if (!plugin.isPremium || isPremiumSubscription) {
-            if (plugin.value === PluginID.PLUGINS_STORE) {
-              handleOpenGPTsStore();
-            } else {
-              onPluginSelect(plugin.value);
-              setSelectedPluginName(plugin.name);
-              setSelectedPlugin(plugin.value);
-            }
+            onPluginSelect(plugin.value);
+            setSelectedPluginName(plugin.name);
+            setSelectedPlugin(plugin.value);
           } else {
             setCurrentPlugin(plugin);
             setShowLockedPluginDialog(true);
@@ -104,8 +85,6 @@ const PluginSelector: React.FC<PluginSelectorProps> = ({ onPluginSelect }) => {
         <span>{plugin.name}</span>
         {plugin.isPremium && !isPremiumSubscription ? (
           <IconLock size={18} className="ml-2" />
-        ) : plugin.value === PluginID.PLUGINS_STORE ? (
-          <IconBuildingStore size={18} className="ml-2" />
         ) : plugin.value === PluginID.NONE ? (
           <IconMessage size={18} className="ml-2" />
         ) : null}

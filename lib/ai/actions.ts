@@ -1,4 +1,4 @@
-import { Message, generateObject } from 'ai';
+import { type Message, generateObject } from 'ai';
 import { myProvider } from './providers';
 import { DEFAULT_TITLE_GENERATION_PROMPT_TEMPLATE } from './prompts';
 import { z } from 'zod';

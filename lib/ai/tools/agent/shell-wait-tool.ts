@@ -1,6 +1,6 @@
 import { tool } from 'ai';
 import { z } from 'zod';
-import { type ToolContext } from './types';
+import type { ToolContext } from './types';
 
 const MAX_WAIT_TIME = 4 * 60 * 1000; // 4 minutes in milliseconds
 

@@ -2,7 +2,6 @@ import { PluginID } from '@/types/plugins';
 
 export const getFreePlugins = (): PluginID[] => [
   PluginID.TERMINAL,
-  PluginID.CVE_MAP,
   PluginID.SUBDOMAIN_FINDER,
   PluginID.WAF_DETECTOR,
   PluginID.WHOIS_LOOKUP,
@@ -12,7 +11,6 @@ export const getTerminalPlugins = (): PluginID[] => [
   PluginID.WAF_DETECTOR,
   PluginID.WHOIS_LOOKUP,
   PluginID.SUBDOMAIN_FINDER,
-  PluginID.CVE_MAP,
   PluginID.TERMINAL,
 ];
 

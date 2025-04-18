@@ -7,5 +7,3 @@ export const GPT4: LLM = {
   provider: 'openai',
   imageInput: true,
 };
-
-export const OPENAI_LLM_LIST: LLM[] = [GPT4];

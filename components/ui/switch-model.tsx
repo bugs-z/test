@@ -144,7 +144,6 @@ export const SwitchModel: FC<SwitchModelProps> = ({
               </div>
 
               {[
-                { id: GPT4.modelId, name: 'PGPT-4.1' },
                 { id: LargeModel.modelId, name: 'Large Model' },
                 { id: SmallModel.modelId, name: 'Small Model' },
               ]
@@ -174,7 +173,6 @@ export const SwitchModel: FC<SwitchModelProps> = ({
               <div className="bg-muted-foreground/50 mx-2 my-1 h-px" />
 
               {[
-                { id: GPT4.modelId, name: 'PGPT-4.1' },
                 { id: LargeModel.modelId, name: 'Large Model' },
                 { id: SmallModel.modelId, name: 'Small Model' },
               ]
