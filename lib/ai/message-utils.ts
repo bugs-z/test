@@ -259,7 +259,6 @@ export async function processChatMessages(
   supportsImages: boolean;
   systemPrompt: string;
 }> {
-  let selectedChatModel = selectedModel;
   let supportsImages = true;
   let shouldUncensor = false;
 
@@ -270,28 +269,24 @@ export async function processChatMessages(
     !isTerminalContinuation &&
     !terminalPlugins.includes(selectedPlugin as PluginID) &&
     // Skip uncensoring for reasoning plugin as it uses xAI model
-    selectedPlugin !== PluginID.REASONING &&
-    // Skip uncensoring for xAI model when no specific plugin is selected
-    !(
-      selectedPlugin === PluginID.NONE &&
-      selectedChatModel === 'chat-model-large'
-    )
+    selectedPlugin !== PluginID.REASONING
   ) {
     const { shouldUncensorResponse: moderationResult } =
       await getModerationResult(messages, apiKey, 10, isLargeModel);
     shouldUncensor = moderationResult;
   }
 
-  // Handle vision support for large model
-  if (selectedChatModel === 'chat-model-large') {
-    supportsImages = messagesIncludeImages(messages);
-    if (supportsImages) {
-      selectedChatModel = 'vision-model';
-    }
-  }
-
   if (shouldUncensor) {
-    addAuthMessage(messages);
+    if (isLargeModel) {
+      selectedModel = 'chat-model-large';
+      supportsImages = messagesIncludeImages(messages);
+      if (supportsImages) {
+        selectedModel = 'chat-model-gpt-large';
+        addAuthMessage(messages);
+      }
+    } else {
+      addAuthMessage(messages);
+    }
   }
 
   filterEmptyAssistantMessages(messages);
@@ -300,13 +295,13 @@ export async function processChatMessages(
   const validatedMessages = validateMessages(messages);
 
   const systemPrompt = getSystemPrompt({
-    selectedChatModel: selectedChatModel,
+    selectedChatModel: selectedModel,
     profileContext: profileContext,
   });
 
   return {
     messages: validatedMessages,
-    selectedModel: selectedChatModel,
+    selectedModel,
     supportsImages,
     systemPrompt,
   };

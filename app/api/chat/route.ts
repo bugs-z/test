@@ -11,7 +11,7 @@ import PostHogClient from '@/app/posthog';
 import { handleToolExecution } from '@/lib/ai/tool-handler-v2';
 import { createToolSchemas } from '@/lib/ai/tools/toolSchemas';
 import { processRag } from '@/lib/ai/rag-processor';
-import { processChatMessages } from '@/lib/ai/message-utils-v1';
+import { processChatMessages } from '@/lib/ai/message-utils';
 import type { LLMID } from '@/types';
 import { generateTitleFromUserMessage } from '@/lib/ai/actions';
 
@@ -55,6 +55,7 @@ export async function POST(request: Request) {
     let {
       messages: validatedMessages,
       selectedModel: finalSelectedModel,
+      supportsImages,
       systemPrompt,
     } = await processChatMessages(
       messages,
@@ -116,7 +117,7 @@ export async function POST(request: Request) {
       });
     }
 
-    if (!ragUsed) {
+    if (!ragUsed && finalSelectedModel !== 'chat-model-large') {
       finalSelectedModel = config.isLargeModel
         ? 'chat-model-gpt-large-with-tools'
         : 'chat-model-gpt-small-with-tools';
@@ -130,7 +131,7 @@ export async function POST(request: Request) {
           const baseConfig = {
             model: myProvider.languageModel(finalSelectedModel),
             system: systemPrompt,
-            messages: toVercelChatMessages(validatedMessages, true),
+            messages: toVercelChatMessages(validatedMessages, supportsImages),
             maxTokens: 2048,
             abortSignal: request.signal,
             experimental_transform: smoothStream({ chunking: 'word' }),
