@@ -1,8 +1,10 @@
 import type {
   CoreAssistantMessage,
   CoreMessage,
-  CoreSystemMessage,
   CoreUserMessage,
+  TextPart,
+  ImagePart,
+  FilePart,
 } from 'ai';
 import type { BuiltChatMessage } from '@/types/chat-message';
 import { PluginID } from '@/types/plugins';
@@ -46,20 +48,8 @@ export function filterEmptyAssistantMessages(messages: BuiltChatMessage[]) {
 export const toVercelChatMessages = (
   messages: BuiltChatMessage[],
   supportsImages = false,
-  systemPrompt?: string,
 ): CoreMessage[] => {
   const result: CoreMessage[] = [];
-
-  // Add system message if provided
-  if (systemPrompt) {
-    result.push({
-      role: 'system',
-      content: systemPrompt,
-      providerOptions: {
-        anthropic: { cacheControl: { type: 'ephemeral' } },
-      },
-    } as CoreSystemMessage);
-  }
 
   // Add the rest of the messages
   messages.forEach((message) => {
@@ -127,15 +117,6 @@ export const toVercelChatMessages = (
                 .filter(Boolean)
             : [{ type: 'text', text: message.content as string }],
         } as CoreUserMessage;
-        break;
-      case 'system':
-        // Skip system messages from the array if we already added a systemPrompt
-        if (!systemPrompt) {
-          formattedMessage = {
-            role: 'system',
-            content: message.content,
-          } as CoreSystemMessage;
-        }
         break;
       default:
         formattedMessage = null;
@@ -305,4 +286,24 @@ export async function processChatMessages(
     supportsImages,
     systemPrompt,
   };
+}
+
+/**
+ * Extracts text content from a message, handling both string and array content types
+ * @param content - The message content to extract text from
+ * @returns The extracted text content or empty string if none found
+ */
+export function extractTextContent(
+  content: string | (TextPart | ImagePart | FilePart)[] | any,
+): string {
+  if (typeof content === 'string') {
+    return content;
+  }
+
+  if (Array.isArray(content)) {
+    const textItem = content.find((item) => item.type === 'text');
+    return textItem?.text || '';
+  }
+
+  return '';
 }

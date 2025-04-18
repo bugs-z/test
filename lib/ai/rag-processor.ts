@@ -1,6 +1,8 @@
 import { generateStandaloneQuestion } from '@/lib/models/question-generator';
 import { buildSystemPrompt, RAG_SYSTEM_PROMPT_BODY } from '@/lib/ai/prompts';
 import PostHogClient from '@/app/posthog';
+import { extractTextContent } from './message-utils';
+import type { BuiltChatMessage } from '@/types/chat-message';
 
 interface RagResult {
   ragUsed: boolean;
@@ -30,7 +32,7 @@ export async function processRag({
   profile,
   selectedChatModel,
 }: {
-  messages: any;
+  messages: BuiltChatMessage[];
   isContinuation: boolean;
   profile: any;
   selectedChatModel: string;
@@ -40,19 +42,19 @@ export async function processRag({
     ragId: null,
     systemPrompt: null,
   };
+  const RAGIE_API_KEY = process.env.RAGIE_API_KEY;
 
-  const targetStandAloneMessage = messages[messages.length - 1].content;
+  const targetStandAloneMessage = extractTextContent(
+    messages[messages.length - 1].content,
+  );
   const filterTargetMessage = isContinuation
     ? messages[messages.length - 2]
     : messages[messages.length - 1];
 
-  const RAGIE_API_KEY = process.env.RAGIE_API_KEY;
-
   if (
     !RAGIE_API_KEY ||
-    messages.length === 0 ||
     filterTargetMessage.role !== 'user' ||
-    filterTargetMessage.content.length <= 5
+    extractTextContent(filterTargetMessage.content).length <= 5
   ) {
     return result;
   }

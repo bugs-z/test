@@ -1,15 +1,18 @@
-import { type Message, generateObject } from 'ai';
+import { type CoreUserMessage, generateObject } from 'ai';
 import { myProvider } from './providers';
 import { DEFAULT_TITLE_GENERATION_PROMPT_TEMPLATE } from './prompts';
+import { extractTextContent } from './message-utils';
 import { z } from 'zod';
 
 export async function generateTitleFromUserMessage({
   message,
   abortSignal,
 }: {
-  message: Message;
+  message: CoreUserMessage;
   abortSignal?: AbortSignal;
 }) {
+  const textContent = extractTextContent(message.content);
+
   const {
     object: { title },
   } = await generateObject({
@@ -20,7 +23,7 @@ export async function generateTitleFromUserMessage({
     messages: [
       {
         role: 'user',
-        content: DEFAULT_TITLE_GENERATION_PROMPT_TEMPLATE(message.content),
+        content: DEFAULT_TITLE_GENERATION_PROMPT_TEMPLATE(textContent),
       },
     ],
     abortSignal,

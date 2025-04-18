@@ -2,15 +2,17 @@ import { generateText } from 'ai';
 import endent from 'endent';
 import { myProvider } from '../ai/providers';
 import llmConfig from './llm-config';
+import type { BuiltChatMessage } from '@/types/chat-message';
+import { extractTextContent } from '../ai/message-utils';
 
 export async function generateStandaloneQuestion(
-  messages: any[],
-  latestUserMessage: any,
+  messages: BuiltChatMessage[],
+  latestUserMessage: string,
 ) {
   const chatHistory = messages
-    .slice(1, -1) // Remove the first (system prompt) and the last message (user message)
+    .slice(0, -1) // Remove the last message (user message)
     .slice(-3) // Get the last 3 messages only (assistant, user, assistant)
-    .map((msg) => `${msg.role}: ${msg.content}`)
+    .map((msg) => `${msg.role}: ${extractTextContent(msg.content)}`)
     .join('\n');
 
   const template = endent`
