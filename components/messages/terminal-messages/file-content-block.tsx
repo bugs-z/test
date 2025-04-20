@@ -44,24 +44,26 @@ export const FileContentBlockComponent: React.FC<
             </code>
           </div>
         </div>
-        <div className="flex items-center ml-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 text-xs"
-            onClick={() => onToggleBlock(index)}
-            aria-expanded={!isClosed}
-            aria-controls={`file-content-${index}`}
-          >
-            {isClosed ? (
-              <IconChevronDown size={18} />
-            ) : (
-              <IconChevronUp size={18} />
-            )}
-          </Button>
-        </div>
+        {displayedContent && (
+          <div className="flex items-center ml-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={() => onToggleBlock(index)}
+              aria-expanded={!isClosed}
+              aria-controls={`file-content-${index}`}
+            >
+              {isClosed ? (
+                <IconChevronDown size={18} />
+              ) : (
+                <IconChevronUp size={18} />
+              )}
+            </Button>
+          </div>
+        )}
       </div>
-      {!isClosed && (
+      {displayedContent && !isClosed && (
         <div
           id={`file-content-${index}`}
           className="bg-foreground dark:bg-background"
