@@ -9,7 +9,6 @@ export interface SandboxContext {
   dataStream: any;
   isPremiumUser?: boolean;
   selectedPlugin?: string;
-  terminalTemplate?: string;
   setSandbox?: (sandbox: any) => void;
 }
 
@@ -64,14 +63,6 @@ export const createTemporarySandbox = async (
   }
 };
 
-export const getSandboxTemplate = (template?: string): string => {
-  return template || SANDBOX_TEMPLATE;
-};
-
-export const getSandboxTimeout = (): number => {
-  return BASH_SANDBOX_TIMEOUT;
-};
-
 export const ensureSandboxConnection = async (
   context: SandboxContext,
   options: {
@@ -79,14 +70,9 @@ export const ensureSandboxConnection = async (
     initialPersistentSandbox?: boolean;
   } = {},
 ): Promise<{ sandbox: any; persistentSandbox: boolean }> => {
-  const {
-    userID,
-    dataStream,
-    isPremiumUser = false,
-    terminalTemplate = SANDBOX_TEMPLATE,
-    setSandbox,
-  } = context;
+  const { userID, dataStream, isPremiumUser = false, setSandbox } = context;
 
+  const terminalTemplate = SANDBOX_TEMPLATE;
   const { initialSandbox, initialPersistentSandbox = true } = options;
 
   let sandbox = initialSandbox;

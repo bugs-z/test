@@ -5,9 +5,8 @@ import { streamText } from 'ai';
 import { myProvider } from '@/lib/ai/providers';
 import PostHogClient from '@/app/posthog';
 import { handleChatWithMetadata } from '../actions';
-import { ChatMetadata, LLMID } from '@/types';
-import { SupabaseClient } from '@supabase/supabase-js';
-import { createClient } from '@/lib/supabase/server';
+import type { ChatMetadata, LLMID } from '@/types';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { generateTitleFromUserMessage } from '@/lib/ai/actions';
 
 interface ReasonLLMConfig {

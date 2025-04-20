@@ -27,7 +27,6 @@ import {
 } from '../chat-helpers';
 import { getMessageFileItemsByMessageId } from '@/db/message-file-items';
 import { useRetrievalLogic } from './retrieval-logic';
-import { isTerminalPlugin } from '@/lib/tools/tool-store/tools-helper';
 
 export const useChatHandler = () => {
   const router = useRouter();
@@ -152,7 +151,7 @@ export const useChatHandler = () => {
       // Update chat's finish reason to 'aborted' when terminal in use
       if (
         selectedChat &&
-        (isTerminalPlugin(toolInUse as PluginID) ||
+        (toolInUse === PluginID.TERMINAL ||
           toolInUse === 'temporary-sandbox' ||
           toolInUse === 'persistent-sandbox')
       ) {
@@ -441,7 +440,6 @@ export const useChatHandler = () => {
       let finishReason = '';
       let ragUsed = false;
       let ragId = null;
-      let assistantGeneratedImages: string[] = [];
       let citations: string[] = [];
 
       const {
@@ -452,10 +450,8 @@ export const useChatHandler = () => {
         ragUsed: ragUsedFromResponse,
         ragId: ragIdFromResponse,
         selectedPlugin: updatedSelectedPlugin,
-        assistantGeneratedImages: assistantGeneratedImagesFromResponse,
         citations: citationsFromResponse,
         chatTitle,
-        isChatSavedInBackend,
       } = await handleHostedChat(
         payload,
         tempAssistantChatMessage,
@@ -479,7 +475,6 @@ export const useChatHandler = () => {
       ragUsed = ragUsedFromResponse;
       ragId = ragIdFromResponse;
       selectedPlugin = updatedSelectedPlugin;
-      assistantGeneratedImages = assistantGeneratedImagesFromResponse;
       citations = citationsFromResponse;
 
       if (isTemporaryChat) {
@@ -502,7 +497,7 @@ export const useChatHandler = () => {
         setTemporaryChatMessages(updatedMessages);
       } else {
         if (!currentChat) {
-          currentChat = await handleCreateChat(
+          currentChat = handleCreateChat(
             baseModel!,
             profile!,
             messageContent || '',
@@ -550,7 +545,6 @@ export const useChatHandler = () => {
           setChatMessages,
           setChatImages,
           selectedPlugin,
-          assistantGeneratedImages,
           editSequenceNumber,
           ragUsed,
           ragId,

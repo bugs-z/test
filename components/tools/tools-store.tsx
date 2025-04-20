@@ -21,8 +21,7 @@ export default function ToolsStorePage({
 
   const { setContentType, subscription } = useContext(PentestGPTContext);
 
-  const { setSelectedPlugin, isEnhancedMenuOpen, setIsEnhancedMenuOpen } =
-    useUIContext();
+  const { setSelectedPlugin } = useUIContext();
 
   const filters = [
     'Free',
@@ -83,9 +82,6 @@ export default function ToolsStorePage({
   const startChatWithPlugin = async (pluginValue: PluginID) => {
     setContentType('chats');
     await handleNewChat();
-    if (!isEnhancedMenuOpen) {
-      setIsEnhancedMenuOpen(true);
-    }
     setSelectedPlugin(pluginValue);
   };
 

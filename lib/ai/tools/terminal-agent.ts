@@ -7,19 +7,14 @@ import { pauseSandbox } from '@/lib/tools/e2b/sandbox';
 import { createAgentTools } from '@/lib/ai/tools/agent';
 import { PENTESTGPT_AGENT_SYSTEM_PROMPT } from '@/lib/models/agent-prompts';
 import { getSubscriptionInfo } from '@/lib/server/subscription-utils';
-import { isFreePlugin } from '@/lib/tools/tool-store/tools-helper';
-import { getToolsWithAnswerPrompt } from '@/lib/tools/tool-store/prompts/system-prompt';
-import { getTerminalTemplate } from '@/lib/tools/tool-store/tools-helper';
 import { myProvider } from '@/lib/ai/providers';
-import { SANDBOX_TEMPLATE } from '@/lib/ai/tools/agent/types';
 import { executeTerminalCommandWithConfig } from './terminal-command-executor';
 import {
   generateTitleFromUserMessage,
   handleChatWithMetadata,
 } from '@/lib/ai/actions';
-import { ChatMetadata, LLMID, PluginID, AgentMode } from '@/types';
-import { SupabaseClient } from '@supabase/supabase-js';
-import { createClient } from '@/lib/supabase/server';
+import type { ChatMetadata, LLMID, PluginID, AgentMode } from '@/types';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 interface TerminalToolConfig {
   messages: any[];
@@ -55,8 +50,7 @@ export async function executeTerminalAgent({
   let sandbox: Sandbox | null = null;
   const persistentSandbox = false;
   const userID = profile.user_id;
-  let systemPrompt = PENTESTGPT_AGENT_SYSTEM_PROMPT;
-  let terminalTemplate = SANDBOX_TEMPLATE;
+  const systemPrompt = PENTESTGPT_AGENT_SYSTEM_PROMPT;
 
   try {
     // Check rate limit
@@ -75,20 +69,6 @@ export async function executeTerminalAgent({
     const subscriptionInfo = await getSubscriptionInfo(userID);
     const isPremiumUser = subscriptionInfo.isPremium;
 
-    // Handle plugin-specific setup
-    if (selectedPlugin && selectedPlugin !== PluginID.NONE) {
-      if (!isFreePlugin(selectedPlugin) && !isPremiumUser) {
-        dataStream.writeData({
-          type: 'error',
-          content: `Access Denied to ${selectedPlugin}: The plugin you are trying to use is exclusive to Pro and Team members. Please upgrade to access this plugin.`,
-        });
-        return 'Access Denied to plugin';
-      }
-
-      systemPrompt = getToolsWithAnswerPrompt(selectedPlugin);
-      terminalTemplate = getTerminalTemplate(selectedPlugin);
-    }
-
     // Functions to update sandbox and persistentSandbox from tools
     const setSandbox = (newSandbox: Sandbox) => {
       sandbox = newSandbox;
@@ -101,7 +81,6 @@ export async function executeTerminalAgent({
         dataStream,
         isPremiumUser,
         selectedPlugin,
-        terminalTemplate,
         setSandbox,
         initialSandbox: sandbox || undefined,
         initialPersistentSandbox: persistentSandbox,
@@ -128,7 +107,6 @@ export async function executeTerminalAgent({
             userID,
             persistentSandbox,
             selectedPlugin,
-            terminalTemplate,
             setSandbox,
             isPremiumUser,
             agentMode,

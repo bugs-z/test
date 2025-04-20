@@ -5,7 +5,7 @@ import { extractTextContent } from './message-utils';
 import { z } from 'zod';
 import { waitUntil } from '@vercel/functions';
 import type { BuiltChatMessage, LLMID, ChatMetadata } from '@/types';
-import { SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { TablesUpdate } from '@/supabase/types';
 
 export async function createChatWithWaitUntil({
@@ -44,6 +44,23 @@ export async function createChatWithWaitUntil({
           .single();
 
         if (error) {
+          // If it's a duplicate key error, update instead
+          if (error.code === '23505') {
+            const { error: updateError } = await supabase
+              .from('chats')
+              .update({
+                updated_at: new Date().toISOString(),
+                finish_reason: finishReason,
+                model,
+              })
+              .eq('id', chatId);
+
+            if (updateError) {
+              console.error('Error updating chat:', updateError);
+            }
+            return;
+          }
+
           console.error('Error creating chat:', error);
           return;
         }
@@ -76,13 +93,25 @@ export async function updateChatWithWaitUntil({
           .single();
 
         if (error) {
-          console.error('Error updating chat:', error);
+          console.error('Error updating chat:', {
+            message: error.message,
+            code: error.code,
+            details: error.details,
+            hint: error.hint,
+            chatId,
+            updates,
+          });
           return;
         }
 
         // console.log('Updated chat:', updatedChat);
       } catch (error) {
-        console.error('Error in waitUntil:', error);
+        console.error('Error in waitUntil:', {
+          error,
+          chatId,
+          updates,
+          stack: error instanceof Error ? error.stack : undefined,
+        });
       }
     })(),
   );

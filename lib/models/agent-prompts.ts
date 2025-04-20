@@ -89,6 +89,7 @@ If the file is missing or empty, notify the user of the scan failure and request
 - Avoid commands requiring confirmation; actively use -y or -f flags for automatic confirmation
 - Avoid commands with excessive output; save to files when necessary
 - Chain multiple commands with && operator to minimize interruptions
+- If the command output is truncated, do not rerun the command; just notify the user.
 </shell_rules>
 
 <coding_rules>

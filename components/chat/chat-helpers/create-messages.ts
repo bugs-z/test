@@ -16,7 +16,6 @@ import {
 } from '@/types';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
-import { fetchImageData } from './image-handlers';
 
 export const handleCreateMessages = async (
   chatMessages: ChatMessage[],
@@ -32,7 +31,6 @@ export const handleCreateMessages = async (
   setMessages: (messages: ChatMessage[]) => void,
   setChatImages: React.Dispatch<React.SetStateAction<MessageImage[]>>,
   selectedPlugin: PluginID,
-  assistantGeneratedImages: string[],
   editSequenceNumber?: number,
   ragUsed?: boolean,
   ragId?: string | null,
@@ -87,7 +85,7 @@ export const handleCreateMessages = async (
         user_id: profile.user_id,
         model: modelData.modelId,
         plugin: selectedPlugin,
-        image_paths: assistantGeneratedImages || [],
+        image_paths: [],
         rag_used: ragUsed || false,
         rag_id: ragId || null,
         citations: citations || [],
@@ -130,7 +128,7 @@ export const handleCreateMessages = async (
     plugin: selectedPlugin,
     role: 'assistant',
     sequence_number: lastSequenceNumber(chatMessages) + 2,
-    image_paths: assistantGeneratedImages || [],
+    image_paths: [],
     rag_used: ragUsed || false,
     rag_id: ragId || null,
     citations: citations || [],
@@ -170,19 +168,6 @@ export const handleCreateMessages = async (
       setChatFiles,
     );
 
-    const chatImagesWithUrls = await Promise.all(
-      assistantGeneratedImages.map(async (url) => {
-        const base64 = await fetchImageData(url);
-        return {
-          messageId: createdMessages[0].id,
-          path: url,
-          base64: base64,
-          url: base64 || url,
-          file: null,
-        };
-      }),
-    );
-
     await createMessageFileItems(
       retrievedFileItems.map((fileItem) => {
         return {
@@ -193,10 +178,7 @@ export const handleCreateMessages = async (
       }),
     );
 
-    setChatImages((prevChatImages) => [
-      ...prevChatImages,
-      ...chatImagesWithUrls,
-    ]);
+    setChatImages((prevChatImages) => [...prevChatImages]);
 
     finalChatMessages = [
       ...chatMessages.slice(0, -1),
@@ -251,24 +233,7 @@ export const handleCreateMessages = async (
       path: paths[index],
     }));
 
-    const generatedImages = await Promise.all(
-      assistantGeneratedImages.map(async (url) => {
-        const base64Data = await fetchImageData(url);
-        return {
-          messageId: createdMessages[1].id,
-          path: url,
-          base64: base64Data,
-          url: url,
-          file: null,
-        };
-      }),
-    );
-
-    setChatImages((prevImages) => [
-      ...prevImages,
-      ...newImages,
-      ...generatedImages,
-    ]);
+    setChatImages((prevImages) => [...prevImages, ...newImages]);
 
     let messageWithPaths = createdMessages[0];
     if (paths.length > 0) {

@@ -63,7 +63,6 @@ export const createFileWriteTool = (context: ToolContext) => {
     dataStream,
     sandbox: initialSandbox,
     userID,
-    terminalTemplate,
     persistentSandbox: initialPersistentSandbox = true,
     setSandbox,
     isPremiumUser,
@@ -107,7 +106,6 @@ export const createFileWriteTool = (context: ToolContext) => {
             userID,
             dataStream,
             isPremiumUser,
-            terminalTemplate,
             setSandbox,
           },
           {

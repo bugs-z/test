@@ -4,8 +4,9 @@ import { executeTerminalAgent } from '@/lib/ai/tools/terminal-agent';
 import { executeReasonLLMTool } from '@/lib/ai/tools/reason-llm';
 import { terminalPlugins } from '@/lib/ai/terminal-utils';
 import { createStreamResponse } from '@/lib/ai-helper';
-import { ChatMetadata, BuiltChatMessage, AgentMode, LLMID } from '@/types';
-import { SupabaseClient } from '@supabase/supabase-js';
+import type { ChatMetadata, BuiltChatMessage, AgentMode, LLMID } from '@/types';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
 interface ToolHandlerConfig {
   messages: BuiltChatMessage[];
   profile: any;

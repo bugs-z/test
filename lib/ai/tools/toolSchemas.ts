@@ -3,8 +3,8 @@ import { executeTerminalAgent } from './terminal-agent';
 import { executeBrowserTool } from './browser';
 import { z } from 'zod';
 import type { AgentMode, LLMID } from '@/types/llms';
-import { ChatMetadata } from '@/types';
-import { SupabaseClient } from '@supabase/supabase-js';
+import type { ChatMetadata } from '@/types';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 export const createToolSchemas = ({
   messages,
@@ -51,7 +51,15 @@ Always ensure URLs start with 'https://' and contain a valid domain name (e.g., 
       execute: async ({ open_url }: { open_url: string | string[] }) => {
         return executeBrowserTool({
           open_url,
-          config: { profile, messages, dataStream },
+          config: {
+            profile,
+            messages,
+            dataStream,
+            abortSignal,
+            chatMetadata,
+            model,
+            supabase,
+          },
         });
       },
     },

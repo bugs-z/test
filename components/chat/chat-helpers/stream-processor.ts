@@ -2,7 +2,6 @@ import type { ChatMessage, DataPartValue } from '@/types';
 import type { AlertAction } from '@/context/alert-context';
 import { processDataStream } from 'ai';
 import { toast } from 'sonner';
-import { getTerminalPlugins } from '@/lib/tools/tool-store/tools-helper';
 import { PluginID } from '@/types/plugins';
 import type { AgentStatusState } from '@/components/messages/agent-status';
 import type { Dispatch, SetStateAction } from 'react';
@@ -64,12 +63,10 @@ export const processResponse = async (
     let isFirstChunk = true;
     let isFirstChunkReceived = false;
     let updatedPlugin = selectedPlugin;
-    const assistantGeneratedImages: string[] = [];
     let toolExecuted = false;
     let citations: string[] = [];
     let shouldSkipFirstChunk = false;
     let chatTitle: string | null = null;
-    let isChatSavedInBackend = false;
 
     try {
       await processDataStream({
@@ -261,11 +258,6 @@ export const processResponse = async (
               chatTitle = firstValue.chatTitle;
             }
 
-            // Handle isChatSavedInBackend
-            if (firstValue?.isChatSavedInBackend) {
-              isChatSavedInBackend = firstValue.isChatSavedInBackend;
-            }
-
             // Handle finishReason
             if (firstValue?.finishReason) {
               if (firstValue.finishReason === 'tool-calls') {
@@ -299,7 +291,7 @@ export const processResponse = async (
             // Only set finishReason if it hasn't been set before
             if (
               value.finishReason === 'tool-calls' &&
-              getTerminalPlugins().includes(updatedPlugin)
+              updatedPlugin === PluginID.TERMINAL
             ) {
               // To use continue generating for terminal
               finishReason = 'terminal-calls';
@@ -329,10 +321,8 @@ export const processResponse = async (
       ragUsed,
       ragId,
       selectedPlugin: updatedPlugin,
-      assistantGeneratedImages,
       citations,
       chatTitle,
-      isChatSavedInBackend,
     };
   } else {
     throw new Error('Response body is null');

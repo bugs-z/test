@@ -18,7 +18,6 @@ import { handleFileUpload } from './chat-helpers/file-upload';
 import { useChatHandler } from './chat-hooks/use-chat-handler';
 import { usePromptAndCommand } from './chat-hooks/use-prompt-and-command';
 import { useSelectFileHandler } from './chat-hooks/use-select-file-handler';
-import { EnhancedMenuPicker } from './enhance-menu';
 import { UnsupportedFilesDialog } from './unsupported-files-dialog';
 import { ToolOptions } from './chat-tools/tool-options';
 import { useUIContext } from '@/context/ui-context';
@@ -54,13 +53,7 @@ export const ChatInput: FC = () => {
     isTemporaryChat,
   } = useContext(PentestGPTContext);
 
-  const {
-    isGenerating,
-    isEnhancedMenuOpen,
-    setIsEnhancedMenuOpen,
-    selectedPlugin,
-    isMobile,
-  } = useUIContext();
+  const { isGenerating, selectedPlugin, isMobile } = useUIContext();
 
   const {
     chatInputRef,
@@ -161,15 +154,12 @@ export const ChatInput: FC = () => {
               chatMessages={chatMessages}
             />
           )}
-
-          {isEnhancedMenuOpen && <EnhancedMenuPicker />}
         </div>
 
         {/* Chat Input Area */}
         <VoiceStatusBar
           isListening={isListening}
           isSpeechToTextLoading={isSpeechToTextLoading}
-          isEnhancedMenuOpen={isEnhancedMenuOpen}
           onStop={() => setIsListening(false)}
           onCancel={() => {
             setIsListening(false);
@@ -244,9 +234,6 @@ export const ChatInput: FC = () => {
                 <div className="absolute bottom-[10px] left-2 flex flex-row">
                   <ToolOptions
                     fileInputRef={fileInputRef as RefObject<HTMLInputElement>}
-                    handleToggleEnhancedMenu={() =>
-                      setIsEnhancedMenuOpen(!isEnhancedMenuOpen)
-                    }
                   />
                 </div>
 

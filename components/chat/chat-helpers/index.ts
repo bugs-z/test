@@ -1,7 +1,6 @@
 // Only used in use-chat-handler.tsx to keep it clean
 
 import type { AlertAction } from '@/context/alert-context';
-import { createChat } from '@/db/chats';
 import { buildFinalMessages } from '@/lib/build-prompt';
 import type { Tables } from '@/supabase/types';
 import {

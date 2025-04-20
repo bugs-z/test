@@ -6,9 +6,6 @@ export interface DataPartValue {
   content?: string;
   finishReason?: string;
   sandboxType?: 'persistent-sandbox' | 'temporary-sandbox';
-  // Thinking
   elapsed_secs?: number;
-  // For new chat
   chatTitle?: string | null;
-  isChatSavedInBackend?: boolean;
 }

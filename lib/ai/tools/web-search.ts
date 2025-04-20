@@ -4,9 +4,9 @@ import llmConfig from '@/lib/models/llm-config';
 import { streamText } from 'ai';
 import { perplexity } from '@ai-sdk/perplexity';
 import PostHogClient from '@/app/posthog';
-import { ChatMetadata, LLMID } from '@/types';
-import { SupabaseClient } from '@supabase/supabase-js';
-import { createClient } from '@/lib/supabase/server';
+import type { ChatMetadata, LLMID } from '@/types';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
 import {
   generateTitleFromUserMessage,
   handleChatWithMetadata,
@@ -59,6 +59,7 @@ export async function executeWebSearchTool({
     abortSignal,
     chatMetadata,
     model,
+    supabase,
   } = config;
   const { systemPrompt, selectedModel } = await getProviderConfig(
     isLargeModel,
@@ -83,11 +84,7 @@ export async function executeWebSearchTool({
     });
   }
 
-  let supabase: SupabaseClient | null = null;
   let generatedTitle: string | undefined;
-  if (chatMetadata?.id && model) {
-    supabase = await createClient();
-  }
 
   try {
     await Promise.all([

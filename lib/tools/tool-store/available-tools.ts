@@ -36,7 +36,7 @@ export const availablePlugins: PluginSummary[] = [
   },
   {
     id: 1,
-    name: 'Enhanced Search',
+    name: 'RAG Search',
     value: PluginID.ENHANCED_SEARCH,
     categories: ['utils'],
     icon: 'https://cdn-icons-png.flaticon.com/128/11751/11751689.png',
@@ -57,7 +57,7 @@ export const availablePlugins: PluginSummary[] = [
     icon: 'https://cdn-icons-png.flaticon.com/128/5576/5576886.png',
     invertInDarkMode: true,
     description:
-      'Execute Bash commands, install and configure tools, and perform advanced pentesting tasks',
+      'Execute terminal commands, install and configure tools, and perform advanced pentesting tasks',
     githubRepoUrl: pluginUrls.PENTESTGPT,
     isInstalled: false,
     isPremium: true,

@@ -1,27 +1,26 @@
 import { getAIProfile } from '@/lib/server/server-chat-helpers';
-import {
-  toVercelChatMessages,
-  extractTextContent,
-} from '@/lib/ai/message-utils';
 import { handleErrorResponse } from '@/lib/models/api-error';
 import llmConfig from '@/lib/models/llm-config';
 import { checkRatelimitOnApi } from '@/lib/server/ratelimiter';
 import { createDataStreamResponse, smoothStream, streamText } from 'ai';
-import { PluginID } from '@/types/plugins';
 import { myProvider } from '@/lib/ai/providers';
 import { terminalPlugins } from '@/lib/ai/terminal-utils';
 import PostHogClient from '@/app/posthog';
 import { handleToolExecution } from '@/lib/ai/tool-handler';
 import { createToolSchemas } from '@/lib/ai/tools/toolSchemas';
 import { processRag } from '@/lib/ai/rag-processor';
-import { processChatMessages } from '@/lib/ai/message-utils';
-import type { LLMID } from '@/types';
+import {
+  processChatMessages,
+  toVercelChatMessages,
+} from '@/lib/ai/message-utils';
+import { type LLMID, PluginID } from '@/types';
 import {
   generateTitleFromUserMessage,
   handleChatWithMetadata,
 } from '@/lib/ai/actions';
 import { createClient } from '@/lib/supabase/server';
-import { SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { v4 as uuidv4 } from 'uuid';
 
 export const maxDuration = 600;
 
@@ -146,40 +145,12 @@ export async function POST(request: Request) {
         : 'chat-model-gpt-small-with-tools';
     }
 
-    let toolCalled: boolean = false;
+    let toolCalled = false;
 
     try {
       return createDataStreamResponse({
         execute: async (dataStream) => {
           dataStream.writeData({ ragUsed, ragId });
-
-          const baseConfig = {
-            model: myProvider.languageModel(finalSelectedModel),
-            system: systemPrompt,
-            messages: toVercelChatMessages(validatedMessages, supportsImages),
-            maxTokens: 2048,
-            abortSignal: request.signal,
-            experimental_transform: smoothStream({ chunking: 'word' }),
-            onChunk: async (chunk: any) => {
-              if (chunk.chunk.type === 'tool-call') {
-                toolCalled = true;
-              }
-            },
-            onFinish: async ({ finishReason }: { finishReason: string }) => {
-              if (supabase && !toolCalled) {
-                await handleChatWithMetadata({
-                  supabase,
-                  chatMetadata,
-                  profile,
-                  model,
-                  title: generatedTitle,
-                  messages: validatedMessages,
-                  finishReason,
-                });
-                dataStream.writeData({ isChatSavedInBackend: true });
-              }
-            },
-          };
 
           const toolConfig = {
             messages: validatedMessages,
@@ -194,7 +165,17 @@ export async function POST(request: Request) {
           };
 
           const result = streamText({
-            ...baseConfig,
+            model: myProvider.languageModel(finalSelectedModel),
+            system: systemPrompt,
+            messages: toVercelChatMessages(validatedMessages, supportsImages),
+            maxTokens: 2048,
+            abortSignal: request.signal,
+            experimental_transform: smoothStream({ chunking: 'word' }),
+            onChunk: async (chunk: any) => {
+              if (chunk.chunk.type === 'tool-call') {
+                toolCalled = true;
+              }
+            },
             ...(!ragUsed
               ? {
                   tools: createToolSchemas(toolConfig).getSelectedSchemas(
@@ -204,9 +185,22 @@ export async function POST(request: Request) {
                   ),
                 }
               : {}),
+            onFinish: async ({ finishReason }: { finishReason: string }) => {
+              if (supabase && !toolCalled) {
+                await handleChatWithMetadata({
+                  supabase,
+                  chatMetadata,
+                  profile,
+                  model,
+                  title: generatedTitle,
+                  messages: validatedMessages,
+                  finishReason,
+                });
+                dataStream.writeData({ isChatSavedInBackend: true });
+              }
+            },
           });
 
-          // Run title generation and streamText in parallel
           await Promise.all([
             result.mergeIntoDataStream(dataStream),
             (async () => {

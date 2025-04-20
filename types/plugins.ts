@@ -52,17 +52,9 @@ type PluginUrls = Record<string, string>;
 
 export const pluginUrls: PluginUrls = {
   PENTESTGPT: 'https://github.com/hackerai-tech/PentestGPT',
-  // Pentest tools
-  WAF_DETECTOR: 'https://github.com/EnableSecurity/wafw00f',
-  WHOIS_LOOKUP: 'https://www.whois.com/whois/',
-  SUBDOMAIN_FINDER: 'https://github.com/projectdiscovery/subfinder',
 };
 
-export const PLUGINS_WITHOUT_IMAGE_SUPPORT: PluginID[] = [
-  PluginID.WEB_SEARCH,
-  PluginID.REASONING,
-  PluginID.REASONING_WEB_SEARCH,
-];
+export const PLUGINS_WITHOUT_IMAGE_SUPPORT: PluginID[] = [PluginID.REASONING];
 
 export const isPluginWithoutImageSupport = (pluginId: PluginID): boolean => {
   return PLUGINS_WITHOUT_IMAGE_SUPPORT.includes(pluginId);

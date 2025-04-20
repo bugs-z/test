@@ -8,9 +8,7 @@ import {
 import type { AgentStatusState } from '@/components/messages/agent-status';
 
 interface UIContextType {
-  // ENHANCE MENU
-  isEnhancedMenuOpen: boolean;
-  setIsEnhancedMenuOpen: Dispatch<SetStateAction<boolean>>;
+  // Tools
   selectedPluginType: string;
   setSelectedPluginType: Dispatch<SetStateAction<string>>;
   selectedPlugin: PluginID;
@@ -51,9 +49,7 @@ interface UIContextType {
 }
 
 export const UIContext = createContext<UIContextType>({
-  // ENHANCE MENU
-  isEnhancedMenuOpen: false,
-  setIsEnhancedMenuOpen: () => {},
+  // Tools
   selectedPluginType: '',
   setSelectedPluginType: () => {},
   selectedPlugin: PluginID.NONE,

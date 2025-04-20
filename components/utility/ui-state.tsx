@@ -13,11 +13,7 @@ interface UIStateProps {
 }
 
 export const UIState: FC<UIStateProps> = ({ children }) => {
-  // ENHANCE MENU
-  const [isEnhancedMenuOpen, setIsEnhancedMenuOpen] = useLocalStorageState(
-    'isEnhancedMenuOpen',
-    true,
-  );
+  // Tools
   const [selectedPluginType, setSelectedPluginType] = useState('');
   const [selectedPlugin, setSelectedPlugin] = useState(PluginID.NONE);
 
@@ -62,9 +58,7 @@ export const UIState: FC<UIStateProps> = ({ children }) => {
   return (
     <UIContext.Provider
       value={{
-        // ENHANCE MENU
-        isEnhancedMenuOpen,
-        setIsEnhancedMenuOpen,
+        // Tools
         selectedPluginType,
         setSelectedPluginType,
         selectedPlugin,

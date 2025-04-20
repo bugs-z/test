@@ -16,7 +16,6 @@ import { toast } from 'sonner';
 interface VoiceStatusBarProps {
   isListening: boolean;
   isSpeechToTextLoading: boolean;
-  isEnhancedMenuOpen: boolean;
   onStop: () => void;
   onCancel: () => void;
 }
@@ -24,7 +23,6 @@ interface VoiceStatusBarProps {
 const VoiceStatusBar: FC<VoiceStatusBarProps> = ({
   isListening,
   isSpeechToTextLoading,
-  isEnhancedMenuOpen,
   onStop,
   onCancel,
 }) => {
@@ -72,9 +70,7 @@ const VoiceStatusBar: FC<VoiceStatusBarProps> = ({
   // Move the early return after all hooks
   if (!isListening && !isSpeechToTextLoading) return null;
 
-  const baseClasses = `bg-secondary ${
-    isEnhancedMenuOpen ? 'mt-3' : 'mt-0'
-  } flex min-h-[96px] items-center rounded-xl px-4 py-3`;
+  const baseClasses = `bg-secondary flex min-h-[96px] items-center rounded-xl px-4 py-3`;
 
   if (isSpeechToTextLoading) {
     return (

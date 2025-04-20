@@ -5,11 +5,21 @@ import { streamText } from 'ai';
 import { myProvider } from '@/lib/ai/providers';
 import FirecrawlApp, { type ScrapeResponse } from '@mendable/firecrawl-js';
 import PostHogClient from '@/app/posthog';
+import type { ChatMetadata, LLMID } from '@/types';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import {
+  generateTitleFromUserMessage,
+  handleChatWithMetadata,
+} from '@/lib/ai/actions';
 
 interface BrowserToolConfig {
   profile: any;
   messages: any[];
   dataStream: any;
+  abortSignal: AbortSignal;
+  chatMetadata: ChatMetadata;
+  model: LLMID;
+  supabase: SupabaseClient | null;
 }
 
 async function getProviderConfig(profile: any) {
@@ -31,34 +41,35 @@ export function getLastUserMessage(messages: any[]): string {
 }
 
 export async function browsePage(url: string): Promise<string> {
-  const firecrawlApiKey = process.env.FIRECRAWL_API_KEY;
-
-  if (!firecrawlApiKey) {
-    throw new Error(
-      'FIRECRAWL_API_KEY is not set in the environment variables',
-    );
-  }
-
   try {
-    const app = new FirecrawlApp({ apiKey: firecrawlApiKey });
+    const app = new FirecrawlApp({ apiKey: process.env.FIRECRAWL_API_KEY });
     const scrapeResult = (await app.scrapeUrl(url, {
       formats: ['markdown'],
     })) as ScrapeResponse;
 
     if (!scrapeResult.success) {
-      throw new Error(
-        `Error fetching URL: ${url}. Error: ${scrapeResult.error}`,
-      );
+      return `Error fetching URL: ${url}. Error: ${scrapeResult.error}`;
     }
 
     if (!scrapeResult.markdown) {
-      throw new Error(`Empty content received from URL: ${url}`);
+      return `Error: Empty content received from URL: ${url}`;
     }
 
     return scrapeResult.markdown;
   } catch (error) {
-    console.error('[BrowserTool] Error browsing URL:', url, error);
-    throw error;
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
+
+    // Check if the error message contains HTTP status codes we want to skip logging
+    if (
+      !errorMessage.includes('408') &&
+      !errorMessage.includes('403') &&
+      !errorMessage.includes('500')
+    ) {
+      console.error('[BrowserTool] Error browsing URL:', url, error);
+    }
+
+    return `Error browsing URL: ${url}. ${errorMessage}`;
   }
 }
 
@@ -77,13 +88,17 @@ export async function browseMultiplePages(
         } catch (error) {
           console.error(`[BrowserTool] Error browsing URL: ${url}`, error);
           results[url] =
-            `Error accessing URL: ${url}. The webpage might be empty, unavailable, or there could be an issue with the content retrieval process.`;
+            `Error accessing URL: ${url}. ${error instanceof Error ? error.message : 'Unknown error'}`;
         }
       }),
     );
   } catch (error) {
     console.error('[BrowserTool] Error in browseMultiplePages:', error);
-    throw error;
+    // If there's an error in Promise.all, mark all URLs as failed
+    urlsToProcess.forEach((url) => {
+      results[url] =
+        `Error: Failed to process URL: ${url}. ${error instanceof Error ? error.message : 'Unknown error'}`;
+    });
   }
 
   return results;
@@ -167,7 +182,7 @@ export async function executeBrowserTool({
     );
   }
 
-  const { profile, messages, dataStream } = config;
+  const { profile, messages, dataStream, chatMetadata, supabase } = config;
   const { systemPrompt, model } = await getProviderConfig(profile);
 
   const posthog = PostHogClient();
@@ -200,30 +215,59 @@ export async function executeBrowserTool({
       browserPrompt = createMultiBrowserPrompt(browserResults, lastUserMessage);
     }
 
-    const { fullStream } = streamText({
-      model,
-      messages: [
-        {
-          role: 'system',
-          content: systemPrompt,
-        },
-        ...toVercelChatMessages(messages.slice(0, -1)),
-        { role: 'user', content: browserPrompt },
-      ],
-      maxTokens: 2048,
-    });
+    let generatedTitle: string | undefined;
 
-    dataStream.writeData({ type: 'tool-call', content: 'none' });
-    dataStream.writeData({ type: 'text-delta', content: '\n\n' });
-
-    for await (const delta of fullStream) {
-      if (delta.type === 'text-delta') {
-        dataStream.writeData({
-          type: 'text-delta',
-          content: delta.textDelta,
+    await Promise.all([
+      (async () => {
+        const { fullStream } = streamText({
+          model,
+          messages: [
+            {
+              role: 'system',
+              content: systemPrompt,
+            },
+            ...toVercelChatMessages(messages.slice(0, -1)),
+            { role: 'user', content: browserPrompt },
+          ],
+          maxTokens: 2048,
+          onFinish: async ({ finishReason }: { finishReason: string }) => {
+            if (supabase) {
+              await handleChatWithMetadata({
+                supabase,
+                chatMetadata,
+                profile,
+                model: config.model,
+                title: generatedTitle,
+                messages,
+                finishReason,
+              });
+              dataStream.writeData({ isChatSavedInBackend: true });
+            }
+          },
         });
-      }
-    }
+
+        dataStream.writeData({ type: 'tool-call', content: 'none' });
+        dataStream.writeData({ type: 'text-delta', content: '\n\n' });
+
+        for await (const delta of fullStream) {
+          if (delta.type === 'text-delta') {
+            dataStream.writeData({
+              type: 'text-delta',
+              content: delta.textDelta,
+            });
+          }
+        }
+      })(),
+      (async () => {
+        if (chatMetadata?.newChat) {
+          generatedTitle = await generateTitleFromUserMessage({
+            messages,
+            abortSignal: config.abortSignal,
+          });
+          dataStream.writeData({ chatTitle: generatedTitle });
+        }
+      })(),
+    ]);
 
     return 'Browser tool executed';
   } catch (error) {
@@ -231,6 +275,10 @@ export async function executeBrowserTool({
       error: error instanceof Error ? error.message : 'Unknown error',
       model,
     });
-    throw error;
+    dataStream.writeData({
+      type: 'text-delta',
+      content: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    });
+    return 'Browser tool executed with errors';
   }
 }

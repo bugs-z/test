@@ -240,7 +240,7 @@ export async function processChatMessages(
   supportsImages: boolean;
   systemPrompt: string;
 }> {
-  let supportsImages = true;
+  const supportsImages = true;
   let shouldUncensor = false;
 
   // Check if we should uncensor the response

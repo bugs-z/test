@@ -5,6 +5,7 @@ import {
   handleFileError,
   ensureSandboxConnection,
 } from './utils/sandbox-utils';
+import { truncateContentByTokens } from '@/lib/ai/terminal-utils';
 
 const processFileContent = (
   content: string,
@@ -35,14 +36,14 @@ const readAndProcessFile = async (
 
     const content = await sandbox.files.read(filePath);
     const processedContent = processFileContent(content, start_line, end_line);
-    const wrappedContent = `<file-content path="${filePath}">${processedContent}</file-content>\n\n`;
+    const wrappedContent = `<file-content path="${filePath}">${truncateContentByTokens(processedContent, 2048)}</file-content>\n\n`;
 
     dataStream.writeData({
       type: 'text-delta',
       content: wrappedContent,
     });
 
-    return processedContent;
+    return truncateContentByTokens(processedContent);
   } catch (error) {
     return handleFileError(error, 'processing file');
   }
@@ -58,7 +59,6 @@ export const createFileReadTool = (context: ToolContext) => {
     dataStream,
     sandbox: initialSandbox,
     userID,
-    terminalTemplate,
     persistentSandbox: initialPersistentSandbox = true,
     setSandbox,
     isPremiumUser,
@@ -92,7 +92,6 @@ export const createFileReadTool = (context: ToolContext) => {
             userID,
             dataStream,
             isPremiumUser,
-            terminalTemplate,
             setSandbox,
           },
           {
