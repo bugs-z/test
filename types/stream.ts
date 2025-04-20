@@ -10,4 +10,5 @@ export interface DataPartValue {
   elapsed_secs?: number;
   // For new chat
   chatTitle?: string | null;
+  isChatSavedInBackend?: boolean;
 }

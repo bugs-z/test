@@ -1,5 +1,8 @@
 import { getAIProfile } from '@/lib/server/server-chat-helpers';
-import { toVercelChatMessages } from '@/lib/ai/message-utils';
+import {
+  toVercelChatMessages,
+  extractTextContent,
+} from '@/lib/ai/message-utils';
 import { handleErrorResponse } from '@/lib/models/api-error';
 import llmConfig from '@/lib/models/llm-config';
 import { checkRatelimitOnApi } from '@/lib/server/ratelimiter';
@@ -8,12 +11,17 @@ import { PluginID } from '@/types/plugins';
 import { myProvider } from '@/lib/ai/providers';
 import { terminalPlugins } from '@/lib/ai/terminal-utils';
 import PostHogClient from '@/app/posthog';
-import { handleToolExecution } from '@/lib/ai/tool-handler-v2';
+import { handleToolExecution } from '@/lib/ai/tool-handler';
 import { createToolSchemas } from '@/lib/ai/tools/toolSchemas';
 import { processRag } from '@/lib/ai/rag-processor';
 import { processChatMessages } from '@/lib/ai/message-utils';
 import type { LLMID } from '@/types';
-import { generateTitleFromUserMessage } from '@/lib/ai/actions';
+import {
+  generateTitleFromUserMessage,
+  handleChatWithMetadata,
+} from '@/lib/ai/actions';
+import { createClient } from '@/lib/supabase/server';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 export const maxDuration = 600;
 
@@ -68,11 +76,24 @@ export async function POST(request: Request) {
       profile.profile_context,
     );
 
-    const title = generateTitleFromUserMessage({
-      message:
-        messages.find((m: { role: string }) => m.role === 'user') ||
-        messages[messages.length - 1],
-      abortSignal: request.signal,
+    let supabase: SupabaseClient | null = null;
+    let generatedTitle: string | undefined;
+    if (chatMetadata.id && model) {
+      supabase = await createClient();
+    }
+
+    request.signal.addEventListener('abort', async () => {
+      if (supabase) {
+        await handleChatWithMetadata({
+          supabase,
+          chatMetadata,
+          profile,
+          model,
+          title: generatedTitle,
+          messages: validatedMessages,
+          finishReason: 'stop',
+        });
+      }
     });
 
     const toolResponse = await handleToolExecution({
@@ -84,8 +105,10 @@ export async function POST(request: Request) {
       agentMode: modelParams.agentMode,
       confirmTerminalCommand: modelParams.confirmTerminalCommand,
       abortSignal: request.signal,
+      // For saving the chat on backend
       chatMetadata,
-      title,
+      model,
+      supabase,
     });
     if (toolResponse) {
       return toolResponse;
@@ -123,6 +146,8 @@ export async function POST(request: Request) {
         : 'chat-model-gpt-small-with-tools';
     }
 
+    let toolCalled: boolean = false;
+
     try {
       return createDataStreamResponse({
         execute: async (dataStream) => {
@@ -135,6 +160,25 @@ export async function POST(request: Request) {
             maxTokens: 2048,
             abortSignal: request.signal,
             experimental_transform: smoothStream({ chunking: 'word' }),
+            onChunk: async (chunk: any) => {
+              if (chunk.chunk.type === 'tool-call') {
+                toolCalled = true;
+              }
+            },
+            onFinish: async ({ finishReason }: { finishReason: string }) => {
+              if (supabase && !toolCalled) {
+                await handleChatWithMetadata({
+                  supabase,
+                  chatMetadata,
+                  profile,
+                  model,
+                  title: generatedTitle,
+                  messages: validatedMessages,
+                  finishReason,
+                });
+                dataStream.writeData({ isChatSavedInBackend: true });
+              }
+            },
           };
 
           const toolConfig = {
@@ -144,6 +188,9 @@ export async function POST(request: Request) {
             confirmTerminalCommand: modelParams.confirmTerminalCommand,
             dataStream,
             abortSignal: request.signal,
+            chatMetadata,
+            model,
+            supabase,
           };
 
           const result = streamText({
@@ -164,7 +211,10 @@ export async function POST(request: Request) {
             result.mergeIntoDataStream(dataStream),
             (async () => {
               if (chatMetadata.newChat) {
-                const generatedTitle = await title;
+                generatedTitle = await generateTitleFromUserMessage({
+                  messages,
+                  abortSignal: request.signal,
+                });
                 dataStream.writeData({ chatTitle: generatedTitle });
               }
             })(),

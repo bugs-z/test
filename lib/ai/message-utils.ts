@@ -258,16 +258,7 @@ export async function processChatMessages(
   }
 
   if (shouldUncensor) {
-    if (isLargeModel) {
-      selectedModel = 'chat-model-large';
-      supportsImages = messagesIncludeImages(messages);
-      if (supportsImages) {
-        selectedModel = 'chat-model-gpt-large';
-        addAuthMessage(messages);
-      }
-    } else {
-      addAuthMessage(messages);
-    }
+    addAuthMessage(messages);
   }
 
   filterEmptyAssistantMessages(messages);

@@ -11,7 +11,7 @@ import { IconTerminal2 } from '@tabler/icons-react';
 import { useUIContext } from '@/context/ui-context';
 import { useAgentModePreference } from './use-auto-run-preference';
 import { useChatHandler } from '@/components/chat/chat-hooks/use-chat-handler';
-import { Textarea } from '@/components/ui/textarea';
+import { TextareaAutosize } from '@/components/ui/textarea-autosize';
 import { PentestGPTContext } from '@/context/context';
 
 interface AskTerminalCommandBlockProps {
@@ -54,15 +54,16 @@ export const AskTerminalCommandBlock: React.FC<
           <span>{execDir}</span>
         </div>
         <div className="text-sm">
-          <Textarea
+          <TextareaAutosize
             value={editedCommand}
-            onChange={(e) =>
-              isPremiumSubscription && setEditedCommand(e.target.value)
+            onValueChange={(value) =>
+              isPremiumSubscription && setEditedCommand(value)
             }
             onKeyDown={handleKeyDown}
-            className="font-mono text-foreground/80 break-all whitespace-pre-wrap bg-transparent border-0 p-0 resize-none focus-visible:ring-0 focus-visible:ring-offset-0 min-h-[1.5rem]"
-            rows={1}
-            readOnly={!isPremiumSubscription}
+            className="font-mono text-foreground/80 break-all whitespace-pre-wrap bg-transparent border-0 p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+            minRows={1}
+            maxRows={10}
+            disabled={!isPremiumSubscription}
           />
         </div>
       </div>

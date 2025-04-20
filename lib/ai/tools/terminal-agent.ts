@@ -7,14 +7,19 @@ import { pauseSandbox } from '@/lib/tools/e2b/sandbox';
 import { createAgentTools } from '@/lib/ai/tools/agent';
 import { PENTESTGPT_AGENT_SYSTEM_PROMPT } from '@/lib/models/agent-prompts';
 import { getSubscriptionInfo } from '@/lib/server/subscription-utils';
-import { PluginID } from '@/types/plugins';
 import { isFreePlugin } from '@/lib/tools/tool-store/tools-helper';
 import { getToolsWithAnswerPrompt } from '@/lib/tools/tool-store/prompts/system-prompt';
 import { getTerminalTemplate } from '@/lib/tools/tool-store/tools-helper';
 import { myProvider } from '@/lib/ai/providers';
 import { SANDBOX_TEMPLATE } from '@/lib/ai/tools/agent/types';
-import type { AgentMode } from '@/types/llms';
 import { executeTerminalCommandWithConfig } from './terminal-command-executor';
+import {
+  generateTitleFromUserMessage,
+  handleChatWithMetadata,
+} from '@/lib/ai/actions';
+import { ChatMetadata, LLMID, PluginID, AgentMode } from '@/types';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/server';
 
 interface TerminalToolConfig {
   messages: any[];
@@ -23,7 +28,11 @@ interface TerminalToolConfig {
   agentMode: AgentMode;
   confirmTerminalCommand: boolean;
   selectedPlugin?: PluginID;
-  abortSignal?: AbortSignal;
+  abortSignal: AbortSignal;
+  // For saving the chat on backend
+  chatMetadata: ChatMetadata;
+  model: LLMID;
+  supabase: SupabaseClient | null;
 }
 
 export async function executeTerminalAgent({
@@ -31,7 +40,16 @@ export async function executeTerminalAgent({
 }: {
   config: TerminalToolConfig;
 }) {
-  const { profile, dataStream, agentMode, selectedPlugin } = config;
+  const {
+    profile,
+    dataStream,
+    agentMode,
+    selectedPlugin,
+    abortSignal,
+    chatMetadata,
+    model,
+    supabase,
+  } = config;
   let messages = config.messages;
 
   let sandbox: Sandbox | null = null;
@@ -39,7 +57,6 @@ export async function executeTerminalAgent({
   const userID = profile.user_id;
   let systemPrompt = PENTESTGPT_AGENT_SYSTEM_PROMPT;
   let terminalTemplate = SANDBOX_TEMPLATE;
-  const selectedChatModel = 'chat-model-agent';
 
   try {
     // Check rate limit
@@ -95,74 +112,108 @@ export async function executeTerminalAgent({
       messages = result.messages;
     }
 
-    // Always run the agent after terminal command execution
-    const { fullStream, finishReason } = streamText({
-      model: myProvider.languageModel(selectedChatModel),
-      maxTokens: 2048,
-      system: systemPrompt,
-      messages: toVercelChatMessages(messages, true),
-      tools: createAgentTools({
-        dataStream,
-        sandbox,
-        userID,
-        persistentSandbox,
-        selectedPlugin,
-        terminalTemplate,
-        setSandbox,
-        isPremiumUser,
-        agentMode,
-      }),
-      maxSteps: 5,
-      toolChoice: 'required',
-      abortSignal: config.abortSignal,
-    });
+    let generatedTitle: string | undefined;
+    let customFinishReason: string | null = null;
 
-    // Handle stream
-    let shouldStop = false;
-    for await (const chunk of fullStream) {
-      if (chunk.type === 'text-delta') {
-        dataStream.writeData({
-          type: 'text-delta',
-          content: chunk.textDelta,
+    await Promise.all([
+      (async () => {
+        const { fullStream, finishReason } = streamText({
+          model: myProvider.languageModel('chat-model-agent'),
+          maxTokens: 2048,
+          system: systemPrompt,
+          messages: toVercelChatMessages(messages, true),
+          tools: createAgentTools({
+            dataStream,
+            sandbox,
+            userID,
+            persistentSandbox,
+            selectedPlugin,
+            terminalTemplate,
+            setSandbox,
+            isPremiumUser,
+            agentMode,
+          }),
+          maxSteps: 5,
+          toolChoice: 'required',
+          abortSignal,
+          onFinish: async ({ finishReason }: { finishReason: string }) => {
+            if (supabase) {
+              await handleChatWithMetadata({
+                supabase,
+                chatMetadata,
+                profile,
+                model,
+                title: generatedTitle,
+                messages,
+                finishReason: customFinishReason
+                  ? customFinishReason
+                  : finishReason,
+              });
+              dataStream.writeData({ isChatSavedInBackend: true });
+            }
+          },
         });
-      } else if (chunk.type === 'tool-call') {
-        if (chunk.toolName === 'idle') {
-          dataStream.writeData({ finishReason: 'idle' });
-          shouldStop = true;
-        } else if (chunk.toolName === 'message_ask_user') {
-          dataStream.writeData({
-            type: 'text-delta',
-            content: chunk.args?.text,
-          });
-          dataStream.writeData({ finishReason: 'message_ask_user' });
-          shouldStop = true;
-        } else if (
-          agentMode === 'ask-every-time' &&
-          chunk.toolName === 'shell_exec'
-        ) {
-          const { exec_dir, command } = chunk.args;
-          dataStream.writeData({
-            type: 'text-delta',
-            content: `<terminal-command exec-dir="${exec_dir}">${command}</terminal-command>`,
-          });
-          dataStream.writeData({ finishReason: 'terminal_command_ask_user' });
-          shouldStop = true;
-        }
-      }
-    }
 
-    // Send finish reason if not already sent
-    if (!shouldStop) {
-      const originalFinishReason = await finishReason;
-      dataStream.writeData({ finishReason: originalFinishReason });
-    }
+        // Handle stream
+        let shouldStop = false;
+        for await (const chunk of fullStream) {
+          if (chunk.type === 'text-delta') {
+            dataStream.writeData({
+              type: 'text-delta',
+              content: chunk.textDelta,
+            });
+          } else if (chunk.type === 'tool-call') {
+            if (chunk.toolName === 'idle') {
+              dataStream.writeData({ finishReason: 'idle' });
+              customFinishReason = 'idle';
+              shouldStop = true;
+            } else if (chunk.toolName === 'message_ask_user') {
+              dataStream.writeData({
+                type: 'text-delta',
+                content: chunk.args?.text,
+              });
+              dataStream.writeData({ finishReason: 'message_ask_user' });
+              customFinishReason = 'message_ask_user';
+              shouldStop = true;
+            } else if (
+              agentMode === 'ask-every-time' &&
+              chunk.toolName === 'shell_exec'
+            ) {
+              const { exec_dir, command } = chunk.args;
+              dataStream.writeData({
+                type: 'text-delta',
+                content: `<terminal-command exec-dir="${exec_dir}">${command}</terminal-command>`,
+              });
+              dataStream.writeData({
+                finishReason: 'terminal_command_ask_user',
+              });
+              customFinishReason = 'terminal_command_ask_user';
+              shouldStop = true;
+            }
+          }
+        }
+
+        // Send finish reason if not already sent
+        if (!shouldStop) {
+          const originalFinishReason = await finishReason;
+          dataStream.writeData({ finishReason: originalFinishReason });
+        }
+      })(),
+      (async () => {
+        if (chatMetadata?.newChat) {
+          generatedTitle = await generateTitleFromUserMessage({
+            messages,
+            abortSignal,
+          });
+          dataStream.writeData({ chatTitle: generatedTitle });
+        }
+      })(),
+    ]);
 
     return 'Terminal execution completed';
   } catch (error) {
     console.error('[TerminalAgent] Error:', {
       error: error instanceof Error ? error.message : 'Unknown error',
-      model: selectedChatModel,
-      plugin: selectedPlugin,
     });
     dataStream.writeData({
       type: 'error',

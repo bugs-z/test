@@ -69,6 +69,7 @@ export const processResponse = async (
     let citations: string[] = [];
     let shouldSkipFirstChunk = false;
     let chatTitle: string | null = null;
+    let isChatSavedInBackend = false;
 
     try {
       await processDataStream({
@@ -163,7 +164,7 @@ export const processResponse = async (
                 );
               }
 
-              if (firstValue.type === 'tool-call') {
+              if (firstValue.type === 'agent-status') {
                 setAgentStatus(firstValue.content as AgentStatusState);
               }
 
@@ -260,6 +261,11 @@ export const processResponse = async (
               chatTitle = firstValue.chatTitle;
             }
 
+            // Handle isChatSavedInBackend
+            if (firstValue?.isChatSavedInBackend) {
+              isChatSavedInBackend = firstValue.isChatSavedInBackend;
+            }
+
             // Handle finishReason
             if (firstValue?.finishReason) {
               if (firstValue.finishReason === 'tool-calls') {
@@ -326,6 +332,7 @@ export const processResponse = async (
       assistantGeneratedImages,
       citations,
       chatTitle,
+      isChatSavedInBackend,
     };
   } else {
     throw new Error('Response body is null');

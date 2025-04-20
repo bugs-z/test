@@ -2,7 +2,9 @@ import { executeWebSearchTool } from './web-search';
 import { executeTerminalAgent } from './terminal-agent';
 import { executeBrowserTool } from './browser';
 import { z } from 'zod';
-import type { AgentMode } from '@/types/llms';
+import type { AgentMode, LLMID } from '@/types/llms';
+import { ChatMetadata } from '@/types';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 export const createToolSchemas = ({
   messages,
@@ -11,6 +13,9 @@ export const createToolSchemas = ({
   confirmTerminalCommand,
   dataStream,
   abortSignal,
+  chatMetadata,
+  model,
+  supabase,
 }: {
   messages: any;
   profile: any;
@@ -18,6 +23,9 @@ export const createToolSchemas = ({
   confirmTerminalCommand: boolean;
   dataStream: any;
   abortSignal: AbortSignal;
+  chatMetadata: ChatMetadata;
+  model: LLMID;
+  supabase: SupabaseClient | null;
 }) => {
   const allSchemas = {
     browser: {
@@ -63,6 +71,10 @@ Do not use this tool if the human is merely asking about the possibility of sear
             profile,
             dataStream,
             isLargeModel: true,
+            abortSignal,
+            chatMetadata,
+            model,
+            supabase,
           },
         });
       },
@@ -92,6 +104,9 @@ This tool executes Bash commands in a Debian environment with root privileges. U
             confirmTerminalCommand,
             dataStream,
             abortSignal,
+            chatMetadata,
+            model,
+            supabase,
           },
         });
       },

@@ -17,7 +17,7 @@ export const createMessageNotifyTool = (context: ToolContext) => {
     }),
     execute: async ({ text }) => {
       dataStream.writeData({
-        type: 'tool-call',
+        type: 'agent-status',
         content: 'message_notify_user',
       });
 

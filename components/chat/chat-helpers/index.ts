@@ -137,23 +137,30 @@ export const fetchChatResponse = async (
   return response;
 };
 
-export const handleCreateChat = async (
+export const handleCreateChat = (
   model: LLMID,
   profile: Tables<'profiles'>,
   messageContent: string,
   finishReason: string,
   setSelectedChat: Dispatch<SetStateAction<Tables<'chats'> | null>>,
   setChats: Dispatch<SetStateAction<Tables<'chats'>[]>>,
+  chatId: string,
   chatTitle?: string | null,
 ) => {
-  // Create chat first with a temporary chat name
-  const createdChat = await createChat({
+  const createdChat = {
+    id: chatId,
     user_id: profile.user_id,
     include_profile_context: true,
     model,
     name: chatTitle || messageContent.substring(0, 100),
     finish_reason: finishReason,
-  });
+    created_at: new Date().toISOString(),
+    updated_at: null,
+    last_shared_message_id: null,
+    shared_at: null,
+    shared_by: null,
+    sharing: 'private',
+  };
 
   setSelectedChat(createdChat);
   setChats((chats) => [createdChat, ...chats]);

@@ -19,7 +19,7 @@ export function createAgentTools(context: ToolContext) {
   return {
     shell_exec:
       agentMode === 'ask-every-time'
-        ? createAskShellExecTool(context)
+        ? createAskShellExecTool()
         : createShellExecTool(context),
     shell_wait: createShellWaitTool(context),
     message_notify_user: createMessageNotifyTool(context),

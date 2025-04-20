@@ -33,7 +33,7 @@ export const createShellWaitTool = (context: ToolContext) => {
       }
 
       dataStream.writeData({
-        type: 'tool-call',
+        type: 'agent-status',
         content: 'shell_wait',
       });
 

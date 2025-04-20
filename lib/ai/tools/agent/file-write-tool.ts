@@ -17,7 +17,7 @@ const writeFileContent = async (
 ): Promise<string> => {
   try {
     dataStream.writeData({
-      type: 'tool-call',
+      type: 'agent-status',
       content: 'file_write',
     });
 

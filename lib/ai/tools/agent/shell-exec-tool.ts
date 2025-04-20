@@ -91,7 +91,7 @@ export const createShellExecTool = (context: ToolContext) => {
       }
 
       dataStream.writeData({
-        type: 'tool-call',
+        type: 'agent-status',
         content: 'terminal',
       });
 

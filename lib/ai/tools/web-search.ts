@@ -4,6 +4,13 @@ import llmConfig from '@/lib/models/llm-config';
 import { streamText } from 'ai';
 import { perplexity } from '@ai-sdk/perplexity';
 import PostHogClient from '@/app/posthog';
+import { ChatMetadata, LLMID } from '@/types';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/server';
+import {
+  generateTitleFromUserMessage,
+  handleChatWithMetadata,
+} from '../actions';
 
 interface WebSearchConfig {
   messages: any[];
@@ -11,6 +18,10 @@ interface WebSearchConfig {
   dataStream: any;
   isLargeModel: boolean;
   directToolCall?: boolean;
+  abortSignal: AbortSignal;
+  chatMetadata: ChatMetadata;
+  model: LLMID;
+  supabase: SupabaseClient | null;
 }
 
 async function getProviderConfig(isLargeModel: boolean, profile: any) {
@@ -39,8 +50,16 @@ export async function executeWebSearchTool({
     throw new Error('Perplexity API key is not set for web search');
   }
 
-  const { messages, profile, dataStream, isLargeModel, directToolCall } =
-    config;
+  const {
+    messages,
+    profile,
+    dataStream,
+    isLargeModel,
+    directToolCall,
+    abortSignal,
+    chatMetadata,
+    model,
+  } = config;
   const { systemPrompt, selectedModel } = await getProviderConfig(
     isLargeModel,
     profile,
@@ -64,54 +83,83 @@ export async function executeWebSearchTool({
     });
   }
 
+  let supabase: SupabaseClient | null = null;
+  let generatedTitle: string | undefined;
+  if (chatMetadata?.id && model) {
+    supabase = await createClient();
+  }
+
   try {
-    const { fullStream } = streamText({
-      model: perplexity(selectedModel),
-      messages: [
-        {
-          role: 'system',
-          content: systemPrompt,
-        },
-        ...toVercelChatMessages(messages),
-      ],
-      maxTokens: 2048,
-    });
+    await Promise.all([
+      (async () => {
+        const { fullStream } = streamText({
+          model: perplexity(selectedModel),
+          system: systemPrompt,
+          messages: toVercelChatMessages(messages),
+          maxTokens: 2048,
+          abortSignal,
+          onFinish: async ({ finishReason }: { finishReason: string }) => {
+            if (supabase) {
+              await handleChatWithMetadata({
+                supabase,
+                chatMetadata,
+                profile,
+                model,
+                title: generatedTitle,
+                messages,
+                finishReason,
+              });
+              dataStream.writeData({ isChatSavedInBackend: true });
+            }
+          },
+        });
 
-    const citations: string[] = [];
-    let hasFirstTextDelta = false;
+        const citations: string[] = [];
+        let hasFirstTextDelta = false;
 
-    for await (const delta of fullStream) {
-      if (delta.type === 'source') {
-        if (delta.source.sourceType === 'url') {
-          citations.push(delta.source.url);
-        }
-      }
+        for await (const delta of fullStream) {
+          if (delta.type === 'source') {
+            if (delta.source.sourceType === 'url') {
+              citations.push(delta.source.url);
+            }
+          }
 
-      if (delta.type === 'text-delta') {
-        if (!hasFirstTextDelta) {
-          // Send citations after first text-delta
-          dataStream.writeData({ citations });
-          hasFirstTextDelta = true;
+          if (delta.type === 'text-delta') {
+            if (!hasFirstTextDelta) {
+              // Send citations after first text-delta
+              dataStream.writeData({ citations });
+              hasFirstTextDelta = true;
 
-          if (!directToolCall) {
-            dataStream.writeData({
-              type: 'tool-call',
-              content: 'none',
-            });
+              if (!directToolCall) {
+                dataStream.writeData({
+                  type: 'tool-call',
+                  content: 'none',
+                });
+
+                dataStream.writeData({
+                  type: 'text-delta',
+                  content: '\n\n',
+                });
+              }
+            }
 
             dataStream.writeData({
               type: 'text-delta',
-              content: '\n\n',
+              content: delta.textDelta,
             });
           }
         }
-
-        dataStream.writeData({
-          type: 'text-delta',
-          content: delta.textDelta,
-        });
-      }
-    }
+      })(),
+      (async () => {
+        if (chatMetadata?.newChat) {
+          generatedTitle = await generateTitleFromUserMessage({
+            messages,
+            abortSignal: config.abortSignal,
+          });
+          dataStream.writeData({ chatTitle: generatedTitle });
+        }
+      })(),
+    ]);
 
     return 'Web search completed';
   } catch (error) {

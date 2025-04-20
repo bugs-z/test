@@ -96,7 +96,7 @@ export async function executeTerminalCommandWithConfig({
   }
 
   dataStream.writeData({
-    type: 'tool-call',
+    type: 'agent-status',
     content: 'terminal',
   });
 

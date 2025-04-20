@@ -5,14 +5,12 @@ import {
   IconPaperclip,
   IconPuzzle,
   IconPuzzleOff,
-  IconWorld,
   IconAtom,
 } from '@tabler/icons-react';
 import { useContext } from 'react';
 import { WithTooltip } from '../../ui/with-tooltip';
 import { useUIContext } from '@/context/ui-context';
 import { PLUGINS_WITHOUT_IMAGE_SUPPORT } from '@/types/plugins';
-import { UpgradePrompt } from '@/components/ui/upgrade-prompt';
 
 interface ToolOptionsProps {
   fileInputRef: React.RefObject<HTMLInputElement>;
@@ -49,40 +47,10 @@ export const ToolOptions = ({
     fileInputRef.current?.click();
   };
 
-  const handleWebSearchToggle = () => {
-    if (hasImageAttached) return;
-    if (!isPremiumSubscription) return;
-
-    if (isPremiumSubscription && selectedPlugin === PluginID.REASONING) {
-      // If reason LLM is active, clicking web search will enable combined mode
-      setSelectedPlugin(PluginID.REASONING_WEB_SEARCH);
-    } else if (
-      isPremiumSubscription &&
-      selectedPlugin === PluginID.REASONING_WEB_SEARCH
-    ) {
-      // If in combined mode, keep reason LLM active
-      setSelectedPlugin(PluginID.REASONING);
-    } else {
-      // Normal web search toggle behavior
-      setSelectedPlugin(
-        selectedPlugin === PluginID.WEB_SEARCH
-          ? PluginID.NONE
-          : PluginID.WEB_SEARCH,
-      );
-    }
-
-    if (isEnhancedMenuOpen) {
-      setIsEnhancedMenuOpen(false);
-    }
-  };
-
   const handlePluginsMenuToggle = () => {
     handleToggleEnhancedMenu();
-    // Disable web search and reason llm if active
-    if (
-      selectedPlugin === PluginID.WEB_SEARCH ||
-      (isPremiumSubscription && selectedPlugin === PluginID.REASONING)
-    ) {
+    // Disable reason llm if active
+    if (isPremiumSubscription && selectedPlugin === PluginID.REASONING) {
       setSelectedPlugin(PluginID.NONE);
     }
   };
@@ -90,23 +58,12 @@ export const ToolOptions = ({
   const handleReasonLLMToggle = () => {
     if (hasImageAttached) return;
 
-    if (isPremiumSubscription && selectedPlugin === PluginID.WEB_SEARCH) {
-      // If web search is active, clicking reason LLM will enable combined mode
-      setSelectedPlugin(PluginID.REASONING_WEB_SEARCH);
-    } else if (
-      isPremiumSubscription &&
-      selectedPlugin === PluginID.REASONING_WEB_SEARCH
-    ) {
-      // If in combined mode, keep web search active
-      setSelectedPlugin(PluginID.WEB_SEARCH);
-    } else {
-      // Normal reason LLM toggle behavior
-      setSelectedPlugin(
-        selectedPlugin === PluginID.REASONING
-          ? PluginID.NONE
-          : PluginID.REASONING,
-      );
-    }
+    // Normal reason LLM toggle behavior
+    setSelectedPlugin(
+      selectedPlugin === PluginID.REASONING
+        ? PluginID.NONE
+        : PluginID.REASONING,
+    );
 
     if (isEnhancedMenuOpen) {
       setIsEnhancedMenuOpen(false);
@@ -173,8 +130,7 @@ export const ToolOptions = ({
         delayDuration={TOOLTIP_DELAY}
         side="top"
         display={
-          selectedPlugin !== PluginID.REASONING &&
-          selectedPlugin !== PluginID.REASONING_WEB_SEARCH && (
+          selectedPlugin !== PluginID.REASONING && (
             <div className="flex flex-col">
               <p className="font-medium">Think before responding</p>
             </div>
@@ -184,8 +140,7 @@ export const ToolOptions = ({
           <div
             className={cn(
               'relative flex flex-row items-center rounded-lg transition-colors duration-300',
-              selectedPlugin === PluginID.REASONING ||
-                selectedPlugin === PluginID.REASONING_WEB_SEARCH
+              selectedPlugin === PluginID.REASONING
                 ? 'bg-primary/10'
                 : 'hover:bg-black/10 dark:hover:bg-white/10',
               hasImageAttached && 'pointer-events-none opacity-50',
@@ -195,8 +150,7 @@ export const ToolOptions = ({
             <IconAtom
               className={cn(
                 'cursor-pointer rounded-lg rounded-bl-xl p-1 focus-visible:outline-black dark:focus-visible:outline-white',
-                selectedPlugin === PluginID.REASONING ||
-                  selectedPlugin === PluginID.REASONING_WEB_SEARCH
+                selectedPlugin === PluginID.REASONING
                   ? 'text-primary'
                   : 'opacity-50',
               )}
@@ -214,64 +168,6 @@ export const ToolOptions = ({
               )}
             >
               Reason
-            </div>
-          </div>
-        }
-      />
-
-      {/* Web Search Toggle */}
-      <WithTooltip
-        delayDuration={TOOLTIP_DELAY}
-        side="top"
-        display={
-          selectedPlugin !== PluginID.WEB_SEARCH &&
-          selectedPlugin !== PluginID.REASONING_WEB_SEARCH && (
-            <div className="flex flex-col">
-              {isPremiumSubscription ? (
-                <p className="font-medium">Search the web</p>
-              ) : (
-                <UpgradePrompt />
-              )}
-            </div>
-          )
-        }
-        trigger={
-          <div
-            className={cn(
-              'relative flex flex-row items-center rounded-lg transition-colors duration-300',
-              selectedPlugin === PluginID.WEB_SEARCH ||
-                selectedPlugin === PluginID.REASONING_WEB_SEARCH
-                ? 'bg-primary/10'
-                : 'hover:bg-black/10 dark:hover:bg-white/10',
-              hasImageAttached && 'pointer-events-none opacity-50',
-              !isPremiumSubscription && 'opacity-50',
-            )}
-            onClick={() => {
-              handleWebSearchToggle();
-            }}
-          >
-            <IconWorld
-              className={cn(
-                'cursor-pointer rounded-lg rounded-bl-xl p-1 focus-visible:outline-black dark:focus-visible:outline-white',
-                selectedPlugin === PluginID.WEB_SEARCH ||
-                  selectedPlugin === PluginID.REASONING_WEB_SEARCH
-                  ? 'text-primary'
-                  : 'opacity-50',
-              )}
-              size={32}
-            />
-            <div
-              className={cn(
-                'whitespace-nowrap text-xs font-medium',
-                'transition-all duration-300',
-                !isMobile && 'max-w-[100px] pr-2',
-                isMobile &&
-                  (selectedPlugin === PluginID.WEB_SEARCH
-                    ? 'max-w-[100px] pr-2 opacity-100'
-                    : 'max-w-0 opacity-0'),
-              )}
-            >
-              Search
             </div>
           </div>
         }

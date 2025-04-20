@@ -64,7 +64,7 @@ export const PluginProvider: React.FC<{
     let installedPluginIds: number[] = localData ? JSON.parse(localData) : [];
 
     if (!localData) {
-      const defaultPluginIds = [1, 2, 10, 12, 13];
+      const defaultPluginIds = [1, 2];
       installedPluginIds = defaultPluginIds;
       localStorage.setItem(
         'installedPluginIds',
