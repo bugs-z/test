@@ -159,9 +159,9 @@ export const handleCreateChat = (
     shared_at: null,
     shared_by: null,
     sharing: 'private',
-    last_feedback_update: new Date().toISOString(),
-    last_file_update: new Date().toISOString(),
-    last_message_update: new Date().toISOString(),
+    last_feedback_update: '',
+    last_file_update: '',
+    last_message_update: '',
   };
 
   setSelectedChat(createdChat);
