@@ -8,7 +8,6 @@ export interface SandboxContext {
   userID: string;
   dataStream: any;
   isPremiumUser?: boolean;
-  selectedPlugin?: string;
   setSandbox?: (sandbox: any) => void;
 }
 

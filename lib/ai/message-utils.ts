@@ -8,7 +8,6 @@ import type {
 } from 'ai';
 import type { BuiltChatMessage } from '@/types/chat-message';
 import { PluginID } from '@/types/plugins';
-import { terminalPlugins } from '@/lib/ai/terminal-utils';
 import { getModerationResult } from '@/lib/server/moderation';
 import { getSystemPrompt } from './prompts';
 
@@ -248,7 +247,6 @@ export async function processChatMessages(
     apiKey &&
     !isContinuation &&
     !isTerminalContinuation &&
-    !terminalPlugins.includes(selectedPlugin as PluginID) &&
     // Skip uncensoring for reasoning plugin as it uses xAI model
     selectedPlugin !== PluginID.REASONING
   ) {

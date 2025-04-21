@@ -155,10 +155,11 @@ export const useChatHandler = () => {
           toolInUse === 'temporary-sandbox' ||
           toolInUse === 'persistent-sandbox')
       ) {
-        const updatedChat = await updateChat(selectedChat.id, {
+        const updatedChat = {
+          ...selectedChat,
           updated_at: new Date().toISOString(),
           finish_reason: 'aborted',
-        });
+        };
 
         // Only update state if we're still on the same chat
         if (selectedChat.id === updatedChat.id) {

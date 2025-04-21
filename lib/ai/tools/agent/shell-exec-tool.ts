@@ -17,7 +17,6 @@ export const createShellExecTool = (context: ToolContext) => {
     sandbox: initialSandbox,
     userID,
     persistentSandbox: initialPersistentSandbox = true,
-    selectedPlugin,
     setSandbox,
     isPremiumUser,
   } = context;
@@ -45,7 +44,6 @@ export const createShellExecTool = (context: ToolContext) => {
           userID,
           dataStream,
           isPremiumUser,
-          selectedPlugin,
           setSandbox,
         },
         {
@@ -58,9 +56,7 @@ export const createShellExecTool = (context: ToolContext) => {
       if (posthog) {
         posthog.capture({
           distinctId: userID,
-          event: selectedPlugin
-            ? `${selectedPlugin}_executed`
-            : 'terminal_executed',
+          event: 'terminal_executed',
           properties: {
             command: command,
             persistentSandbox: persistentSandbox,

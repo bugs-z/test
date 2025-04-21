@@ -115,6 +115,7 @@ This tool executes Bash commands in a Debian environment with root privileges. U
             chatMetadata,
             model,
             supabase,
+            autoSelected: true,
           },
         });
       },
@@ -125,25 +126,25 @@ This tool executes Bash commands in a Debian environment with root privileges. U
 
   return {
     allSchemas,
-    getSelectedSchemas: (selectedPlugin: string | string[]) => {
+    getSelectedSchemas: (selectedTool: string | string[]) => {
       if (
-        selectedPlugin === 'all' ||
-        !selectedPlugin ||
-        selectedPlugin.length === 0
+        selectedTool === 'all' ||
+        !selectedTool ||
+        selectedTool.length === 0
       ) {
         return allSchemas;
       }
-      if (typeof selectedPlugin === 'string') {
-        return selectedPlugin in allSchemas
+      if (typeof selectedTool === 'string') {
+        return selectedTool in allSchemas
           ? {
-              [selectedPlugin as SchemaKey]:
-                allSchemas[selectedPlugin as SchemaKey],
+              [selectedTool as SchemaKey]:
+                allSchemas[selectedTool as SchemaKey],
             }
           : {};
       }
       return Object.fromEntries(
         Object.entries(allSchemas).filter(([key]) =>
-          selectedPlugin.includes(key),
+          selectedTool.includes(key),
         ),
       );
     },

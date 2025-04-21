@@ -1,18 +1,13 @@
 import PostHogClient from '@/app/posthog';
 import { executeTerminalCommand } from '@/lib/tools/e2b/terminal-executor';
-import {
-  streamTerminalOutput,
-  truncateContentByTokens,
-} from '@/lib/ai/terminal-utils';
+import { streamTerminalOutput } from '@/lib/ai/terminal-utils';
 import type { Sandbox } from '@e2b/code-interpreter';
-import type { PluginID } from '@/types/plugins';
 import { ensureSandboxConnection } from './agent/utils/sandbox-utils';
 
 interface TerminalCommandExecutorConfig {
   userID: string;
   dataStream: any;
   isPremiumUser: boolean;
-  selectedPlugin?: PluginID;
   setSandbox: (sandbox: Sandbox) => void;
   initialSandbox?: Sandbox;
   initialPersistentSandbox?: boolean;
@@ -23,7 +18,6 @@ export async function executeTerminalCommandWithConfig({
   userID,
   dataStream,
   isPremiumUser,
-  selectedPlugin,
   setSandbox,
   initialSandbox,
   initialPersistentSandbox,
@@ -56,7 +50,6 @@ export async function executeTerminalCommandWithConfig({
       userID,
       dataStream,
       isPremiumUser,
-      selectedPlugin,
       setSandbox,
     },
     {
@@ -69,9 +62,7 @@ export async function executeTerminalCommandWithConfig({
   if (posthog) {
     posthog.capture({
       distinctId: userID,
-      event: selectedPlugin
-        ? `${selectedPlugin}_executed`
-        : 'terminal_executed',
+      event: 'terminal_executed',
       properties: {
         command: command,
         persistentSandbox: persistentSandbox,

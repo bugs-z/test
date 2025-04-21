@@ -13,7 +13,7 @@ import {
   generateTitleFromUserMessage,
   handleChatWithMetadata,
 } from '@/lib/ai/actions';
-import type { ChatMetadata, LLMID, PluginID, AgentMode } from '@/types';
+import type { ChatMetadata, LLMID, AgentMode } from '@/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 interface TerminalToolConfig {
@@ -22,12 +22,12 @@ interface TerminalToolConfig {
   dataStream: any;
   agentMode: AgentMode;
   confirmTerminalCommand: boolean;
-  selectedPlugin?: PluginID;
   abortSignal: AbortSignal;
   // For saving the chat on backend
   chatMetadata: ChatMetadata;
   model: LLMID;
   supabase: SupabaseClient | null;
+  autoSelected?: boolean;
 }
 
 export async function executeTerminalAgent({
@@ -39,11 +39,11 @@ export async function executeTerminalAgent({
     profile,
     dataStream,
     agentMode,
-    selectedPlugin,
     abortSignal,
     chatMetadata,
     model,
     supabase,
+    autoSelected,
   } = config;
   let messages = config.messages;
 
@@ -80,7 +80,6 @@ export async function executeTerminalAgent({
         userID,
         dataStream,
         isPremiumUser,
-        selectedPlugin,
         setSandbox,
         initialSandbox: sandbox || undefined,
         initialPersistentSandbox: persistentSandbox,
@@ -106,7 +105,6 @@ export async function executeTerminalAgent({
             sandbox,
             userID,
             persistentSandbox,
-            selectedPlugin,
             setSandbox,
             isPremiumUser,
             agentMode,
@@ -178,7 +176,7 @@ export async function executeTerminalAgent({
         }
       })(),
       (async () => {
-        if (chatMetadata?.newChat) {
+        if (chatMetadata?.newChat && !autoSelected) {
           generatedTitle = await generateTitleFromUserMessage({
             messages,
             abortSignal,

@@ -4,7 +4,6 @@ import llmConfig from '@/lib/models/llm-config';
 import { checkRatelimitOnApi } from '@/lib/server/ratelimiter';
 import { createDataStreamResponse, smoothStream, streamText } from 'ai';
 import { myProvider } from '@/lib/ai/providers';
-import { terminalPlugins } from '@/lib/ai/terminal-utils';
 import PostHogClient from '@/app/posthog';
 import { handleToolExecution } from '@/lib/ai/tool-handler';
 import { createToolSchemas } from '@/lib/ai/tools/toolSchemas';
@@ -20,7 +19,6 @@ import {
 } from '@/lib/ai/actions';
 import { createClient } from '@/lib/supabase/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { v4 as uuidv4 } from 'uuid';
 
 export const maxDuration = 600;
 
@@ -77,11 +75,18 @@ export async function POST(request: Request) {
 
     let supabase: SupabaseClient | null = null;
     let generatedTitle: string | undefined;
-    if (chatMetadata.id && model) {
+    let toolUsed = '';
+    if (chatMetadata.id) {
       supabase = await createClient();
     }
 
     request.signal.addEventListener('abort', async () => {
+      const isTerminalUsed =
+        modelParams.isTerminalContinuation ||
+        modelParams.confirmTerminalCommand ||
+        modelParams.selectedPlugin === PluginID.TERMINAL ||
+        toolUsed === 'terminal';
+
       if (supabase) {
         await handleChatWithMetadata({
           supabase,
@@ -90,7 +95,7 @@ export async function POST(request: Request) {
           model,
           title: generatedTitle,
           messages: validatedMessages,
-          finishReason: 'stop',
+          finishReason: isTerminalUsed ? 'aborted' : 'stop',
         });
       }
     });
@@ -145,8 +150,6 @@ export async function POST(request: Request) {
         : 'chat-model-gpt-small-with-tools';
     }
 
-    let toolCalled = false;
-
     try {
       return createDataStreamResponse({
         execute: async (dataStream) => {
@@ -173,7 +176,7 @@ export async function POST(request: Request) {
             experimental_transform: smoothStream({ chunking: 'word' }),
             onChunk: async (chunk: any) => {
               if (chunk.chunk.type === 'tool-call') {
-                toolCalled = true;
+                toolUsed = chunk.chunk.toolName;
               }
             },
             ...(!ragUsed
@@ -186,7 +189,7 @@ export async function POST(request: Request) {
                 }
               : {}),
             onFinish: async ({ finishReason }: { finishReason: string }) => {
-              if (supabase && !toolCalled) {
+              if (supabase && !toolUsed) {
                 await handleChatWithMetadata({
                   supabase,
                   chatMetadata,
@@ -254,7 +257,6 @@ async function getProviderConfig(
 
   const rateLimitModel =
     selectedPlugin !== PluginID.NONE &&
-    !terminalPlugins.includes(selectedPlugin as PluginID) &&
     selectedPlugin !== PluginID.ENHANCED_SEARCH
       ? selectedPlugin
       : rateLimitModelMap[model] || model;
