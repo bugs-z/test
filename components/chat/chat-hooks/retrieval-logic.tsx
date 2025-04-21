@@ -3,6 +3,7 @@ import type { ChatMessage } from '@/types';
 import type { Tables } from '@/supabase/types';
 import { PentestGPTContext } from '@/context/context';
 import { useContext } from 'react';
+import { getFileItemsByFileIds, getFileItemsByFileId } from '@/db/files';
 
 const MAX_FILE_CONTENT_TOKENS = 12000;
 
@@ -71,13 +72,9 @@ export const useRetrievalLogic = () => {
         console.log(
           `Strategy: Including all new message files (${sumOfNewMessageFilesTokens} tokens)`,
         );
-        const { data: allNewMessageFileItems } = await supabase
-          .from('file_items')
-          .select('*')
-          .in(
-            'file_id',
-            retrievedNewMessageFiles.map((file) => file.id),
-          );
+        const allNewMessageFileItems = await getFileItemsByFileIds(
+          retrievedNewMessageFiles.map((file) => file.id),
+        );
         retrievedFileItems.push(...(allNewMessageFileItems ?? []));
       } else {
         console.log(
@@ -88,13 +85,10 @@ export const useRetrievalLogic = () => {
       console.log(
         `Strategy: Including all file content (${sumOfTokens} tokens)`,
       );
-      const { data: allNewMessageFileItems } = await supabase
-        .from('file_items')
-        .select('*')
-        .in('file_id', [
-          ...retrievedNewMessageFiles.map((file) => file.id),
-          ...retrievedChatFiles.map((file) => file.id),
-        ]);
+      const allNewMessageFileItems = await getFileItemsByFileIds([
+        ...retrievedNewMessageFiles.map((file) => file.id),
+        ...retrievedChatFiles.map((file) => file.id),
+      ]);
       retrievedFileItems.push(...(allNewMessageFileItems ?? []));
     }
 
@@ -133,20 +127,8 @@ export const useRetrievalLogic = () => {
       const batchResults = await Promise.all(
         batch.map(async (file) => {
           try {
-            const { data, error } = await supabase
-              .from('file_items')
-              .select('*')
-              .eq('file_id', file.id)
-              .order('sequence_number', { ascending: true });
-
-            if (error) {
-              console.error(
-                `File retrieval error (${file.id}): ${error.message}`,
-              );
-              return [];
-            }
-
-            return data || [];
+            const data = await getFileItemsByFileId(file.id);
+            return data;
           } catch (e) {
             console.error(`Unexpected error retrieving file ${file.id}:`, e);
             return [];

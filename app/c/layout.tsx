@@ -3,12 +3,19 @@
 import { Dashboard } from '@/components/ui/dashboard';
 import { PentestGPTContext } from '@/context/context';
 import { useUIContext } from '@/context/ui-context';
+import { getChatFilesByMultipleChatIds } from '@/db/chat-files';
 import { getChatsByUserId } from '@/db/chats';
+import { localDB } from '@/db/local/db';
+import { getFeedbackByMultipleChatIds } from '@/db/message-feedback';
+import { getFileItemsByMultipleFileIds } from '@/db/message-file-items';
+import { getMessagesByMultipleChatIds } from '@/db/messages';
 import { getSubscriptionByUserId } from '@/db/subscriptions';
 import { LargeModel, SmallModel } from '@/lib/models/hackerai-llm-list';
 import { useRouter } from 'next/navigation';
 import { type ReactNode, useContext, useEffect, useState } from 'react';
 import Loading from '../loading';
+import { supabase } from '@/lib/supabase/browser-client';
+import { refreshLocalData } from '@/db/refresh-local-data';
 
 interface WorkspaceLayoutProps {
   children: ReactNode;
@@ -19,7 +26,9 @@ const fetchWorkspaceData = async (
   setChats: (chats: any[]) => void,
 ) => {
   try {
-    const chats = await getChatsByUserId(userId);
+    const chats = await getChatsByUserId(userId, false);
+    await refreshLocalData(chats);
+
     setChats(chats);
     return true;
   } catch (error) {
@@ -93,7 +102,36 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     };
 
     initializeWorkspace();
-  }, [router]); // Only depend on router
+  }, [router]);
+
+  // Check authentication status and refresh token if needed
+  async function checkAuthStatus() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      await localDB.storage.clearAll();
+      router.push('/login');
+    }
+    return !!user;
+  }
+
+  useEffect(() => {
+    // Set up periodic checks
+    function setupPeriodicChecks(intervalMinutes: number) {
+      const intervalId = setInterval(
+        async () => {
+          await checkAuthStatus();
+        },
+        intervalMinutes * 60 * 1000,
+      );
+
+      // Clean up interval on component unmount
+      return () => clearInterval(intervalId);
+    }
+
+    return setupPeriodicChecks(15); // Check every 15 minutes
+  }, [router]);
 
   if (loading) {
     return <Loading />;

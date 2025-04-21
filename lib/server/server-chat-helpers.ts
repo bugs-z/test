@@ -4,7 +4,6 @@ export async function getServerUserAndProfile() {
   'use server';
 
   const supabase = await createClient();
-
   const user = (await supabase.auth.getUser()).data.user;
   if (!user) {
     throw new Error('User not found');

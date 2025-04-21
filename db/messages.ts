@@ -1,7 +1,18 @@
 import { supabase } from '@/lib/supabase/browser-client';
 import type { Tables, TablesInsert, TablesUpdate } from '@/supabase/types';
+import { localDB } from './local/db';
+
+export type MessageWithFileItemsAndFeedback = Tables<'messages'> & {
+  file_items: Tables<'file_items'>[];
+  feedback: Tables<'feedback'>[];
+};
 
 export const getMessageById = async (messageId: string) => {
+  const storedMessage = await localDB.messages.getById(messageId);
+  if (storedMessage) {
+    return storedMessage;
+  }
+
   const { data: message } = await supabase
     .from('messages')
     .select('*')
@@ -19,7 +30,17 @@ export const getMessagesByChatId = async (
   chatId: string,
   limit = 20,
   lastSequenceNumber?: number,
-) => {
+  useStored = true,
+): Promise<MessageWithFileItemsAndFeedback[]> => {
+  const storedMessages = await localDB.messages.getByChatId(
+    chatId,
+    limit,
+    lastSequenceNumber,
+  );
+  if (useStored && storedMessages) {
+    return storedMessages;
+  }
+
   let query = supabase
     .from('messages')
     .select('*, feedback(*), file_items (*)')
@@ -40,6 +61,25 @@ export const getMessagesByChatId = async (
   return messages.reverse();
 };
 
+export const getMessagesByMultipleChatIds = async (chatIds: string[]) => {
+  if (chatIds.length === 0) {
+    return [];
+  }
+
+  const { data: messages } = await supabase
+    .from('messages')
+    .select('*')
+    .in('chat_id', chatIds);
+
+  if (!messages) {
+    throw new Error('Messages not found');
+  }
+
+  await localDB.messages.updateMany(messages);
+
+  return messages;
+};
+
 export const createMessage = async (message: TablesInsert<'messages'>) => {
   const { data: createdMessage, error } = await supabase
     .from('messages')
@@ -50,6 +90,8 @@ export const createMessage = async (message: TablesInsert<'messages'>) => {
   if (error) {
     throw new Error(error.message);
   }
+
+  await localDB.messages.update(createdMessage);
 
   return createdMessage;
 };
@@ -74,7 +116,7 @@ export const createMessages = async (
     .filter((id) => id !== undefined);
 
   if (fileIds.length > 0) {
-    const { error: filesError } = await supabase
+    const { data: files, error: filesError } = await supabase
       .from('files')
       .update({ message_id: createdMessages[0].id, chat_id: chatId })
       .in('id', fileIds)
@@ -94,6 +136,12 @@ export const createMessages = async (
     if (filesError) {
       throw new Error(filesError.message);
     }
+
+    await localDB.files.updateMany(files);
+  }
+
+  for (const message of createdMessages) {
+    await localDB.messages.update(message);
   }
 
   return createdMessages;
@@ -114,6 +162,8 @@ export const updateMessage = async (
     throw new Error(error.message);
   }
 
+  await localDB.messages.update(updatedMessage);
+
   return updatedMessage;
 };
 
@@ -126,6 +176,8 @@ export const deleteMessage = async (messageId: string) => {
   if (error) {
     throw new Error(error.message);
   }
+
+  await localDB.messages.delete(messageId);
 
   return true;
 };
@@ -198,6 +250,12 @@ export async function deleteMessagesIncludingAndAfter(
 
     files = filesData;
   }
+
+  await localDB.messages.deleteIncludingAndAfter(
+    userId,
+    chatId,
+    sequenceNumber,
+  );
 
   const { error } = await supabase.rpc('delete_messages_including_and_after', {
     p_user_id: userId,

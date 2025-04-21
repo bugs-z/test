@@ -2,10 +2,9 @@ import React, { useState, useEffect, useContext } from 'react';
 import { DialogPanel, DialogTitle } from '@headlessui/react';
 import { Button } from '../../ui/button';
 import { IconTrash, IconX, IconLoader2 } from '@tabler/icons-react';
-import { supabase } from '@/lib/supabase/browser-client';
 import { PentestGPTContext } from '@/context/context';
 import type { Tables } from '@/supabase/types';
-import { updateChat } from '@/db/chats';
+import { updateChat, getSharedChatsByUserId } from '@/db/chats';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { TransitionedDialog } from '@/components/ui/transitioned-dialog';
@@ -36,15 +35,8 @@ export const SharedChatsPopup: React.FC<SharedChatsPopupProps> = ({
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase
-        .from('chats')
-        .select('*')
-        .eq('user_id', profile.user_id)
-        .eq('sharing', 'public')
-        .order('shared_at', { ascending: false });
-
-      if (error) throw error;
-      setSharedChats(data || []);
+      const sharedChats = await getSharedChatsByUserId(profile.user_id);
+      setSharedChats(sharedChats);
     } catch (error) {
       console.error('Error fetching shared chats:', error);
       toast.error('Failed to fetch shared chats');

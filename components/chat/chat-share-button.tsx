@@ -1,16 +1,5 @@
-import React, { useState, useEffect, useContext } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-  IconX,
-  IconLink,
-  IconBrandLinkedin,
-  IconBrandFacebook,
-  IconBrandReddit,
-  IconBrandX,
-  IconShare2,
-} from '@tabler/icons-react';
-import { supabase } from '@/lib/supabase/browser-client';
-import { PentestGPTContext } from '@/context/context';
+import { CopyButton } from '@/components/ui/copy-button';
 import {
   Dialog,
   DialogContent,
@@ -19,13 +8,22 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { updateChat } from '@/db/chats';
-import { CopyButton } from '@/components/ui/copy-button';
-import { toast } from 'sonner';
+import { PentestGPTContext } from '@/context/context';
+import { getLastSharedMessageId, updateChat } from '@/db/chats';
 import { getMessagesByChatId } from '@/db/messages';
 import type { Tables } from '@/supabase/types';
+import {
+  IconBrandFacebook,
+  IconBrandLinkedin,
+  IconBrandReddit,
+  IconBrandX,
+  IconLink,
+  IconShare2,
+  IconX,
+} from '@tabler/icons-react';
+import React, { useContext, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { WithTooltip } from '../ui/with-tooltip';
-
 interface ShareChatButtonProps {
   children?: React.ReactNode;
   chat?: Tables<'chats'>;
@@ -53,17 +51,10 @@ export const ShareChatButton: React.FC<ShareChatButtonProps> = ({
   const checkIfShared = async () => {
     if (!chatToShare) return;
 
-    const { data } = await supabase
-      .from('chats')
-      .select('last_shared_message_id')
-      .eq('id', chatToShare.id)
-      .eq('sharing', 'public')
-      .single();
+    const lastSharedMessageId = await getLastSharedMessageId(chatToShare.id);
 
-    if (data?.last_shared_message_id) {
-      setShareUrl(
-        `${window.location.origin}/share/${data.last_shared_message_id}`,
-      );
+    if (lastSharedMessageId) {
+      setShareUrl(`${window.location.origin}/share/${lastSharedMessageId}`);
     } else {
       setShareUrl('');
     }

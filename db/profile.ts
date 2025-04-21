@@ -59,3 +59,22 @@ export const deleteProfile = async (profileId: string) => {
 
   return true;
 };
+
+export const updateProfileAvatar = async (
+  userId: string,
+  avatarUrl: string,
+) => {
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      image_url: avatarUrl,
+      image_path: '',
+    })
+    .eq('user_id', userId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return true;
+};

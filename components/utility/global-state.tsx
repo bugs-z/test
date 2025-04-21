@@ -5,6 +5,7 @@ import { getChatFilesByChatId } from '@/db/chat-files';
 import { getChatById } from '@/db/chats';
 import { getMessagesByChatId } from '@/db/messages';
 import { getProfileByUserId } from '@/db/profile';
+import { localDB } from '@/db/local/db';
 import { getMessageImageFromStorage } from '@/db/storage/message-images';
 import {
   getSubscriptionByTeamId,
@@ -193,20 +194,45 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
       (message) =>
         message.image_paths
           ? message.image_paths.map(async (imagePath) => {
+              // First try to get the image from IndexedDB
+              const storedImage =
+                await localDB.messageImages.getByPath(imagePath);
+
+              if (storedImage && storedImage.base64) {
+                return storedImage;
+              }
+
+              // If not in IndexedDB, fetch from remote storage
               const url = await getMessageImageFromStorage(imagePath);
 
               if (url) {
-                const response = await fetch(url);
-                const blob = await response.blob();
-                const base64 = await convertBlobToBase64(blob);
+                try {
+                  const response = await fetch(url);
+                  const blob = await response.blob();
+                  const base64 = await convertBlobToBase64(blob);
 
-                return {
-                  messageId: message.id,
-                  path: imagePath,
-                  base64,
-                  url,
-                  file: null,
-                };
+                  const messageImage = {
+                    messageId: message.id,
+                    path: imagePath,
+                    base64,
+                    url,
+                    file: null,
+                  };
+
+                  // Store the image in IndexedDB for offline use
+                  await localDB.messageImages.store(messageImage);
+
+                  return messageImage;
+                } catch (error) {
+                  console.error('Error fetching image:', error);
+                  return {
+                    messageId: message.id,
+                    path: imagePath,
+                    base64: '',
+                    url,
+                    file: null,
+                  };
+                }
               }
 
               return {
@@ -257,9 +283,9 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
       return;
     }
 
-    setChatFiles(chatFiles.files);
+    setChatFiles(chatFiles);
 
-    setUseRetrieval(chatFiles.files.length > 0);
+    setUseRetrieval(chatFiles.length > 0);
     setAllMessagesLoaded(false);
     setIsLoadingMore(false);
 

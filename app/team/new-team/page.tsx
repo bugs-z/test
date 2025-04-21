@@ -15,6 +15,7 @@ import PentestGPTTextSVG from '@/components/icons/pentestgpt-text-svg';
 import { useTheme } from 'next-themes';
 import { PentestGPTContext } from '@/context/context';
 import { getSubscriptionByUserId } from '@/db/subscriptions';
+import { localDB } from '@/db/local/db';
 
 const MONTHLY_TEAM_PRICE_ID =
   process.env.NEXT_PUBLIC_STRIPE_MONTHLY_TEAM_PRICE_ID;
@@ -104,6 +105,7 @@ const NewTeamPage: FC = () => {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut({ scope: 'local' });
+    await localDB.storage.clearAll();
     router.push('/login');
     router.refresh();
   };

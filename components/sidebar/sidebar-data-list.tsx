@@ -46,10 +46,20 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
         lastChat.created_at,
       );
       if (moreChats.length > 0) {
-        setChats((prevChats: Tables<'chats'>[]) => [
-          ...prevChats,
-          ...moreChats,
-        ]);
+        setChats((prevChats: Tables<'chats'>[]) => {
+          // Create a map of existing chats by ID for quick lookup
+          const existingChatsMap = new Map(
+            prevChats.map((chat) => [chat.id, chat]),
+          );
+
+          // Filter out any chats that already exist in prevChats
+          const uniqueNewChats = moreChats.filter(
+            (chat) => !existingChatsMap.has(chat.id),
+          );
+
+          // Return combined array with unique chats
+          return [...prevChats, ...uniqueNewChats];
+        });
       } else {
         setHasMoreChats(false);
       }

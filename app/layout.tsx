@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/server';
 import { UIState } from '@/components/utility/ui-state';
 import { Toaster } from '@/components/ui/sonner';
 import { PostHogProvider } from '@/app/providers';
+import { MFAProvider } from '@/components/utility/mfa/use-mfa';
 
 const inter = Inter({ subsets: ['latin'] });
 const APP_NAME = 'PentestGPT';
@@ -115,7 +116,9 @@ export default async function RootLayout({ children }: RootLayoutProps) {
               {user ? (
                 <PluginProvider>
                   <GlobalState user={user}>
-                    <UIState>{children}</UIState>
+                    <MFAProvider>
+                      <UIState>{children}</UIState>
+                    </MFAProvider>
                   </GlobalState>
                 </PluginProvider>
               ) : (

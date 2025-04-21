@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
+import { updateProfileAvatar } from '@/db/profile';
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
@@ -23,18 +24,7 @@ export async function GET(request: Request) {
 
         if (avatarUrl && data.user) {
           try {
-            // Update profile directly using supabase query
-            const { error: updateError } = await supabase
-              .from('profiles')
-              .update({
-                image_url: avatarUrl,
-                image_path: '',
-              })
-              .eq('user_id', data.user.id);
-
-            if (updateError) {
-              console.error('Error updating profile:', updateError);
-            }
+            await updateProfileAvatar(data.user.id, avatarUrl);
           } catch (error) {
             console.error('Error updating profile with Google avatar:', error);
           }

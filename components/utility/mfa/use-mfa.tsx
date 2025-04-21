@@ -1,8 +1,56 @@
-import { useState, useEffect } from 'react';
+'use client';
+
+import {
+  useState,
+  useEffect,
+  createContext,
+  useContext,
+  ReactNode,
+} from 'react';
 import { supabase } from '@/lib/supabase/browser-client';
 import { toast } from 'sonner';
 
+type MFAFactor = {
+  id: string;
+  factor_type: 'totp' | 'phone';
+  status: 'verified' | 'unverified';
+  friendly_name?: string;
+  created_at: string;
+  updated_at: string;
+};
+
+type MFAContextType = {
+  isLoading: boolean;
+  factors: MFAFactor[];
+  factorId: string;
+  qrCode: string;
+  secret: string;
+  error: string;
+  isEnrolling: boolean;
+  startEnrollment: () => Promise<void>;
+  verifyMFA: (code: string) => Promise<void>;
+  verifyBeforeUnenroll: (code: string) => Promise<boolean>;
+  unenrollMFA: () => Promise<void>;
+  fetchFactors: () => Promise<void>;
+};
+
+const MFAContext = createContext<MFAContextType | undefined>(undefined);
+
+export const MFAProvider = ({ children }: { children: ReactNode }) => {
+  const mfaUtils = useMFAUtils();
+
+  return <MFAContext.Provider value={mfaUtils}>{children}</MFAContext.Provider>;
+};
+
 export const useMFA = () => {
+  const context = useContext(MFAContext);
+  if (context === undefined) {
+    throw new Error('useMFA must be used within a MFAProvider');
+  }
+  return context;
+};
+
+const useMFAUtils = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [factors, setFactors] = useState<any[]>([]);
   const [factorId, setFactorId] = useState('');

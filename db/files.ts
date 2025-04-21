@@ -1,10 +1,16 @@
 import { supabase } from '@/lib/supabase/browser-client';
-import type { TablesInsert, TablesUpdate } from '@/supabase/types';
+import type { Tables, TablesInsert, TablesUpdate } from '@/supabase/types';
 import mammoth from 'mammoth';
 import { toast } from 'sonner';
 import { uploadFile } from './storage/files';
+import { localDB } from './local/db';
 
-export const getFileById = async (fileId: string) => {
+export const getFileById = async (fileId: string, useStored = true) => {
+  const storedFile = await localDB.files.getById(fileId);
+  if (useStored && storedFile) {
+    return storedFile;
+  }
+
   const { data: file, error } = await supabase
     .from('files')
     .select('*')
@@ -15,10 +21,17 @@ export const getFileById = async (fileId: string) => {
     throw new Error(error.message);
   }
 
+  await localDB.files.update(file);
+
   return file;
 };
 
-export const getAllFilesCount = async () => {
+export const getAllFilesCount = async (userId: string) => {
+  const storedFilesCount = await localDB.files.getCount(userId);
+  if (storedFilesCount) {
+    return storedFilesCount;
+  }
+
   const { count, error } = await supabase
     .from('files')
     .select('*', { count: 'exact' });
@@ -66,7 +79,7 @@ export const createFile = async (
   }
   fileRecord.name = validFilename;
 
-  const filesCounts = (await getAllFilesCount()) || 0;
+  const filesCounts = (await getAllFilesCount(fileRecord.user_id)) || 0;
   const maxFiles = Number.parseInt(
     process.env.NEXT_PUBLIC_RATELIMITER_LIMIT_FILES || '100',
   );
@@ -82,6 +95,7 @@ export const createFile = async (
   if (error) {
     throw new Error(error.message);
   }
+  await localDB.files.update(createdFile);
 
   const filePath = await uploadFile(file, {
     name: createdFile.name,
@@ -108,12 +122,16 @@ export const createFile = async (
       `Error processing file:${createdFile.id}, status:${response.status}, response:${json.message}`,
     );
     await deleteFile(createdFile.id);
+    await localDB.files.delete(createdFile.id);
     throw new Error(
       `Failed to process file (${fileRecord.name}): ${json.message}`,
     );
   }
 
-  const fetchedFile = await getFileById(createdFile.id);
+  const fetchedFile = await getFileById(createdFile.id, false);
+
+  // for the cache
+  await getFileItemsByFileId(createdFile.id, false);
 
   return fetchedFile;
 };
@@ -124,7 +142,7 @@ export const createDocXFile = async (
   file: File,
   fileRecord: TablesInsert<'files'>,
 ) => {
-  const filesCounts = (await getAllFilesCount()) || 0;
+  const filesCounts = (await getAllFilesCount(fileRecord.user_id)) || 0;
   const maxFiles = Number.parseInt(
     process.env.NEXT_PUBLIC_RATELIMITER_LIMIT_FILES || '100',
   );
@@ -140,6 +158,7 @@ export const createDocXFile = async (
   if (error) {
     throw new Error(error.message);
   }
+  await localDB.files.update(createdFile);
 
   const filePath = await uploadFile(file, {
     name: createdFile.name,
@@ -177,6 +196,8 @@ export const createDocXFile = async (
   }
 
   const fetchedFile = await getFileById(createdFile.id);
+  // for the cache
+  await getFileItemsByFileId(createdFile.id, false);
 
   return fetchedFile;
 };
@@ -196,6 +217,8 @@ export const updateFile = async (
     throw new Error(error.message);
   }
 
+  await localDB.files.update(updatedFile);
+
   return updatedFile;
 };
 
@@ -206,5 +229,67 @@ export const deleteFile = async (fileId: string) => {
     throw new Error(error.message);
   }
 
+  await localDB.files.delete(fileId);
+
   return true;
+};
+
+export const getFileItemsByFileIds = async (fileIds: string[]) => {
+  if (!fileIds.length) return [];
+
+  const returnData: Tables<'file_items'>[] = [];
+
+  for (const fileId of fileIds) {
+    const storedFileItems = await localDB.fileItems.getByFileId(fileId);
+    if (storedFileItems) {
+      returnData.push(...storedFileItems);
+    }
+  }
+  const { data, error } = await supabase
+    .from('file_items')
+    .select('*')
+    .in(
+      'file_id',
+      fileIds.filter(
+        (fileId) => !returnData.some((item) => item.file_id === fileId),
+      ),
+    );
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  if (data?.length > 0) {
+    await localDB.fileItems.updateMany(data);
+    returnData.push(...data);
+  }
+
+  return returnData;
+};
+
+export const getFileItemsByFileId = async (
+  fileId: string,
+  useStored = true,
+) => {
+  const storedFileItems = await localDB.fileItems.getByFileId(
+    fileId,
+    'sequence_number',
+  );
+  if (useStored && storedFileItems) {
+    return storedFileItems;
+  }
+
+  const { data, error } = await supabase
+    .from('file_items')
+    .select('*')
+    .eq('file_id', fileId)
+    .order('sequence_number', { ascending: true });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  await localDB.fileItems.updateMany(data);
+
+  return data || [];
 };

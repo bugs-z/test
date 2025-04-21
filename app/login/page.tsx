@@ -5,6 +5,7 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { checkAuthRateLimit } from '@/lib/server/check-auth-ratelimit';
 import { LoginForm } from './form';
+import { localDB } from '@/db/local/db';
 
 export const metadata: Metadata = {
   title: 'Login',
