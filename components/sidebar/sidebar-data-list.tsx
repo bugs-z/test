@@ -24,7 +24,7 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
   contentType,
   data,
 }) => {
-  const { setChats, isTemporaryChat } = useContext(PentestGPTContext);
+  const { chats, setChats, isTemporaryChat } = useContext(PentestGPTContext);
 
   const divRef = useRef<HTMLDivElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
@@ -45,7 +45,12 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
         lastChat.user_id,
         lastChat.created_at,
       );
-      if (moreChats.length > 0) {
+
+      const newChats = moreChats.filter(
+        (chat) => !chats.some((c) => c.id === chat.id),
+      );
+
+      if (newChats.length > 0) {
         setChats((prevChats: Tables<'chats'>[]) => {
           // Create a map of existing chats by ID for quick lookup
           const existingChatsMap = new Map(

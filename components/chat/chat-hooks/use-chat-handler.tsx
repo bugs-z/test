@@ -497,7 +497,7 @@ export const useChatHandler = () => {
         setTemporaryChatMessages(updatedMessages);
       } else {
         if (!currentChat) {
-          currentChat = handleCreateChat(
+          currentChat = await handleCreateChat(
             baseModel!,
             profile!,
             messageContent || '',
