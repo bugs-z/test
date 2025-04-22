@@ -198,7 +198,7 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
               const storedImage =
                 await localDB.messageImages.getByPath(imagePath);
 
-              if (storedImage && storedImage.base64) {
+              if (storedImage?.base64) {
                 return storedImage;
               }
 

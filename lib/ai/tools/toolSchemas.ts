@@ -16,6 +16,7 @@ export const createToolSchemas = ({
   chatMetadata,
   model,
   supabase,
+  isPremiumUser,
 }: {
   messages: any;
   profile: any;
@@ -26,6 +27,7 @@ export const createToolSchemas = ({
   chatMetadata: ChatMetadata;
   model: LLMID;
   supabase: SupabaseClient | null;
+  isPremiumUser: boolean;
 }) => {
   const allSchemas = {
     browser: {
@@ -90,7 +92,7 @@ Do not use this tool if the human is merely asking about the possibility of sear
     terminal: {
       description: `Run terminal commands. Select this tool IMMEDIATELY when any terminal operations are needed, don't say or plan anything before selecting this tool.
 
-This tool executes Bash commands in a Debian environment with root privileges. Use this tool when:
+This tool executes terminal commands in a Ubuntu environment with root privileges. Use this tool when:
 1. The human requests to run any command or script
 2. The human needs to perform network scanning, enumeration, or other security testing
 3. The human needs to install, configure, or use security tools
@@ -100,7 +102,7 @@ This tool executes Bash commands in a Debian environment with root privileges. U
         terminal: z
           .boolean()
           .describe(
-            'Set to true to use the terminal for executing bash commands. Select immediately when terminal operations are needed.',
+            'Set to true to use the terminal for executing terminal commands. Select immediately when terminal operations are needed.',
           ),
       }),
       execute: async () => {
@@ -115,6 +117,7 @@ This tool executes Bash commands in a Debian environment with root privileges. U
             chatMetadata,
             model,
             supabase,
+            isPremiumUser,
             autoSelected: true,
           },
         });

@@ -30,7 +30,7 @@ async function getProviderConfig(profile: any) {
 
   return {
     systemPrompt,
-    model: myProvider.languageModel('chat-model-gpt-small'),
+    model: myProvider.languageModel('chat-model-small'),
   };
 }
 

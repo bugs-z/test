@@ -1,4 +1,4 @@
-import { Tables } from '@/supabase/types';
+import type { Tables } from '@/supabase/types';
 import { putItem } from '../core/indexedDB';
 import { STORES } from '../schema/schema';
 

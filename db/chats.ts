@@ -1,10 +1,6 @@
 import { supabase } from '@/lib/supabase/browser-client';
 import type { TablesInsert, TablesUpdate, Tables } from '@/supabase/types';
 import { localDB } from './local/db';
-import { getChatFilesByMultipleChatIds } from './chat-files';
-import { getFileItemsByMultipleFileIds } from './message-file-items';
-import { getMessagesByMultipleChatIds } from './messages';
-import { getFeedbackByMultipleChatIds } from './message-feedback';
 import { refreshLocalData } from './refresh-local-data';
 
 export const getChatById = async (chatId: string) => {

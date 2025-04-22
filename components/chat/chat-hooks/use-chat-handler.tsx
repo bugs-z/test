@@ -1,6 +1,5 @@
 import { useAlertContext } from '@/context/alert-context';
 import { PentestGPTContext } from '@/context/context';
-import { updateChat } from '@/db/chats';
 import type { Tables, TablesInsert } from '@/supabase/types';
 import type {
   ChatMessage,

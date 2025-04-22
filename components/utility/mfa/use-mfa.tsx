@@ -5,7 +5,7 @@ import {
   useEffect,
   createContext,
   useContext,
-  ReactNode,
+  type ReactNode,
 } from 'react';
 import { supabase } from '@/lib/supabase/browser-client';
 import { toast } from 'sonner';

@@ -1,4 +1,4 @@
-import { MessageImage } from '@/types/images/message-image';
+import type { MessageImage } from '@/types/images/message-image';
 import { getItem, putItem } from '../core/indexedDB';
 import { STORES } from '../schema/schema';
 

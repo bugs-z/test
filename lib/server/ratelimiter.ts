@@ -119,33 +119,6 @@ function _getLimit(model: string, subscriptionInfo: SubscriptionInfo): number {
   const isPaid = subscriptionInfo.isPremium || subscriptionInfo.isTeam;
   const suffix = isPaid ? '_PREMIUM' : '_FREE';
 
-  // Pro queries group (reasoning and web search related plugins)
-  const proQueryModels = [
-    'reasoning',
-    'websearch',
-    'reasoning-web-search',
-    'web-search',
-  ];
-
-  if (proQueryModels.includes(model)) {
-    // Try consolidated limit first
-    const consolidatedKey = `RATELIMITER_LIMIT_PRO_QUERIES${suffix}`;
-    let limit = getValidatedLimit(process.env[consolidatedKey], -1);
-
-    // Fall back to model-specific limit if consolidated isn't set
-    if (limit < 0) {
-      const modelKey = `RATELIMITER_LIMIT_${_getFixedModelName(model)}${suffix}`;
-      limit = getValidatedLimit(process.env[modelKey], isPaid ? 25 : 5);
-    }
-
-    if (subscriptionInfo.isTeam) {
-      const teamMultiplier = Number(process.env.TEAM_LIMIT_MULTIPLIER) || 1.8;
-      return Math.floor(limit * teamMultiplier);
-    }
-
-    return limit;
-  }
-
   // Standard model handling
   const fixedModelName = _getFixedModelName(model);
   const limitKey = `RATELIMITER_LIMIT_${fixedModelName}${suffix}`;
@@ -208,15 +181,7 @@ function _getFixedModelName(model: string): string {
 }
 
 function _makeStorageKey(userId: string, model: string): string {
-  // Pro queries group (reasoning and web search related plugins)
-  const proQueryModels = ['websearch', 'reasoning-web-search', 'web-search'];
-
-  // Use a common key for all pro query models
-  if (proQueryModels.includes(model)) {
-    return `ratelimit:${userId}:PRO_QUERIES`;
-  }
-
-  // For other models, use the model-specific key
+  // For all models, use the model-specific key
   const fixedModelName = _getFixedModelName(model);
   return `ratelimit:${userId}:${fixedModelName}`;
 }
@@ -242,9 +207,6 @@ export function getRateLimitErrorMessage(
       message += `\n\nIn the meantime, you can use Large Model`;
     } else if (model === 'pentestgpt-pro') {
       message += `\n\nIn the meantime, you can use Small Model`;
-      // TODO: Remove in future
-    } else if (model === 'gpt-4') {
-      message += `\n\nIn the meantime, you can use Large Model or Small Model`;
     }
   } else {
     message += `\n\n🔓 Want more? Upgrade to Pro or Team and unlock a world of features:
@@ -261,13 +223,10 @@ function getModelName(model: string): string {
   const modelNames: { [key: string]: string } = {
     pentestgpt: 'Small Model',
     'pentestgpt-pro': 'Large Model',
-    // TODO: Remove in future
-    'gpt-4': 'PentestGPT 4.1',
     terminal: 'terminal',
     'tts-1': 'text-to-speech',
     'stt-1': 'speech-to-text',
     reasoning: 'reasoning model',
-    'reasoning-web-search': 'reasoning web search model',
   };
   return modelNames[model] || model;
 }
@@ -276,31 +235,24 @@ export async function checkRatelimitOnApi(
   userId: string,
   model: string,
   subscriptionInfo?: SubscriptionInfo,
-): Promise<{ response: Response; result: RateLimitResult } | null> {
+): Promise<{ allowed: boolean; info: any }> {
   const result = await ratelimit(userId, model, subscriptionInfo);
-
-  if (result.allowed) {
-    return null;
-  }
-
   const subInfo = subscriptionInfo || (await getSubscriptionInfo(userId));
-
-  const message = getRateLimitErrorMessage(
-    result.timeRemaining!,
-    subInfo.isPremium,
-    model,
-  );
-
-  const response = new Response(
-    JSON.stringify({
-      message: message,
-      remaining: result.remaining,
-      timeRemaining: result.timeRemaining,
-      subscriptionType: result.subscriptionType,
-    }),
-    {
-      status: 429,
-    },
-  );
-  return { response, result };
+  const max = _getLimit(model, subInfo);
+  const used = max - result.remaining;
+  const info: any = {
+    remaining: result.remaining,
+    used,
+    max,
+    isPremiumUser: subInfo.isPremium,
+  };
+  if (!result.allowed) {
+    info.timeRemaining = result.timeRemaining;
+    info.message = getRateLimitErrorMessage(
+      result.timeRemaining!,
+      subInfo.isPremium,
+      model,
+    );
+  }
+  return { allowed: result.allowed, info };
 }

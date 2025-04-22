@@ -35,13 +35,22 @@ export async function POST(req: NextRequest) {
     }
 
     // Check rate limit
-    const rateLimitCheckResult = await checkRatelimitOnApi(
+    const rateLimitStatus = await checkRatelimitOnApi(
       profile.user_id,
       'stt-1',
       subscriptionInfo,
     );
-    if (rateLimitCheckResult !== null) {
-      return rateLimitCheckResult.response;
+
+    if (!rateLimitStatus.allowed) {
+      return new Response(
+        JSON.stringify({
+          error: {
+            type: 'ratelimit_hit',
+            message: rateLimitStatus.info.message,
+          },
+        }),
+        { status: 429 },
+      );
     }
 
     // Get and validate audio file

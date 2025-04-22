@@ -103,19 +103,25 @@ export const fetchChatResponse = async (
   });
 
   if (!response.ok) {
-    if (response.status === 500) {
-      const errorData = await response.json();
-      toast.error(errorData.message);
+    let errorData;
+    try {
+      errorData = await response.json();
+    } catch {
+      errorData = {};
     }
 
-    const errorData = await response.json();
-    if (response.status === 429 && errorData && errorData.timeRemaining) {
+    if (response.status === 500) {
+      toast.error(errorData.message || 'Server error');
+    } else if (
+      response.status === 429 &&
+      errorData.error?.type === 'ratelimit_hit'
+    ) {
       alertDispatch({
         type: 'SHOW',
         payload: {
-          message: errorData.message,
+          message: errorData.error.message,
           title: 'Usage Cap Error',
-          ...(errorData.subscriptionType === 'free' && {
+          ...(errorData.error.isPremiumUser === false && {
             action: {
               label: 'Upgrade Now',
               onClick: () => {
@@ -126,8 +132,7 @@ export const fetchChatResponse = async (
         },
       });
     } else {
-      const errorData = await response.json();
-      toast.error(errorData.message);
+      toast.error(errorData.message || 'An error occurred');
     }
 
     setIsGenerating(false);

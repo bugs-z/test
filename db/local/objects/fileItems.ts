@@ -1,6 +1,6 @@
 import { getItem, getItemsByIndex, putItem } from '../core/indexedDB';
 import { STORES } from '../schema/schema';
-import { Tables } from '@/supabase/types';
+import type { Tables } from '@/supabase/types';
 
 const updateStoredFileItems = async (
   fileItems: Tables<'file_items'>[],

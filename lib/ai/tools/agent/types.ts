@@ -1,5 +1,4 @@
 import type { Sandbox } from '@e2b/code-interpreter';
-import type { PluginID } from '@/types/plugins';
 import type { AgentMode } from '@/types/llms';
 
 /**

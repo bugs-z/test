@@ -37,14 +37,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const rateLimitCheckResult = await checkRatelimitOnApi(
+    const rateLimitStatus = await checkRatelimitOnApi(
       profile.user_id,
       'tts-1',
       subscriptionInfo,
     );
 
-    if (rateLimitCheckResult !== null) {
-      return rateLimitCheckResult.response;
+    if (!rateLimitStatus.allowed) {
+      return new Response(
+        JSON.stringify({
+          error: {
+            type: 'ratelimit_hit',
+            message: rateLimitStatus.info.message,
+          },
+        }),
+        { status: 429 },
+      );
     }
 
     const MAX_LENGTH = 4096;

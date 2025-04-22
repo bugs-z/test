@@ -1,4 +1,3 @@
-import { supabase } from '../../../lib/supabase/browser-client';
 import type { ChatMessage } from '@/types';
 import type { Tables } from '@/supabase/types';
 import { PentestGPTContext } from '@/context/context';

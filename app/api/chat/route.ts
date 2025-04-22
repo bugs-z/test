@@ -53,8 +53,17 @@ export async function POST(request: Request) {
       modelParams.selectedPlugin,
     );
 
-    if (config.rateLimitCheckResult !== null) {
-      return config.rateLimitCheckResult.response;
+    if (!config.isRateLimitAllowed) {
+      return new Response(
+        JSON.stringify({
+          error: {
+            type: 'ratelimit_hit',
+            message: config.rateLimitInfo.message,
+            isPremiumUser: config.isPremiumUser,
+          },
+        }),
+        { status: 429 },
+      );
     }
 
     let {
@@ -109,10 +118,10 @@ export async function POST(request: Request) {
       agentMode: modelParams.agentMode,
       confirmTerminalCommand: modelParams.confirmTerminalCommand,
       abortSignal: request.signal,
-      // For saving the chat on backend
       chatMetadata,
       model,
       supabase,
+      isPremiumUser: config.isPremiumUser,
     });
     if (toolResponse) {
       return toolResponse;
@@ -144,16 +153,19 @@ export async function POST(request: Request) {
       });
     }
 
-    if (!ragUsed && finalSelectedModel !== 'chat-model-large') {
+    if (!ragUsed) {
       finalSelectedModel = config.isLargeModel
-        ? 'chat-model-gpt-large-with-tools'
-        : 'chat-model-gpt-small-with-tools';
+        ? 'chat-model-large-with-tools'
+        : 'chat-model-small-with-tools';
     }
 
     try {
       return createDataStreamResponse({
         execute: async (dataStream) => {
-          dataStream.writeData({ ragUsed, ragId });
+          dataStream.writeData({
+            type: 'ratelimit',
+            content: config.rateLimitInfo,
+          });
 
           const toolConfig = {
             messages: validatedMessages,
@@ -165,6 +177,7 @@ export async function POST(request: Request) {
             chatMetadata,
             model,
             supabase,
+            isPremiumUser: config.isPremiumUser,
           };
 
           const result = streamText({
@@ -236,11 +249,11 @@ async function getProviderConfig(
   profile: any,
   selectedPlugin: PluginID,
 ) {
-  // Moving away from chat-model-large to chat-model-gpt-large
+  // Moving away from gpt-4-turbo-preview to chat-model-large
   const modelMap: Record<string, string> = {
     'mistral-medium': 'chat-model-small',
-    'mistral-large': 'chat-model-gpt-large',
-    'gpt-4-turbo-preview': 'chat-model-gpt-large',
+    'mistral-large': 'chat-model-large',
+    'gpt-4-turbo-preview': 'chat-model-large',
   };
   // Moving away from gpt-4-turbo-preview to pentestgpt-pro
   const rateLimitModelMap: Record<string, string> = {
@@ -261,14 +274,16 @@ async function getProviderConfig(
       ? selectedPlugin
       : rateLimitModelMap[model] || model;
 
-  const rateLimitCheckResult = await checkRatelimitOnApi(
+  const rateLimitStatus = await checkRatelimitOnApi(
     profile.user_id,
     rateLimitModel,
   );
 
   return {
     selectedModel,
-    rateLimitCheckResult,
+    isRateLimitAllowed: rateLimitStatus.allowed,
     isLargeModel,
+    rateLimitInfo: rateLimitStatus.info,
+    isPremiumUser: rateLimitStatus.info.isPremiumUser,
   };
 }

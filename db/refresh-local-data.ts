@@ -1,4 +1,4 @@
-import { Tables } from '@/supabase/types';
+import type { Tables } from '@/supabase/types';
 import { getChatFilesByMultipleChatIds } from './chat-files';
 import { localDB } from './local/db';
 import { getFeedbackByMultipleChatIds } from './message-feedback';

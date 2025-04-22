@@ -6,7 +6,7 @@ import React, {
   useEffect,
   useRef,
 } from 'react';
-import { IconChevronDown, IconRepeat, IconWorld } from '@tabler/icons-react';
+import { IconChevronDown, IconRepeat } from '@tabler/icons-react';
 import { WithTooltip } from './with-tooltip';
 import { GPT4 } from '@/lib/models/openai-llm-list';
 import { SmallModel, LargeModel } from '@/lib/models/hackerai-llm-list';
@@ -204,27 +204,6 @@ export const SwitchModel: FC<SwitchModelProps> = ({
                     )}
                   </MenuItem>
                 ))}
-
-              <MenuItem>
-                {({ focus }) => (
-                  <button
-                    onClick={() => onChangeModel(`${currentModel}:websearch`)}
-                    className={`${
-                      focus
-                        ? 'bg-accent text-accent-foregrounds'
-                        : 'text-secondary-foreground'
-                    } group flex w-full items-center justify-between whitespace-nowrap rounded-sm px-3 py-2.5 text-base transition-colors`}
-                  >
-                    <div className="flex items-center">
-                      Search the web
-                      <IconWorld
-                        size={18}
-                        className={`text-muted-foreground ml-3`}
-                      />
-                    </div>
-                  </button>
-                )}
-              </MenuItem>
             </div>
           </MenuItems>
         </Transition>

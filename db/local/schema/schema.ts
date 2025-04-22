@@ -19,7 +19,7 @@ const initDB = (): Promise<IDBDatabase> => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
     request.onerror = (event) => {
-      reject('IndexedDB error: ' + (event.target as IDBOpenDBRequest).error);
+      reject(`IndexedDB error: ${(event.target as IDBOpenDBRequest).error}`);
     };
 
     request.onsuccess = (event) => {

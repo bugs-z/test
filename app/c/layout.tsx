@@ -3,12 +3,8 @@
 import { Dashboard } from '@/components/ui/dashboard';
 import { PentestGPTContext } from '@/context/context';
 import { useUIContext } from '@/context/ui-context';
-import { getChatFilesByMultipleChatIds } from '@/db/chat-files';
 import { getChatsByUserId } from '@/db/chats';
 import { localDB } from '@/db/local/db';
-import { getFeedbackByMultipleChatIds } from '@/db/message-feedback';
-import { getFileItemsByMultipleFileIds } from '@/db/message-file-items';
-import { getMessagesByMultipleChatIds } from '@/db/messages';
 import { getSubscriptionByUserId } from '@/db/subscriptions';
 import { LargeModel, SmallModel } from '@/lib/models/hackerai-llm-list';
 import { useRouter } from 'next/navigation';
