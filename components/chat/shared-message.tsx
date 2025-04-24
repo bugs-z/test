@@ -57,9 +57,7 @@ export const SharedMessage: React.FC<SharedMessageProps> = ({
                 )}
               </div>
               <MessageTypeResolver
-                previousMessage={previousMessage}
                 message={message}
-                messageSizeLimit={12000}
                 isLastMessage={isLast}
                 toolInUse="none"
               />

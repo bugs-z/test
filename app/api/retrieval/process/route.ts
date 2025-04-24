@@ -6,6 +6,7 @@ import {
   processTxt,
   convert,
   TOKEN_LIMIT,
+  PDF_TOKEN_LIMIT,
 } from '@/lib/retrieval/processing';
 import { getServerProfile } from '@/lib/server/server-chat-helpers';
 import { createSupabaseAdminClient } from '@/lib/server/server-utils';
@@ -82,13 +83,14 @@ export async function POST(req: Request) {
       chunks = chunks.filter((chunk) => chunk.content.trim() !== '');
     }
 
-    if (chunks.length === 0) {
+    if (chunks.length === 0 && fileExtension !== 'pdf') {
       throw new Error('Empty file. Please check the file format and content.');
     }
 
     const totalTokens = chunks.reduce((acc, chunk) => acc + chunk.tokens, 0);
-    if (totalTokens > TOKEN_LIMIT) {
-      throw new Error(`File content exceeds token limit of ${TOKEN_LIMIT}`);
+    const limit = fileExtension === 'pdf' ? PDF_TOKEN_LIMIT : TOKEN_LIMIT;
+    if (totalTokens > limit) {
+      throw new Error(`File content exceeds token limit of ${limit}`);
     }
 
     const file_items = chunks.map((chunk) => ({

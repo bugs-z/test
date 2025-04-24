@@ -84,10 +84,6 @@ export const Message: FC<MessageProps> = ({
 
   const { handleSendMessage } = useChatHandler();
 
-  const messageSizeLimit = Number(
-    process.env.NEXT_PUBLIC_MESSAGE_SIZE_LIMIT || 12000,
-  );
-
   const editInputRef = useRef<HTMLTextAreaElement>(null);
 
   const [isHovering, setIsHovering] = useState(false);
@@ -304,9 +300,7 @@ export const Message: FC<MessageProps> = ({
                 </div>
 
                 <MessageTypeResolver
-                  previousMessage={previousMessage}
                   message={message}
-                  messageSizeLimit={messageSizeLimit}
                   isLastMessage={isLast}
                   toolInUse={toolInUse}
                 />

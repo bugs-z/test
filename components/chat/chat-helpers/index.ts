@@ -3,14 +3,13 @@
 import type { AlertAction } from '@/context/alert-context';
 import { buildFinalMessages } from '@/lib/build-prompt';
 import type { Tables } from '@/supabase/types';
-import {
-  type ChatMessage,
-  type ChatPayload,
-  type ModelParams,
-  type MessageImage,
-  PluginID,
-  type LLMID,
-  type ChatMetadata,
+import type {
+  ChatMessage,
+  ChatPayload,
+  ModelParams,
+  MessageImage,
+  LLMID,
+  ChatMetadata,
 } from '@/types';
 import type { Dispatch, SetStateAction } from 'react';
 import { toast } from 'sonner';
@@ -39,12 +38,6 @@ export const handleHostedChat = async (
   modelParams: ModelParams,
   chatMetadata: ChatMetadata,
 ) => {
-  setToolInUse(
-    modelParams.selectedPlugin && modelParams.selectedPlugin !== PluginID.NONE
-      ? modelParams.selectedPlugin
-      : PluginID.NONE,
-  );
-
   const formattedMessages = await buildFinalMessages(
     payload,
     model,

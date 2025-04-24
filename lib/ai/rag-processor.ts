@@ -6,7 +6,6 @@ import type { BuiltChatMessage } from '@/types/chat-message';
 
 interface RagResult {
   ragUsed: boolean;
-  ragId: string | null;
   systemPrompt: string | null;
 }
 
@@ -39,7 +38,6 @@ export async function processRag({
 }): Promise<RagResult> {
   const result: RagResult = {
     ragUsed: false,
-    ragId: null,
     systemPrompt: null,
   };
   const RAGIE_API_KEY = process.env.RAGIE_API_KEY;
@@ -109,8 +107,6 @@ export async function processRag({
         ragPrompt,
         profile.profile_context,
       );
-      // Use the ID of the first (highest scoring) chunk
-      result.ragId = data.scored_chunks[0].id;
     }
   }
 

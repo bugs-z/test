@@ -253,7 +253,6 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
       message: fetchMessage,
       fileItems: fetchMessage.file_items,
       feedback: fetchMessage.feedback[0] ?? undefined,
-      isFinal: true,
     }));
   };
 
@@ -265,7 +264,7 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
       setTimeout(() => window.sessionStorage.removeItem(toastKey), 2000);
     }
 
-    router.push(`//c`);
+    router.push(`/c`);
   };
 
   const fetchMessages = async (chatId: string) => {

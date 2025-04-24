@@ -58,8 +58,7 @@ export const processResponse = async (
     let thinkingText = '';
     let finishReason = '';
     let thinkingElapsedSecs: number | null = null;
-    let ragUsed = false;
-    let ragId = null;
+    const ragUsed = false;
     let isFirstChunk = true;
     let isFirstChunkReceived = false;
     let updatedPlugin = selectedPlugin;
@@ -246,13 +245,6 @@ export const processResponse = async (
               citations = firstValue.citations;
             }
 
-            // Handle RAG data
-            if (firstValue?.ragUsed !== undefined) {
-              ragUsed = Boolean(firstValue.ragUsed);
-              ragId =
-                firstValue.ragId !== null ? String(firstValue.ragId) : null;
-            }
-
             // Handle chatTitle
             if (firstValue?.chatTitle) {
               chatTitle = firstValue.chatTitle;
@@ -319,7 +311,6 @@ export const processResponse = async (
       thinkingElapsedSecs,
       finishReason,
       ragUsed,
-      ragId,
       selectedPlugin: updatedPlugin,
       citations,
       chatTitle,

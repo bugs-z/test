@@ -32,8 +32,6 @@ export const handleCreateMessages = async (
   setChatImages: React.Dispatch<React.SetStateAction<MessageImage[]>>,
   selectedPlugin: PluginID,
   editSequenceNumber?: number,
-  ragUsed?: boolean,
-  ragId?: string | null,
   isTemporary = false,
   citations?: string[],
   thinkingText?: string,
@@ -61,13 +59,12 @@ export const handleCreateMessages = async (
         model: modelData.modelId,
         plugin: selectedPlugin,
         image_paths: newMessageImages.map((image) => image.path),
-        rag_used: ragUsed || false,
-        rag_id: ragId || null,
+        rag_used: false,
+        rag_id: null,
         citations: [],
         fragment: null,
       },
       fileItems: retrievedFileItems,
-      isFinal: false,
     };
 
     const tempAssistantMessage: ChatMessage = {
@@ -86,13 +83,12 @@ export const handleCreateMessages = async (
         model: modelData.modelId,
         plugin: selectedPlugin,
         image_paths: [],
-        rag_used: ragUsed || false,
-        rag_id: ragId || null,
+        rag_used: false,
+        rag_id: null,
         citations: citations || [],
         fragment: null,
       },
       fileItems: [],
-      isFinal: false,
     };
 
     setMessages([...chatMessages, tempUserMessage, tempAssistantMessage]);
@@ -111,8 +107,8 @@ export const handleCreateMessages = async (
     role: 'user',
     sequence_number: lastSequenceNumber(chatMessages) + 1,
     image_paths: [],
-    rag_used: ragUsed || false,
-    rag_id: ragId || null,
+    rag_used: false,
+    rag_id: null,
     citations: [],
     fragment: null,
   };
@@ -129,8 +125,8 @@ export const handleCreateMessages = async (
     role: 'assistant',
     sequence_number: lastSequenceNumber(chatMessages) + 2,
     image_paths: [],
-    rag_used: ragUsed || false,
-    rag_id: ragId || null,
+    rag_used: false,
+    rag_id: null,
     citations: citations || [],
     fragment: null,
   };
@@ -262,12 +258,10 @@ export const handleCreateMessages = async (
       {
         message: messageWithPaths,
         fileItems: retrievedFileItems,
-        isFinal: true,
       },
       {
         message: createdMessages[1],
         fileItems: [],
-        isFinal: true,
       },
     ];
 

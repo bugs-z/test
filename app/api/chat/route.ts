@@ -65,11 +65,9 @@ export async function POST(request: Request) {
         { status: 429 },
       );
     }
-
     let {
       messages: validatedMessages,
       selectedModel: finalSelectedModel,
-      supportsImages,
       systemPrompt,
     } = await processChatMessages(
       messages,
@@ -79,7 +77,7 @@ export async function POST(request: Request) {
       modelParams.isTerminalContinuation,
       llmConfig.openai.apiKey,
       config.isLargeModel,
-      profile.profile_context,
+      profile,
     );
 
     let supabase: SupabaseClient | null = null;
@@ -129,7 +127,6 @@ export async function POST(request: Request) {
 
     // Process RAG
     let ragUsed = false;
-    let ragId: string | null = null;
     if (modelParams.isRagEnabled) {
       const ragResult = await processRag({
         messages,
@@ -139,7 +136,6 @@ export async function POST(request: Request) {
       });
 
       ragUsed = ragResult.ragUsed;
-      ragId = ragResult.ragId;
       if (ragResult.systemPrompt) {
         systemPrompt = ragResult.systemPrompt;
       }
@@ -183,7 +179,7 @@ export async function POST(request: Request) {
           const result = streamText({
             model: myProvider.languageModel(finalSelectedModel),
             system: systemPrompt,
-            messages: toVercelChatMessages(validatedMessages, supportsImages),
+            messages: toVercelChatMessages(validatedMessages, true),
             maxTokens: 2048,
             abortSignal: request.signal,
             experimental_transform: smoothStream({ chunking: 'word' }),

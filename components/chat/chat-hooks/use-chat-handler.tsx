@@ -51,7 +51,6 @@ export const useChatHandler = () => {
     setNewMessageFiles,
     newMessageFiles,
     useRetrieval,
-    sourceCount,
     setChatSettings,
     setUseRetrieval,
     isTemporaryChat,
@@ -287,12 +286,7 @@ export const useChatHandler = () => {
     const isRagEnabled = selectedPlugin === PluginID.ENHANCED_SEARCH;
 
     // Simpler model handling
-    const baseModel = (model?.split(':')[0] as LLMID) || chatSettings?.model;
-    const isWebSearch = model?.includes(':websearch');
-
-    if (isWebSearch) {
-      selectedPlugin = PluginID.WEB_SEARCH;
-    }
+    const baseModel = (model as LLMID) || chatSettings?.model;
 
     try {
       if (!isRegeneration) {
@@ -399,19 +393,18 @@ export const useChatHandler = () => {
       }
 
       let retrievedFileItems: Tables<'file_items'>[] = [];
-
+      let retrievalUsed = false;
       if (
         (newMessageFiles.length > 0 || chatFiles.length > 0) &&
         useRetrieval
       ) {
-        setToolInUse('retrieval');
+        retrievalUsed = true;
 
         if (!isContinuation) {
           retrievedFileItems = await retrievalLogic(
             sentChatMessages,
             editedMessageFiles,
             chatFiles,
-            sourceCount,
           );
         } else {
           // Get the last message's retrieved file items
@@ -438,17 +431,22 @@ export const useChatHandler = () => {
       let thinkingText = '';
       let thinkingElapsedSecs: number | null = null;
       let finishReason = '';
-      let ragUsed = false;
-      let ragId = null;
       let citations: string[] = [];
+
+      setToolInUse(
+        modelParams.selectedPlugin &&
+          modelParams.selectedPlugin !== PluginID.NONE
+          ? modelParams.selectedPlugin
+          : retrievalUsed
+            ? 'retrieval'
+            : PluginID.NONE,
+      );
 
       const {
         fullText,
         thinkingText: thinkingTextFromResponse,
         thinkingElapsedSecs: thinkingElapsedSecsFromResponse,
         finishReason: finishReasonFromResponse,
-        ragUsed: ragUsedFromResponse,
-        ragId: ragIdFromResponse,
         selectedPlugin: updatedSelectedPlugin,
         citations: citationsFromResponse,
         chatTitle,
@@ -472,8 +470,6 @@ export const useChatHandler = () => {
       thinkingText = thinkingTextFromResponse;
       thinkingElapsedSecs = thinkingElapsedSecsFromResponse;
       finishReason = finishReasonFromResponse;
-      ragUsed = ragUsedFromResponse;
-      ragId = ragIdFromResponse;
       selectedPlugin = updatedSelectedPlugin;
       citations = citationsFromResponse;
 
@@ -546,8 +542,6 @@ export const useChatHandler = () => {
           setChatImages,
           selectedPlugin,
           editSequenceNumber,
-          ragUsed,
-          ragId,
           isTemporaryChat,
           citations,
           thinkingText,

@@ -2,26 +2,15 @@ import type { Tables } from '@/supabase/types';
 import { PluginID } from '@/types/plugins';
 import type { FC } from 'react';
 import { MessageMarkdown } from './message-markdown';
-import { MessagePluginFile } from './message-plugin-file';
 import { MessageTerminal } from './terminal-messages/message-terminal';
 import { MessageCitations } from './message-citations';
 import { MessageThinking } from './message-thinking';
 
 interface MessageTypeResolverProps {
   message: Tables<'messages'>;
-  previousMessage: Tables<'messages'> | undefined;
-  messageSizeLimit: number;
   isLastMessage: boolean;
   toolInUse: string;
 }
-
-// const extractOutputFilename = (content: string) => {
-//   const jsonMatch = content.match(/"command"\s*:\s*"(.+?)"/)
-//   const commandContent = jsonMatch ? jsonMatch[1] : content
-
-//   const filenameMatch = commandContent.match(/-output\s+(\S+)/)
-//   return filenameMatch ? filenameMatch[1].trim() : undefined
-// }
 
 export const allTerminalPlugins = [
   PluginID.TERMINAL,
@@ -33,9 +22,7 @@ export const allTerminalPlugins = [
 ];
 
 export const MessageTypeResolver: FC<MessageTypeResolverProps> = ({
-  // previousMessage,
   message,
-  messageSizeLimit,
   isLastMessage,
   toolInUse,
 }) => {
@@ -60,24 +47,6 @@ export const MessageTypeResolver: FC<MessageTypeResolverProps> = ({
         content={message.content}
         isAssistant={message.role === 'assistant'}
         isLastMessage={isLastMessage}
-      />
-    );
-  }
-
-  if (
-    typeof message.content === 'string' &&
-    message.content.length > messageSizeLimit
-  ) {
-    return (
-      <MessagePluginFile
-        created_at={message.created_at}
-        content={message.content}
-        plugin={message.plugin ?? PluginID.NONE}
-        autoDownloadEnabled={false}
-        id={message.id}
-        filename={`${message.plugin}-${message.id}.md`}
-        isLastMessage={isLastMessage}
-        isAssistant={message.role === 'assistant'}
       />
     );
   }
