@@ -75,8 +75,6 @@ interface PentestGPTContextType {
   setSourceCount: Dispatch<SetStateAction<number>>;
 
   // Audio
-  currentPlayingMessageId: string | null;
-  setCurrentPlayingMessageId: Dispatch<SetStateAction<string | null>>;
   isMicSupported: boolean;
   setIsMicSupported: Dispatch<SetStateAction<boolean>>;
 
@@ -157,8 +155,6 @@ export const PentestGPTContext = createContext<PentestGPTContextType>({
   setSourceCount: () => {},
 
   // Audio
-  currentPlayingMessageId: null,
-  setCurrentPlayingMessageId: () => {},
   isMicSupported: false,
   setIsMicSupported: () => {},
 

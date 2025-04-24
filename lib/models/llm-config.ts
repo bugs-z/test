@@ -15,17 +15,8 @@ const initialSystemPrompt = `You are PentestGPT, an AI assistant specialized in 
   information to help identify and address vulnerabilities efficiently.\n\n`;
 
 const llmConfig = {
-  openrouter: {
-    baseURL: 'https://openrouter.ai/api/v1',
-    url: `https://openrouter.ai/api/v1/chat/completions`,
-    apiKey: process.env.OPENROUTER_API_KEY,
-  },
   openai: {
     apiKey: process.env.OPENAI_API_KEY,
-  },
-  perplexity: {
-    apiKey: process.env.PERPLEXITY_API_KEY,
-    url: 'https://api.perplexity.ai/chat/completions',
   },
   systemPrompts: {
     // For question generator
@@ -34,10 +25,6 @@ const llmConfig = {
     pentestGPTBrowser: `${getPentestGPTInfo(true)}\n${systemPromptEnding}`,
     // For webSearch tool
     pentestGPTWebSearch: `${getPentestGPTInfo(false)}\n${systemPromptEnding}`,
-    // For ReasoningWebSearch tool
-    reasoningWebSearch: `${getPentestGPTInfo(false, 'October 2023', 'reasoningModel')}\n${systemPromptEnding}`,
-    // For reasoning tool
-    pentestGPTReasoning: `${getPentestGPTInfo(true, 'November 17, 2024', 'reasoningModel')}\n${systemPromptEnding}`,
   },
 };
 

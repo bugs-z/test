@@ -72,7 +72,6 @@ export async function POST(request: Request) {
     } = await processChatMessages(
       messages,
       config.selectedModel,
-      modelParams.selectedPlugin,
       modelParams.isContinuation,
       modelParams.isTerminalContinuation,
       llmConfig.openai.apiKey,

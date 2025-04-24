@@ -15,7 +15,8 @@ import {
 } from '@/components/ui/dialog';
 import { Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { localDB } from '@/db/local/db';
+// import { localDB } from '@/db/local/db';
+
 export const SecurityTab: FC = () => {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -42,7 +43,7 @@ export const SecurityTab: FC = () => {
     setIsLoggingOut(true);
     try {
       await supabase.auth.signOut({ scope: 'global' });
-      await localDB.storage.clearAll();
+      // await localDB.storage.clearAll();
       router.push('/login');
       router.refresh();
       toast.success('Logged out of all devices');

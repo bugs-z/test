@@ -224,7 +224,6 @@ function getModelName(model: string): string {
     pentestgpt: 'Small Model',
     'pentestgpt-pro': 'Large Model',
     terminal: 'terminal',
-    'tts-1': 'text-to-speech',
     'stt-1': 'speech-to-text',
     reasoning: 'reasoning model',
   };

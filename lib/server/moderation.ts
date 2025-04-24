@@ -124,7 +124,11 @@ function prepareInput(
 function calculateModerationLevel(
   categoryScores: OpenAI.Moderations.Moderation.CategoryScores,
 ): number {
-  const maxScore = Math.max(...Object.values(categoryScores));
+  const maxScore = Math.max(
+    ...Object.values(categoryScores).filter(
+      (score): score is number => typeof score === 'number',
+    ),
+  );
   return Math.min(Math.max(maxScore, 0), 1);
 }
 
@@ -150,8 +154,8 @@ function determineShouldUncensorResponse(
     forbiddenCategories.includes(category),
   );
 
-  // NEVER LOWER THAN 0.2
-  const minModerationLevel = 0.2;
+  // NEVER LOWER THAN 0.1
+  const minModerationLevel = 0.1;
   // NEVER HIGHER THAN 0.9
   const maxModerationLevel = 0.9;
   return (

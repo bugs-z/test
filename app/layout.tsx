@@ -109,25 +109,25 @@ export default async function RootLayout({ children }: RootLayoutProps) {
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body className={`${inter.className} h-full`}>
-        <PostHogProvider>
-          <Providers attribute="class" defaultTheme="dark">
-            <Toaster richColors position="top-center" duration={3000} />
-            <div className="bg-background text-foreground flex h-dvh flex-col items-center overflow-x-auto">
-              {user ? (
-                <PluginProvider>
-                  <GlobalState user={user}>
+        <Providers attribute="class" defaultTheme="dark">
+          <Toaster richColors position="top-center" duration={3000} />
+          <div className="bg-background text-foreground flex h-dvh flex-col items-center overflow-x-auto">
+            {user ? (
+              <PluginProvider>
+                <GlobalState user={user}>
+                  <PostHogProvider>
                     <MFAProvider>
                       <UIState>{children}</UIState>
                     </MFAProvider>
-                  </GlobalState>
-                </PluginProvider>
-              ) : (
-                children
-              )}
-            </div>
-            <GlobalAlertDialog />
-          </Providers>
-        </PostHogProvider>
+                  </PostHogProvider>
+                </GlobalState>
+              </PluginProvider>
+            ) : (
+              children
+            )}
+          </div>
+          <GlobalAlertDialog />
+        </Providers>
       </body>
     </html>
   );

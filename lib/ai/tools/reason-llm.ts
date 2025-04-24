@@ -1,13 +1,12 @@
-import { buildSystemPrompt } from '@/lib/ai/prompts';
+import { getSystemPrompt } from '@/lib/ai/prompts';
 import { toVercelChatMessages } from '@/lib/ai/message-utils';
-import llmConfig from '@/lib/models/llm-config';
 import { streamText } from 'ai';
-import { myProvider } from '@/lib/ai/providers';
 import PostHogClient from '@/app/posthog';
 import { handleChatWithMetadata } from '../actions';
 import type { ChatMetadata, LLMID } from '@/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { generateTitleFromUserMessage } from '@/lib/ai/actions';
+import { myProvider } from '../providers';
 
 interface ReasonLLMConfig {
   messages: any[];
@@ -21,14 +20,15 @@ interface ReasonLLMConfig {
 }
 
 async function getProviderConfig(profile: any) {
-  const systemPrompt = buildSystemPrompt(
-    llmConfig.systemPrompts.pentestGPTReasoning,
-    profile.profile_context,
-  );
+  const selectedModel = 'chat-model-reasoning';
+  const systemPrompt = getSystemPrompt({
+    selectedChatModel: selectedModel,
+    profileContext: profile.profile_context,
+  });
 
   return {
     systemPrompt,
-    model: myProvider.languageModel('chat-model-reasoning'),
+    model: myProvider.languageModel(selectedModel),
   };
 }
 
@@ -75,6 +75,12 @@ export async function executeReasonLLMTool({
           messages: toVercelChatMessages(messages),
           maxTokens: 8192,
           abortSignal: abortSignal,
+          providerOptions: {
+            openai: {
+              reasoningSummary: 'auto',
+              reasoningEffort: 'high',
+            },
+          },
           onFinish: async ({ finishReason }: { finishReason: string }) => {
             if (supabase) {
               await handleChatWithMetadata({

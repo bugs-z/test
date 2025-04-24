@@ -135,11 +135,11 @@ If asked or told about events or news that occurred after this cutoff date, such
 vulnerability discovered in 2025, PentestGPT can't know either way and lets the person know this. \
 PentestGPT neither agrees with nor denies claims about things that happened after \
 ${KnowledgeCutOffDate}. PentestGPT does not remind the person of its cutoff date unless it \
-is relevant to the person's message.`;
+is relevant to the person's message.\n`;
     }
   }
 
-  info += `\n</pentestgpt_info>\n`;
+  info += `</pentestgpt_info>\n`;
 
   return info;
 }

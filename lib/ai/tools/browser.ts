@@ -40,22 +40,29 @@ export function getLastUserMessage(messages: any[]): string {
   );
 }
 
-export async function browsePage(url: string): Promise<string> {
+export async function browsePage(
+  url: string,
+  format: 'markdown' | 'rawHtml' = 'markdown',
+): Promise<string> {
   try {
     const app = new FirecrawlApp({ apiKey: process.env.FIRECRAWL_API_KEY });
     const scrapeResult = (await app.scrapeUrl(url, {
-      formats: ['markdown'],
+      formats: ['markdown', 'rawHtml'],
     })) as ScrapeResponse;
 
     if (!scrapeResult.success) {
       return `Error fetching URL: ${url}. Error: ${scrapeResult.error}`;
     }
 
-    if (!scrapeResult.markdown) {
+    const content =
+      format === 'markdown'
+        ? (scrapeResult as any).markdown
+        : (scrapeResult as any).rawHtml;
+    if (!content) {
       return `Error: Empty content received from URL: ${url}`;
     }
 
-    return scrapeResult.markdown;
+    return content;
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown error';
@@ -171,9 +178,11 @@ Instead, answer as if you have directly attempted to view the webpages and are s
 
 export async function executeBrowserTool({
   open_url,
+  format_output,
   config,
 }: {
-  open_url: string | string[];
+  open_url: string;
+  format_output: 'markdown' | 'rawHtml';
   config: BrowserToolConfig;
 }) {
   if (!process.env.FIRECRAWL_API_KEY) {
@@ -198,22 +207,14 @@ export async function executeBrowserTool({
 
   try {
     const lastUserMessage = getLastUserMessage(messages);
-    let browserPrompt: string;
-
     dataStream.writeData({ type: 'tool-call', content: 'browser' });
 
-    // Handle single URL or multiple URLs
-    if (typeof open_url === 'string') {
-      const browserResult = await browsePage(open_url);
-      browserPrompt = createBrowserPrompt(
-        browserResult,
-        lastUserMessage,
-        open_url,
-      );
-    } else {
-      const browserResults = await browseMultiplePages(open_url);
-      browserPrompt = createMultiBrowserPrompt(browserResults, lastUserMessage);
-    }
+    const browserResult = await browsePage(open_url, format_output);
+    const browserPrompt = createBrowserPrompt(
+      browserResult,
+      lastUserMessage,
+      open_url,
+    );
 
     let generatedTitle: string | undefined;
 
@@ -221,11 +222,8 @@ export async function executeBrowserTool({
       (async () => {
         const { fullStream } = streamText({
           model,
+          system: systemPrompt,
           messages: [
-            {
-              role: 'system',
-              content: systemPrompt,
-            },
             ...toVercelChatMessages(messages.slice(0, -1)),
             { role: 'user', content: browserPrompt },
           ],
@@ -241,13 +239,11 @@ export async function executeBrowserTool({
                 messages,
                 finishReason,
               });
-              dataStream.writeData({ isChatSavedInBackend: true });
             }
           },
         });
 
         dataStream.writeData({ type: 'tool-call', content: 'none' });
-        dataStream.writeData({ type: 'text-delta', content: '\n\n' });
 
         for await (const delta of fullStream) {
           if (delta.type === 'text-delta') {

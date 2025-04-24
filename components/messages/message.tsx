@@ -352,7 +352,6 @@ export const Message: FC<MessageProps> = ({
               onBadResponse={handleBadResponse}
               messageContent={message.content || ''}
               messageModel={message.model}
-              messageSequenceNumber={message.sequence_number}
             />
           </div>
         )}

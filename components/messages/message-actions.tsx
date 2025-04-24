@@ -3,19 +3,15 @@ import {
   IconCheck,
   IconCopy,
   IconEdit,
-  IconLoader,
-  IconPlayerStop,
   IconRepeat,
   IconThumbDown,
   IconThumbDownFilled,
   IconThumbUp,
   IconThumbUpFilled,
-  IconVolume,
 } from '@tabler/icons-react';
 import { type FC, useContext, useEffect, useState } from 'react';
 import { WithTooltip } from '../ui/with-tooltip';
 import { SwitchModel } from '../ui/switch-model';
-import { useAudioPlayer } from '../chat/chat-hooks/use-audio-player';
 import { useUIContext } from '@/context/ui-context';
 
 export const MESSAGE_ICON_SIZE = 20;
@@ -36,7 +32,6 @@ interface MessageActionsProps {
   messageHasImage: boolean;
   messageContent: string;
   messageModel: string;
-  messageSequenceNumber: number;
 }
 
 export const MessageActions: FC<MessageActionsProps> = ({
@@ -55,24 +50,15 @@ export const MessageActions: FC<MessageActionsProps> = ({
   messageHasImage,
   messageContent,
   messageModel,
-  messageSequenceNumber,
 }) => {
-  const {
-    currentPlayingMessageId,
-    setCurrentPlayingMessageId,
-    selectedChat,
-    isPremiumSubscription,
-    isTemporaryChat,
-  } = useContext(PentestGPTContext);
+  const { isPremiumSubscription, isTemporaryChat } =
+    useContext(PentestGPTContext);
 
   const { isMobile, isGenerating } = useUIContext();
 
-  const { playAudio, stopAudio, isLoading, isPlaying } = useAudioPlayer();
   const [showCheckmark, setShowCheckmark] = useState(false);
 
   const MESSAGE_ICON_SIZE = isMobile ? 22 : 20;
-  const isMessageLengthValid =
-    messageContent.length > 0 && messageContent.length < 4096;
   const isMessageLengthTooShort = messageContent.length === 0;
 
   useEffect(() => {
@@ -89,34 +75,6 @@ export const MessageActions: FC<MessageActionsProps> = ({
     onCopy();
     setShowCheckmark(true);
   };
-
-  const handlePlayClick = async () => {
-    try {
-      if (currentPlayingMessageId === messageSequenceNumber.toString()) {
-        stopAudio();
-        setCurrentPlayingMessageId(null);
-      } else {
-        await playAudio(messageContent);
-        setCurrentPlayingMessageId(messageSequenceNumber.toString());
-      }
-    } catch (error) {
-      console.error('Error playing audio:', error);
-    }
-  };
-
-  useEffect(() => {
-    if (currentPlayingMessageId && selectedChat) {
-      stopAudio();
-      setCurrentPlayingMessageId(null);
-    }
-  }, [selectedChat]);
-
-  useEffect(() => {
-    return () => {
-      stopAudio();
-      setCurrentPlayingMessageId(null);
-    };
-  }, []);
 
   return (isLast && isGenerating) || isEditing ? null : (
     <div className={`text-muted-foreground flex items-center space-x-4`}>
@@ -135,45 +93,6 @@ export const MessageActions: FC<MessageActionsProps> = ({
                 size={MESSAGE_ICON_SIZE}
                 onClick={onEdit}
               />
-            }
-          />
-        )}
-
-      {(isHovering || isLast) &&
-        isAssistant &&
-        isMessageLengthValid &&
-        isPremiumSubscription && (
-          <WithTooltip
-            delayDuration={0}
-            side="bottom"
-            display={
-              <div>
-                {isLoading
-                  ? 'Loading...'
-                  : isPlaying &&
-                      currentPlayingMessageId ===
-                        messageSequenceNumber.toString()
-                    ? 'Stop'
-                    : 'Read Aloud'}
-              </div>
-            }
-            trigger={
-              isLoading ? (
-                <IconLoader className="animate-spin" size={MESSAGE_ICON_SIZE} />
-              ) : isPlaying &&
-                currentPlayingMessageId === messageSequenceNumber.toString() ? (
-                <IconPlayerStop
-                  className="cursor-pointer hover:opacity-50"
-                  size={MESSAGE_ICON_SIZE}
-                  onClick={handlePlayClick}
-                />
-              ) : (
-                <IconVolume
-                  className="cursor-pointer hover:opacity-50"
-                  size={MESSAGE_ICON_SIZE}
-                  onClick={handlePlayClick}
-                />
-              )
             }
           />
         )}

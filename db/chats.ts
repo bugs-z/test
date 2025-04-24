@@ -1,13 +1,13 @@
 import { supabase } from '@/lib/supabase/browser-client';
 import type { TablesInsert, TablesUpdate, Tables } from '@/supabase/types';
-import { localDB } from './local/db';
-import { refreshLocalData } from './refresh-local-data';
+// import { localDB } from './local/db';
+// import { refreshLocalData } from './refresh-local-data';
 
 export const getChatById = async (chatId: string) => {
-  const storedChat = await localDB.chats.getById(chatId);
-  if (storedChat) {
-    return storedChat;
-  }
+  // const storedChat = await localDB.chats.getById(chatId);
+  // if (storedChat) {
+  //   return storedChat;
+  // }
 
   const { data: chat, error } = await supabase
     .from('chats')
@@ -19,9 +19,9 @@ export const getChatById = async (chatId: string) => {
     throw new Error(error.message);
   }
 
-  if (chat) {
-    await localDB.chats.update(chat);
-  }
+  // if (chat) {
+  //   await localDB.chats.update(chat);
+  // }
 
   return chat;
 };
@@ -37,7 +37,7 @@ export const createChat = async (chat: TablesInsert<'chats'>) => {
     throw new Error(error.message);
   }
 
-  await localDB.chats.update(createdChat);
+  // await localDB.chats.update(createdChat);
 
   return createdChat;
 };
@@ -57,7 +57,7 @@ export const updateChat = async (
     throw new Error(error.message);
   }
 
-  await localDB.chats.update(updatedChat);
+  // await localDB.chats.update(updatedChat);
 
   return updatedChat;
 };
@@ -69,7 +69,7 @@ export const deleteChat = async (chatId: string) => {
     throw new Error(error.message);
   }
 
-  await localDB.chats.delete(chatId);
+  // await localDB.chats.delete(chatId);
 
   return true;
 };
@@ -84,19 +84,19 @@ export const deleteAllChats = async (userId: string) => {
     throw new Error(chatDeleteError.message);
   }
 
-  await localDB.chats.deleteAll(userId);
+  // await localDB.chats.deleteAll(userId);
 
   return true;
 };
 
 export const getChatsByUserId = async (
   userId: string,
-  useStored = true,
+  // useStored = true,
 ): Promise<Tables<'chats'>[]> => {
-  const storedChats = await localDB.chats.getByUserId(userId);
-  if (useStored && storedChats) {
-    return storedChats;
-  }
+  // const storedChats = await localDB.chats.getByUserId(userId);
+  // if (useStored && storedChats) {
+  //   return storedChats;
+  // }
 
   const { data: chats, error } = await supabase
     .from('chats')
@@ -109,7 +109,7 @@ export const getChatsByUserId = async (
     throw new Error(error.message);
   }
 
-  await localDB.chats.updateMany(chats);
+  // await localDB.chats.updateMany(chats);
 
   return chats;
 };
@@ -130,18 +130,18 @@ export const getMoreChatsByUserId = async (
     throw new Error(error.message);
   }
 
-  await refreshLocalData(chats);
+  // await refreshLocalData(chats);
 
-  await localDB.chats.updateMany(chats);
+  // await localDB.chats.updateMany(chats);
 
   return chats;
 };
 
 export const getLastSharedMessageId = async (chatId: string) => {
-  const storedChat = await localDB.chats.getById(chatId);
-  if (storedChat) {
-    return storedChat.last_shared_message_id;
-  }
+  // const storedChat = await localDB.chats.getById(chatId);
+  // if (storedChat) {
+  //   return storedChat.last_shared_message_id;
+  // }
 
   const { data, error } = await supabase
     .from('chats')

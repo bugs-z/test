@@ -7,7 +7,6 @@ import type {
   FilePart,
 } from 'ai';
 import type { BuiltChatMessage } from '@/types/chat-message';
-import { PluginID } from '@/types/plugins';
 import { getModerationResult } from '@/lib/server/moderation';
 import { getSystemPrompt } from './prompts';
 import { processMessageContentWithAttachments } from '../build-prompt-backend';
@@ -227,7 +226,6 @@ export function validateMessages(messages: any[]) {
 export async function processChatMessages(
   messages: BuiltChatMessage[],
   selectedModel: string,
-  selectedPlugin: PluginID,
   isContinuation: boolean,
   isTerminalContinuation: boolean,
   apiKey: string | undefined,
@@ -241,13 +239,7 @@ export async function processChatMessages(
   let shouldUncensor = false;
 
   // Check if we should uncensor the response
-  if (
-    apiKey &&
-    !isContinuation &&
-    !isTerminalContinuation &&
-    // Skip uncensoring for reasoning plugin as it uses xAI model
-    selectedPlugin !== PluginID.REASONING
-  ) {
+  if (apiKey && !isContinuation && !isTerminalContinuation) {
     const { shouldUncensorResponse: moderationResult } =
       await getModerationResult(messages, apiKey, 10, isLargeModel);
     shouldUncensor = moderationResult;

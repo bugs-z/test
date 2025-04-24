@@ -1,15 +1,15 @@
 import { supabase } from '@/lib/supabase/browser-client';
 import type { TablesInsert } from '@/supabase/types';
-import { localDB } from './local/db';
+// import { localDB } from './local/db';
 
 export const getMessageFileItemsByMessageId = async (messageId: string) => {
-  const fileItems = await localDB.fileItems.getByMessageId(messageId);
-  if (fileItems) {
-    return {
-      id: messageId,
-      file_items: fileItems,
-    };
-  }
+  // const fileItems = await localDB.fileItems.getByMessageId(messageId);
+  // if (fileItems) {
+  //   return {
+  //     id: messageId,
+  //     file_items: fileItems,
+  //   };
+  // }
 
   const { data: messageFileItems, error } = await supabase
     .from('messages')
@@ -31,7 +31,7 @@ export const getMessageFileItemsByMessageId = async (messageId: string) => {
     throw new Error(error.message);
   }
 
-  await localDB.fileItems.updateMany(messageFileItems.file_items);
+  // await localDB.fileItems.updateMany(messageFileItems.file_items);
 
   return messageFileItems;
 };
@@ -48,47 +48,47 @@ export const createMessageFileItems = async (
     throw new Error(error.message);
   }
 
-  await localDB.messageFileItems.updateMany(createdMessageFileItems);
+  // await localDB.messageFileItems.updateMany(createdMessageFileItems);
 
   return createdMessageFileItems;
 };
 
-export const getFileItemsByMultipleFileIds = async (fileIds: string[]) => {
-  if (fileIds.length === 0) {
-    return [];
-  }
+// export const getFileItemsByMultipleFileIds = async (fileIds: string[]) => {
+//   if (fileIds.length === 0) {
+//     return [];
+//   }
 
-  const { data: fileItems, error } = await supabase
-    .from('file_items')
-    .select('*')
-    .in('file_id', fileIds);
+//   const { data: fileItems, error } = await supabase
+//     .from('file_items')
+//     .select('*')
+//     .in('file_id', fileIds);
 
-  if (error) {
-    throw new Error(error.message);
-  }
+//   if (error) {
+//     throw new Error(error.message);
+//   }
 
-  await localDB.fileItems.updateMany(fileItems);
+//   await localDB.fileItems.updateMany(fileItems);
 
-  return fileItems;
-};
+//   return fileItems;
+// };
 
-export const getMessageFileItemsByMultipleMessageIds = async (
-  messageIds: string[],
-) => {
-  if (messageIds.length === 0) {
-    return [];
-  }
+// export const getMessageFileItemsByMultipleMessageIds = async (
+//   messageIds: string[],
+// ) => {
+//   if (messageIds.length === 0) {
+//     return [];
+//   }
 
-  const { data: messageFileItems, error } = await supabase
-    .from('message_file_items')
-    .select('*')
-    .in('message_id', messageIds);
+//   const { data: messageFileItems, error } = await supabase
+//     .from('message_file_items')
+//     .select('*')
+//     .in('message_id', messageIds);
 
-  if (error) {
-    throw new Error(error.message);
-  }
+//   if (error) {
+//     throw new Error(error.message);
+//   }
 
-  await localDB.messageFileItems.updateMany(messageFileItems);
+//   await localDB.messageFileItems.updateMany(messageFileItems);
 
-  return messageFileItems;
-};
+//   return messageFileItems;
+// };
