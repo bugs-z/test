@@ -17,8 +17,7 @@ export const useKeyboardHandler = ({
   sendMessage,
   handleSelectDeviceFile,
 }: UseKeyboardHandlerProps) => {
-  const { isToolPickerOpen, focusTool, setFocusTool, selectedPlugin } =
-    useUIContext();
+  const { selectedPlugin } = useUIContext();
   const { isPremiumSubscription } = useContext(PentestGPTContext);
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
@@ -26,15 +25,6 @@ export const useKeyboardHandler = ({
     if (!isTyping && event.key === 'Enter' && !event.shiftKey && !isMobile) {
       event.preventDefault();
       sendMessage();
-    }
-
-    // Handle tool picker navigation
-    if (
-      isToolPickerOpen &&
-      ['Tab', 'ArrowUp', 'ArrowDown', 'Enter', 'Escape'].includes(event.key)
-    ) {
-      event.preventDefault();
-      if (!focusTool) setFocusTool(true);
     }
   };
 

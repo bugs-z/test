@@ -6,7 +6,6 @@ import { perplexity } from '@ai-sdk/perplexity';
 import PostHogClient from '@/app/posthog';
 import type { ChatMetadata, LLMID } from '@/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
-
 import {
   generateTitleFromUserMessage,
   handleChatWithMetadata,
@@ -93,6 +92,11 @@ export async function executeWebSearchTool({
           model: perplexity(selectedModel),
           system: systemPrompt,
           messages: toVercelChatMessages(messages),
+          providerOptions: {
+            perplexity: {
+              search_context_size: 'medium',
+            },
+          },
           maxTokens: 2048,
           abortSignal,
           onFinish: async ({ finishReason }: { finishReason: string }) => {
@@ -106,7 +110,6 @@ export async function executeWebSearchTool({
                 messages,
                 finishReason,
               });
-              dataStream.writeData({ isChatSavedInBackend: true });
             }
           },
         });
@@ -148,7 +151,7 @@ export async function executeWebSearchTool({
         }
       })(),
       (async () => {
-        if (chatMetadata?.newChat) {
+        if (chatMetadata.id && chatMetadata.newChat) {
           generatedTitle = await generateTitleFromUserMessage({
             messages,
             abortSignal: config.abortSignal,

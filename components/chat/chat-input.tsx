@@ -12,7 +12,6 @@ import {
 } from 'react';
 import { Input } from '../ui/input';
 import { TextareaAutosize } from '../ui/textarea-autosize';
-import { ChatCommandInput } from './chat-command-input';
 import { ChatFilesDisplay } from './chat-files-display';
 import { handleFileUpload } from './chat-helpers/file-upload';
 import { useChatHandler } from './chat-hooks/use-chat-handler';
@@ -178,13 +177,6 @@ export const ChatInput: FC = () => {
               )}
               ref={divRef}
             >
-              <div
-                className={`absolute left-0 w-full overflow-auto rounded-xl dark:border-none`}
-                style={{ bottom: `${bottomSpacingPx}px` }}
-              >
-                <ChatCommandInput />
-              </div>
-
               {/* Upload files */}
               <Input
                 ref={fileInputRef}

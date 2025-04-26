@@ -243,8 +243,6 @@ export async function executeBrowserTool({
           },
         });
 
-        dataStream.writeData({ type: 'tool-call', content: 'none' });
-
         for await (const delta of fullStream) {
           if (delta.type === 'text-delta') {
             dataStream.writeData({
@@ -255,7 +253,7 @@ export async function executeBrowserTool({
         }
       })(),
       (async () => {
-        if (chatMetadata?.newChat) {
+        if (chatMetadata.id && chatMetadata.newChat) {
           generatedTitle = await generateTitleFromUserMessage({
             messages,
             abortSignal: config.abortSignal,

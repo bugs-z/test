@@ -25,7 +25,6 @@ export interface Plugin {
 
 export enum PluginID {
   NONE = 'none',
-  ENHANCED_SEARCH = 'enhanced-search',
   PLUGINS_STORE = 'pluginselector',
   // Tools
   WEB_SEARCH = 'websearch',

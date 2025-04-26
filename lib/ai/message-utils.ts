@@ -10,6 +10,7 @@ import type { BuiltChatMessage } from '@/types/chat-message';
 import { getModerationResult } from '@/lib/server/moderation';
 import { getSystemPrompt } from './prompts';
 import { processMessageContentWithAttachments } from '../build-prompt-backend';
+import llmConfig from '../models/llm-config';
 
 /**
  * Removes the last assistant message if it's empty.
@@ -228,7 +229,6 @@ export async function processChatMessages(
   selectedModel: string,
   isContinuation: boolean,
   isTerminalContinuation: boolean,
-  apiKey: string | undefined,
   isLargeModel: boolean,
   profile: { user_id: string; profile_context: string },
 ): Promise<{
@@ -237,6 +237,7 @@ export async function processChatMessages(
   systemPrompt: string;
 }> {
   let shouldUncensor = false;
+  const apiKey = llmConfig.openai.apiKey;
 
   // Check if we should uncensor the response
   if (apiKey && !isContinuation && !isTerminalContinuation) {

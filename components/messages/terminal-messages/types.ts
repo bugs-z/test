@@ -43,6 +43,7 @@ export interface ShowMoreButtonProps {
   isExpanded: boolean;
   onClick: () => void;
   remainingLines: number;
+  icon?: React.ReactNode;
 }
 
 export const MAX_VISIBLE_LINES = 12;

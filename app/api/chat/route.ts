@@ -7,7 +7,6 @@ import { myProvider } from '@/lib/ai/providers';
 import PostHogClient from '@/app/posthog';
 import { handleToolExecution } from '@/lib/ai/tool-handler';
 import { createToolSchemas } from '@/lib/ai/tools/toolSchemas';
-import { processRag } from '@/lib/ai/rag-processor';
 import {
   processChatMessages,
   toVercelChatMessages,
@@ -65,6 +64,7 @@ export async function POST(request: Request) {
         { status: 429 },
       );
     }
+
     let {
       messages: validatedMessages,
       selectedModel: finalSelectedModel,
@@ -74,7 +74,6 @@ export async function POST(request: Request) {
       config.selectedModel,
       modelParams.isContinuation,
       modelParams.isTerminalContinuation,
-      llmConfig.openai.apiKey,
       config.isLargeModel,
       profile,
     );
@@ -124,34 +123,12 @@ export async function POST(request: Request) {
       return toolResponse;
     }
 
-    // Process RAG
-    let ragUsed = false;
-    if (modelParams.isRagEnabled) {
-      const ragResult = await processRag({
-        messages,
-        isContinuation: modelParams.isContinuation,
-        profile,
-        selectedChatModel: finalSelectedModel,
-      });
-
-      ragUsed = ragResult.ragUsed;
-      if (ragResult.systemPrompt) {
-        systemPrompt = ragResult.systemPrompt;
-      }
-    }
-
     const posthog = PostHogClient();
     if (posthog) {
       posthog.capture({
         distinctId: profile.user_id,
         event: finalSelectedModel,
       });
-    }
-
-    if (!ragUsed) {
-      finalSelectedModel = config.isLargeModel
-        ? 'chat-model-large-with-tools'
-        : 'chat-model-small-with-tools';
     }
 
     try {
@@ -187,15 +164,11 @@ export async function POST(request: Request) {
                 toolUsed = chunk.chunk.toolName;
               }
             },
-            ...(!ragUsed
-              ? {
-                  tools: createToolSchemas(toolConfig).getSelectedSchemas(
-                    config.isLargeModel
-                      ? ['browser', 'webSearch', 'terminal']
-                      : ['browser', 'webSearch'],
-                  ),
-                }
-              : {}),
+            tools: createToolSchemas(toolConfig).getSelectedSchemas(
+              config.isLargeModel
+                ? ['browser', 'webSearch', 'terminal']
+                : ['browser', 'webSearch'],
+            ),
             onFinish: async ({ finishReason }: { finishReason: string }) => {
               if (supabase && !toolUsed) {
                 await handleChatWithMetadata({
@@ -215,7 +188,7 @@ export async function POST(request: Request) {
           await Promise.all([
             result.mergeIntoDataStream(dataStream),
             (async () => {
-              if (chatMetadata.newChat) {
+              if (chatMetadata.id && chatMetadata.newChat) {
                 generatedTitle = await generateTitleFromUserMessage({
                   messages,
                   abortSignal: request.signal,
@@ -264,8 +237,7 @@ async function getProviderConfig(
   const isLargeModel = selectedModel.includes('large');
 
   const rateLimitModel =
-    selectedPlugin !== PluginID.NONE &&
-    selectedPlugin !== PluginID.ENHANCED_SEARCH
+    selectedPlugin !== PluginID.NONE
       ? selectedPlugin
       : rateLimitModelMap[model] || model;
 

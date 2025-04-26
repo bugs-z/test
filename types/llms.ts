@@ -24,7 +24,6 @@ export type AgentMode = 'auto-run' | 'ask-every-time';
 export interface ModelParams {
   isContinuation: boolean;
   isTerminalContinuation: boolean;
-  isRagEnabled: boolean;
   selectedPlugin: PluginID;
   agentMode: AgentMode;
   confirmTerminalCommand: boolean;

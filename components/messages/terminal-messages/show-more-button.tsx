@@ -7,6 +7,7 @@ export const ShowMoreButton: React.FC<ShowMoreButtonProps> = ({
   isExpanded,
   onClick,
   remainingLines,
+  icon,
 }) => (
   <div className="flex justify-center py-1">
     <Button
@@ -17,12 +18,12 @@ export const ShowMoreButton: React.FC<ShowMoreButtonProps> = ({
     >
       {isExpanded ? (
         <>
-          <IconArrowUp size={14} className="mr-1" />
+          {icon || <IconArrowUp size={14} className="mr-1" />}
           Show Less
         </>
       ) : (
         <>
-          <IconArrowDown size={14} className="mr-1" />
+          {icon || <IconArrowDown size={14} className="mr-1" />}
           Show More ({remainingLines} more lines)
         </>
       )}

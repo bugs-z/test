@@ -4,6 +4,8 @@ import {
   IconChevronDown,
   IconChevronUp,
   IconTerminal2,
+  IconArrowUp,
+  IconArrowDown,
 } from '@tabler/icons-react';
 import type { PluginID } from '@/types/plugins';
 import { allTerminalPlugins } from '../message-type-solver';
@@ -56,15 +58,18 @@ export const TerminalBlockComponent: React.FC<TerminalBlockProps> = ({
 
   const lines = outputContent.split('\n');
   const shouldShowMore = lines.length > MAX_VISIBLE_LINES;
+  const isLastBlock = index === totalBlocks - 1;
+
+  // Show last lines during generation, first lines after generation stops
   const displayedContent = isExpanded
     ? outputContent
-    : lines.slice(0, MAX_VISIBLE_LINES).join('\n');
+    : isGenerating && isLastBlock
+      ? lines.slice(-MAX_VISIBLE_LINES).join('\n')
+      : lines.slice(0, MAX_VISIBLE_LINES).join('\n');
 
   const isLongCommand =
     block.command.length > COMMAND_LENGTH_THRESHOLD || isMobile;
   const showFullTerminalView = isLongCommand;
-
-  const isLastBlock = index === totalBlocks - 1;
 
   if (isLastMessage && !isGenerating && isAskUser && isLastBlock) {
     return (
@@ -135,30 +140,74 @@ export const TerminalBlockComponent: React.FC<TerminalBlockProps> = ({
           )}
           {block.stdout && (
             <div className="font-mono text-foreground/80">
+              {shouldShowMore && isGenerating && isLastBlock && (
+                <ShowMoreButton
+                  isExpanded={isExpanded}
+                  onClick={() => onToggleExpanded(index)}
+                  remainingLines={lines.length - MAX_VISIBLE_LINES}
+                  icon={
+                    isExpanded ? (
+                      <IconArrowDown size={16} />
+                    ) : (
+                      <IconArrowUp size={16} />
+                    )
+                  }
+                />
+              )}
               {renderContent(
                 `\`\`\`stdout\n${shouldShowMore ? displayedContent : block.stdout}\n\`\`\``,
               )}
               {shouldShowMore &&
-                block.stdout.split('\n').length > MAX_VISIBLE_LINES && (
+                block.stdout.split('\n').length > MAX_VISIBLE_LINES &&
+                !(isGenerating && isLastBlock) && (
                   <ShowMoreButton
                     isExpanded={isExpanded}
                     onClick={() => onToggleExpanded(index)}
                     remainingLines={lines.length - MAX_VISIBLE_LINES}
+                    icon={
+                      isExpanded ? (
+                        <IconArrowUp size={16} />
+                      ) : (
+                        <IconArrowDown size={16} />
+                      )
+                    }
                   />
                 )}
             </div>
           )}
           {block.error && (
             <div className="font-mono text-destructive/90">
+              {shouldShowMore && isGenerating && isLastBlock && (
+                <ShowMoreButton
+                  isExpanded={isExpanded}
+                  onClick={() => onToggleExpanded(index)}
+                  remainingLines={lines.length - MAX_VISIBLE_LINES}
+                  icon={
+                    isExpanded ? (
+                      <IconArrowDown size={16} />
+                    ) : (
+                      <IconArrowUp size={16} />
+                    )
+                  }
+                />
+              )}
               {renderContent(
                 `\`\`\`stdout\n${shouldShowMore ? displayedContent : block.error}\n\`\`\``,
               )}
               {shouldShowMore &&
-                block.error.split('\n').length > MAX_VISIBLE_LINES && (
+                block.error.split('\n').length > MAX_VISIBLE_LINES &&
+                !(isGenerating && isLastBlock) && (
                   <ShowMoreButton
                     isExpanded={isExpanded}
                     onClick={() => onToggleExpanded(index)}
                     remainingLines={lines.length - MAX_VISIBLE_LINES}
+                    icon={
+                      isExpanded ? (
+                        <IconArrowUp size={16} />
+                      ) : (
+                        <IconArrowDown size={16} />
+                      )
+                    }
                   />
                 )}
             </div>

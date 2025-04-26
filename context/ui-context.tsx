@@ -14,10 +14,6 @@ interface UIContextType {
   selectedPlugin: PluginID;
   setSelectedPlugin: Dispatch<SetStateAction<PluginID>>;
 
-  // CHAT INPUT COMMAND
-  slashCommand: string;
-  setSlashCommand: Dispatch<SetStateAction<string>>;
-
   // UI States
   isMobile: boolean;
   isReadyToChat: boolean;
@@ -29,11 +25,7 @@ interface UIContextType {
     value: boolean | ((prevState: boolean) => boolean),
   ) => void;
 
-  // Tools UI
-  isToolPickerOpen: boolean;
-  setIsToolPickerOpen: Dispatch<SetStateAction<boolean>>;
-  focusTool: boolean;
-  setFocusTool: Dispatch<SetStateAction<boolean>>;
+  // Tools
   toolInUse: string;
   setToolInUse: Dispatch<SetStateAction<string>>;
 
@@ -55,10 +47,6 @@ export const UIContext = createContext<UIContextType>({
   selectedPlugin: PluginID.NONE,
   setSelectedPlugin: () => {},
 
-  // CHAT INPUT COMMAND
-  slashCommand: '',
-  setSlashCommand: () => {},
-
   // UI States
   isMobile: false,
   isReadyToChat: false,
@@ -69,10 +57,6 @@ export const UIContext = createContext<UIContextType>({
   setShowTerminalOutput: () => {},
 
   // Tools UI
-  isToolPickerOpen: false,
-  setIsToolPickerOpen: () => {},
-  focusTool: false,
-  setFocusTool: () => {},
   toolInUse: 'none',
   setToolInUse: () => {},
 

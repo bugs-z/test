@@ -174,7 +174,7 @@ export async function executeTerminalAgent({
         }
       })(),
       (async () => {
-        if (chatMetadata?.newChat && !autoSelected) {
+        if (chatMetadata.id && chatMetadata.newChat && !autoSelected) {
           generatedTitle = await generateTitleFromUserMessage({
             messages,
             abortSignal,

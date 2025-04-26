@@ -17,9 +17,6 @@ export const UIState: FC<UIStateProps> = ({ children }) => {
   const [selectedPluginType, setSelectedPluginType] = useState('');
   const [selectedPlugin, setSelectedPlugin] = useState(PluginID.NONE);
 
-  // CHAT INPUT COMMAND
-  const [slashCommand, setSlashCommand] = useState('');
-
   // UI States
   const [isMobile, setIsMobile] = useState<boolean | undefined>(undefined);
   const [isReadyToChat, setIsReadyToChat] = useState(true);
@@ -32,9 +29,7 @@ export const UIState: FC<UIStateProps> = ({ children }) => {
     true,
   );
 
-  // Tools UI
-  const [isToolPickerOpen, setIsToolPickerOpen] = useState(false);
-  const [focusTool, setFocusTool] = useState(false);
+  // Tools
   const [toolInUse, setToolInUse] = useState('none');
 
   // Agent states
@@ -64,10 +59,6 @@ export const UIState: FC<UIStateProps> = ({ children }) => {
         selectedPlugin,
         setSelectedPlugin,
 
-        // CHAT INPUT COMMAND
-        slashCommand,
-        setSlashCommand,
-
         // UI States
         isMobile: !!isMobile,
         isReadyToChat,
@@ -77,11 +68,7 @@ export const UIState: FC<UIStateProps> = ({ children }) => {
         showTerminalOutput,
         setShowTerminalOutput,
 
-        // Tools UI
-        isToolPickerOpen,
-        setIsToolPickerOpen,
-        focusTool,
-        setFocusTool,
+        // Tools
         toolInUse,
         setToolInUse,
 

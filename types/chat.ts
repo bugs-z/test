@@ -31,6 +31,6 @@ export type SubscriptionInfo = {
 };
 
 export type ChatMetadata = {
-  id: string;
+  id?: string;
   newChat: boolean;
 };

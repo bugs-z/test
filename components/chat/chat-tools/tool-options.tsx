@@ -1,12 +1,7 @@
 import { PentestGPTContext } from '@/context/context';
 import { cn } from '@/lib/utils';
 import { PluginID } from '@/types/plugins';
-import {
-  IconPaperclip,
-  IconTerminal2,
-  IconSearch,
-  IconAtom,
-} from '@tabler/icons-react';
+import { IconPaperclip, IconTerminal2, IconAtom } from '@tabler/icons-react';
 import { useContext, useState } from 'react';
 import { WithTooltip } from '../../ui/with-tooltip';
 import { useUIContext } from '@/context/ui-context';
@@ -49,14 +44,6 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
 
     setSelectedPlugin(
       selectedPlugin === PluginID.TERMINAL ? PluginID.NONE : PluginID.TERMINAL,
-    );
-  };
-
-  const handleEnhancedSearchToggle = () => {
-    setSelectedPlugin(
-      selectedPlugin === PluginID.ENHANCED_SEARCH
-        ? PluginID.NONE
-        : PluginID.ENHANCED_SEARCH,
     );
   };
 
@@ -139,51 +126,6 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
               )}
             >
               Reason
-            </div>
-          </div>
-        }
-      />
-
-      {/* Enhanced Search Tool */}
-      <WithTooltip
-        delayDuration={TOOLTIP_DELAY}
-        side="top"
-        display={
-          <div className="flex flex-col">
-            <p className="font-medium">Search pentesting knowledge base</p>
-          </div>
-        }
-        trigger={
-          <div
-            className={cn(
-              'relative flex flex-row items-center rounded-lg transition-colors duration-300',
-              selectedPlugin === PluginID.ENHANCED_SEARCH
-                ? 'bg-primary/10'
-                : 'hover:bg-black/10 dark:hover:bg-white/10',
-            )}
-            onClick={handleEnhancedSearchToggle}
-          >
-            <IconSearch
-              className={cn(
-                'cursor-pointer rounded-lg rounded-bl-xl p-1 focus-visible:outline-black dark:focus-visible:outline-white',
-                selectedPlugin === PluginID.ENHANCED_SEARCH
-                  ? 'text-primary'
-                  : 'opacity-50',
-              )}
-              size={32}
-            />
-            <div
-              className={cn(
-                'whitespace-nowrap text-xs font-medium',
-                'transition-all duration-300',
-                !isMobile && 'max-w-[100px] pr-2',
-                isMobile &&
-                  (selectedPlugin === PluginID.ENHANCED_SEARCH
-                    ? 'max-w-[100px] pr-2 opacity-100'
-                    : 'max-w-0 opacity-0'),
-              )}
-            >
-              RAG Search
             </div>
           </div>
         }
