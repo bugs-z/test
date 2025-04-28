@@ -80,6 +80,7 @@ export const createShellExecTool = (context: ToolContext) => {
         command,
         exec_dir,
         sandbox,
+        dataStream,
       });
 
       const terminalOutput = await streamTerminalOutput(

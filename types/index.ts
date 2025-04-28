@@ -9,3 +9,4 @@ export * from './sharing';
 export * from './sidebar-data';
 export * from './stream';
 export * from './plugins';
+export * from './files';

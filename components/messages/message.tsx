@@ -26,6 +26,7 @@ import { useUIContext } from '@/context/ui-context';
 import { ChatFileItem } from '../chat/chat-file-item';
 import { AgentStatus, isValidAgentStatus } from './agent-status';
 import { MessageStatus } from './message-status';
+import { MessageAttachments } from './message-attachments';
 
 const DynamicFilePreview = dynamic(() => import('../ui/file-preview'), {
   ssr: false,
@@ -304,6 +305,8 @@ export const Message: FC<MessageProps> = ({
                   isLastMessage={isLast}
                   toolInUse={toolInUse}
                 />
+
+                <MessageAttachments attachments={message.attachments || []} />
               </div>
             )}
           </div>

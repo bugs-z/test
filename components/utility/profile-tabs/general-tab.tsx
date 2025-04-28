@@ -36,7 +36,7 @@ export const GeneralTab: FC<GeneralTabProps> = ({
 
       <div className="flex items-center justify-between">
         <Label className="max-w-[80%] shrink leading-normal">
-          Always show terminal output when using plugins
+          Always show terminal output
         </Label>
         <div className="flex grow justify-end">
           <Switch

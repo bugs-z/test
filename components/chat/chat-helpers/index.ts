@@ -73,7 +73,6 @@ export const handleHostedChat = async (
     setFirstTokenReceived,
     setChatMessages,
     setToolInUse,
-    requestBody,
     setIsGenerating,
     alertDispatch,
     modelParams.selectedPlugin,

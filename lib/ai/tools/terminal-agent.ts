@@ -123,7 +123,6 @@ export async function executeTerminalAgent({
                   ? customFinishReason
                   : finishReason,
               });
-              dataStream.writeData({ isChatSavedInBackend: true });
             }
           },
         });

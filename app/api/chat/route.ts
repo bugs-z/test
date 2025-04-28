@@ -1,6 +1,5 @@
 import { getAIProfile } from '@/lib/server/server-chat-helpers';
 import { handleErrorResponse } from '@/lib/models/api-error';
-import llmConfig from '@/lib/models/llm-config';
 import { checkRatelimitOnApi } from '@/lib/server/ratelimiter';
 import { createDataStreamResponse, smoothStream, streamText } from 'ai';
 import { myProvider } from '@/lib/ai/providers';
@@ -65,7 +64,7 @@ export async function POST(request: Request) {
       );
     }
 
-    let {
+    const {
       messages: validatedMessages,
       selectedModel: finalSelectedModel,
       systemPrompt,
@@ -180,7 +179,6 @@ export async function POST(request: Request) {
                   messages: validatedMessages,
                   finishReason,
                 });
-                dataStream.writeData({ isChatSavedInBackend: true });
               }
             },
           });

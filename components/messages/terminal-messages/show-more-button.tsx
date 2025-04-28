@@ -13,7 +13,7 @@ export const ShowMoreButton: React.FC<ShowMoreButtonProps> = ({
     <Button
       variant="ghost"
       size="sm"
-      className="h-7 px-2 text-xs"
+      className="h-7 px-2 text-xs text-muted-foreground"
       onClick={onClick}
     >
       {isExpanded ? (

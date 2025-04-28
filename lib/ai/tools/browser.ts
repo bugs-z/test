@@ -11,6 +11,7 @@ import {
   generateTitleFromUserMessage,
   handleChatWithMetadata,
 } from '@/lib/ai/actions';
+import { truncateContentByTokens } from '@/lib/ai/terminal-utils';
 
 interface BrowserToolConfig {
   profile: any;
@@ -62,7 +63,7 @@ export async function browsePage(
       return `Error: Empty content received from URL: ${url}`;
     }
 
-    return content;
+    return truncateContentByTokens(content);
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown error';

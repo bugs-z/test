@@ -14,6 +14,7 @@ import { PluginID } from '@/types/plugins';
 import { useRouter } from 'next/navigation';
 import { useContext, useEffect, useRef } from 'react';
 import { LLM_LIST } from '../../../lib/models/llm-list';
+import { SmallModel } from '@/lib/models/hackerai-llm-list';
 import { v4 as uuidv4 } from 'uuid';
 import { useUIContext } from '@/context/ui-context';
 import { createMessageFeedback } from '@/db/message-feedback';
@@ -26,6 +27,7 @@ import {
 } from '../chat-helpers';
 import { getMessageFileItemsByMessageId } from '@/db/message-file-items';
 import { useRetrievalLogic } from './retrieval-logic';
+import { toast } from 'sonner';
 
 export const useChatHandler = () => {
   const router = useRouter();
@@ -198,8 +200,8 @@ export const useChatHandler = () => {
       allow_sharing: allow_sharing,
       has_files: chatMessage.fileItems.length > 0,
       plugin: chatMessage.message.plugin || PluginID.NONE,
-      rag_used: chatMessage.message.rag_used,
-      rag_id: chatMessage.message.rag_id,
+      rag_used: false,
+      rag_id: null,
     };
     const newFeedback = await createMessageFeedback(feedbackInsert);
     setChatMessages((prevMessages: ChatMessage[]) =>
@@ -427,6 +429,30 @@ export const useChatHandler = () => {
         ? { newChat: !currentChat }
         : { id: chatId, newChat: !currentChat };
 
+      // Create chat early if it doesn't exist
+      if (!currentChat && !isTemporaryChat) {
+        if (!profile) {
+          toast.error('User profile not found. Please try logging in again.');
+          throw new Error('Profile not found - user needs to log in');
+        }
+
+        const validModel = baseModel || SmallModel.modelId;
+
+        currentChat = await handleCreateChat(
+          validModel,
+          profile,
+          messageContent || '',
+          'stop',
+          setSelectedChat,
+          setChats,
+          chatId,
+          '',
+        );
+
+        // Update URL without triggering a page reload or new history entry
+        window.history.replaceState({}, '', `/c/${chatId}`);
+      }
+
       let generatedText = '';
       let thinkingText = '';
       let thinkingElapsedSecs: number | null = null;
@@ -450,6 +476,7 @@ export const useChatHandler = () => {
         selectedPlugin: updatedSelectedPlugin,
         citations: citationsFromResponse,
         chatTitle,
+        fileAttachments,
       } = await handleHostedChat(
         payload,
         tempAssistantChatMessage,
@@ -491,40 +518,25 @@ export const useChatHandler = () => {
             : msg,
         );
         setTemporaryChatMessages(updatedMessages);
-      } else {
-        if (!currentChat) {
-          currentChat = await handleCreateChat(
-            baseModel!,
-            profile!,
-            messageContent || '',
-            finishReason,
-            setSelectedChat,
-            setChats,
-            chatId,
-            chatTitle,
+      } else if (currentChat) {
+        const updatedChat: Tables<'chats'> = {
+          ...currentChat,
+          ...(chatTitle ? { name: chatTitle } : {}),
+          updated_at: new Date().toISOString(),
+          finish_reason: finishReason,
+          model: chatSettings?.model || currentChat.model,
+        };
+
+        setChats((prevChats) => {
+          const updatedChats = prevChats.map((prevChat) =>
+            prevChat.id === updatedChat.id ? updatedChat : prevChat,
           );
 
-          // Update URL without triggering a page reload or new history entry
-          window.history.replaceState({}, '', `/c/${chatId}`);
-        } else {
-          const updatedChat = {
-            ...currentChat,
-            updated_at: new Date().toISOString(),
-            finish_reason: finishReason,
-            model: chatSettings?.model || currentChat.model,
-          };
+          return updatedChats;
+        });
 
-          setChats((prevChats) => {
-            const updatedChats = prevChats.map((prevChat) =>
-              prevChat.id === updatedChat.id ? updatedChat : prevChat,
-            );
-
-            return updatedChats;
-          });
-
-          if (selectedChat?.id === updatedChat.id) {
-            setSelectedChat(updatedChat);
-          }
+        if (currentChat) {
+          setSelectedChat(updatedChat);
         }
 
         await handleCreateMessages(
@@ -548,6 +560,7 @@ export const useChatHandler = () => {
           thinkingElapsedSecs,
           newMessageFiles,
           setChatFiles,
+          fileAttachments,
         );
       }
 

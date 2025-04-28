@@ -12,10 +12,12 @@ import {
   type ChatMessage,
   type LLM,
   type MessageImage,
+  type FileAttachment,
   PluginID,
 } from '@/types';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
+import { convertToJsonAttachments } from '@/lib/utils/type-converters';
 
 export const handleCreateMessages = async (
   chatMessages: ChatMessage[],
@@ -38,6 +40,7 @@ export const handleCreateMessages = async (
   thinkingElapsedSecs?: number | null,
   newChatFiles?: { id: string }[],
   setChatFiles?: React.Dispatch<React.SetStateAction<Tables<'files'>[]>>,
+  fileAttachments?: FileAttachment[],
 ) => {
   const isEdit = editSequenceNumber !== undefined;
 
@@ -48,21 +51,19 @@ export const handleCreateMessages = async (
         id: uuidv4(),
         chat_id: '',
         content: messageContent || '',
-        role: 'user',
         thinking_content: null,
         thinking_enabled: selectedPlugin === PluginID.REASONING,
         thinking_elapsed_secs: null,
+        role: 'user',
+        model: modelData.modelId,
+        plugin: selectedPlugin,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         sequence_number: lastSequenceNumber(chatMessages) + 1,
         user_id: profile.user_id,
-        model: modelData.modelId,
-        plugin: selectedPlugin,
         image_paths: newMessageImages.map((image) => image.path),
-        rag_used: false,
-        rag_id: null,
+        attachments: [],
         citations: [],
-        fragment: null,
       },
       fileItems: retrievedFileItems,
     };
@@ -75,18 +76,18 @@ export const handleCreateMessages = async (
         thinking_content: thinkingText || null,
         thinking_enabled: selectedPlugin === PluginID.REASONING,
         thinking_elapsed_secs: thinkingElapsedSecs || null,
+        model: modelData.modelId,
+        plugin: selectedPlugin,
         role: 'assistant',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         sequence_number: lastSequenceNumber(chatMessages) + 2,
         user_id: profile.user_id,
-        model: modelData.modelId,
-        plugin: selectedPlugin,
         image_paths: [],
-        rag_used: false,
-        rag_id: null,
         citations: citations || [],
-        fragment: null,
+        attachments: fileAttachments
+          ? convertToJsonAttachments(fileAttachments)
+          : [],
       },
       fileItems: [],
     };
@@ -107,10 +108,8 @@ export const handleCreateMessages = async (
     role: 'user',
     sequence_number: lastSequenceNumber(chatMessages) + 1,
     image_paths: [],
-    rag_used: false,
-    rag_id: null,
     citations: [],
-    fragment: null,
+    attachments: [],
   };
 
   const finalAssistantMessage: TablesInsert<'messages'> = {
@@ -125,10 +124,10 @@ export const handleCreateMessages = async (
     role: 'assistant',
     sequence_number: lastSequenceNumber(chatMessages) + 2,
     image_paths: [],
-    rag_used: false,
-    rag_id: null,
     citations: citations || [],
-    fragment: null,
+    attachments: fileAttachments
+      ? convertToJsonAttachments(fileAttachments)
+      : [],
   };
 
   let finalChatMessages: ChatMessage[] = [];
@@ -188,8 +187,16 @@ export const handleCreateMessages = async (
   } else if (isContinuation) {
     const lastStartingMessage = chatMessages[chatMessages.length - 1].message;
 
+    // Get existing attachments and append new ones
+    const existingAttachments = lastStartingMessage.attachments || [];
+    const newAttachments = fileAttachments
+      ? convertToJsonAttachments(fileAttachments)
+      : [];
+    const combinedAttachments = [...existingAttachments, ...newAttachments];
+
     const updatedMessage = await updateMessage(lastStartingMessage.id, {
       content: lastStartingMessage.content + generatedText,
+      attachments: combinedAttachments,
     });
 
     chatMessages[chatMessages.length - 1].message = updatedMessage;

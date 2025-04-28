@@ -1,10 +1,8 @@
-import llmConfig from '@/lib/models/llm-config';
 import { processDocX } from '@/lib/retrieval/processing';
 import { getServerProfile } from '@/lib/server/server-chat-helpers';
 import { createSupabaseAdminClient } from '@/lib/server/server-utils';
 import type { FileItemChunk } from '@/types';
 import { NextResponse } from 'next/server';
-import OpenAI from 'openai';
 
 export async function POST(req: Request) {
   const json = await req.json();
@@ -31,28 +29,13 @@ export async function POST(req: Request) {
         });
     }
 
-    let embeddings: any = [];
-
-    const openai = new OpenAI({
-      apiKey: llmConfig.openai.apiKey,
-    });
-
-    const response = await openai.embeddings.create({
-      model: 'text-embedding-3-small',
-      input: chunks.map((chunk) => chunk.content),
-    });
-
-    embeddings = response.data.map((item: any) => {
-      return item.embedding;
-    });
-
     const file_items = chunks.map((chunk, index) => ({
       file_id: fileId,
       user_id: profile.user_id,
       sequence_number: index,
       content: chunk.content,
       tokens: chunk.tokens,
-      openai_embedding: embeddings[index],
+      openai_embedding: null,
     }));
 
     await supabaseAdmin.from('file_items').upsert(file_items);

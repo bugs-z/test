@@ -92,7 +92,6 @@ export async function executeReasonLLMTool({
                 messages,
                 finishReason,
               });
-              dataStream.writeData({ isChatSavedInBackend: true });
             }
           },
         });

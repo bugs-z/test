@@ -1,5 +1,6 @@
 import type { Tables } from '@/supabase/types';
 import type { FilePart, TextPart } from 'ai';
+import type { PluginID } from './plugins';
 
 export interface ChatMessage {
   message: Tables<'messages'>;
@@ -21,4 +22,14 @@ export interface BuiltChatMessage {
   role: string;
   content: string | MessageContent[];
   attachments?: Tables<'file_items'>[];
+}
+
+export interface ProviderMetadata {
+  thinking_enabled?: boolean;
+  thinking_elapsed_secs?: number | null;
+  citations?: string[];
+}
+
+export interface MessageModelParams {
+  plugin: PluginID;
 }

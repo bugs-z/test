@@ -80,6 +80,7 @@ export async function executeTerminalCommandWithConfig({
     command,
     exec_dir,
     sandbox,
+    dataStream,
   });
 
   const terminalOutput = await streamTerminalOutput(terminalStream, dataStream);

@@ -1,4 +1,4 @@
-import type { ChatMessage, DataPartValue } from '@/types';
+import type { ChatMessage, DataPartValue, FileAttachment } from '@/types';
 import type { AlertAction } from '@/context/alert-context';
 import { processDataStream } from 'ai';
 import { toast } from 'sonner';
@@ -13,7 +13,6 @@ export const processResponse = async (
   setFirstTokenReceived: Dispatch<SetStateAction<boolean>>,
   setChatMessages: Dispatch<SetStateAction<ChatMessage[]>>,
   setToolInUse: Dispatch<SetStateAction<string>>,
-  requestBody: object,
   setIsGenerating: Dispatch<SetStateAction<boolean>>,
   alertDispatch: Dispatch<AlertAction>,
   selectedPlugin: PluginID,
@@ -66,6 +65,7 @@ export const processResponse = async (
     let citations: string[] = [];
     let shouldSkipFirstChunk = false;
     let chatTitle: string | null = null;
+    let fileAttachments: FileAttachment[] = [];
 
     try {
       await processDataStream({
@@ -103,7 +103,6 @@ export const processResponse = async (
                       message: {
                         ...chatMessage.message,
                         content: chatMessage.message.content + value,
-                        image_paths: chatMessage.message.image_paths,
                       },
                     }
                   : chatMessage,
@@ -158,6 +157,13 @@ export const processResponse = async (
                       : chatMessage,
                   ),
                 );
+              }
+
+              if (firstValue.type === 'file-attachment') {
+                const attachments = Array.isArray(firstValue.content)
+                  ? (firstValue.content as FileAttachment[])
+                  : [];
+                fileAttachments = [...fileAttachments, ...attachments];
               }
 
               if (firstValue.type === 'agent-status') {
@@ -314,6 +320,7 @@ export const processResponse = async (
       selectedPlugin: updatedPlugin,
       citations,
       chatTitle,
+      fileAttachments,
     };
   } else {
     throw new Error('Response body is null');

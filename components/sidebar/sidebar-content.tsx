@@ -23,13 +23,8 @@ export const SidebarContent: FC<SidebarContentProps> = ({
   contentType,
   data,
 }) => {
-  const {
-    isPremiumSubscription,
-    subscription,
-    membershipData,
-    teamMembers,
-    setContentType,
-  } = useContext(PentestGPTContext);
+  const { isPremiumSubscription, subscription, membershipData, teamMembers } =
+    useContext(PentestGPTContext);
   const { isMobile, setShowSidebar } = useUIContext();
   const isInvitationPending = membershipData?.invitation_status === 'pending';
 
