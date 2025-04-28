@@ -28,6 +28,12 @@ export const FileContentBlockComponent: React.FC<
     setIsExpanded(!isExpanded);
   };
 
+  const getActionText = () => {
+    if (block.isStrReplace) return 'Editing file';
+    if (block.isWrite) return 'Writing to file';
+    return 'Reading file';
+  };
+
   return (
     <div
       className={`overflow-hidden rounded-lg border border-border ${index === 1 ? 'mb-3' : 'my-3'}`}
@@ -36,7 +42,7 @@ export const FileContentBlockComponent: React.FC<
         <div className="flex items-center flex-1 min-w-0">
           <div className="flex items-center shrink-0 mr-2">
             <IconFile size={16} className="mr-2" />
-            <span>{block.isWrite ? 'Writing to file' : 'Reading file'}</span>
+            <span>{getActionText()}</span>
           </div>
           <div className="min-w-0 flex-1">
             <code className="truncate block font-mono text-muted-foreground text-sm">

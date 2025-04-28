@@ -4,7 +4,8 @@
 export enum AgentStatusState {
   THINKING = 'message_notify_user',
   TERMINAL = 'terminal',
-  FILE_WRITE = 'file_write',
+  CREATING_FILE = 'creating_file',
+  EDITING_FILE = 'editing_file',
   FILE_READ = 'file_read',
   WEB_SEARCH = 'websearch',
   BROWSER = 'browser',
@@ -18,7 +19,8 @@ export enum AgentStatusState {
 export const AgentStatusLabels: Record<AgentStatusState, string> = {
   [AgentStatusState.THINKING]: 'Thinking',
   [AgentStatusState.TERMINAL]: 'Using terminal',
-  [AgentStatusState.FILE_WRITE]: 'Writing to file',
+  [AgentStatusState.CREATING_FILE]: 'Creating file',
+  [AgentStatusState.EDITING_FILE]: 'Editing file',
   [AgentStatusState.FILE_READ]: 'Reading file',
   [AgentStatusState.WEB_SEARCH]: 'Searching the web',
   [AgentStatusState.BROWSER]: 'Browsing the web',
@@ -41,7 +43,7 @@ const AgentStatusColors: Record<
     ping: 'bg-amber-400',
     base: 'bg-amber-500',
   },
-  [AgentStatusState.FILE_WRITE]: {
+  [AgentStatusState.CREATING_FILE]: {
     ping: 'bg-green-400',
     base: 'bg-green-500',
   },
@@ -64,6 +66,10 @@ const AgentStatusColors: Record<
   [AgentStatusState.SHELL_KILL_PROCESS]: {
     ping: 'bg-red-400',
     base: 'bg-red-500',
+  },
+  [AgentStatusState.EDITING_FILE]: {
+    ping: 'bg-pink-400',
+    base: 'bg-pink-500',
   },
 };
 

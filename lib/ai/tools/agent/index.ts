@@ -7,6 +7,7 @@ import { createFileWriteTool } from './file-write-tool';
 import { createFileReadTool } from './file-read-tool';
 import { createIdleTool } from './idle-tool';
 import { createShellWaitTool } from './shell-wait-tool';
+import { createFileStrReplaceTool } from './file-str-replace-tool';
 
 /**
  * Creates and returns all agent tools with the provided context
@@ -25,10 +26,8 @@ export function createAgentTools(context: ToolContext) {
     message_notify_user: createMessageNotifyTool(context),
     message_ask_user: createMessageAskTool(),
     file_write: createFileWriteTool(context),
+    file_str_replace: createFileStrReplaceTool(context),
     file_read: createFileReadTool(context),
     idle: createIdleTool(),
   };
 }
-
-// Export types and constants
-export * from './types';

@@ -19,6 +19,7 @@ export interface FileContentBlock {
   path: string;
   content: string;
   isWrite?: boolean;
+  isStrReplace?: boolean;
 }
 
 export type ContentBlock =

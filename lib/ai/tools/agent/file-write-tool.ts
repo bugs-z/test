@@ -20,7 +20,7 @@ const writeFileContent = async (
   try {
     dataStream.writeData({
       type: 'agent-status',
-      content: 'file_write',
+      content: append ? 'editing_file' : 'creating_file',
     });
 
     let finalContent = content;

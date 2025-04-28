@@ -3,7 +3,7 @@ import type { ContentBlock } from './types';
 export const parseContent = (content: string): ContentBlock[] => {
   const blocks: ContentBlock[] = [];
   const blockRegex =
-    /((?:<terminal-command[^>]*>[\s\S]*?<\/terminal-command>|```terminal\n[\s\S]*?```|<file-content[^>]*>[\s\S]*?<\/file-content>|<file-write[^>]*>[\s\S]*?<\/file-write>|<shell-wait[^>]*>[\s\S]*?<\/shell-wait>)(?:\n```(?:stdout)[\s\S]*?(?:```|$))*(?:\s*<terminal-error>[\s\S]*?<\/terminal-error>)?)/g;
+    /((?:<terminal-command[^>]*>[\s\S]*?<\/terminal-command>|```terminal\n[\s\S]*?```|<file-content[^>]*>[\s\S]*?<\/file-content>|<file-write[^>]*>[\s\S]*?<\/file-write>|<file-str-replace[^>]*>[\s\S]*?<\/file-str-replace>|<shell-wait[^>]*>[\s\S]*?<\/shell-wait>)(?:\n```(?:stdout)[\s\S]*?(?:```|$))*(?:\s*<terminal-error>[\s\S]*?<\/terminal-error>)?)/g;
   const terminalXmlRegex =
     /<terminal-command(?:\s+[^>]*)?>([\s\S]*?)<\/terminal-command>/;
   const terminalMarkdownRegex = /```terminal\n([\s\S]*?)```/;
@@ -11,6 +11,8 @@ export const parseContent = (content: string): ContentBlock[] => {
     /<file-content(?:\s+path="([^"]*)")?>([\s\S]*?)<\/file-content>/;
   const fileWriteRegex =
     /<file-write(?:\s+file="([^"]*)")?>([\s\S]*?)<\/file-write>/;
+  const fileStrReplaceRegex =
+    /<file-str-replace(?:\s+file="([^"]*)")?>([\s\S]*?)<\/file-str-replace>/;
   const shellWaitRegex = /<shell-wait[^>]*>([\s\S]*?)<\/shell-wait>/;
   const stdoutRegex = /```stdout\n([\s\S]*?)(?:```|$)/;
   const errorRegex = /<terminal-error>([\s\S]*?)<\/terminal-error>/;
@@ -32,6 +34,7 @@ export const parseContent = (content: string): ContentBlock[] => {
     const terminalMarkdownMatch = block.match(terminalMarkdownRegex);
     const fileContentMatch = block.match(fileContentRegex);
     const fileWriteMatch = block.match(fileWriteRegex);
+    const fileStrReplaceMatch = block.match(fileStrReplaceRegex);
     const shellWaitMatch = block.match(shellWaitRegex);
     const stdoutMatch = block.match(stdoutRegex);
     const errorMatch = block.match(errorRegex);
@@ -74,6 +77,16 @@ export const parseContent = (content: string): ContentBlock[] => {
           path: fileWriteMatch[1] || '',
           content: fileWriteMatch[2].trim(),
           isWrite: true,
+        },
+      });
+    } else if (fileStrReplaceMatch) {
+      blocks.push({
+        type: 'file-content',
+        content: {
+          path: fileStrReplaceMatch[1] || '',
+          content: fileStrReplaceMatch[2].trim(),
+          isWrite: true,
+          isStrReplace: true,
         },
       });
     }
