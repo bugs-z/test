@@ -229,6 +229,9 @@ export async function executeBrowserTool({
             { role: 'user', content: browserPrompt },
           ],
           maxTokens: 2048,
+          onError: async (error) => {
+            console.error('[BrowserTool] Stream Error:', error);
+          },
           onFinish: async ({ finishReason }: { finishReason: string }) => {
             if (supabase) {
               await handleChatWithMetadata({

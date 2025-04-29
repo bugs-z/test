@@ -81,6 +81,9 @@ export async function executeReasonLLMTool({
               reasoningEffort: 'high',
             },
           },
+          onError: async (error) => {
+            console.error('[ReasonLLM] Stream Error:', error);
+          },
           onFinish: async ({ finishReason }: { finishReason: string }) => {
             if (supabase) {
               await handleChatWithMetadata({

@@ -233,7 +233,6 @@ export async function processChatMessages(
   profile: { user_id: string; profile_context: string },
 ): Promise<{
   messages: BuiltChatMessage[];
-  selectedModel: string;
   systemPrompt: string;
 }> {
   let shouldUncensor = false;
@@ -268,7 +267,6 @@ export async function processChatMessages(
 
   return {
     messages: validatedMessages,
-    selectedModel,
     systemPrompt,
   };
 }

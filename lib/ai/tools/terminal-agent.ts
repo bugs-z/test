@@ -110,6 +110,9 @@ export async function executeTerminalAgent({
           maxSteps: 10,
           toolChoice: 'required',
           abortSignal,
+          onError: async (error) => {
+            console.error('[TerminalAgent] Stream Error:', error);
+          },
           onFinish: async ({ finishReason }: { finishReason: string }) => {
             if (supabase) {
               await handleChatWithMetadata({
