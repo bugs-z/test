@@ -167,8 +167,7 @@ export const executeTerminalCommand = async ({
               error instanceof Error &&
               error.name === 'CommandExitError' &&
               ((error as ExecutionError).result?.exitCode === 1 ||
-                (error as ExecutionError).result?.exitCode === 28) &&
-              !(error as ExecutionError).result?.stderr
+                (error as ExecutionError).result?.exitCode === 28)
             )
           ) {
             console.error(`[${userID}] Error:`, error);

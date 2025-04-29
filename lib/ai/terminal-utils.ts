@@ -2,6 +2,7 @@ import { encode, decode } from 'gpt-tokenizer';
 
 const STREAM_MAX_TOKENS = 2048;
 const AGENT_MAX_TOKENS = 32000;
+const TRUNCATION_MESSAGE = '...\n\n[Output truncated because too long]```';
 
 export async function streamTerminalOutput(
   terminalStream: ReadableStream<Uint8Array>,
@@ -27,7 +28,7 @@ export async function streamTerminalOutput(
       if (!truncationMessageSent) {
         dataStream.writeData({
           type: 'text-delta',
-          content: '...\n\n[Output truncated because too long]\n```',
+          content: TRUNCATION_MESSAGE,
         });
         truncationMessageSent = true;
       }
@@ -50,7 +51,7 @@ export async function streamTerminalOutput(
       if (!truncationMessageSent) {
         dataStream.writeData({
           type: 'text-delta',
-          content: '...\n\n[Output truncated because too long]\n```',
+          content: TRUNCATION_MESSAGE,
         });
         truncationMessageSent = true;
       }
@@ -67,7 +68,7 @@ export async function streamTerminalOutput(
   const tokens = encode(terminalOutput);
   if (tokens.length > AGENT_MAX_TOKENS) {
     const truncatedTokens = tokens.slice(0, AGENT_MAX_TOKENS);
-    terminalOutput = `${decode(truncatedTokens)}\n\n[Output truncated because too long]`;
+    terminalOutput = `${decode(truncatedTokens)}${TRUNCATION_MESSAGE}`;
   }
 
   return terminalOutput;
@@ -80,7 +81,7 @@ export function truncateContentByTokens(
   const tokens = encode(output);
   if (tokens.length > maxTokens) {
     const initial = tokens.slice(0, maxTokens);
-    return `${decode(initial)}...\n\n[Output truncated because too long]\n\`\`\``;
+    return `${decode(initial)}${TRUNCATION_MESSAGE}`;
   }
   return output;
 }

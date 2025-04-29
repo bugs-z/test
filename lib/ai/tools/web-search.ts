@@ -163,10 +163,13 @@ export async function executeWebSearchTool({
 
     return 'Web search completed';
   } catch (error) {
-    console.error('[WebSearch] Error:', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      model: selectedModel,
-    });
+    // Skip logging for terminated errors
+    if (!(error instanceof Error && error.message === 'terminated')) {
+      console.error('[WebSearch] Error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        model: selectedModel,
+      });
+    }
     throw error;
   }
 }

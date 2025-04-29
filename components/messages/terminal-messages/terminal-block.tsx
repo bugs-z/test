@@ -177,39 +177,7 @@ export const TerminalBlockComponent: React.FC<TerminalBlockProps> = ({
           )}
           {block.error && (
             <div className="font-mono text-destructive/90">
-              {shouldShowMore && isGenerating && isLastBlock && (
-                <ShowMoreButton
-                  isExpanded={isExpanded}
-                  onClick={() => onToggleExpanded(index)}
-                  remainingLines={lines.length - MAX_VISIBLE_LINES}
-                  icon={
-                    isExpanded ? (
-                      <IconArrowDown size={16} />
-                    ) : (
-                      <IconArrowUp size={16} />
-                    )
-                  }
-                />
-              )}
-              {renderContent(
-                `\`\`\`stdout\n${shouldShowMore ? displayedContent : block.error}\n\`\`\``,
-              )}
-              {shouldShowMore &&
-                block.error.split('\n').length > MAX_VISIBLE_LINES &&
-                !(isGenerating && isLastBlock) && (
-                  <ShowMoreButton
-                    isExpanded={isExpanded}
-                    onClick={() => onToggleExpanded(index)}
-                    remainingLines={lines.length - MAX_VISIBLE_LINES}
-                    icon={
-                      isExpanded ? (
-                        <IconArrowUp size={16} />
-                      ) : (
-                        <IconArrowDown size={16} />
-                      )
-                    }
-                  />
-                )}
+              {renderContent(`\`\`\`stdout\n${block.error}\n\`\`\``)}
             </div>
           )}
         </div>

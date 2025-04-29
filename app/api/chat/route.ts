@@ -161,7 +161,15 @@ export async function POST(request: Request) {
               }
             },
             onError: async (error) => {
-              console.error('[Chat] Stream Error:', error);
+              if (
+                !(
+                  error instanceof Error &&
+                  error.name === 'AI_ToolExecutionError' &&
+                  error.message.includes('terminated')
+                )
+              ) {
+                console.error('[Chat] Stream Error:', error);
+              }
             },
             tools: createToolSchemas(toolConfig).getSelectedSchemas(
               config.isLargeModel

@@ -119,6 +119,7 @@ System Environment:
 - User: \`root\`, with sudo privileges
 - Home directory: /home/user
 - Persistent sandbox keeps data for 30 days
+- VPN connectivity is not available due to missing TUN/TAP device support in the sandbox environment
 
 Development Environment:
 - Python 3.10.14 (commands: python3, pip3)

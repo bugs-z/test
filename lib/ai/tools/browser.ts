@@ -72,7 +72,8 @@ export async function browsePage(
     if (
       !errorMessage.includes('408') &&
       !errorMessage.includes('403') &&
-      !errorMessage.includes('500')
+      !errorMessage.includes('500') &&
+      !errorMessage.includes('400')
     ) {
       console.error('[BrowserTool] Error browsing URL:', url, error);
     }

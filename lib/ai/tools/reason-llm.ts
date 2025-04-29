@@ -147,10 +147,13 @@ export async function executeReasonLLMTool({
 
     return 'Reason LLM execution completed';
   } catch (error) {
-    console.error('[ReasonLLM] Error:', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      model,
-    });
+    // Skip logging for terminated errors
+    if (!(error instanceof Error && error.message === 'terminated')) {
+      console.error('[ReasonLLM] Error:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        model,
+      });
+    }
     throw error;
   }
 }

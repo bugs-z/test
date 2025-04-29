@@ -11,6 +11,7 @@ import { getModerationResult } from '@/lib/server/moderation';
 import { getSystemPrompt } from './prompts';
 import { processMessageContentWithAttachments } from '../build-prompt-backend';
 import llmConfig from '../models/llm-config';
+import { countTokens } from 'gpt-tokenizer';
 
 /**
  * Removes the last assistant message if it's empty.
@@ -213,6 +214,43 @@ export function validateMessages(messages: any[]) {
 }
 
 /**
+ * Validates that the total tokens in messages don't exceed the maximum limit
+ * @param messages - Array of messages to validate
+ * @throws Error if total tokens exceed MAX_TOKENS
+ */
+function validateMessageTokens(
+  messages: BuiltChatMessage[],
+  userId: string,
+): void {
+  const MAX_TOKENS = 32000;
+  let totalTokens = 0;
+
+  for (const message of messages) {
+    if (typeof message.content === 'string') {
+      totalTokens += countTokens(message.content);
+    } else if (Array.isArray(message.content)) {
+      // Only count text content
+      const textContent = message.content
+        .filter((item: any) => item.type === 'text')
+        .map((item: any) => item.text)
+        .join(' ');
+      totalTokens += countTokens(textContent);
+    }
+  }
+
+  if (totalTokens > MAX_TOKENS) {
+    console.error('Token limit exceeded:', {
+      totalTokens,
+      maxTokens: MAX_TOKENS,
+      userId,
+    });
+    throw new Error(
+      `Message content exceeds maximum token limit of ${MAX_TOKENS}. Please reduce the message length.`,
+    );
+  }
+}
+
+/**
  * Processes chat messages and handles model selection, uncensoring, and validation
  * @param messages - Array of messages to process
  * @param selectedModel - The initially selected model
@@ -250,6 +288,9 @@ export async function processChatMessages(
   }
 
   filterEmptyAssistantMessages(messages);
+
+  // Validate total token count before processing attachments
+  validateMessageTokens(messages, profile?.user_id);
 
   // Process attachments and file content for the last message
   const messagesWithAttachments = await processMessageContentWithAttachments(
