@@ -38,9 +38,10 @@ export const MessageTypeResolver: FC<MessageTypeResolverProps> = ({
   // })
 
   if (
-    (isPluginOutput &&
+    message.role === 'assistant' &&
+    ((isPluginOutput &&
       allTerminalPlugins.includes(message.plugin as PluginID)) ||
-    allTerminalPlugins.includes(toolInUse as PluginID)
+      allTerminalPlugins.includes(toolInUse as PluginID))
   ) {
     return (
       <MessageTerminal
@@ -52,9 +53,10 @@ export const MessageTypeResolver: FC<MessageTypeResolverProps> = ({
   }
 
   if (
-    toolInUse === PluginID.REASONING ||
-    toolInUse === PluginID.REASONING_WEB_SEARCH ||
-    message.thinking_content
+    message.role === 'assistant' &&
+    (toolInUse === PluginID.REASONING ||
+      toolInUse === PluginID.REASONING_WEB_SEARCH ||
+      message.thinking_content)
   ) {
     return (
       <MessageThinking
@@ -68,9 +70,10 @@ export const MessageTypeResolver: FC<MessageTypeResolverProps> = ({
   }
 
   if (
-    message.plugin === PluginID.WEB_SEARCH ||
-    toolInUse === PluginID.WEB_SEARCH ||
-    message.citations?.length > 0
+    message.role === 'assistant' &&
+    (message.plugin === PluginID.WEB_SEARCH ||
+      toolInUse === PluginID.WEB_SEARCH ||
+      message.citations?.length > 0)
   ) {
     return (
       <MessageCitations
