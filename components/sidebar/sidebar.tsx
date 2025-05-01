@@ -34,9 +34,6 @@ export const Sidebar: FC<SidebarProps> = ({ contentType, showSidebar }) => {
             case 'chats':
               return renderSidebarContent('chats', chats);
 
-            case 'tools':
-              return renderSidebarContent('chats', chats);
-
             default:
               return null;
           }

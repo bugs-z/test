@@ -30,9 +30,6 @@ export const ChatItem: FC<ChatItemProps> = ({ chat }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleClick = useCallback(() => {
-    if (contentType === 'tools') {
-      setContentType('chats');
-    }
     handleSelectChat(chat);
     if (isMobile) {
       setShowSidebar(false);

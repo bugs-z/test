@@ -5,7 +5,6 @@ import {
   handleFileError,
   ensureSandboxConnection,
 } from './utils/sandbox-utils';
-import { saveFileToDatabase } from './utils/file-db-utils';
 
 const replaceFileContent = async (
   sandbox: any,
@@ -13,7 +12,6 @@ const replaceFileContent = async (
   oldStr: string,
   newStr: string,
   dataStream: any,
-  userId: string,
 ): Promise<string> => {
   try {
     dataStream.writeData({
@@ -29,9 +27,6 @@ const replaceFileContent = async (
 
     // Write back to file
     await sandbox.files.write(file, finalContent);
-
-    // Save file data to database with overwrite flag
-    await saveFileToDatabase(file, finalContent, userId, dataStream, true);
 
     const wrappedContent = `<file-str-replace file="${file}">${finalContent}</file-str-replace>\n\n`;
     dataStream.writeData({
@@ -92,14 +87,7 @@ export const createFileStrReplaceTool = (context: ToolContext) => {
           },
         );
 
-        return replaceFileContent(
-          sandbox,
-          file,
-          old_str,
-          new_str,
-          dataStream,
-          userID,
-        );
+        return replaceFileContent(sandbox, file, old_str, new_str, dataStream);
       } catch (error) {
         return handleFileError(error, 'connecting to sandbox');
       }

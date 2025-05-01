@@ -10,8 +10,6 @@ import {
 } from '@/components/ui/dialog';
 import { PentestGPTContext } from '@/context/context';
 import { deleteChat } from '@/db/chats';
-import { deleteFile } from '@/db/files';
-import { deleteFileFromStorage } from '@/db/storage/files';
 import type { Tables } from '@/supabase/types';
 import type { ContentType, DataItemType } from '@/types';
 import { type FC, useContext, useRef, useState } from 'react';
@@ -35,18 +33,10 @@ export const SidebarDeleteItem: FC<SidebarDeleteItemProps> = ({
     chats: async (chat: Tables<'chats'>) => {
       await deleteChat(chat.id);
     },
-    files: async (file: Tables<'files'>) => {
-      await deleteFileFromStorage(file.file_path);
-      await deleteFile(file.id);
-    },
-    tools: async (chat: Tables<'chats'>) => {
-      await deleteChat(chat.id);
-    },
   };
 
   const stateUpdateFunctions = {
     chats: setChats,
-    tools: setChats,
   };
 
   const handleDelete = async () => {

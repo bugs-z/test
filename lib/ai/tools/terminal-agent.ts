@@ -14,6 +14,7 @@ import {
 } from '@/lib/ai/actions';
 import type { ChatMetadata, LLMID, AgentMode } from '@/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { handleMessageAttachments } from '@/lib/ai/tools/agent/utils/file-db-utils';
 
 interface TerminalToolConfig {
   messages: any[];
@@ -144,6 +145,19 @@ export async function executeTerminalAgent({
               customFinishReason = 'idle';
               shouldStop = true;
             } else if (chunk.toolName === 'message_ask_user') {
+              // Handle attachments if provided
+              if (chunk.args?.attachments) {
+                await handleMessageAttachments({
+                  attachments: chunk.args.attachments,
+                  sandbox,
+                  userID,
+                  dataStream,
+                  isPremiumUser,
+                  setSandbox,
+                  persistentSandbox,
+                });
+              }
+
               dataStream.writeData({
                 type: 'text-delta',
                 content: chunk.args?.text,

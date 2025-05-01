@@ -10,9 +10,12 @@ import {
 } from '@/lib/retrieval/processing';
 import { getServerProfile } from '@/lib/server/server-chat-helpers';
 import { createSupabaseAdminClient } from '@/lib/server/server-utils';
+import {
+  uploadFileToStorage,
+  cleanupFileFromStorage,
+} from '@/lib/server/file-storage';
 import type { FileItemChunk } from '@/types';
 import { NextResponse } from 'next/server';
-import { uploadFile } from '@/db/storage/files';
 import { createClient } from '@/lib/supabase/server';
 
 const MAX_FILE_SIZE_MB = 30; // 30MB limit
@@ -93,7 +96,7 @@ export async function POST(req: Request) {
 
     let filePath: string;
     try {
-      filePath = await uploadFile(
+      filePath = await uploadFileToStorage(
         file,
         {
           name: createdFile.name,
@@ -104,7 +107,6 @@ export async function POST(req: Request) {
       );
     } catch (uploadError) {
       // Clean up the file record if upload fails
-      await supabase.from('files').delete().eq('id', createdFile.id);
       throw uploadError;
     }
 
@@ -116,8 +118,7 @@ export async function POST(req: Request) {
 
     if (updateError) {
       // Clean up both the file record and storage if update fails
-      await supabase.from('files').delete().eq('id', createdFile.id);
-      await supabase.storage.from('files').remove([filePath]);
+      await cleanupFileFromStorage(filePath, createdFile.id, supabase);
       throw new Error(`Failed to update file path: ${updateError.message}`);
     }
 
@@ -128,16 +129,19 @@ export async function POST(req: Request) {
       .single();
 
     if (metadataError) {
+      await cleanupFileFromStorage(filePath, createdFile.id, supabase);
       throw new Error(
         `Failed to retrieve file metadata: ${metadataError.message}`,
       );
     }
 
     if (!fileMetadata) {
+      await cleanupFileFromStorage(filePath, createdFile.id, supabase);
       throw new Error('File not found');
     }
 
     if (fileMetadata.user_id !== profile.user_id) {
+      await cleanupFileFromStorage(filePath, createdFile.id, supabase);
       throw new Error('Unauthorized');
     }
 
@@ -174,8 +178,7 @@ export async function POST(req: Request) {
 
     if (chunks.length === 0 && fileExtension !== 'pdf') {
       // Clean up the file record and storage if file is empty
-      await supabase.from('files').delete().eq('id', createdFile.id);
-      await supabase.storage.from('files').remove([filePath]);
+      await cleanupFileFromStorage(filePath, createdFile.id, supabase);
       throw new Error('Empty file. Please check the file format and content.');
     }
 
@@ -183,8 +186,7 @@ export async function POST(req: Request) {
     const limit = fileExtension === 'pdf' ? PDF_TOKEN_LIMIT : TOKEN_LIMIT;
     if (totalTokens > limit) {
       // Clean up the file record and storage if token limit is exceeded
-      await supabase.from('files').delete().eq('id', createdFile.id);
-      await supabase.storage.from('files').remove([filePath]);
+      await cleanupFileFromStorage(filePath, createdFile.id, supabase);
       throw new Error(`File content exceeds token limit of ${limit}`);
     }
 
@@ -204,8 +206,7 @@ export async function POST(req: Request) {
 
     if (itemsError) {
       // Clean up the file record and storage if file items creation fails
-      await supabase.from('files').delete().eq('id', createdFile.id);
-      await supabase.storage.from('files').remove([filePath]);
+      await cleanupFileFromStorage(filePath, createdFile.id, supabase);
       throw new Error(`Failed to create file items: ${itemsError.message}`);
     }
 
@@ -220,8 +221,7 @@ export async function POST(req: Request) {
         .from('file_items')
         .delete()
         .eq('file_id', createdFile.id);
-      await supabase.from('files').delete().eq('id', createdFile.id);
-      await supabase.storage.from('files').remove([filePath]);
+      await cleanupFileFromStorage(filePath, createdFile.id, supabase);
       throw new Error(
         `Failed to update token count: ${tokenUpdateError.message}`,
       );

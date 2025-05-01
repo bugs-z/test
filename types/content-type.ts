@@ -1,1 +1,1 @@
-export type ContentType = 'chats' | 'tools';
+export type ContentType = 'chats';

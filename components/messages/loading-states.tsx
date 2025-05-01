@@ -35,11 +35,11 @@ export const loadingStates = {
   },
   'temporary-sandbox': {
     icon: <IconTerminal2 size={20} />,
-    text: 'Connecting to temporary sandbox (15-min)...',
+    text: 'Connecting to sandbox...',
   },
   'persistent-sandbox': {
     icon: <IconTerminal2 size={20} />,
-    text: 'Connecting to persistent sandbox...',
+    text: 'Connecting to sandbox...',
   },
 };
 

@@ -5,7 +5,6 @@ import {
   handleFileError,
   ensureSandboxConnection,
 } from './utils/sandbox-utils';
-import { saveFileToDatabase } from './utils/file-db-utils';
 
 const writeFileContent = async (
   sandbox: any,
@@ -15,7 +14,6 @@ const writeFileContent = async (
   leading_newline: boolean,
   trailing_newline: boolean,
   dataStream: any,
-  userId: string,
 ): Promise<string> => {
   try {
     dataStream.writeData({
@@ -42,9 +40,6 @@ const writeFileContent = async (
     }
 
     await sandbox.files.write(file, finalContent);
-
-    // Save file data to database and send file metadata
-    await saveFileToDatabase(file, finalContent, userId, dataStream, append);
 
     const wrappedContent = `<file-write file="${file}">${finalContent}</file-write>\n\n`;
     dataStream.writeData({
@@ -127,7 +122,6 @@ export const createFileWriteTool = (context: ToolContext) => {
           leading_newline,
           trailing_newline,
           dataStream,
-          userID,
         );
       } catch (error) {
         return handleFileError(error, 'connecting to sandbox');

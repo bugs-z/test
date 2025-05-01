@@ -5,7 +5,6 @@ import { Inter } from 'next/font/google';
 import type { ReactNode } from 'react';
 import './globals.css';
 import { GlobalAlertDialog } from './global-alert-dialog';
-import { PluginProvider } from '@/components/chat/chat-hooks/PluginProvider';
 import { createClient } from '@/lib/supabase/server';
 import { UIState } from '@/components/utility/ui-state';
 import { Toaster } from '@/components/ui/sonner';
@@ -113,15 +112,13 @@ export default async function RootLayout({ children }: RootLayoutProps) {
           <Toaster richColors position="top-center" duration={3000} />
           <div className="bg-background text-foreground flex h-dvh flex-col items-center overflow-x-auto">
             {user ? (
-              <PluginProvider>
-                <GlobalState user={user}>
-                  <PostHogProvider>
-                    <MFAProvider>
-                      <UIState>{children}</UIState>
-                    </MFAProvider>
-                  </PostHogProvider>
-                </GlobalState>
-              </PluginProvider>
+              <GlobalState user={user}>
+                <PostHogProvider>
+                  <MFAProvider>
+                    <UIState>{children}</UIState>
+                  </MFAProvider>
+                </PostHogProvider>
+              </GlobalState>
             ) : (
               children
             )}

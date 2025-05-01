@@ -34,7 +34,7 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
 
   const fetchMoreChats = useCallback(async () => {
     if (
-      (contentType === 'chats' || contentType === 'tools') &&
+      contentType === 'chats' &&
       data.length > 0 &&
       !isLoadingMore &&
       hasMoreChats
@@ -104,8 +104,6 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
     switch (contentType) {
       case 'chats':
         return <ChatItem key={item.id} chat={item as Tables<'chats'>} />;
-      case 'tools':
-        return <ChatItem key={item.id} chat={item as Tables<'chats'>} />;
       default:
         return null;
     }
@@ -142,7 +140,7 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
 
         {data.length > 0 && (
           <div className={`size-full space-y-3 pt-4`}>
-            {contentType === 'chats' || contentType === 'tools' ? (
+            {contentType === 'chats' ? (
               <>
                 {[
                   'Today',
@@ -179,7 +177,7 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
                     )
                   );
                 })}
-                {(contentType === 'chats' || contentType === 'tools') &&
+                {contentType === 'chats' &&
                   data.length > 0 &&
                   hasMoreChats &&
                   !isTemporaryChat && (

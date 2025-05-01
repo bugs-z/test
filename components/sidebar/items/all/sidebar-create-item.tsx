@@ -37,12 +37,10 @@ export const SidebarCreateItem: FC<SidebarCreateItemProps> = ({
 
   const createFunctions = {
     chats: createChat,
-    tools: createChat,
   };
 
   const stateUpdateFunctions = {
     chats: setChats,
-    tools: setChats,
   };
 
   const handleCreate = async () => {

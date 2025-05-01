@@ -21,12 +21,6 @@ import {
   useEffect,
 } from 'react';
 import { useSelectFileHandler } from '@/components/chat/chat-hooks/use-select-file-handler';
-import {
-  ActionTypes,
-  getInstalledPlugins,
-  usePluginContext,
-} from '../chat/chat-hooks/PluginProvider';
-import { availablePlugins } from '@/lib/tools/tool-store/available-tools';
 import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
 import { useUIContext } from '@/context/ui-context';
@@ -35,11 +29,6 @@ import { PLUGINS_WITHOUT_IMAGE_SUPPORT } from '@/types/plugins';
 
 const DynamicKeyboardShortcutsPopup = dynamic(
   () => import('../chat/keyboard-shortcuts-popup'),
-  { ssr: false },
-);
-
-const DynamicToolsStore = dynamic(
-  () => import('@/components/tools/tools-store'),
   { ssr: false },
 );
 
@@ -79,13 +68,6 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
 
   const toggleButtonRef = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
-    setContentType(tabValue as ContentType);
-    if (tabValue === 'tools') {
-      setShowSidebar(false);
-    }
-  }, [tabValue, isMobile, setShowSidebar]);
-
   useHotkey('s', () => setShowSidebar((prev) => !prev));
   useHotkey('/', () => setIsKeyboardShortcutsOpen(true), { shiftKey: false });
 
@@ -95,39 +77,8 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
     }
   }, [isMobile, showSidebar, setShowSidebar]);
 
-  const { state: pluginState, dispatch: pluginDispatch } = usePluginContext();
-
-  const installPlugin = (pluginId: number) => {
-    pluginDispatch({
-      type: ActionTypes.INSTALL_PLUGIN,
-      payload: pluginId,
-    });
-  };
-
-  const uninstallPlugin = (pluginId: number) => {
-    pluginDispatch({
-      type: ActionTypes.UNINSTALL_PLUGIN,
-      payload: pluginId,
-    });
-  };
-
-  const installedPlugins = getInstalledPlugins(pluginState.installedPluginIds);
-
-  const updatedAvailablePlugins = availablePlugins.map((plugin) => ({
-    ...plugin,
-    isInstalled: installedPlugins.some((p) => p.id === plugin.id),
-  }));
-
   const renderContent = () => {
     switch (contentType) {
-      case 'tools':
-        return (
-          <DynamicToolsStore
-            pluginsData={updatedAvailablePlugins}
-            installPlugin={installPlugin}
-            uninstallPlugin={uninstallPlugin}
-          />
-        );
       case 'chats':
       default:
         return children;
@@ -181,8 +132,7 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
     setIsDragging(false);
   };
 
-  const isDraggingEnabled =
-    contentType !== 'tools' && isReadyToChat && isPremiumSubscription;
+  const isDraggingEnabled = isReadyToChat && isPremiumSubscription;
 
   const handleConversionConfirmation = () => {
     pendingFiles.forEach((file) => handleSelectDeviceFile(file));

@@ -1,5 +1,4 @@
 import type { Sandbox } from '@e2b/code-interpreter';
-import { FileWatcher } from './file-watcher';
 
 const MAX_COMMAND_EXECUTION_TIME = 6 * 60 * 1000;
 const STREAM_TIMEOUT = 1 * 60 * 1000;
@@ -34,7 +33,6 @@ export const executeTerminalCommand = async ({
   let currentBlock: 'stdout' | null = null;
   let timeoutId: NodeJS.Timeout;
   let isStreamClosed = false;
-  let fileWatcher: FileWatcher | null = null;
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -48,15 +46,6 @@ export const executeTerminalCommand = async ({
       try {
         if (!sandbox) {
           throw new Error('Failed to create or connect to sandbox');
-        }
-
-        // Start watching the execution directory for file changes
-        if (dataStream) {
-          fileWatcher = new FileWatcher(sandbox, {
-            userId: userID,
-            dataStream,
-          });
-          await fileWatcher.startWatching(exec_dir);
         }
 
         // Set up custom timeout
@@ -174,10 +163,6 @@ export const executeTerminalCommand = async ({
           }
         }
       } finally {
-        // Stop file watching
-        if (fileWatcher) {
-          await fileWatcher.stop();
-        }
         // Clear timeout in case it's still pending
         clearTimeout(timeoutId);
         // Ensure any open block is closed before ending the stream

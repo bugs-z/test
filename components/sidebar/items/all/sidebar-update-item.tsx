@@ -61,7 +61,6 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
   const renderState = {
     chats: null,
     files: null,
-    tools: null,
   };
 
   const fetchDataFunctions: Record<
@@ -69,7 +68,6 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
     ((id: string) => Promise<void>) | null
   > = {
     chats: null,
-    tools: null,
   };
 
   const updateFunctions = {
@@ -78,12 +76,10 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
       const updatedFile = await updateFile(fileId, updateState);
       return updatedFile;
     },
-    tools: updateChat,
   };
 
   const stateUpdateFunctions = {
     chats: setChats,
-    tools: setChats,
   };
 
   const handleUpdate = async () => {

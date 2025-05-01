@@ -1,58 +1,5 @@
 import { supabase } from '@/lib/supabase/browser-client';
-import { toast } from 'sonner';
 import JSZip from 'jszip';
-import type { SupabaseClient } from '@supabase/supabase-js';
-
-export const uploadFile = async (
-  file: File,
-  payload: {
-    name: string;
-    user_id: string;
-    file_id: string;
-  },
-  supabaseClient?: SupabaseClient,
-) => {
-  const sizeLimitMB = Number.parseInt(
-    process.env.NEXT_PUBLIC_USER_FILE_SIZE_LIMIT_MB || String(30),
-  );
-  const MB_TO_BYTES = (mb: number) => mb * 1024 * 1024;
-  const SIZE_LIMIT = MB_TO_BYTES(sizeLimitMB);
-
-  if (file.size > SIZE_LIMIT) {
-    throw new Error(`File must be less than ${sizeLimitMB}MB`);
-  }
-
-  const filePath = `${payload.user_id}/${Buffer.from(payload.file_id).toString('base64')}`;
-
-  // Use provided Supabase client or fall back to browser client
-  const finalSupabase = supabaseClient || supabase;
-
-  try {
-    const { error } = await finalSupabase.storage
-      .from('files')
-      .upload(filePath, file, {
-        upsert: true,
-      });
-
-    if (error) {
-      throw new Error(`Error uploading file: ${error.message}`);
-    }
-
-    return filePath;
-  } catch (error) {
-    console.error('Unexpected error during file upload:', error);
-    throw error;
-  }
-};
-
-export const deleteFileFromStorage = async (filePath: string) => {
-  const { error } = await supabase.storage.from('files').remove([filePath]);
-
-  if (error) {
-    toast.error('Failed to remove file!');
-    return;
-  }
-};
 
 export const getFileFromStorage = async (filePath: string) => {
   const { data, error } = await supabase.storage

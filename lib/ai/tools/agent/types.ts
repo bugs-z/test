@@ -9,7 +9,7 @@ export interface ToolContext {
   sandbox?: Sandbox | null;
   userID: string;
   persistentSandbox?: boolean;
-  setSandbox?: (sandbox: Sandbox) => void;
+  setSandbox: (sandbox: Sandbox) => void;
   isPremiumUser?: boolean;
   agentMode: AgentMode;
 }
