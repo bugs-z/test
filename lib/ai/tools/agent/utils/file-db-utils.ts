@@ -66,7 +66,6 @@ export const handleMessageAttachments = async ({
   sandbox,
   userID,
   dataStream,
-  isPremiumUser,
   setSandbox,
   persistentSandbox,
 }: {
@@ -74,7 +73,6 @@ export const handleMessageAttachments = async ({
   sandbox: Sandbox | null;
   userID: string;
   dataStream: any;
-  isPremiumUser: boolean;
   setSandbox: (sandbox: Sandbox) => void;
   persistentSandbox: boolean;
 }) => {
@@ -86,7 +84,6 @@ export const handleMessageAttachments = async ({
       {
         userID,
         dataStream,
-        isPremiumUser,
         setSandbox,
       },
       {

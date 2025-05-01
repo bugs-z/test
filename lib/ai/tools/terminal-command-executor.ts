@@ -7,7 +7,6 @@ import { ensureSandboxConnection } from './agent/utils/sandbox-utils';
 interface TerminalCommandExecutorConfig {
   userID: string;
   dataStream: any;
-  isPremiumUser: boolean;
   setSandbox: (sandbox: Sandbox) => void;
   initialSandbox?: Sandbox;
   initialPersistentSandbox?: boolean;
@@ -17,7 +16,6 @@ interface TerminalCommandExecutorConfig {
 export async function executeTerminalCommandWithConfig({
   userID,
   dataStream,
-  isPremiumUser,
   setSandbox,
   initialSandbox,
   initialPersistentSandbox,
@@ -49,7 +47,6 @@ export async function executeTerminalCommandWithConfig({
     {
       userID,
       dataStream,
-      isPremiumUser,
       setSandbox,
     },
     {

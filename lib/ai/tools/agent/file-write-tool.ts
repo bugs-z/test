@@ -65,7 +65,6 @@ export const createFileWriteTool = (context: ToolContext) => {
     userID,
     persistentSandbox: initialPersistentSandbox = true,
     setSandbox,
-    isPremiumUser,
   } = context;
 
   return tool({
@@ -105,7 +104,6 @@ export const createFileWriteTool = (context: ToolContext) => {
           {
             userID,
             dataStream,
-            isPremiumUser,
             setSandbox,
           },
           {

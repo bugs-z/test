@@ -7,7 +7,6 @@ import {
 export interface SandboxContext {
   userID: string;
   dataStream: any;
-  isPremiumUser?: boolean;
   setSandbox?: (sandbox: any) => void;
 }
 
@@ -69,33 +68,25 @@ export const ensureSandboxConnection = async (
     initialPersistentSandbox?: boolean;
   } = {},
 ): Promise<{ sandbox: any; persistentSandbox: boolean }> => {
-  const { userID, dataStream, isPremiumUser = false, setSandbox } = context;
+  const { userID, dataStream, setSandbox } = context;
 
-  const terminalTemplate = SANDBOX_TEMPLATE;
   const { initialSandbox, initialPersistentSandbox = true } = options;
 
   let sandbox = initialSandbox;
   let persistentSandbox = initialPersistentSandbox;
 
-  // Determine sandbox type based on context
-  if (!isPremiumUser) {
-    persistentSandbox = false; // Free users get temporary sandbox
-  } else {
-    persistentSandbox = true; // Pro users get persistent sandbox
-  }
-
   if (!sandbox) {
     sandbox = persistentSandbox
       ? await createPersistentSandbox(
           userID,
-          terminalTemplate,
+          SANDBOX_TEMPLATE,
           BASH_SANDBOX_TIMEOUT,
           dataStream,
           setSandbox,
         )
       : await createTemporarySandbox(
           userID,
-          terminalTemplate,
+          SANDBOX_TEMPLATE,
           BASH_SANDBOX_TIMEOUT,
           dataStream,
           setSandbox,

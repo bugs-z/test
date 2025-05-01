@@ -15,7 +15,6 @@ export const createMessageNotifyTool = (context: ToolContext) => {
     userID,
     persistentSandbox: initialPersistentSandbox = true,
     setSandbox,
-    isPremiumUser,
   } = context;
 
   return tool({
@@ -42,7 +41,6 @@ export const createMessageNotifyTool = (context: ToolContext) => {
           sandbox: initialSandbox ?? null,
           userID,
           dataStream,
-          isPremiumUser: isPremiumUser ?? false,
           setSandbox,
           persistentSandbox: initialPersistentSandbox,
         });

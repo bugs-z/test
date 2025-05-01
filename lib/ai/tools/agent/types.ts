@@ -10,7 +10,6 @@ export interface ToolContext {
   userID: string;
   persistentSandbox?: boolean;
   setSandbox: (sandbox: Sandbox) => void;
-  isPremiumUser?: boolean;
   agentMode: AgentMode;
 }
 

@@ -52,7 +52,6 @@ export const createFileStrReplaceTool = (context: ToolContext) => {
     userID,
     persistentSandbox: initialPersistentSandbox = true,
     setSandbox,
-    isPremiumUser,
   } = context;
 
   return tool({
@@ -78,7 +77,6 @@ export const createFileStrReplaceTool = (context: ToolContext) => {
           {
             userID,
             dataStream,
-            isPremiumUser,
             setSandbox,
           },
           {

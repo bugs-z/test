@@ -18,7 +18,6 @@ export const createShellExecTool = (context: ToolContext) => {
     userID,
     persistentSandbox: initialPersistentSandbox = true,
     setSandbox,
-    isPremiumUser,
   } = context;
 
   return tool({
@@ -43,7 +42,6 @@ export const createShellExecTool = (context: ToolContext) => {
         {
           userID,
           dataStream,
-          isPremiumUser,
           setSandbox,
         },
         {

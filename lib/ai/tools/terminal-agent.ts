@@ -49,7 +49,7 @@ export async function executeTerminalAgent({
   let messages = config.messages;
 
   let sandbox: Sandbox | null = null;
-  const persistentSandbox = false;
+  const persistentSandbox = isPremiumUser ? true : false;
   const userID = profile.user_id;
 
   try {
@@ -78,7 +78,6 @@ export async function executeTerminalAgent({
       const result = await executeTerminalCommandWithConfig({
         userID,
         dataStream,
-        isPremiumUser,
         setSandbox,
         initialSandbox: sandbox || undefined,
         initialPersistentSandbox: persistentSandbox,
@@ -105,7 +104,6 @@ export async function executeTerminalAgent({
             userID,
             persistentSandbox,
             setSandbox,
-            isPremiumUser,
             agentMode,
           }),
           maxSteps: 10,
@@ -152,7 +150,6 @@ export async function executeTerminalAgent({
                   sandbox,
                   userID,
                   dataStream,
-                  isPremiumUser,
                   setSandbox,
                   persistentSandbox,
                 });
