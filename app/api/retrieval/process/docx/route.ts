@@ -29,10 +29,10 @@ export async function POST(req: Request) {
         });
     }
 
-    const file_items = chunks.map((chunk, index) => ({
+    const file_items = chunks.map((chunk) => ({
       file_id: fileId,
       user_id: profile.user_id,
-      sequence_number: index,
+      sequence_number: 0,
       content: chunk.content,
       tokens: chunk.tokens,
       openai_embedding: null,

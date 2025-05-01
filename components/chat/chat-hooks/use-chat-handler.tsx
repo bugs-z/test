@@ -423,6 +423,7 @@ export const useChatHandler = () => {
         selectedPlugin,
         agentMode: getStoredAutoRunPreference(),
         confirmTerminalCommand,
+        isTemporaryChat,
       };
       const chatId = currentChat?.id ?? uuidv4();
       const chatMetadata: ChatMetadata = isTemporaryChat

@@ -172,7 +172,7 @@ export async function POST(request: Request) {
               }
             },
             tools: createToolSchemas(toolConfig).getSelectedSchemas(
-              config.isLargeModel
+              config.isLargeModel && !modelParams.isTemporaryChat
                 ? ['browser', 'webSearch', 'terminal']
                 : ['browser', 'webSearch'],
             ),

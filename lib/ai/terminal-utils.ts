@@ -1,7 +1,7 @@
 import { encode, decode } from 'gpt-tokenizer';
 
 const STREAM_MAX_TOKENS = 2048;
-const AGENT_MAX_TOKENS = 32000;
+const AGENT_MAX_TOKENS = 12000;
 const TRUNCATION_MESSAGE = '...\n\n[Output truncated because too long]```';
 
 export async function streamTerminalOutput(

@@ -43,12 +43,12 @@ export function getLastUserMessage(messages: any[]): string {
 
 export async function browsePage(
   url: string,
-  format: 'markdown' | 'rawHtml' = 'markdown',
+  format: 'markdown' | 'html' = 'markdown',
 ): Promise<string> {
   try {
     const app = new FirecrawlApp({ apiKey: process.env.FIRECRAWL_API_KEY });
     const scrapeResult = (await app.scrapeUrl(url, {
-      formats: ['markdown', 'rawHtml'],
+      formats: ['markdown', 'html'],
     })) as ScrapeResponse;
 
     if (!scrapeResult.success) {
@@ -58,7 +58,7 @@ export async function browsePage(
     const content =
       format === 'markdown'
         ? (scrapeResult as any).markdown
-        : (scrapeResult as any).rawHtml;
+        : (scrapeResult as any).html;
     if (!content) {
       return `Error: Empty content received from URL: ${url}`;
     }
@@ -184,7 +184,7 @@ export async function executeBrowserTool({
   config,
 }: {
   open_url: string;
-  format_output: 'markdown' | 'rawHtml';
+  format_output: 'markdown' | 'html';
   config: BrowserToolConfig;
 }) {
   if (!process.env.FIRECRAWL_API_KEY) {

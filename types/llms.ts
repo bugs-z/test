@@ -27,4 +27,5 @@ export interface ModelParams {
   selectedPlugin: PluginID;
   agentMode: AgentMode;
   confirmTerminalCommand: boolean;
+  isTemporaryChat: boolean;
 }

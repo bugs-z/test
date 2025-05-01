@@ -16,7 +16,7 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
   const TOOLTIP_DELAY = 500;
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
-  const { isPremiumSubscription, newMessageImages } =
+  const { isPremiumSubscription, newMessageImages, isTemporaryChat } =
     useContext(PentestGPTContext);
 
   const { selectedPlugin, setSelectedPlugin, isMobile } = useUIContext();
@@ -131,62 +131,64 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
         }
       />
 
-      {/* Terminal Tool */}
-      <WithTooltip
-        delayDuration={TOOLTIP_DELAY}
-        side="top"
-        display={
-          <div className="flex flex-col">
-            {!isPremiumSubscription ? (
-              <UpgradePrompt
-                title="Upgrade to Pro"
-                description="Get access to terminal and more features with Pro"
-                buttonText="Upgrade Now"
-              />
-            ) : (
-              <p className="font-medium">Execute terminal commands</p>
-            )}
-          </div>
-        }
-        trigger={
-          <div
-            className={cn(
-              'relative flex flex-row items-center rounded-lg transition-colors duration-300',
-              selectedPlugin === PluginID.TERMINAL
-                ? 'bg-primary/10'
-                : 'hover:bg-black/10 dark:hover:bg-white/10',
-              hasImageAttached &&
-                !isPremiumSubscription &&
-                'pointer-events-none opacity-50',
-              !isPremiumSubscription && 'opacity-50',
-            )}
-            onClick={handleTerminalToggle}
-          >
-            <IconTerminal2
-              className={cn(
-                'cursor-pointer rounded-lg rounded-bl-xl p-1 focus-visible:outline-black dark:focus-visible:outline-white',
-                selectedPlugin === PluginID.TERMINAL
-                  ? 'text-primary'
-                  : 'opacity-50',
+      {/* Terminal Tool - Only show if not in temporary chat */}
+      {!isTemporaryChat && (
+        <WithTooltip
+          delayDuration={TOOLTIP_DELAY}
+          side="top"
+          display={
+            <div className="flex flex-col">
+              {!isPremiumSubscription ? (
+                <UpgradePrompt
+                  title="Upgrade to Pro"
+                  description="Get access to terminal and more features with Pro"
+                  buttonText="Upgrade Now"
+                />
+              ) : (
+                <p className="font-medium">Execute terminal commands</p>
               )}
-              size={32}
-            />
+            </div>
+          }
+          trigger={
             <div
               className={cn(
-                'whitespace-nowrap text-xs font-medium',
-                'transition-all duration-300',
-                !isMobile && 'max-w-[100px] pr-2',
-                isMobile &&
-                  (selectedPlugin === PluginID.TERMINAL
-                    ? 'max-w-[100px] pr-2 opacity-100'
-                    : 'max-w-0 opacity-0'),
+                'relative flex flex-row items-center rounded-lg transition-colors duration-300',
+                selectedPlugin === PluginID.TERMINAL
+                  ? 'bg-primary/10'
+                  : 'hover:bg-black/10 dark:hover:bg-white/10',
+                hasImageAttached &&
+                  !isPremiumSubscription &&
+                  'pointer-events-none opacity-50',
+                !isPremiumSubscription && 'opacity-50',
               )}
+              onClick={handleTerminalToggle}
             >
-              Terminal
+              <IconTerminal2
+                className={cn(
+                  'cursor-pointer rounded-lg rounded-bl-xl p-1 focus-visible:outline-black dark:focus-visible:outline-white',
+                  selectedPlugin === PluginID.TERMINAL
+                    ? 'text-primary'
+                    : 'opacity-50',
+                )}
+                size={32}
+              />
+              <div
+                className={cn(
+                  'whitespace-nowrap text-xs font-medium',
+                  'transition-all duration-300',
+                  !isMobile && 'max-w-[100px] pr-2',
+                  isMobile &&
+                    (selectedPlugin === PluginID.TERMINAL
+                      ? 'max-w-[100px] pr-2 opacity-100'
+                      : 'max-w-0 opacity-0'),
+                )}
+              >
+                Terminal
+              </div>
             </div>
-          </div>
-        }
-      />
+          }
+        />
+      )}
 
       {/* Upgrade Prompt Modal */}
       {showUpgradePrompt && (

@@ -48,12 +48,12 @@ export const AskTerminalCommandBlock: React.FC<
 
   return (
     <div className="overflow-hidden rounded-lg border border-border my-3">
-      <div className="flex flex-col border-b border-border bg-muted px-4 py-2">
+      <div className="flex flex-col bg-muted px-4 py-2">
         <div className="flex items-center text-xs text-muted-foreground mb-1">
           <IconTerminal2 size={16} className="mr-2" />
           <span>{execDir}</span>
         </div>
-        <div className="text-sm">
+        <div className="text-sm hover:bg-primary/10">
           <TextareaAutosize
             value={editedCommand}
             onValueChange={(value) =>

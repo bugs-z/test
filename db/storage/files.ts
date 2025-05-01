@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase/browser-client';
 import { toast } from 'sonner';
 import JSZip from 'jszip';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 export const uploadFile = async (
   file: File,
@@ -9,6 +10,7 @@ export const uploadFile = async (
     user_id: string;
     file_id: string;
   },
+  supabaseClient?: SupabaseClient,
 ) => {
   const sizeLimitMB = Number.parseInt(
     process.env.NEXT_PUBLIC_USER_FILE_SIZE_LIMIT_MB || String(30),
@@ -22,17 +24,25 @@ export const uploadFile = async (
 
   const filePath = `${payload.user_id}/${Buffer.from(payload.file_id).toString('base64')}`;
 
-  const { error } = await supabase.storage
-    .from('files')
-    .upload(filePath, file, {
-      upsert: true,
-    });
+  // Use provided Supabase client or fall back to browser client
+  const finalSupabase = supabaseClient || supabase;
 
-  if (error) {
-    throw new Error('Error uploading file');
+  try {
+    const { error } = await finalSupabase.storage
+      .from('files')
+      .upload(filePath, file, {
+        upsert: true,
+      });
+
+    if (error) {
+      throw new Error(`Error uploading file: ${error.message}`);
+    }
+
+    return filePath;
+  } catch (error) {
+    console.error('Unexpected error during file upload:', error);
+    throw error;
   }
-
-  return filePath;
 };
 
 export const deleteFileFromStorage = async (filePath: string) => {

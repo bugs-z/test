@@ -44,21 +44,21 @@ The browser tool cannot access HTTP-only sites, IP addresses (like http://192.16
 
 The browser tool can extract content in two formats:
 - markdown: Use for general content reading and information extraction (default).
-- rawHtml: Use for security testing, vulnerability assessment, and penetration testing to analyze HTML \
-structure, forms, scripts, and potential security issues. Also use when raw HTML content would be more \
+- html: Use for security testing, vulnerability assessment, and penetration testing to analyze HTML \
+structure, forms, scripts, and potential security issues. Also use when HTML content would be more \
 beneficial for the user's needs.
 `,
       parameters: z.object({
         open_url: z.string().url().describe('The URL of the webpage to open'),
         format_output: z
-          .enum(['markdown', 'rawHtml'])
+          .enum(['markdown', 'html'])
           .default('markdown')
           .describe('The format of the output content.'),
       }),
       execute: async ({
         open_url,
         format_output,
-      }: { open_url: string; format_output: 'markdown' | 'rawHtml' }) => {
+      }: { open_url: string; format_output: 'markdown' | 'html' }) => {
         return executeBrowserTool({
           open_url,
           format_output,
