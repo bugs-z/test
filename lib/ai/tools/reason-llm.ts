@@ -75,12 +75,6 @@ export async function executeReasonLLMTool({
           messages: toVercelChatMessages(messages),
           maxTokens: 8192,
           abortSignal: abortSignal,
-          providerOptions: {
-            openai: {
-              reasoningSummary: 'auto',
-              reasoningEffort: 'high',
-            },
-          },
           onError: async (error) => {
             console.error('[ReasonLLM] Stream Error:', error);
           },

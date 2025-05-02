@@ -68,8 +68,7 @@ export async function POST(request: Request) {
       await processChatMessages(
         messages,
         config.selectedModel,
-        modelParams.isContinuation,
-        modelParams.isTerminalContinuation,
+        modelParams,
         config.isLargeModel,
         profile,
       );

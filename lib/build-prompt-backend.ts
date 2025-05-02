@@ -113,17 +113,13 @@ export async function processPdfFileItem(
  */
 export async function processMessageContentWithAttachments(
   messages: BuiltChatMessage[],
-  userId?: string,
+  userId: string,
+  isReasoning: boolean,
 ): Promise<BuiltChatMessage[]> {
   if (!messages.length) return messages;
 
   // Create a copy to avoid mutating the original
   let processedMessages = [...messages];
-
-  // Exit early if we don't have a valid user ID
-  if (!userId) {
-    return processedMessages;
-  }
 
   try {
     // Create admin client to access database
@@ -179,23 +175,32 @@ export async function processMessageContentWithAttachments(
             );
             if (!fileItem) continue;
 
-            // Check if it's a PDF
-            const pdfFile = await processPdfFileItem(
-              supabaseAdmin,
-              fileItem,
-              userId,
-            );
-            if (pdfFile) {
-              processedContent.push(pdfFile as FilePart);
-              hasPdfAttachments = true;
-            } else if (!hasPdfAttachments) {
-              // If it's not a PDF and we haven't found any PDFs yet,
-              // add it to the document text
+            // If isReasoning is true, use buildDocumentsText for all files including PDFs
+            if (isReasoning) {
               const documentsText = buildDocumentsText([fileItem]);
               processedContent.push({
                 type: 'text',
                 text: documentsText,
               } as TextPart);
+            } else {
+              // Check if it's a PDF
+              const pdfFile = await processPdfFileItem(
+                supabaseAdmin,
+                fileItem,
+                userId,
+              );
+              if (pdfFile) {
+                processedContent.push(pdfFile as FilePart);
+                hasPdfAttachments = true;
+              } else if (!hasPdfAttachments) {
+                // If it's not a PDF and we haven't found any PDFs yet,
+                // add it to the document text
+                const documentsText = buildDocumentsText([fileItem]);
+                processedContent.push({
+                  type: 'text',
+                  text: documentsText,
+                } as TextPart);
+              }
             }
           }
 

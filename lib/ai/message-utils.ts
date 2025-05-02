@@ -12,6 +12,7 @@ import { getSystemPrompt } from './prompts';
 import { processMessageContentWithAttachments } from '../build-prompt-backend';
 import llmConfig from '../models/llm-config';
 import { countTokens } from 'gpt-tokenizer';
+import { PluginID } from '@/types/plugins';
 
 /**
  * Removes the last assistant message if it's empty.
@@ -265,8 +266,11 @@ function validateMessageTokens(
 export async function processChatMessages(
   messages: BuiltChatMessage[],
   selectedModel: string,
-  isContinuation: boolean,
-  isTerminalContinuation: boolean,
+  modelParams: {
+    isContinuation: boolean;
+    isTerminalContinuation: boolean;
+    selectedPlugin: string;
+  },
   isLargeModel: boolean,
   profile: { user_id: string; profile_context: string },
 ): Promise<{
@@ -275,9 +279,15 @@ export async function processChatMessages(
 }> {
   let shouldUncensor = false;
   const apiKey = llmConfig.openai.apiKey;
+  const isReasoning = modelParams.selectedPlugin === PluginID.REASONING;
 
   // Check if we should uncensor the response
-  if (apiKey && !isContinuation && !isTerminalContinuation) {
+  if (
+    apiKey &&
+    !modelParams.isContinuation &&
+    !modelParams.isTerminalContinuation &&
+    !isReasoning
+  ) {
     const { shouldUncensorResponse: moderationResult } =
       await getModerationResult(messages, apiKey, 10, isLargeModel);
     shouldUncensor = moderationResult;
@@ -295,7 +305,8 @@ export async function processChatMessages(
   // Process attachments and file content for the last message
   const messagesWithAttachments = await processMessageContentWithAttachments(
     messages,
-    profile?.user_id,
+    profile.user_id,
+    isReasoning,
   );
 
   // Remove invalid message exchanges
