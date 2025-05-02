@@ -5,7 +5,7 @@ import { getChatFilesByChatId } from '@/db/chat-files';
 import { getChatById } from '@/db/chats';
 import { getMessagesByChatId } from '@/db/messages';
 import { getProfileByUserId } from '@/db/profile';
-// import { localDB } from '@/db/local/db';
+import { localDB } from '@/db/local/db';
 import { getMessageImageFromStorage } from '@/db/storage/message-images';
 import {
   getSubscriptionByTeamId,
@@ -192,12 +192,12 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
         message.image_paths
           ? message.image_paths.map(async (imagePath) => {
               // First try to get the image from IndexedDB
-              // const storedImage =
-              //   await localDB.messageImages.getByPath(imagePath);
+              const storedImage =
+                await localDB.messageImages.getByPath(imagePath);
 
-              // if (storedImage?.base64) {
-              //   return storedImage;
-              // }
+              if (storedImage?.base64) {
+                return storedImage;
+              }
 
               // If not in IndexedDB, fetch from remote storage
               const url = await getMessageImageFromStorage(imagePath);
@@ -217,7 +217,7 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
                   };
 
                   // Store the image in IndexedDB for offline use
-                  // await localDB.messageImages.store(messageImage);
+                  await localDB.messageImages.store(messageImage);
 
                   return messageImage;
                 } catch (error) {
