@@ -47,6 +47,7 @@ export const ChatInput: FC = () => {
     chatMessages,
     temporaryChatMessages,
     newMessageImages,
+    newMessageFiles,
     isPremiumSubscription,
     isMicSupported,
     isTemporaryChat,
@@ -194,6 +195,7 @@ export const ChatInput: FC = () => {
                     setPendingFiles,
                     handleSelectDeviceFile,
                     newMessageImages,
+                    newMessageFiles,
                   );
                 }}
                 accept="*"

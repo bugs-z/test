@@ -1,7 +1,8 @@
 import type { MessageImage } from '@/types/images/message-image';
+import type { Tables } from '@/supabase/types';
 import { toast } from 'sonner';
 
-const MAX_FILES = 3;
+const MAX_TOTAL_FILES = 5;
 
 export const handleFileUpload = (
   files: File[],
@@ -9,6 +10,7 @@ export const handleFileUpload = (
   setPendingFiles: (files: File[]) => void,
   handleSelectDeviceFile: (file: File) => void,
   newMessageImages: MessageImage[] = [],
+  newMessageFiles: Tables<'files'>[] = [],
 ) => {
   const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
   const videoExtensions = ['mp4', 'avi', 'mov', 'wmv', 'flv'];
@@ -47,13 +49,11 @@ export const handleFileUpload = (
     'text/html',
   ];
 
-  if (files.length > MAX_FILES) {
-    toast.error(`Maximum of ${MAX_FILES} files can be uploaded at once.`);
-    return;
-  }
-
-  if (newMessageImages.length > 2) {
-    toast.error(`Maximum of 3 images allowed.`);
+  const totalFiles = newMessageImages.length + newMessageFiles.length;
+  if (totalFiles >= MAX_TOTAL_FILES) {
+    toast.error(
+      `Maximum of ${MAX_TOTAL_FILES} files (including images) allowed.`,
+    );
     return;
   }
 
