@@ -7,6 +7,7 @@ import {
   IconAtom,
 } from '@tabler/icons-react';
 import { PluginID } from '@/types/plugins';
+import { useUIContext } from '@/context/ui-context';
 
 export const loadingStates = {
   none: {
@@ -43,7 +44,15 @@ export const loadingStates = {
   },
 };
 
-export const LoadingState = ({ toolInUse }: { toolInUse: string }) => {
+export const LoadingState = ({
+  isLastMessage,
+  isAssistant,
+}: { isLastMessage: boolean; isAssistant: boolean }) => {
+  const { firstTokenReceived, isGenerating, toolInUse } = useUIContext();
+
+  if (!isLastMessage || !isAssistant || firstTokenReceived || !isGenerating)
+    return null;
+
   const { icon, text } = loadingStates[
     toolInUse as keyof typeof loadingStates
   ] || {

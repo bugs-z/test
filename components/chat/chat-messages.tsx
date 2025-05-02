@@ -46,7 +46,7 @@ export const ChatMessages: FC = () => {
             chatMessage={chatMessage}
             previousMessage={previousMessage}
             isEditing={editingMessage?.id === chatMessage.message.id}
-            isLast={index === messagesToDisplay.length - 1}
+            isLastMessage={index === messagesToDisplay.length - 1}
             onStartEdit={setEditingMessage}
             onCancelEdit={() => setEditingMessage(undefined)}
             onSubmitEdit={handleSendEdit}

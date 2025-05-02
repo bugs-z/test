@@ -281,3 +281,34 @@ export async function executeBrowserTool({
     return 'Browser tool executed with errors';
   }
 }
+
+export async function getPageContent(
+  url: string,
+  format: 'markdown' | 'html' = 'markdown',
+): Promise<string> {
+  try {
+    const app = new FirecrawlApp({ apiKey: process.env.FIRECRAWL_API_KEY });
+    const scrapeResult = (await app.scrapeUrl(url, {
+      formats: ['markdown', 'html'],
+    })) as ScrapeResponse;
+
+    if (!scrapeResult.success) {
+      return `Error fetching URL: ${url}. Error: ${scrapeResult.error}`;
+    }
+
+    const content =
+      format === 'markdown'
+        ? (scrapeResult as any).markdown
+        : (scrapeResult as any).html;
+    if (!content) {
+      return `Error: Empty content received from URL: ${url}`;
+    }
+
+    return truncateContentByTokens(content);
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
+    console.error('[BrowserTool] Error getting page content:', url, error);
+    return `Error getting page content: ${url}. ${errorMessage}`;
+  }
+}

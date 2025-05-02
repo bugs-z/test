@@ -1,8 +1,10 @@
+import { useUIContext } from '@/context/ui-context';
+
 /**
  * Represents the different states an agent can be in during execution
  */
 export enum AgentStatusState {
-  THINKING = 'message_notify_user',
+  THINKING = 'thinking',
   TERMINAL = 'terminal',
   CREATING_FILE = 'creating_file',
   EDITING_FILE = 'editing_file',
@@ -76,21 +78,31 @@ const AgentStatusColors: Record<
 /**
  * Helper function to check if a value is a valid AgentStatusState
  */
-export const isValidAgentStatus = (
+const isValidAgentStatus = (
   state: string | null,
 ): state is AgentStatusState => {
   if (!state) return false;
   return Object.values(AgentStatusState).includes(state as AgentStatusState);
 };
 
-export const AgentStatus = ({ state }: { state: AgentStatusState | null }) => {
-  // If state is null or invalid, don't render anything
-  if (!isValidAgentStatus(state)) {
+export const AgentStatus = ({
+  isLastMessage,
+  isAssistant,
+}: { isLastMessage: boolean; isAssistant: boolean }) => {
+  const { isGenerating, agentStatus } = useUIContext();
+
+  if (
+    agentStatus === null ||
+    !isValidAgentStatus(agentStatus) ||
+    !isGenerating ||
+    !isLastMessage ||
+    !isAssistant
+  ) {
     return null;
   }
 
-  const text = AgentStatusLabels[state];
-  const colors = AgentStatusColors[state];
+  const text = AgentStatusLabels[agentStatus];
+  const colors = AgentStatusColors[agentStatus];
 
   return (
     <div className="mt-2 flex items-center space-x-3 text-sm">

@@ -49,7 +49,7 @@ export async function executeTerminalAgent({
   let messages = config.messages;
 
   let sandbox: Sandbox | null = null;
-  const persistentSandbox = isPremiumUser ? true : false;
+  const persistentSandbox = !!isPremiumUser;
   const userID = profile.user_id;
 
   try {
@@ -109,6 +109,14 @@ export async function executeTerminalAgent({
           maxSteps: 10,
           toolChoice: 'required',
           abortSignal,
+          onChunk: async (chunk) => {
+            if (chunk.chunk.type === 'tool-call') {
+              dataStream.writeData({
+                type: 'agent-status',
+                content: 'thinking',
+              });
+            }
+          },
           onError: async (error) => {
             console.error('[TerminalAgent] Stream Error:', error);
           },

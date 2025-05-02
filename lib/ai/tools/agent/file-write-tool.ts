@@ -47,7 +47,7 @@ const writeFileContent = async (
       content: wrappedContent,
     });
 
-    return `Successfully ${append ? 'appended to' : 'wrote'} file: ${file}`;
+    return wrappedContent;
   } catch (error) {
     return handleFileError(error, 'writing to file');
   }

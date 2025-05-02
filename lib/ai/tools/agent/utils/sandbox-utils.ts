@@ -73,7 +73,7 @@ export const ensureSandboxConnection = async (
   const { initialSandbox, initialPersistentSandbox = true } = options;
 
   let sandbox = initialSandbox;
-  let persistentSandbox = initialPersistentSandbox;
+  const persistentSandbox = initialPersistentSandbox;
 
   if (!sandbox) {
     sandbox = persistentSandbox

@@ -24,7 +24,7 @@ import { LoadingState } from './loading-states';
 import dynamic from 'next/dynamic';
 import { useUIContext } from '@/context/ui-context';
 import { ChatFileItem } from '../chat/chat-file-item';
-import { AgentStatus, isValidAgentStatus } from './agent-status';
+import { AgentStatus } from './agent-status';
 import { MessageStatus } from './message-status';
 import { MessageAttachments } from './message-attachments';
 
@@ -36,7 +36,7 @@ interface MessageProps {
   chatMessage: ChatMessage;
   previousMessage: Tables<'messages'> | undefined;
   isEditing: boolean;
-  isLast: boolean;
+  isLastMessage: boolean;
   onStartEdit: (message: Tables<'messages'>) => void;
   onCancelEdit: () => void;
   onSubmitEdit: (value: string, sequenceNumber: number) => void;
@@ -53,7 +53,7 @@ export const Message: FC<MessageProps> = ({
   chatMessage,
   previousMessage,
   isEditing,
-  isLast,
+  isLastMessage,
   onStartEdit,
   onCancelEdit,
   onSubmitEdit,
@@ -68,14 +68,7 @@ export const Message: FC<MessageProps> = ({
     selectedChat,
   } = useContext(PentestGPTContext);
 
-  const {
-    isGenerating,
-    setIsGenerating,
-    firstTokenReceived,
-    toolInUse,
-    isMobile,
-    agentStatus,
-  } = useUIContext();
+  const { setIsGenerating, toolInUse, isMobile } = useUIContext();
 
   const { message, feedback } = chatMessage;
 
@@ -119,7 +112,7 @@ export const Message: FC<MessageProps> = ({
   };
 
   useHotkey('c', () => {
-    if (isLast && message.role === 'assistant') {
+    if (isLastMessage && message.role === 'assistant') {
       handleCopy();
       toast.success('Last response copied to clipboard', {
         duration: 3000,
@@ -224,18 +217,16 @@ export const Message: FC<MessageProps> = ({
     >
       <div
         className={`relative flex w-full flex-col px-4 py-6 sm:max-w-[800px] sm:px-6 md:px-8
-        ${isLast ? 'mb-8' : ''}`}
+        ${isLastMessage ? 'mb-8' : ''}`}
       >
         <div className="flex space-x-3">
           <div
             className={`grow ${isMobile && 'space-y-3'} min-w-0 ${message.role === 'user' && 'flex justify-end'}`}
           >
-            {!firstTokenReceived &&
-              isGenerating &&
-              isLast &&
-              message.role === 'assistant' && (
-                <LoadingState toolInUse={toolInUse} />
-              )}
+            <LoadingState
+              isLastMessage={isLastMessage}
+              isAssistant={message.role === 'assistant'}
+            />
 
             {isEditing ? (
               <div className="flex h-auto w-full flex-col gap-2">
@@ -302,21 +293,23 @@ export const Message: FC<MessageProps> = ({
 
                 <MessageTypeResolver
                   message={message}
-                  isLastMessage={isLast}
+                  isLastMessage={isLastMessage}
                   toolInUse={toolInUse}
                 />
 
-                <MessageAttachments attachments={message.attachments || []} />
+                <MessageAttachments
+                  attachments={message.attachments || []}
+                  isAssistant={message.role === 'assistant'}
+                />
               </div>
             )}
+
+            <AgentStatus
+              isLastMessage={isLastMessage}
+              isAssistant={message.role === 'assistant'}
+            />
           </div>
         </div>
-
-        {agentStatus !== null &&
-          isValidAgentStatus(agentStatus) &&
-          isGenerating &&
-          isLast &&
-          message.role === 'assistant' && <AgentStatus state={agentStatus} />}
 
         <div className="mt-3 flex flex-wrap gap-2" />
 
@@ -331,9 +324,11 @@ export const Message: FC<MessageProps> = ({
           </div>
         )}
 
-        {!isGenerating && isLast && message.role === 'assistant' && (
-          <MessageStatus finish_reason={selectedChat?.finish_reason} />
-        )}
+        <MessageStatus
+          isLastMessage={isLastMessage}
+          isAssistant={message.role === 'assistant'}
+          finish_reason={selectedChat?.finish_reason}
+        />
 
         {!quickFeedback && !sendReportQuery && !isEditing && (
           <div
@@ -343,7 +338,7 @@ export const Message: FC<MessageProps> = ({
               onCopy={handleCopy}
               onEdit={handleStartEdit}
               isAssistant={message.role === 'assistant'}
-              isLast={isLast}
+              isLastMessage={isLastMessage}
               isEditing={isEditing}
               isHovering={isHovering}
               isGoodResponse={feedback?.feedback === 'good'}

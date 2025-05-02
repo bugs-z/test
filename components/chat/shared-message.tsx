@@ -9,13 +9,13 @@ import Image from 'next/image';
 interface SharedMessageProps {
   message: Tables<'messages'>;
   previousMessage: Tables<'messages'> | undefined;
-  isLast: boolean;
+  isLastMessage: boolean;
 }
 
 export const SharedMessage: React.FC<SharedMessageProps> = ({
   message,
   previousMessage,
-  isLast,
+  isLastMessage,
 }) => {
   const [imageUrls, setImageUrls] = useState<(string | null)[]>([]);
 
@@ -58,7 +58,7 @@ export const SharedMessage: React.FC<SharedMessageProps> = ({
               </div>
               <MessageTypeResolver
                 message={message}
-                isLastMessage={isLast}
+                isLastMessage={isLastMessage}
                 toolInUse="none"
               />
             </div>

@@ -71,7 +71,7 @@ export default async function SharedChatPage({
                 key={message.id}
                 message={message}
                 previousMessage={array[index - 1]}
-                isLast={index === array.length - 1}
+                isLastMessage={index === array.length - 1}
               />
             ))}
           </div>

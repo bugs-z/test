@@ -116,6 +116,7 @@
     "strip-ansi": "^7.1.0",
     "stripe": "^17.7.0",
     "tailwindcss": "^4.1.4",
+    "tldts": "^7.0.5",
     "use-stick-to-bottom": "^1.1.0",
     "uuid": "^11.1.0",
     "vaul": "^1.1.2",

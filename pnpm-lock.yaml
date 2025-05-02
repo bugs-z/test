@@ -275,6 +275,9 @@ importers:
       tailwindcss:
         specifier: ^4.1.4
         version: 4.1.4
+      tldts:
+        specifier: ^7.0.5
+        version: 7.0.5
       use-stick-to-bottom:
         specifier: ^1.1.0
         version: 1.1.0(react@19.1.0)
@@ -6760,8 +6763,15 @@ packages:
   tldts-core@6.1.85:
     resolution: {integrity: sha512-DTjUVvxckL1fIoPSb3KE7ISNtkWSawZdpfxGxwiIrZoO6EbHVDXXUIlIuWympPaeS+BLGyggozX/HTMsRAdsoA==}
 
+  tldts-core@7.0.5:
+    resolution: {integrity: sha512-o+2zicH2+bzj5PHV5M4U8OsRBJDOO0zADiTKZQTGdHSymGQYS21+V/YNrMxAxH9SopzMEXt5JuiRoOIZT5ZU9g==}
+
   tldts@6.1.85:
     resolution: {integrity: sha512-gBdZ1RjCSevRPFix/hpaUWeak2/RNUZB4/8frF1r5uYMHjFptkiT0JXIebWvgI/0ZHXvxaUDDJshiA0j6GdL3w==}
+    hasBin: true
+
+  tldts@7.0.5:
+    resolution: {integrity: sha512-Wjn3ZQIBZd3i94Gcw1hTD+BLgrkfeU71PDw7y7QxcUDCfhM5HdlZfNDbSerP4pj+ZbujKvRrlOYNRyRmQCHo0A==}
     hasBin: true
 
   tmpl@1.0.5:
@@ -14370,9 +14380,15 @@ snapshots:
 
   tldts-core@6.1.85: {}
 
+  tldts-core@7.0.5: {}
+
   tldts@6.1.85:
     dependencies:
       tldts-core: 6.1.85
+
+  tldts@7.0.5:
+    dependencies:
+      tldts-core: 7.0.5
 
   tmpl@1.0.5: {}
 

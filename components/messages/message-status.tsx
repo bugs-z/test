@@ -6,8 +6,11 @@ import {
   IconPlayerPause,
 } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
+import { useUIContext } from '@/context/ui-context';
 
 type MessageStatusProps = {
+  isLastMessage: boolean;
+  isAssistant: boolean;
   finish_reason?: string | null;
 };
 
@@ -19,8 +22,21 @@ const isValidFinishReason = (
   );
 };
 
-export const MessageStatus: FC<MessageStatusProps> = ({ finish_reason }) => {
-  if (!finish_reason || !isValidFinishReason(finish_reason)) return null;
+export const MessageStatus: FC<MessageStatusProps> = ({
+  isLastMessage,
+  isAssistant,
+  finish_reason,
+}) => {
+  const { isGenerating } = useUIContext();
+
+  if (
+    !isLastMessage ||
+    !isAssistant ||
+    isGenerating ||
+    !finish_reason ||
+    !isValidFinishReason(finish_reason)
+  )
+    return null;
 
   const statusConfig = {
     message_ask_user: {

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 
 interface MessageAttachmentsProps {
   attachments: Json[];
+  isAssistant: boolean;
 }
 
 const FileAttachmentCard: React.FC<{
@@ -60,10 +61,11 @@ const ViewAllFilesCard: React.FC<{
 
 export const MessageAttachments: React.FC<MessageAttachmentsProps> = ({
   attachments,
+  isAssistant,
 }) => {
   const [open, setOpen] = useState(false);
 
-  if (!attachments || attachments.length === 0) return null;
+  if (!isAssistant || !attachments || attachments.length === 0) return null;
 
   const files = attachments.map((a) => a as unknown as FileAttachment);
 

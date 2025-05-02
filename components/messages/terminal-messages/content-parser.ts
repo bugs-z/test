@@ -3,7 +3,7 @@ import type { ContentBlock } from './types';
 export const parseContent = (content: string): ContentBlock[] => {
   const blocks: ContentBlock[] = [];
   const blockRegex =
-    /((?:<terminal-command[^>]*>[\s\S]*?<\/terminal-command>|```terminal\n[\s\S]*?```|<file-content[^>]*>[\s\S]*?<\/file-content>|<file-write[^>]*>[\s\S]*?<\/file-write>|<file-str-replace[^>]*>[\s\S]*?<\/file-str-replace>|<shell-wait[^>]*>[\s\S]*?<\/shell-wait>)(?:\n```(?:stdout)[\s\S]*?(?:```|$))*(?:\s*<terminal-error>[\s\S]*?<\/terminal-error>)?)/g;
+    /((?:<terminal-command[^>]*>[\s\S]*?<\/terminal-command>|```terminal\n[\s\S]*?```|<file-content[^>]*>[\s\S]*?<\/file-content>|<file-write[^>]*>[\s\S]*?<\/file-write>|<file-str-replace[^>]*>[\s\S]*?<\/file-str-replace>|<shell-wait[^>]*>[\s\S]*?<\/shell-wait>|<info_search_web[^>]*>[\s\S]*?<\/info_search_web>)(?:\n```(?:stdout)[\s\S]*?(?:```|$))*(?:\s*<terminal-error>[\s\S]*?<\/terminal-error>)?)/g;
   const terminalXmlRegex =
     /<terminal-command(?:\s+[^>]*)?>([\s\S]*?)<\/terminal-command>/;
   const terminalMarkdownRegex = /```terminal\n([\s\S]*?)```/;
@@ -14,6 +14,8 @@ export const parseContent = (content: string): ContentBlock[] => {
   const fileStrReplaceRegex =
     /<file-str-replace(?:\s+file="([^"]*)")?>([\s\S]*?)<\/file-str-replace>/;
   const shellWaitRegex = /<shell-wait[^>]*>([\s\S]*?)<\/shell-wait>/;
+  const infoSearchWebRegex =
+    /<info_search_web(?:\s+query="([^"]*)")?[^>]*>([\s\S]*?)<\/info_search_web>/;
   const stdoutRegex = /```stdout\n([\s\S]*?)(?:```|$)/;
   const errorRegex = /<terminal-error>([\s\S]*?)<\/terminal-error>/;
   const execDirRegex = /exec-dir="([^"]*)"/;
@@ -36,6 +38,7 @@ export const parseContent = (content: string): ContentBlock[] => {
     const fileWriteMatch = block.match(fileWriteRegex);
     const fileStrReplaceMatch = block.match(fileStrReplaceRegex);
     const shellWaitMatch = block.match(shellWaitRegex);
+    const infoSearchWebMatch = block.match(infoSearchWebRegex);
     const stdoutMatch = block.match(stdoutRegex);
     const errorMatch = block.match(errorRegex);
     const execDirMatch = terminalXmlMatch ? block.match(execDirRegex) : null;
@@ -45,6 +48,16 @@ export const parseContent = (content: string): ContentBlock[] => {
         type: 'shell-wait',
         content: {
           seconds: shellWaitMatch[1].trim(),
+        },
+      });
+    } else if (infoSearchWebMatch) {
+      const query = infoSearchWebMatch[1] || '';
+      const searchResults = JSON.parse(infoSearchWebMatch[2]);
+      blocks.push({
+        type: 'info-search-web',
+        content: {
+          query,
+          results: searchResults,
         },
       });
     } else if (terminalXmlMatch || terminalMarkdownMatch) {

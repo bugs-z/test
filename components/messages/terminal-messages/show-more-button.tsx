@@ -1,12 +1,20 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { IconArrowDown, IconArrowUp } from '@tabler/icons-react';
-import type { ShowMoreButtonProps } from './types';
+
+interface ShowMoreButtonProps {
+  isExpanded: boolean;
+  onClick: () => void;
+  remainingCount: number;
+  type?: 'lines' | 'results';
+  icon?: React.ReactNode;
+}
 
 export const ShowMoreButton: React.FC<ShowMoreButtonProps> = ({
   isExpanded,
   onClick,
-  remainingLines,
+  remainingCount,
+  type = 'lines',
   icon,
 }) => (
   <div className="flex justify-center py-1">
@@ -24,7 +32,7 @@ export const ShowMoreButton: React.FC<ShowMoreButtonProps> = ({
       ) : (
         <>
           {icon || <IconArrowDown size={14} className="mr-1" />}
-          Show More ({remainingLines} more lines)
+          Show More ({remainingCount} more {type})
         </>
       )}
     </Button>

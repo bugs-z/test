@@ -83,7 +83,7 @@ export const FileContentBlockComponent: React.FC<
               <ShowMoreButton
                 isExpanded={isExpanded}
                 onClick={handleToggleExpanded}
-                remainingLines={lines.length - MAX_VISIBLE_LINES}
+                remainingCount={lines.length - MAX_VISIBLE_LINES}
               />
             )}
           </div>

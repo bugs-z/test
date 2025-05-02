@@ -43,7 +43,7 @@ const readAndProcessFile = async (
       content: wrappedContent,
     });
 
-    return truncateContentByTokens(processedContent);
+    return `<file-content path="${filePath}">${truncateContentByTokens(processedContent)}</file-content>\n\n`;
   } catch (error) {
     return handleFileError(error, 'processing file');
   }

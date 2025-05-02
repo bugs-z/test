@@ -144,7 +144,7 @@ export const TerminalBlockComponent: React.FC<TerminalBlockProps> = ({
                 <ShowMoreButton
                   isExpanded={isExpanded}
                   onClick={() => onToggleExpanded(index)}
-                  remainingLines={lines.length - MAX_VISIBLE_LINES}
+                  remainingCount={lines.length - MAX_VISIBLE_LINES}
                   icon={
                     isExpanded ? (
                       <IconArrowDown size={16} />
@@ -163,7 +163,7 @@ export const TerminalBlockComponent: React.FC<TerminalBlockProps> = ({
                   <ShowMoreButton
                     isExpanded={isExpanded}
                     onClick={() => onToggleExpanded(index)}
-                    remainingLines={lines.length - MAX_VISIBLE_LINES}
+                    remainingCount={lines.length - MAX_VISIBLE_LINES}
                     icon={
                       isExpanded ? (
                         <IconArrowUp size={16} />

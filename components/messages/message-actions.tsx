@@ -18,7 +18,7 @@ export const MESSAGE_ICON_SIZE = 20;
 
 interface MessageActionsProps {
   isAssistant: boolean;
-  isLast: boolean;
+  isLastMessage: boolean;
   isEditing: boolean;
   isHovering: boolean;
   isGoodResponse: boolean;
@@ -36,7 +36,7 @@ interface MessageActionsProps {
 
 export const MessageActions: FC<MessageActionsProps> = ({
   isAssistant,
-  isLast,
+  isLastMessage,
   isEditing,
   isHovering,
   isGoodResponse,
@@ -76,10 +76,10 @@ export const MessageActions: FC<MessageActionsProps> = ({
     setShowCheckmark(true);
   };
 
-  return (isLast && isGenerating) || isEditing ? null : (
+  return (isLastMessage && isGenerating) || isEditing ? null : (
     <div className={`text-muted-foreground flex items-center space-x-4`}>
       {/* Temporary chat doesn't have edit functionality */}
-      {(isHovering || isLast) &&
+      {(isHovering || isLastMessage) &&
         !isAssistant &&
         !messageHasImage &&
         !isTemporaryChat && (
@@ -97,26 +97,28 @@ export const MessageActions: FC<MessageActionsProps> = ({
           />
         )}
 
-      {(isHovering || isLast) && !isMessageLengthTooShort && isAssistant && (
-        <WithTooltip
-          delayDuration={0}
-          side="bottom"
-          display={<div>Copy</div>}
-          trigger={
-            showCheckmark ? (
-              <IconCheck size={MESSAGE_ICON_SIZE} />
-            ) : (
-              <IconCopy
-                className="cursor-pointer hover:opacity-50"
-                size={MESSAGE_ICON_SIZE}
-                onClick={handleCopy}
-              />
-            )
-          }
-        />
-      )}
+      {(isHovering || isLastMessage) &&
+        !isMessageLengthTooShort &&
+        isAssistant && (
+          <WithTooltip
+            delayDuration={0}
+            side="bottom"
+            display={<div>Copy</div>}
+            trigger={
+              showCheckmark ? (
+                <IconCheck size={MESSAGE_ICON_SIZE} />
+              ) : (
+                <IconCopy
+                  className="cursor-pointer hover:opacity-50"
+                  size={MESSAGE_ICON_SIZE}
+                  onClick={handleCopy}
+                />
+              )
+            }
+          />
+        )}
 
-      {(isHovering || isLast) && isAssistant && !isTemporaryChat && (
+      {(isHovering || isLastMessage) && isAssistant && !isTemporaryChat && (
         <WithTooltip
           delayDuration={0}
           side="bottom"
@@ -139,7 +141,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
         />
       )}
 
-      {(isHovering || isLast) && isAssistant && !isTemporaryChat && (
+      {(isHovering || isLastMessage) && isAssistant && !isTemporaryChat && (
         <WithTooltip
           delayDuration={0}
           side="bottom"
@@ -162,7 +164,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
         />
       )}
 
-      {isLast && !messageHasImage && !isPremiumSubscription && (
+      {isLastMessage && !messageHasImage && !isPremiumSubscription && (
         <WithTooltip
           delayDuration={0}
           side="bottom"
@@ -177,7 +179,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
         />
       )}
 
-      {isLast && !messageHasImage && isPremiumSubscription && (
+      {isLastMessage && !messageHasImage && isPremiumSubscription && (
         <SwitchModel
           currentModel={messageModel}
           onChangeModel={onRegenerateSpecificModel}

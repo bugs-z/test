@@ -22,6 +22,15 @@ export interface FileContentBlock {
   isStrReplace?: boolean;
 }
 
+export interface InfoSearchWebBlock {
+  query: string;
+  results: Array<{
+    title: string;
+    url: string;
+    description: string;
+  }>;
+}
+
 export type ContentBlock =
   | {
       type: 'text';
@@ -38,6 +47,10 @@ export type ContentBlock =
   | {
       type: 'file-content';
       content: FileContentBlock;
+    }
+  | {
+      type: 'info-search-web';
+      content: InfoSearchWebBlock;
     };
 
 export interface ShowMoreButtonProps {
