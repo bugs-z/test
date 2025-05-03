@@ -64,6 +64,11 @@ export async function POST(request: Request) {
       );
     }
 
+    let supabase: SupabaseClient | null = null;
+    let generatedTitle: string | undefined;
+    let toolUsed = '';
+    supabase = await createClient();
+
     const { messages: validatedMessages, systemPrompt } =
       await processChatMessages(
         messages,
@@ -71,14 +76,8 @@ export async function POST(request: Request) {
         modelParams,
         config.isLargeModel,
         profile,
+        supabase,
       );
-
-    let supabase: SupabaseClient | null = null;
-    let generatedTitle: string | undefined;
-    let toolUsed = '';
-    if (chatMetadata.id) {
-      supabase = await createClient();
-    }
 
     request.signal.addEventListener('abort', async () => {
       const isTerminalUsed =
@@ -87,7 +86,7 @@ export async function POST(request: Request) {
         modelParams.selectedPlugin === PluginID.TERMINAL ||
         toolUsed === 'terminal';
 
-      if (supabase) {
+      if (chatMetadata.id) {
         await handleChatWithMetadata({
           supabase,
           chatMetadata,
@@ -176,7 +175,7 @@ export async function POST(request: Request) {
                 : ['browser', 'webSearch'],
             ),
             onFinish: async ({ finishReason }: { finishReason: string }) => {
-              if (supabase && !toolUsed) {
+              if (chatMetadata.id && !toolUsed) {
                 await handleChatWithMetadata({
                   supabase,
                   chatMetadata,

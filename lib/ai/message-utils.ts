@@ -13,6 +13,8 @@ import { processMessageContentWithAttachments } from '../build-prompt-backend';
 import llmConfig from '../models/llm-config';
 import { countTokens } from 'gpt-tokenizer';
 import { PluginID } from '@/types/plugins';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { processMessagesWithImages } from './image-processing';
 
 /**
  * Removes the last assistant message if it's empty.
@@ -261,6 +263,7 @@ function validateMessageTokens(
  * @param apiKey - The OpenAI API key
  * @param isLargeModel - Whether the model is large
  * @param profile - Object containing user_id and profile_context
+ * @param supabase - Optional Supabase client for image processing
  * @returns Object containing the processed messages and model information
  */
 export async function processChatMessages(
@@ -273,6 +276,7 @@ export async function processChatMessages(
   },
   isLargeModel: boolean,
   profile: { user_id: string; profile_context: string },
+  supabase?: SupabaseClient,
 ): Promise<{
   messages: BuiltChatMessage[];
   systemPrompt: string;
@@ -280,6 +284,11 @@ export async function processChatMessages(
   let shouldUncensor = false;
   const apiKey = llmConfig.openai.apiKey;
   const isReasoning = modelParams.selectedPlugin === PluginID.REASONING;
+
+  // Process images if supabase client is provided
+  const processedMessages = supabase
+    ? await processMessagesWithImages(messages, supabase)
+    : messages;
 
   // Check if we should uncensor the response
   if (
@@ -289,22 +298,22 @@ export async function processChatMessages(
     !isReasoning
   ) {
     const { shouldUncensorResponse: moderationResult } =
-      await getModerationResult(messages, apiKey, 10, isLargeModel);
+      await getModerationResult(processedMessages, apiKey, 10, isLargeModel);
     shouldUncensor = moderationResult;
   }
 
   if (shouldUncensor) {
-    addAuthMessage(messages);
+    addAuthMessage(processedMessages);
   }
 
-  filterEmptyAssistantMessages(messages);
+  filterEmptyAssistantMessages(processedMessages);
 
   // Validate total token count before processing attachments
-  validateMessageTokens(messages, profile?.user_id);
+  validateMessageTokens(processedMessages, profile?.user_id);
 
   // Process attachments and file content for the last message
   const messagesWithAttachments = await processMessageContentWithAttachments(
-    messages,
+    processedMessages,
     profile.user_id,
     isReasoning,
   );

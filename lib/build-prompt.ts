@@ -132,26 +132,18 @@ export async function buildFinalMessages(
           type: 'text',
           text: message.content,
         },
-        ...message.image_paths.map((path: string) => {
-          let formedUrl = '';
-
-          if (path.startsWith('data')) {
-            formedUrl = path;
-          } else {
-            const chatImage = chatImages.find((image) => image.path === path);
-
-            if (chatImage) {
-              formedUrl = chatImage.base64;
-            }
-          }
-
-          return {
-            type: 'image_url',
-            image_url: {
-              url: formedUrl,
-            },
-          };
-        }),
+        ...message.image_paths
+          .map((path: string) => {
+            const isBase64 = path.startsWith('data');
+            return {
+              type: 'image_url' as const,
+              image_url: {
+                url: path,
+                isPath: !isBase64,
+              },
+            };
+          })
+          .filter(Boolean), // Remove any null entries
       ];
     } else {
       content = message.content;
