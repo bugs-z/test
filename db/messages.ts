@@ -68,13 +68,17 @@ export const getMessagesByMultipleChatIds = async (chatIds: string[]) => {
     return [];
   }
 
-  const { data: messages } = await supabase
+  const { data: messages, error } = await supabase
     .from('messages')
     .select('*')
     .in('chat_id', chatIds);
 
+  if (error) {
+    throw new Error(error.message);
+  }
+
   if (!messages) {
-    throw new Error('Messages not found');
+    return [];
   }
 
   await localDB.messages.updateMany(messages);

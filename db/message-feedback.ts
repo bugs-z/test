@@ -24,13 +24,17 @@ export const getFeedbackByMultipleChatIds = async (chatIds: string[]) => {
     return [];
   }
 
-  const { data: feedback } = await supabase
+  const { data: feedback, error } = await supabase
     .from('feedback')
     .select('*')
     .in('chat_id', chatIds);
 
+  if (error) {
+    throw new Error(error.message);
+  }
+
   if (!feedback) {
-    throw new Error('Feedback not found');
+    return [];
   }
 
   await localDB.feedback.updateMany(feedback);
