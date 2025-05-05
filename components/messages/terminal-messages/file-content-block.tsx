@@ -35,7 +35,7 @@ export const FileContentBlockComponent: React.FC<
     <div
       className={`overflow-hidden rounded-lg border border-border ${index === 1 ? 'mb-3' : 'my-3'}`}
     >
-      <button
+      <div
         className="flex items-center justify-between border-b border-border bg-muted px-4 py-2 hover:opacity-50 cursor-pointer"
         onClick={handleActionClick}
       >
@@ -50,7 +50,7 @@ export const FileContentBlockComponent: React.FC<
             </code>
           </div>
         </div>
-      </button>
+      </div>
     </div>
   );
 };
