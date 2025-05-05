@@ -11,28 +11,18 @@ const supabaseAdmin = createSupabaseAdminClient();
  * @param userID - User identifier for sandbox ownership
  * @param template - Sandbox environment template name
  * @param timeoutMs - Operation timeout in milliseconds
- * @param dataStream - Optional data stream for sending notifications
  * @returns Connected or newly created sandbox instance
  */
 export async function createOrConnectTemporaryTerminal(
   userID: string,
   template: string,
   timeoutMs: number,
-  dataStream?: any,
 ): Promise<Sandbox> {
   const allSandboxes = await Sandbox.list();
   const sandboxInfo = allSandboxes.find(
     (sbx: SandboxInfo) =>
       sbx.metadata?.userID === userID && sbx.metadata?.template === template,
   );
-
-  // Notify about sandbox type when connecting or creating
-  if (dataStream) {
-    dataStream.writeData({
-      type: 'sandbox-type',
-      sandboxType: 'temporary-sandbox',
-    });
-  }
 
   if (!sandboxInfo) {
     try {
@@ -58,7 +48,6 @@ export async function createOrConnectTemporaryTerminal(
  * @param userID - User identifier for sandbox ownership
  * @param template - Sandbox environment template name
  * @param timeoutMs - Operation timeout in milliseconds
- * @param dataStream - Optional data stream for sending notifications
  * @returns Connected or newly created sandbox instance
  *
  * Flow:
@@ -72,7 +61,6 @@ export async function createOrConnectPersistentTerminal(
   userID: string,
   template: string,
   timeoutMs: number,
-  dataStream?: any,
 ): Promise<Sandbox> {
   try {
     // Only check DB for persistent sandboxes
@@ -118,23 +106,40 @@ export async function createOrConnectPersistentTerminal(
               .update({ status: 'active' })
               .eq('sandbox_id', existingSandbox.sandbox_id);
 
-            // Notify about sandbox type when resuming
-            if (dataStream) {
-              dataStream.writeData({
-                type: 'sandbox-type',
-                sandboxType: 'persistent-sandbox',
-              });
-            }
-
             return sandbox;
           } catch (e) {
             console.error(
               `[${existingSandbox.sandbox_id}] Failed to recover sandbox from pausing state:`,
               e,
             );
-            throw new Error(
-              'Sandbox is stuck in pausing state. Please try again later.',
+            console.log(
+              `[${userID}] Sandbox ${existingSandbox.sandbox_id} is stuck in pausing state, creating new one`,
             );
+
+            // Delete the stuck sandbox record
+            await supabaseAdmin
+              .from('e2b_sandboxes')
+              .delete()
+              .eq('sandbox_id', existingSandbox.sandbox_id);
+
+            // Create new persistent sandbox
+            const sandbox = await Sandbox.create(template, {
+              timeoutMs,
+            });
+
+            await supabaseAdmin.from('e2b_sandboxes').upsert(
+              {
+                user_id: userID,
+                sandbox_id: sandbox.sandboxId,
+                template,
+                status: 'active',
+              },
+              {
+                onConflict: 'user_id,template',
+              },
+            );
+
+            return sandbox;
           }
         }
       }
@@ -149,14 +154,6 @@ export async function createOrConnectPersistentTerminal(
             .from('e2b_sandboxes')
             .update({ status: 'active' })
             .eq('sandbox_id', existingSandbox.sandbox_id);
-
-          // Notify about sandbox type when resuming
-          if (dataStream) {
-            dataStream.writeData({
-              type: 'sandbox-type',
-              sandboxType: 'persistent-sandbox',
-            });
-          }
 
           return sandbox;
         } catch (e: any) {
@@ -184,14 +181,6 @@ export async function createOrConnectPersistentTerminal(
     const sandbox = await Sandbox.create(template, {
       timeoutMs,
     });
-
-    // Notify about sandbox type when creating new one
-    if (dataStream) {
-      dataStream.writeData({
-        type: 'sandbox-type',
-        sandboxType: 'persistent-sandbox',
-      });
-    }
 
     await supabaseAdmin.from('e2b_sandboxes').upsert(
       {

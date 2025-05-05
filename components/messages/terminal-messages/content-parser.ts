@@ -3,17 +3,25 @@ import type { ContentBlock } from './types';
 export const parseContent = (content: string): ContentBlock[] => {
   const blocks: ContentBlock[] = [];
   const blockRegex =
-    /((?:<terminal-command[^>]*>[\s\S]*?<\/terminal-command>|```terminal\n[\s\S]*?```|<file-content[^>]*>[\s\S]*?<\/file-content>|<file-write[^>]*>[\s\S]*?<\/file-write>|<file-str-replace[^>]*>[\s\S]*?<\/file-str-replace>|<shell-wait[^>]*>[\s\S]*?<\/shell-wait>|<info_search_web[^>]*>[\s\S]*?<\/info_search_web>)(?:\n```(?:stdout)[\s\S]*?(?:```|$))*(?:\s*<terminal-error>[\s\S]*?<\/terminal-error>)?)/g;
+    /((?:<terminal-command[^>]*>[\s\S]*?<\/terminal-command>|```terminal\n[\s\S]*?```|<file-content[^>]*>[\s\S]*?<\/file-content>|<file-read[^>]*>[\s\S]*?<\/file-read>|<file-write[^>]*>[\s\S]*?<\/file-write>|<file-str-replace[^>]*>[\s\S]*?<\/file-str-replace>|<shell-wait[^>]*>[\s\S]*?<\/shell-wait>|<info_search_web[^>]*>[\s\S]*?<\/info_search_web>)(?:\n```(?:stdout)[\s\S]*?(?:```|$))*(?:\s*<terminal-error>[\s\S]*?<\/terminal-error>)?)/g;
   const terminalXmlRegex =
     /<terminal-command(?:\s+[^>]*)?>([\s\S]*?)<\/terminal-command>/;
   const terminalMarkdownRegex = /```terminal\n([\s\S]*?)```/;
+  // For file-read tool
+  const fileReadRegex =
+    /<file-read(?:\s+path="([^"]*)")?>([\s\S]*?)<\/file-read>/;
+  // For file-read tool (old format)
   const fileContentRegex =
     /<file-content(?:\s+path="([^"]*)")?>([\s\S]*?)<\/file-content>/;
+  // For file-write tool
   const fileWriteRegex =
-    /<file-write(?:\s+file="([^"]*)")?>([\s\S]*?)<\/file-write>/;
+    /<file-write(?:\s+file="([^"]*)"|\s+path="([^"]*)")(?:\s+mode="([^"]*)")?>([\s\S]*?)<\/file-write>/;
+  // For file-str-replace tool
   const fileStrReplaceRegex =
     /<file-str-replace(?:\s+file="([^"]*)")?>([\s\S]*?)<\/file-str-replace>/;
+  // For shell-wait tool
   const shellWaitRegex = /<shell-wait[^>]*>([\s\S]*?)<\/shell-wait>/;
+  // For info-search-web tool
   const infoSearchWebRegex =
     /<info_search_web(?:\s+query="([^"]*)")?[^>]*>([\s\S]*?)<\/info_search_web>/;
   const stdoutRegex = /```stdout\n([\s\S]*?)(?:```|$)/;
@@ -35,6 +43,7 @@ export const parseContent = (content: string): ContentBlock[] => {
     const terminalXmlMatch = block.match(terminalXmlRegex);
     const terminalMarkdownMatch = block.match(terminalMarkdownRegex);
     const fileContentMatch = block.match(fileContentRegex);
+    const fileReadMatch = block.match(fileReadRegex);
     const fileWriteMatch = block.match(fileWriteRegex);
     const fileStrReplaceMatch = block.match(fileStrReplaceRegex);
     const shellWaitMatch = block.match(shellWaitRegex);
@@ -80,16 +89,29 @@ export const parseContent = (content: string): ContentBlock[] => {
         content: {
           path: fileContentMatch[1] || '',
           content: fileContentMatch[2].trim(),
-          isWrite: false,
+          mode: 'read',
         },
       });
-    } else if (fileWriteMatch) {
+    } else if (fileReadMatch) {
       blocks.push({
         type: 'file-content',
         content: {
-          path: fileWriteMatch[1] || '',
-          content: fileWriteMatch[2].trim(),
-          isWrite: true,
+          path: fileReadMatch?.[1] || '',
+          content: fileReadMatch?.[2].trim(),
+          mode: 'read',
+        },
+      });
+    } else if (fileWriteMatch) {
+      const path = fileWriteMatch[1] || fileWriteMatch[2] || '';
+      const content = fileWriteMatch[4]?.trim() || '';
+      const mode = fileWriteMatch[3] as 'create' | 'append' | 'overwrite';
+
+      blocks.push({
+        type: 'file-content',
+        content: {
+          path,
+          content,
+          mode: mode || 'overwrite',
         },
       });
     } else if (fileStrReplaceMatch) {
@@ -98,8 +120,7 @@ export const parseContent = (content: string): ContentBlock[] => {
         content: {
           path: fileStrReplaceMatch[1] || '',
           content: fileStrReplaceMatch[2].trim(),
-          isWrite: true,
-          isStrReplace: true,
+          mode: 'overwrite',
         },
       });
     }

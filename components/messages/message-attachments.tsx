@@ -85,8 +85,8 @@ export const MessageAttachments: React.FC<MessageAttachmentsProps> = ({
       ) : (
         <>
           <FileAttachmentCard
-            file={files[files.length - 1]}
-            onClick={() => handleFileClick(files[files.length - 1])}
+            file={files[0]}
+            onClick={() => handleFileClick(files[0])}
           />
           <ViewAllFilesCard onClick={() => setOpen(true)} />
           <FilesModal

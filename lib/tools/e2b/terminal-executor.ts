@@ -21,13 +21,13 @@ export const executeTerminalCommand = async ({
   command,
   exec_dir,
   sandbox = null,
-  dataStream,
+  background = false,
 }: {
   userID: string;
   command: string;
   exec_dir: string;
   sandbox?: Sandbox | null;
-  dataStream?: any;
+  background?: boolean;
 }): Promise<ReadableStream<Uint8Array>> => {
   let hasTerminalOutput = false;
   let currentBlock: 'stdout' | null = null;
@@ -48,56 +48,90 @@ export const executeTerminalCommand = async ({
           throw new Error('Failed to create or connect to sandbox');
         }
 
-        // Set up custom timeout
-        timeoutId = setTimeout(() => {
-          if (!isStreamClosed) {
-            // Close any open block before sending timeout message
-            if (currentBlock) {
-              controller.enqueue(ENCODER.encode('\n```'));
-              currentBlock = null;
+        // Set up custom timeout only if not running in background
+        if (!background) {
+          timeoutId = setTimeout(() => {
+            if (!isStreamClosed) {
+              // Close any open block before sending timeout message
+              if (currentBlock) {
+                controller.enqueue(ENCODER.encode('\n```'));
+                currentBlock = null;
+              }
+              controller.enqueue(
+                ENCODER.encode(
+                  `<terminal-error>The command's output stream has been paused after ${STREAM_TIMEOUT / 1000} seconds. The command may continue running in the background, but its output will no longer be streamed.</terminal-error>`,
+                ),
+              );
+              controller.close();
+              isStreamClosed = true;
             }
-            controller.enqueue(
-              ENCODER.encode(
-                `<terminal-error>The command's output stream has been paused after ${STREAM_TIMEOUT / 1000} seconds. The command may continue running in the background, but its output will no longer be streamed.</terminal-error>`,
-              ),
-            );
-            controller.close();
-            isStreamClosed = true;
-          }
-        }, STREAM_TIMEOUT);
+          }, STREAM_TIMEOUT);
+        }
 
-        const execution = await sandbox.commands.run(command, {
-          timeoutMs: MAX_COMMAND_EXECUTION_TIME,
-          cwd: exec_dir,
-          user: 'root',
-          onStdout: (data: string) => {
-            if (isStreamClosed) return;
-            hasTerminalOutput = true;
-            if (currentBlock !== 'stdout') {
-              if (currentBlock) {
-                controller.enqueue(ENCODER.encode('\n```'));
-              }
-              controller.enqueue(ENCODER.encode('\n```stdout\n'));
-              currentBlock = 'stdout';
-            }
-            controller.enqueue(ENCODER.encode(data));
-          },
-          onStderr: (data: string) => {
-            if (isStreamClosed) return;
-            hasTerminalOutput = true;
-            if (currentBlock !== 'stdout') {
-              if (currentBlock) {
-                controller.enqueue(ENCODER.encode('\n```'));
-              }
-              controller.enqueue(ENCODER.encode('\n```stdout\n'));
-              currentBlock = 'stdout';
-            }
-            controller.enqueue(ENCODER.encode(data));
-          },
-        });
+        const execution = background
+          ? await sandbox.commands.run(command, {
+              cwd: exec_dir,
+              user: 'root',
+              background: true,
+              onStdout: (data: string) => {
+                if (isStreamClosed) return;
+                hasTerminalOutput = true;
+                if (currentBlock !== 'stdout') {
+                  if (currentBlock) {
+                    controller.enqueue(ENCODER.encode('\n```'));
+                  }
+                  controller.enqueue(ENCODER.encode('\n```stdout\n'));
+                  currentBlock = 'stdout';
+                }
+                controller.enqueue(ENCODER.encode(data));
+              },
+              onStderr: (data: string) => {
+                if (isStreamClosed) return;
+                hasTerminalOutput = true;
+                if (currentBlock !== 'stdout') {
+                  if (currentBlock) {
+                    controller.enqueue(ENCODER.encode('\n```'));
+                  }
+                  controller.enqueue(ENCODER.encode('\n```stdout\n'));
+                  currentBlock = 'stdout';
+                }
+                controller.enqueue(ENCODER.encode(data));
+              },
+            })
+          : await sandbox.commands.run(command, {
+              timeoutMs: MAX_COMMAND_EXECUTION_TIME,
+              cwd: exec_dir,
+              user: 'root',
+              onStdout: (data: string) => {
+                if (isStreamClosed) return;
+                hasTerminalOutput = true;
+                if (currentBlock !== 'stdout') {
+                  if (currentBlock) {
+                    controller.enqueue(ENCODER.encode('\n```'));
+                  }
+                  controller.enqueue(ENCODER.encode('\n```stdout\n'));
+                  currentBlock = 'stdout';
+                }
+                controller.enqueue(ENCODER.encode(data));
+              },
+              onStderr: (data: string) => {
+                if (isStreamClosed) return;
+                hasTerminalOutput = true;
+                if (currentBlock !== 'stdout') {
+                  if (currentBlock) {
+                    controller.enqueue(ENCODER.encode('\n```'));
+                  }
+                  controller.enqueue(ENCODER.encode('\n```stdout\n'));
+                  currentBlock = 'stdout';
+                }
+                controller.enqueue(ENCODER.encode(data));
+              },
+            });
 
         // Clear the timeout if command completes before timeout
-        clearTimeout(timeoutId);
+        if (!background) {
+          clearTimeout(timeoutId);
+        }
 
         // Close any open block at the end
         if (currentBlock && !isStreamClosed) {
@@ -164,7 +198,9 @@ export const executeTerminalCommand = async ({
         }
       } finally {
         // Clear timeout in case it's still pending
-        clearTimeout(timeoutId);
+        if (!background) {
+          clearTimeout(timeoutId);
+        }
         // Ensure any open block is closed before ending the stream
         if (currentBlock && !isStreamClosed) {
           controller.enqueue(ENCODER.encode('\n```'));

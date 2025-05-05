@@ -52,6 +52,8 @@ export async function executeTerminalAgent({
   let sandbox: Sandbox | null = null;
   const persistentSandbox = !!isPremiumUser;
   const userID = profile.user_id;
+  // Track if port exposure tool was used
+  let exposedPort = false;
 
   // Create sandbox manager
   const sandboxManager = new DefaultSandboxManager(
@@ -121,6 +123,14 @@ export async function executeTerminalAgent({
                 type: 'agent-status',
                 content: 'thinking',
               });
+
+              // Check if the expose port tool is being used
+              if (
+                chunk.chunk.toolName === 'deploy_expose_port' ||
+                chunk.chunk.toolName === 'shell_background'
+              ) {
+                exposedPort = true;
+              }
             }
           },
           onError: async (error) => {
@@ -220,9 +230,13 @@ export async function executeTerminalAgent({
     });
     throw error;
   } finally {
-    // Pause sandbox at the end of the API request
+    // Don't pause sandbox if we've exposed a port, to keep services running for additional time
     if (sandbox && persistentSandbox) {
-      await pauseSandbox(sandbox);
+      if (!exposedPort) {
+        await pauseSandbox(sandbox);
+      } else {
+        // console.log('[TerminalAgent] Keeping sandbox active for exposed port');
+      }
     }
   }
 }

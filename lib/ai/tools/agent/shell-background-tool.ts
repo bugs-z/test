@@ -6,23 +6,23 @@ import { streamTerminalOutput } from '@/lib/ai/terminal-utils';
 import PostHogClient from '@/app/posthog';
 
 /**
- * Creates a terminal tool for executing commands in the sandbox environment
+ * Creates a tool for executing commands in the background
  * @param context - The context needed for tool execution
- * @returns The terminal tool
+ * @returns The background command execution tool
  */
-export const createShellExecTool = (context: ToolContext) => {
+export const createShellBackgroundTool = (context: ToolContext) => {
   const { dataStream, userID, sandboxManager } = context;
 
   return tool({
     description:
-      'Execute commands in the sandbox environment. Use for running code, installing packages, or managing files.',
+      'Execute commands in the background of the sandbox environment. Use for long-running processes or services that need to continue running.',
     parameters: z.object({
       exec_dir: z
         .string()
         .describe(
           'Working directory for command execution (must use absolute path)',
         ),
-      command: z.string().describe('Shell command to execute'),
+      command: z.string().describe('Shell command to execute in background'),
     }),
     execute: async (args) => {
       const { exec_dir, command } = args as {
@@ -35,16 +35,15 @@ export const createShellExecTool = (context: ToolContext) => {
       }
 
       // Get sandbox from manager
-      const { sandbox, persistentSandbox } = await sandboxManager.getSandbox();
+      const { sandbox } = await sandboxManager.getSandbox();
 
       const posthog = PostHogClient();
       if (posthog) {
         posthog.capture({
           distinctId: userID,
-          event: 'terminal_executed',
+          event: 'terminal_background_executed',
           properties: {
             command: command,
-            persistentSandbox: persistentSandbox,
           },
         });
       }
@@ -56,21 +55,23 @@ export const createShellExecTool = (context: ToolContext) => {
 
       dataStream.writeData({
         type: 'text-delta',
-        content: `<terminal-command exec-dir="${exec_dir}">${command}</terminal-command>`,
+        content: `<terminal-command exec-dir="${exec_dir}" background="true">${command}</terminal-command>`,
       });
 
-      // Execute command
+      // Execute command in background
       const terminalStream = await executeTerminalCommand({
         userID,
         command,
         exec_dir,
         sandbox,
+        background: true,
       });
 
       const terminalOutput = await streamTerminalOutput(
         terminalStream,
         dataStream,
       );
+
       return terminalOutput;
     },
   });

@@ -33,14 +33,14 @@ const readAndProcessFile = async (
 
     const content = await sandbox.files.read(filePath);
     const processedContent = processFileContent(content, start_line, end_line);
-    const wrappedContent = `<file-content path="${filePath}">${truncateContentByTokens(processedContent, 2048)}</file-content>\n\n`;
+    const wrappedContent = `<file-read path="${filePath}">${truncateContentByTokens(processedContent, 2048)}</file-read>\n\n`;
 
     dataStream.writeData({
       type: 'text-delta',
       content: wrappedContent,
     });
 
-    return `<file-content path="${filePath}">${truncateContentByTokens(processedContent)}</file-content>\n\n`;
+    return `<file-read path="${filePath}">${truncateContentByTokens(processedContent)}</file-read>\n\n`;
   } catch (error) {
     return handleFileError(error, 'processing file');
   }
@@ -52,7 +52,7 @@ const readAndProcessFile = async (
  * @returns The file read tool
  */
 export const createFileReadTool = (context: ToolContext) => {
-  const { dataStream, userID, sandboxManager } = context;
+  const { dataStream, sandboxManager } = context;
 
   return tool({
     description:

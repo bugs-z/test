@@ -26,9 +26,17 @@ export const FileContentBlockComponent: React.FC<
   };
 
   const getActionText = () => {
-    if (block.isStrReplace) return 'Editing file';
-    if (block.isWrite) return 'Writing to file';
-    return 'Reading file';
+    switch (block.mode) {
+      case 'overwrite':
+        return 'Editing file';
+      case 'append':
+        return 'Appending to file';
+      case 'create':
+        return 'Creating file';
+      case 'read':
+      default:
+        return 'Reading file';
+    }
   };
 
   return (

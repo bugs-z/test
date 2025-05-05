@@ -18,8 +18,7 @@ export interface ShellWaitBlock {
 export interface FileContentBlock {
   path: string;
   content: string;
-  isWrite?: boolean;
-  isStrReplace?: boolean;
+  mode?: 'read' | 'create' | 'append' | 'overwrite';
 }
 
 export interface InfoSearchWebBlock {

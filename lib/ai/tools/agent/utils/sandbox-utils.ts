@@ -19,7 +19,6 @@ export const createPersistentSandbox = async (
   userID: string,
   template: string,
   timeout: number,
-  dataStream: any,
   setSandbox?: (sandbox: any) => void,
 ) => {
   try {
@@ -27,7 +26,6 @@ export const createPersistentSandbox = async (
       userID,
       template,
       timeout,
-      dataStream,
     );
     if (setSandbox) {
       setSandbox(sandbox);
@@ -42,7 +40,6 @@ export const createTemporarySandbox = async (
   userID: string,
   template: string,
   timeout: number,
-  dataStream: any,
   setSandbox?: (sandbox: any) => void,
 ) => {
   try {
@@ -50,7 +47,6 @@ export const createTemporarySandbox = async (
       userID,
       template,
       timeout,
-      dataStream,
     );
     if (setSandbox) {
       setSandbox(sandbox);
@@ -68,7 +64,7 @@ export const ensureSandboxConnection = async (
     initialPersistentSandbox?: boolean;
   } = {},
 ): Promise<{ sandbox: any; persistentSandbox: boolean }> => {
-  const { userID, dataStream, setSandbox } = context;
+  const { userID, setSandbox } = context;
 
   const { initialSandbox, initialPersistentSandbox = true } = options;
 
@@ -81,14 +77,12 @@ export const ensureSandboxConnection = async (
           userID,
           SANDBOX_TEMPLATE,
           BASH_SANDBOX_TIMEOUT,
-          dataStream,
           setSandbox,
         )
       : await createTemporarySandbox(
           userID,
           SANDBOX_TEMPLATE,
           BASH_SANDBOX_TIMEOUT,
-          dataStream,
           setSandbox,
         );
   }

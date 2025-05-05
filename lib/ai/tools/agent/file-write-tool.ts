@@ -19,6 +19,8 @@ const writeFileContent = async (
     });
 
     let finalContent = content;
+    let originalContent = '';
+    let fileExists = false;
 
     if (leading_newline) {
       finalContent = `\n${finalContent}`;
@@ -27,18 +29,34 @@ const writeFileContent = async (
       finalContent = `${finalContent}\n`;
     }
 
-    if (append) {
-      try {
-        const existingContent = await sandbox.files.read(file);
-        finalContent = existingContent + finalContent;
-      } catch {
-        // File doesn't exist yet, continue with just the new content
-      }
+    // Check if file exists first
+    try {
+      originalContent = await sandbox.files.read(file);
+      fileExists = true;
+    } catch {
+      // File doesn't exist yet
+      fileExists = false;
     }
 
-    await sandbox.files.write(file, finalContent);
+    if (append && fileExists) {
+      await sandbox.files.write(file, originalContent + finalContent);
+    } else {
+      await sandbox.files.write(file, finalContent);
+    }
 
-    const wrappedContent = `<file-write file="${file}">${finalContent}</file-write>\n\n`;
+    // Determine the operation mode
+    let mode;
+    if (append) {
+      mode = 'append';
+    } else if (fileExists) {
+      mode = 'overwrite';
+    } else {
+      mode = 'create';
+    }
+
+    // Use a single file-write tag with a mode parameter
+    const wrappedContent = `<file-write path="${file}" mode="${mode}">${finalContent}</file-write>\n\n`;
+
     dataStream.writeData({
       type: 'text-delta',
       content: wrappedContent,
