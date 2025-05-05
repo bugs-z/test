@@ -15,6 +15,7 @@ import {
 import type { ChatMetadata, LLMID, AgentMode } from '@/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { handleMessageAttachments } from '@/lib/ai/tools/agent/utils/file-db-utils';
+import { DefaultSandboxManager } from './agent/utils/sandbox-manager';
 
 interface TerminalToolConfig {
   messages: any[];
@@ -52,6 +53,17 @@ export async function executeTerminalAgent({
   const persistentSandbox = !!isPremiumUser;
   const userID = profile.user_id;
 
+  // Create sandbox manager
+  const sandboxManager = new DefaultSandboxManager(
+    userID,
+    dataStream,
+    (newSandbox) => {
+      sandbox = newSandbox;
+    },
+    sandbox,
+    persistentSandbox,
+  );
+
   try {
     // Check rate limit
     if (autoSelected) {
@@ -68,19 +80,12 @@ export async function executeTerminalAgent({
       }
     }
 
-    // Functions to update sandbox and persistentSandbox from tools
-    const setSandbox = (newSandbox: Sandbox) => {
-      sandbox = newSandbox;
-    };
-
     // Try to execute terminal command if confirmTerminalCommand is true
     if (config.confirmTerminalCommand) {
       const result = await executeTerminalCommandWithConfig({
         userID,
         dataStream,
-        setSandbox,
-        initialSandbox: sandbox || undefined,
-        initialPersistentSandbox: persistentSandbox,
+        sandboxManager,
         messages,
       });
 
@@ -103,8 +108,9 @@ export async function executeTerminalAgent({
             sandbox,
             userID,
             persistentSandbox,
-            setSandbox,
+            setSandbox: sandboxManager.setSandbox.bind(sandboxManager),
             agentMode,
+            sandboxManager,
           }),
           maxSteps: 10,
           toolChoice: 'required',
@@ -155,11 +161,9 @@ export async function executeTerminalAgent({
               if (chunk.args?.attachments) {
                 await handleMessageAttachments({
                   attachments: chunk.args.attachments,
-                  sandbox,
                   userID,
                   dataStream,
-                  setSandbox,
-                  persistentSandbox,
+                  sandboxManager,
                 });
               }
 

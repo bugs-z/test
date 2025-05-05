@@ -4,7 +4,6 @@ import type { ToolContext } from './types';
 import { executeTerminalCommand } from '@/lib/tools/e2b/terminal-executor';
 import { streamTerminalOutput } from '@/lib/ai/terminal-utils';
 import PostHogClient from '@/app/posthog';
-import { ensureSandboxConnection } from './utils/sandbox-utils';
 
 /**
  * Creates a terminal tool for executing commands in the sandbox environment
@@ -12,13 +11,7 @@ import { ensureSandboxConnection } from './utils/sandbox-utils';
  * @returns The terminal tool
  */
 export const createShellExecTool = (context: ToolContext) => {
-  const {
-    dataStream,
-    sandbox: initialSandbox,
-    userID,
-    persistentSandbox: initialPersistentSandbox = true,
-    setSandbox,
-  } = context;
+  const { dataStream, userID, sandboxManager } = context;
 
   return tool({
     description:
@@ -37,18 +30,12 @@ export const createShellExecTool = (context: ToolContext) => {
         command: string;
       };
 
-      // Ensure sandbox connection
-      const { sandbox, persistentSandbox } = await ensureSandboxConnection(
-        {
-          userID,
-          dataStream,
-          setSandbox,
-        },
-        {
-          initialSandbox,
-          initialPersistentSandbox,
-        },
-      );
+      if (!sandboxManager) {
+        throw new Error('Sandbox manager not initialized');
+      }
+
+      // Get sandbox from manager
+      const { sandbox, persistentSandbox } = await sandboxManager.getSandbox();
 
       const posthog = PostHogClient();
       if (posthog) {

@@ -1,7 +1,6 @@
 import type { FileAttachment } from '@/types';
 import { createAdminFile } from '@/db/storage/admin-files';
-import type { Sandbox } from '@e2b/code-interpreter';
-import { ensureSandboxConnection } from './sandbox-utils';
+import type { SandboxManager } from '../types';
 
 export const saveFileToDatabase = async (
   filePath: string,
@@ -63,34 +62,20 @@ export const saveFileToDatabase = async (
  */
 export const handleMessageAttachments = async ({
   attachments,
-  sandbox,
   userID,
   dataStream,
-  setSandbox,
-  persistentSandbox,
+  sandboxManager,
 }: {
   attachments: string | string[];
-  sandbox: Sandbox | null;
   userID: string;
   dataStream: any;
-  setSandbox: (sandbox: Sandbox) => void;
-  persistentSandbox: boolean;
+  sandboxManager: SandboxManager;
 }) => {
   if (!attachments) return;
 
   try {
-    // Ensure sandbox connection
-    const { sandbox: currentSandbox } = await ensureSandboxConnection(
-      {
-        userID,
-        dataStream,
-        setSandbox,
-      },
-      {
-        initialSandbox: sandbox,
-        initialPersistentSandbox: persistentSandbox,
-      },
-    );
+    // Get sandbox from manager
+    const { sandbox: currentSandbox } = await sandboxManager.getSandbox();
 
     const filePaths = Array.isArray(attachments) ? attachments : [attachments];
 

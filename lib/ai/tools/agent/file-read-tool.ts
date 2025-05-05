@@ -1,10 +1,7 @@
 import { tool } from 'ai';
 import { z } from 'zod';
 import type { ToolContext } from './types';
-import {
-  handleFileError,
-  ensureSandboxConnection,
-} from './utils/sandbox-utils';
+import { handleFileError } from './utils/sandbox-utils';
 import { truncateContentByTokens } from '@/lib/ai/terminal-utils';
 
 const processFileContent = (
@@ -55,13 +52,7 @@ const readAndProcessFile = async (
  * @returns The file read tool
  */
 export const createFileReadTool = (context: ToolContext) => {
-  const {
-    dataStream,
-    sandbox: initialSandbox,
-    userID,
-    persistentSandbox: initialPersistentSandbox = true,
-    setSandbox,
-  } = context;
+  const { dataStream, userID, sandboxManager } = context;
 
   return tool({
     description:
@@ -85,18 +76,11 @@ export const createFileReadTool = (context: ToolContext) => {
       };
 
       try {
-        // Ensure sandbox connection
-        const { sandbox } = await ensureSandboxConnection(
-          {
-            userID,
-            dataStream,
-            setSandbox,
-          },
-          {
-            initialSandbox,
-            initialPersistentSandbox,
-          },
-        );
+        if (!sandboxManager) {
+          throw new Error('Sandbox manager not initialized');
+        }
+
+        const { sandbox } = await sandboxManager.getSandbox();
 
         return readAndProcessFile(
           sandbox,

@@ -1,10 +1,7 @@
 import { tool } from 'ai';
 import { z } from 'zod';
 import type { ToolContext } from './types';
-import {
-  handleFileError,
-  ensureSandboxConnection,
-} from './utils/sandbox-utils';
+import { handleFileError } from './utils/sandbox-utils';
 
 const replaceFileContent = async (
   sandbox: any,
@@ -46,13 +43,7 @@ const replaceFileContent = async (
  * @returns The file string replacement tool
  */
 export const createFileStrReplaceTool = (context: ToolContext) => {
-  const {
-    dataStream,
-    sandbox: initialSandbox,
-    userID,
-    persistentSandbox: initialPersistentSandbox = true,
-    setSandbox,
-  } = context;
+  const { dataStream, userID, sandboxManager } = context;
 
   return tool({
     description:
@@ -72,18 +63,11 @@ export const createFileStrReplaceTool = (context: ToolContext) => {
       };
 
       try {
-        // Ensure sandbox connection
-        const { sandbox } = await ensureSandboxConnection(
-          {
-            userID,
-            dataStream,
-            setSandbox,
-          },
-          {
-            initialSandbox,
-            initialPersistentSandbox,
-          },
-        );
+        if (!sandboxManager) {
+          throw new Error('Sandbox manager not initialized');
+        }
+
+        const { sandbox } = await sandboxManager.getSandbox();
 
         return replaceFileContent(sandbox, file, old_str, new_str, dataStream);
       } catch (error) {

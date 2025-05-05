@@ -1,6 +1,11 @@
 import type { Sandbox } from '@e2b/code-interpreter';
 import type { AgentMode } from '@/types/llms';
 
+export interface SandboxManager {
+  getSandbox: () => Promise<{ sandbox: Sandbox; persistentSandbox: boolean }>;
+  setSandbox: (sandbox: Sandbox) => void;
+}
+
 /**
  * Interface for tools that need access to the data stream
  */
@@ -11,6 +16,7 @@ export interface ToolContext {
   persistentSandbox?: boolean;
   setSandbox: (sandbox: Sandbox) => void;
   agentMode: AgentMode;
+  sandboxManager?: SandboxManager;
 }
 
 // Constants for sandbox creation

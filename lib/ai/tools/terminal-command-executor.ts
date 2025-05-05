@@ -1,24 +1,19 @@
 import PostHogClient from '@/app/posthog';
 import { executeTerminalCommand } from '@/lib/tools/e2b/terminal-executor';
 import { streamTerminalOutput } from '@/lib/ai/terminal-utils';
-import type { Sandbox } from '@e2b/code-interpreter';
-import { ensureSandboxConnection } from './agent/utils/sandbox-utils';
+import type { SandboxManager } from './agent/types';
 
 interface TerminalCommandExecutorConfig {
   userID: string;
   dataStream: any;
-  setSandbox: (sandbox: Sandbox) => void;
-  initialSandbox?: Sandbox;
-  initialPersistentSandbox?: boolean;
+  sandboxManager: SandboxManager;
   messages: any[];
 }
 
 export async function executeTerminalCommandWithConfig({
   userID,
   dataStream,
-  setSandbox,
-  initialSandbox,
-  initialPersistentSandbox,
+  sandboxManager,
   messages,
 }: TerminalCommandExecutorConfig) {
   const lastAssistantMessageContent = messages[messages.length - 2]?.content;
@@ -43,17 +38,7 @@ export async function executeTerminalCommandWithConfig({
 
   const [, exec_dir, command] = lastMatch;
 
-  const { sandbox, persistentSandbox } = await ensureSandboxConnection(
-    {
-      userID,
-      dataStream,
-      setSandbox,
-    },
-    {
-      initialSandbox,
-      initialPersistentSandbox,
-    },
-  );
+  const { sandbox } = await sandboxManager.getSandbox();
 
   const posthog = PostHogClient();
   if (posthog) {
@@ -62,7 +47,6 @@ export async function executeTerminalCommandWithConfig({
       event: 'terminal_executed',
       properties: {
         command: command,
-        persistentSandbox: persistentSandbox,
       },
     });
   }

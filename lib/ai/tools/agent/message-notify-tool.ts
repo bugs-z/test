@@ -9,13 +9,7 @@ import { handleMessageAttachments } from './utils/file-db-utils';
  * @returns The message notification tool
  */
 export const createMessageNotifyTool = (context: ToolContext) => {
-  const {
-    dataStream,
-    sandbox: initialSandbox,
-    userID,
-    persistentSandbox: initialPersistentSandbox = true,
-    setSandbox,
-  } = context;
+  const { dataStream, userID, sandboxManager } = context;
 
   return tool({
     description: `Send a message to user without requiring a response. Use for acknowledging receipt of messages, providing progress updates, reporting task completion, or explaining changes in approach.`,
@@ -36,13 +30,15 @@ export const createMessageNotifyTool = (context: ToolContext) => {
 
       // Handle attachments if provided
       if (attachments) {
+        if (!sandboxManager) {
+          throw new Error('Sandbox manager not initialized');
+        }
+
         await handleMessageAttachments({
           attachments,
-          sandbox: initialSandbox ?? null,
           userID,
           dataStream,
-          setSandbox,
-          persistentSandbox: initialPersistentSandbox,
+          sandboxManager,
         });
       }
 
