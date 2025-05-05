@@ -30,6 +30,8 @@ import { Settings } from '../utility/settings';
 import { ShareChatButton } from './chat-share-button';
 import { useUIContext } from '@/context/ui-context';
 import { ChatContinueButton } from './chat-continue-button';
+import { AgentSidebar } from '../messages/terminal-messages/agent-sidebar';
+import { useAgentSidebar } from '@/components/chat/chat-hooks/use-agent-sidebar';
 
 export const ChatUI: FC = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -65,6 +67,8 @@ export const ChatUI: FC = () => {
   } = useChatHandler();
 
   const { scrollRef, contentRef, isAtBottom, scrollToBottom } = useScroll();
+
+  const { agentSidebar } = useAgentSidebar();
 
   const [loading, setLoading] = useState(true);
   const previousHeightRef = useRef<number | null>(null);
@@ -231,40 +235,55 @@ export const ChatUI: FC = () => {
       <div className="flex size-full flex-col">
         <ChatSettings handleCleanChat={handleCleanChat} />
 
-        <div className="flex min-h-0 flex-1 flex-col gap-2 lg:flex-row-reverse">
+        <div className="flex min-h-0 flex-1 flex-col gap-2 lg:flex-row">
           {/* Chat messages container */}
-          <div className="relative flex h-[45%] flex-1 flex-col overflow-hidden lg:h-auto lg:w-2/5">
-            {/* Chat messages */}
+          {(!isMobile || !agentSidebar.isOpen) && (
             <div
-              ref={scrollRef}
-              className="flex flex-1 flex-col overflow-auto"
-              onScroll={innerHandleScroll}
+              className={`relative flex h-[45%] flex-1 flex-col overflow-hidden lg:h-auto ${
+                agentSidebar.isOpen ? 'lg:w-1/2' : 'lg:w-full'
+              }`}
             >
-              <div ref={contentRef}>
-                <ChatMessages />
+              {/* Chat messages */}
+              <div
+                ref={scrollRef}
+                className="flex flex-1 flex-col overflow-auto"
+                onScroll={innerHandleScroll}
+              >
+                <div ref={contentRef}>
+                  <ChatMessages />
+                </div>
               </div>
-            </div>
 
-            {/* Scroll buttons and continuation button */}
-            <div className="relative w-full items-end">
-              <div className="absolute -top-10 left-1/2 flex -translate-x-1/2 justify-center">
-                <ChatScrollButtons
-                  isAtBottom={isAtBottom}
-                  scrollToBottom={scrollToBottom}
+              {/* Scroll buttons and continuation button */}
+              <div className="relative w-full items-end">
+                <div className="absolute -top-10 left-1/2 flex -translate-x-1/2 justify-center">
+                  <ChatScrollButtons
+                    isAtBottom={isAtBottom}
+                    scrollToBottom={scrollToBottom}
+                  />
+                </div>
+
+                <ChatContinueButton
+                  isGenerating={isGenerating}
+                  finishReason={selectedChat?.finish_reason}
+                  onTerminalContinue={handleSendTerminalContinuation}
+                  onContinue={handleSendContinuation}
                 />
               </div>
 
-              <ChatContinueButton
-                isGenerating={isGenerating}
-                finishReason={selectedChat?.finish_reason}
-                onTerminalContinue={handleSendTerminalContinuation}
-                onContinue={handleSendContinuation}
-              />
+              <ChatInput />
+              <ChatHelp />
             </div>
+          )}
 
-            <ChatInput />
-            <ChatHelp />
-          </div>
+          {/* Agent Sidebar */}
+          {agentSidebar.isOpen && (
+            <div
+              className={`${isMobile ? '' : 'relative flex h-[45%] flex-1 flex-col overflow-hidden lg:h-auto lg:w-1/2'}`}
+            >
+              <AgentSidebar />
+            </div>
+          )}
         </div>
       </div>
 

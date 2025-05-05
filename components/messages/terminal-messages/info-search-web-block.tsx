@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { InfoSearchWebBlock } from './types';
 import { ShowMoreButton } from './show-more-button';
-import { IconSearch } from '@tabler/icons-react';
+import { Search } from 'lucide-react';
 import { parse } from 'tldts';
 
 interface InfoSearchWebBlockProps {
@@ -45,7 +45,7 @@ export const InfoSearchWebBlockComponent: React.FC<InfoSearchWebBlockProps> = ({
     <div className="overflow-hidden rounded-lg border border-border my-3 bg-muted">
       <div className="flex items-center border-b border-border bg-muted px-4 py-2">
         <div className="flex items-center shrink-0 mr-2">
-          <IconSearch size={16} className="text-muted-foreground mr-2" />
+          <Search size={16} className="text-muted-foreground mr-2" />
           <span className="text-sm font-medium text-foreground/80">
             Searching
           </span>

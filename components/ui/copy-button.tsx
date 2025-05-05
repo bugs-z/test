@@ -1,7 +1,7 @@
 import { useCopyToClipboard } from '@/lib/hooks/use-copy-to-clipboard';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { IconCheck, IconCopy } from '@tabler/icons-react';
+import { Check, Copy } from 'lucide-react';
 
 export function CopyButton({
   value,
@@ -24,9 +24,9 @@ export function CopyButton({
       }}
     >
       {isCopied ? (
-        <IconCheck stroke={1.5} size={16} />
+        <Check strokeWidth={1.5} size={16} />
       ) : (
-        <IconCopy stroke={1.5} size={16} />
+        <Copy strokeWidth={1.5} size={16} />
       )}
     </Button>
   );

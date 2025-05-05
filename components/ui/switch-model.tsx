@@ -6,7 +6,7 @@ import React, {
   useEffect,
   useRef,
 } from 'react';
-import { IconChevronDown, IconRepeat } from '@tabler/icons-react';
+import { ChevronDown, Repeat } from 'lucide-react';
 import { WithTooltip } from './with-tooltip';
 import { GPT4 } from '@/lib/models/openai-llm-list';
 import { SmallModel, LargeModel } from '@/lib/models/hackerai-llm-list';
@@ -91,7 +91,7 @@ export const SwitchModel: FC<SwitchModelProps> = ({
               ref={buttonRef}
               className="relative flex cursor-pointer items-center hover:opacity-50"
             >
-              <IconRepeat
+              <Repeat
                 size={ICON_SIZE}
                 className="cursor-pointer hover:opacity-50"
               />
@@ -106,7 +106,7 @@ export const SwitchModel: FC<SwitchModelProps> = ({
                 >
                   {displayName}
                 </span>
-                <IconChevronDown
+                <ChevronDown
                   className={`absolute left-full transition-all duration-500 ${
                     shouldShowDetails ? 'opacity-100' : 'opacity-50'
                   }`}
@@ -196,10 +196,7 @@ export const SwitchModel: FC<SwitchModelProps> = ({
                           />
                           {name}
                         </div>
-                        <IconRepeat
-                          size={18}
-                          className="text-muted-foreground"
-                        />
+                        <Repeat size={18} className="text-muted-foreground" />
                       </button>
                     )}
                   </MenuItem>

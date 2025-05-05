@@ -1,12 +1,12 @@
 import React from 'react';
 import { MessageMarkdown } from '../message-markdown';
 import {
-  IconChevronDown,
-  IconChevronUp,
-  IconTerminal2,
-  IconArrowUp,
-  IconArrowDown,
-} from '@tabler/icons-react';
+  SquareTerminal,
+  ArrowUp,
+  ArrowDown,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
 import type { PluginID } from '@/types/plugins';
 import { allTerminalPlugins } from '../message-type-solver';
 import { useUIContext } from '@/context/ui-context';
@@ -93,7 +93,7 @@ export const TerminalBlockComponent: React.FC<TerminalBlockProps> = ({
                 allTerminalPlugins.includes(toolInUse as PluginID),
             })}
           >
-            <IconTerminal2 size={16} className="mr-2" />
+            <SquareTerminal size={16} className="mr-2" />
             <span>Executing command</span>
           </div>
           {!showFullTerminalView && (
@@ -116,11 +116,7 @@ export const TerminalBlockComponent: React.FC<TerminalBlockProps> = ({
                 aria-expanded={!isClosed}
                 aria-controls={`terminal-content-${index}`}
               >
-                {isClosed ? (
-                  <IconChevronDown size={18} />
-                ) : (
-                  <IconChevronUp size={18} />
-                )}
+                {isClosed ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
               </Button>
             </>
           )}
@@ -146,11 +142,7 @@ export const TerminalBlockComponent: React.FC<TerminalBlockProps> = ({
                   onClick={() => onToggleExpanded(index)}
                   remainingCount={lines.length - MAX_VISIBLE_LINES}
                   icon={
-                    isExpanded ? (
-                      <IconArrowDown size={16} />
-                    ) : (
-                      <IconArrowUp size={16} />
-                    )
+                    isExpanded ? <ArrowDown size={16} /> : <ArrowUp size={16} />
                   }
                 />
               )}
@@ -166,9 +158,9 @@ export const TerminalBlockComponent: React.FC<TerminalBlockProps> = ({
                     remainingCount={lines.length - MAX_VISIBLE_LINES}
                     icon={
                       isExpanded ? (
-                        <IconArrowUp size={16} />
+                        <ArrowUp size={16} />
                       ) : (
-                        <IconArrowDown size={16} />
+                        <ArrowDown size={16} />
                       )
                     }
                   />

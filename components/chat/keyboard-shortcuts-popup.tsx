@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
-import { IconBackspace, IconX } from '@tabler/icons-react';
+import { Delete, X } from 'lucide-react';
 import { Button } from '../ui/button';
 
 interface ShortcutItem {
@@ -40,7 +40,7 @@ export default function KeyboardShortcutsPopup({
       {
         key: isMac ? '⌘ + Shift' : 'Ctrl + Shift',
         description: 'Delete chat',
-        icon: <IconBackspace size={20} />,
+        icon: <Delete size={20} />,
       },
       {
         key: isMac ? '⌘ + Shift + C' : 'Ctrl + Shift + C',
@@ -94,7 +94,7 @@ export default function KeyboardShortcutsPopup({
             className="size-8 rounded-full"
             aria-label="Close"
           >
-            <IconX size={18} />
+            <X size={18} />
           </Button>
         </DialogHeader>
         <div className="grid grid-cols-1 gap-x-9 gap-y-4 p-4 sm:grid-cols-2 sm:p-6">

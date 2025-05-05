@@ -1,12 +1,6 @@
 'use client';
 
-import {
-  IconFileFilled,
-  IconX,
-  IconDownload,
-  IconEye,
-  IconDots,
-} from '@tabler/icons-react';
+import { File, X, Download, Eye, Ellipsis } from 'lucide-react';
 import type { FileAttachment } from '@/types';
 import {
   Dialog,
@@ -184,7 +178,7 @@ export const FilesModal: React.FC<FilesModalProps> = ({
               className="h-8"
               onClick={() => setIsBatchMode(!isBatchMode)}
             >
-              {isBatchMode ? 'Cancel' : <IconDownload className="size-5" />}
+              {isBatchMode ? 'Cancel' : <Download className="size-5" />}
             </Button>
             {!isBatchMode && (
               <DialogClose asChild>
@@ -197,7 +191,7 @@ export const FilesModal: React.FC<FilesModalProps> = ({
                       className="size-8"
                       aria-label="Close"
                     >
-                      <IconX className="size-5" />
+                      <X className="size-5" />
                     </Button>
                   }
                   side="top"
@@ -256,7 +250,7 @@ export const FilesModal: React.FC<FilesModalProps> = ({
                   />
                 </div>
               )}
-              <IconFileFilled className="text-primary flex-shrink-0" />
+              <File className="text-primary flex-shrink-0" />
               <div className="flex-1 truncate">
                 <div className="truncate font-medium">{file.fileName}</div>
                 <div className="truncate text-xs opacity-60">
@@ -276,7 +270,7 @@ export const FilesModal: React.FC<FilesModalProps> = ({
                       tabIndex={0}
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <IconDots size={16} />
+                      <Ellipsis size={16} />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-40">
@@ -284,7 +278,7 @@ export const FilesModal: React.FC<FilesModalProps> = ({
                       className="cursor-pointer"
                       onClick={() => handleView(file)}
                     >
-                      <IconEye className="mr-2 size-5" />
+                      <Eye className="mr-2 size-5" />
                       <span>View</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -295,7 +289,7 @@ export const FilesModal: React.FC<FilesModalProps> = ({
                       )}
                       onClick={() => handleDownload(file)}
                     >
-                      <IconDownload className="mr-2 size-5" />
+                      <Download className="mr-2 size-5" />
                       <span>
                         {isDownloading === file.url
                           ? 'Downloading...'
@@ -329,7 +323,7 @@ export const FilesModal: React.FC<FilesModalProps> = ({
                   <>Creating ZIP...</>
                 ) : (
                   <>
-                    <IconDownload className="mr-2 size-4" />
+                    <Download className="mr-2 size-4" />
                     Batch download
                   </>
                 )}

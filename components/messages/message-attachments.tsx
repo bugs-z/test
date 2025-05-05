@@ -1,4 +1,4 @@
-import { IconFileFilled, IconEye, IconFileSearch } from '@tabler/icons-react';
+import { File, Eye, FileSearch } from 'lucide-react';
 import type { FileAttachment } from '@/types';
 import type { Json } from '@/supabase/types';
 import { getFileFromStorage } from '@/db/storage/files';
@@ -17,12 +17,12 @@ const FileAttachmentCard: React.FC<{
 }> = ({ file, onClick }) => (
   <Button
     variant="secondary"
-    className="relative h-auto w-[280px] justify-start px-4 py-2 text-left"
+    className="relative h-auto w-[280px] justify-start px-4 py-2 text-left group"
     onClick={onClick}
   >
     <div className="flex items-center space-x-4 w-full">
       <div className="rounded shrink-0">
-        <IconFileFilled className="text-primary" />
+        <File className="text-primary" />
       </div>
       <div className="truncate text-sm">
         <div className="truncate font-medium">{file.fileName}</div>
@@ -31,7 +31,7 @@ const FileAttachmentCard: React.FC<{
         </div>
       </div>
       <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-        <IconEye className="w-5 h-5" />
+        <Eye className="w-5 h-5" />
       </div>
     </div>
   </Button>
@@ -47,13 +47,10 @@ const ViewAllFilesCard: React.FC<{
   >
     <div className="flex items-center space-x-4 w-full">
       <div className="rounded shrink-0">
-        <IconFileSearch className="text-primary" />
+        <FileSearch className="text-primary" />
       </div>
       <div className="flex-1 truncate text-sm">
         <div className="truncate font-medium">View all files in this task</div>
-      </div>
-      <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-        <IconEye className="w-5 h-5" />
       </div>
     </div>
   </Button>

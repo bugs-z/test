@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { IconEye, IconEyeOff } from '@tabler/icons-react';
+import { Eye, EyeOff } from 'lucide-react';
 import {
   TooltipProvider,
   Tooltip,
@@ -33,9 +33,9 @@ export function PasswordInput() {
               onClick={() => setShowPassword(!showPassword)}
             >
               {showPassword ? (
-                <IconEyeOff size={20} className="text-muted-foreground" />
+                <EyeOff size={20} className="text-muted-foreground" />
               ) : (
-                <IconEye size={20} className="text-muted-foreground" />
+                <Eye size={20} className="text-muted-foreground" />
               )}
             </Button>
           </TooltipTrigger>

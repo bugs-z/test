@@ -4,7 +4,7 @@ import { Label } from '@/components/ui/label';
 import { PentestGPTContext } from '@/context/context';
 import { getBillingPortalUrl } from '@/lib/server/stripe-url';
 import type { SubscriptionStatus } from '@/types/chat';
-import { IconRefresh } from '@tabler/icons-react';
+import { RefreshCcw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { type FC, useContext, useState } from 'react';
 import { toast } from 'sonner';
@@ -121,7 +121,7 @@ export const SubscriptionTab: FC<SubscriptionTabProps> = ({
             onClick={handleRestoreButtonClick}
             className="flex items-center"
           >
-            <IconRefresh className="mr-2" size={18} />
+            <RefreshCcw className="mr-2" size={18} />
             Restore
           </Button>
         </div>

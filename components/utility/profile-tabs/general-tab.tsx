@@ -2,7 +2,7 @@ import type { FC } from 'react';
 import { Button } from '../../ui/button';
 import { Label } from '../../ui/label';
 import { ThemeSwitcher } from '../theme-switcher';
-import { IconLogout } from '@tabler/icons-react';
+import { LogOut } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { useUIContext } from '@/context/ui-context';
 import { useAgentModePreference } from '@/components/messages/terminal-messages/use-auto-run-preference';
@@ -74,7 +74,7 @@ export const GeneralTab: FC<GeneralTabProps> = ({
           onClick={handleSignOut}
           className="flex items-center"
         >
-          <IconLogout className="mr-2" size={18} />
+          <LogOut className="mr-2" size={18} />
           Log out
         </Button>
       </div>

@@ -13,14 +13,14 @@ import {
   TabPanels,
 } from '@headlessui/react';
 import {
-  IconCreditCard,
-  IconDatabaseCog,
-  IconSettings,
-  IconShield,
-  IconUserHeart,
-  IconUsers,
-  IconX,
-} from '@tabler/icons-react';
+  CreditCard,
+  Database,
+  Settings as IconSettings,
+  Shield,
+  UserRoundCog,
+  Users,
+  X,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { type FC, useContext, useState } from 'react';
 import { toast } from 'sonner';
@@ -150,11 +150,11 @@ export const Settings: FC<{ showEmail?: boolean }> = ({
 
   const tabItems = [
     { value: 'profile', icon: IconSettings, label: 'General' },
-    { value: 'personalization', icon: IconUserHeart, label: 'Personalization' },
-    { value: 'subscription', icon: IconCreditCard, label: 'Subscription' },
-    { value: 'data-controls', icon: IconDatabaseCog, label: 'Data Controls' },
-    { value: 'security', icon: IconShield, label: 'Security' },
-    { value: 'team', icon: IconUsers, label: 'Team' },
+    { value: 'personalization', icon: UserRoundCog, label: 'Personalization' },
+    { value: 'subscription', icon: CreditCard, label: 'Subscription' },
+    { value: 'data-controls', icon: Database, label: 'Data Controls' },
+    { value: 'security', icon: Shield, label: 'Security' },
+    { value: 'team', icon: Users, label: 'Team' },
   ].filter((tab) => {
     if (tab.value === 'subscription') {
       return !membershipData || membershipData?.member_role === TeamRole.OWNER;
@@ -194,7 +194,7 @@ export const Settings: FC<{ showEmail?: boolean }> = ({
               onClick={() => setIsOpen(false)}
               className="hover:bg-muted rounded-full p-2 transition-colors"
             >
-              <IconX size={20} />
+              <X size={20} />
             </button>
           </div>
 

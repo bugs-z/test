@@ -3,7 +3,7 @@ import { PentestGPTContext } from '@/context/context';
 import { useUIContext } from '@/context/ui-context';
 import type { Tables } from '@/supabase/types';
 import type { MessageImage } from '@/types';
-import { IconX } from '@tabler/icons-react';
+import { X } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { type FC, useContext, useState } from 'react';
@@ -117,7 +117,7 @@ export const ChatFilesDisplay: FC = () => {
                       side="top"
                       display={<div>Remove image</div>}
                       trigger={
-                        <IconX
+                        <X
                           className="bg-secondary border-primary absolute right-[-6px] top-[-2px] flex size-5 cursor-pointer items-center justify-center rounded-full border text-[10px] hover:border-red-500 hover:bg-white hover:text-red-500"
                           onClick={(e) => {
                             e.stopPropagation();

@@ -1,10 +1,6 @@
 import type { FC } from 'react';
 import { Badge } from '@/components/ui/badge';
-import {
-  IconCircleDashed,
-  IconCircleCheck,
-  IconPlayerPause,
-} from '@tabler/icons-react';
+import { CircleDashed, CircleCheck, Pause } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUIContext } from '@/context/ui-context';
 
@@ -40,19 +36,19 @@ export const MessageStatus: FC<MessageStatusProps> = ({
 
   const statusConfig = {
     message_ask_user: {
-      icon: IconCircleDashed,
+      icon: CircleDashed,
       text: 'PentestGPT will continue working after your reply',
       color: 'var(--function-warning)',
       bgClass: 'bg-[var(--function-warning)]/10',
     },
     idle: {
-      icon: IconCircleCheck,
+      icon: CircleCheck,
       text: 'PentestGPT has completed the current task',
       color: 'var(--function-success)',
       bgClass: 'bg-[var(--function-success)]/10',
     },
     aborted: {
-      icon: IconPlayerPause,
+      icon: Pause,
       text: 'PentestGPT has stopped, send a new message to continue',
       color: 'var(--function-warning)',
       bgClass: 'bg-[var(--function-warning)]/10',

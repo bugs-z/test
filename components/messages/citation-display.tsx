@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { IconWorld } from '@tabler/icons-react';
+import { Globe } from 'lucide-react';
 
 const getFaviconUrl = (domain: string) => {
   return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
@@ -58,7 +58,7 @@ const WebsiteCard: FC<WebsiteCardProps> = ({ url, domain }) => {
                 />
               ) : (
                 <div className="flex items-center justify-center w-full h-full bg-muted rounded-lg">
-                  <IconWorld className="size-4" />
+                  <Globe className="size-4" />
                 </div>
               )}
             </div>
@@ -127,7 +127,7 @@ export const CitationDisplay: FC<CitationDisplayProps> = ({
                 />
               ) : (
                 <div className="flex items-center justify-center w-full h-full">
-                  <IconWorld className="size-4" />
+                  <Globe className="size-4" />
                 </div>
               )}
             </div>

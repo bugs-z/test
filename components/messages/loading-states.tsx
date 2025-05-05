@@ -1,13 +1,7 @@
-import {
-  IconCircleFilled,
-  IconFileText,
-  IconPuzzle,
-  IconTerminal2,
-  IconWorld,
-  IconAtom,
-} from '@tabler/icons-react';
+import { IconCircleFilled } from '@tabler/icons-react';
 import { PluginID } from '@/types/plugins';
 import { useUIContext } from '@/context/ui-context';
+import { FileText, Puzzle, Globe, Atom, SquareTerminal } from 'lucide-react';
 
 export const loadingStates = {
   none: {
@@ -15,32 +9,32 @@ export const loadingStates = {
     text: '',
   },
   retrieval: {
-    icon: <IconFileText size={20} />,
+    icon: <FileText size={20} />,
     text: 'Reading documents...',
   },
   [PluginID.WEB_SEARCH]: {
-    icon: <IconWorld size={20} />,
+    icon: <Globe size={20} />,
     text: 'Searching the web...',
   },
   [PluginID.BROWSER]: {
-    icon: <IconWorld size={20} />,
+    icon: <Globe size={20} />,
     text: 'Browsing the web...',
   },
   [PluginID.REASONING]: {
-    icon: <IconAtom size={20} />,
-    text: 'Thinking...',
-  },
-  [PluginID.REASONING_WEB_SEARCH]: {
-    icon: <IconAtom size={20} />,
+    icon: <Atom size={20} />,
     text: 'Thinking...',
   },
   'temporary-sandbox': {
-    icon: <IconTerminal2 size={20} />,
+    icon: <SquareTerminal size={20} />,
     text: 'Connecting to sandbox...',
   },
   'persistent-sandbox': {
-    icon: <IconTerminal2 size={20} />,
+    icon: <SquareTerminal size={20} />,
     text: 'Connecting to sandbox...',
+  },
+  [PluginID.TERMINAL]: {
+    icon: <SquareTerminal size={20} />,
+    text: 'Using terminal agent...',
   },
 };
 
@@ -56,7 +50,7 @@ export const LoadingState = ({
   const { icon, text } = loadingStates[
     toolInUse as keyof typeof loadingStates
   ] || {
-    icon: <IconPuzzle size={20} />,
+    icon: <Puzzle size={20} />,
     text: `Using ${toolInUse}...`,
   };
 

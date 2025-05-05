@@ -18,9 +18,8 @@ import {
   IconBrandReddit,
   IconBrandX,
   IconLink,
-  IconShare2,
-  IconX,
 } from '@tabler/icons-react';
+import { X, Share } from 'lucide-react';
 import React, { useContext, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { WithTooltip } from '../ui/with-tooltip';
@@ -132,7 +131,7 @@ export const ShareChatButton: React.FC<ShareChatButtonProps> = ({
             aria-label="Share"
           >
             <div className="flex w-full items-center justify-center gap-1.5">
-              <IconShare2 size={16} />
+              <Share size={16} />
               <span className="font-normal">Share</span>
             </div>
           </Button>
@@ -148,7 +147,7 @@ export const ShareChatButton: React.FC<ShareChatButtonProps> = ({
               onClick={() => setIsDialogOpen(false)}
               className="absolute right-4 top-4"
             >
-              <IconX className="size-4" />
+              <X className="size-4" />
             </Button>
           </DialogHeader>
           <div className="flex flex-col space-y-4">
@@ -223,10 +222,10 @@ export const ShareChatButton: React.FC<ShareChatButtonProps> = ({
             delayDuration={200}
             display={'Share'}
             trigger={
-              <IconShare2
+              <Share
                 className="mr-2 cursor-pointer hover:opacity-50"
                 size={24}
-                stroke={2}
+                strokeWidth={2}
                 onClick={handleOpenDialog}
               />
             }
@@ -245,7 +244,7 @@ export const ShareChatButton: React.FC<ShareChatButtonProps> = ({
             onClick={() => setIsDialogOpen(false)}
             className="absolute right-4 top-4"
           >
-            <IconX className="size-4" />
+            <X className="size-4" />
           </Button>
         </DialogHeader>
         <div className="flex flex-col space-y-4">

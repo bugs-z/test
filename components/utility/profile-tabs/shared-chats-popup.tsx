@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { DialogPanel, DialogTitle } from '@headlessui/react';
 import { Button } from '../../ui/button';
-import { IconTrash, IconX, IconLoader2 } from '@tabler/icons-react';
+import { Trash, X, LoaderCircle } from 'lucide-react';
+
 import { PentestGPTContext } from '@/context/context';
 import type { Tables } from '@/supabase/types';
 import { updateChat, getSharedChatsByUserId } from '@/db/chats';
@@ -100,13 +101,13 @@ export const SharedChatsPopup: React.FC<SharedChatsPopupProps> = ({
             onClick={onClose}
             className="hover:bg-muted rounded-full p-2 transition-colors"
           >
-            <IconX size={20} />
+            <X size={20} />
           </Button>
         </div>
         <div className="mt-4 grow overflow-x-auto">
           {isLoading ? (
             <div className="flex h-32 items-center justify-center">
-              <IconLoader2 className="animate-spin" size={24} />
+              <LoaderCircle className="animate-spin" size={24} />
             </div>
           ) : sharedChats.length === 0 ? (
             <p className="text-sm text-gray-500">No shared links found.</p>
@@ -152,9 +153,9 @@ export const SharedChatsPopup: React.FC<SharedChatsPopupProps> = ({
                         disabled={deletingChatId === chat.id}
                       >
                         {deletingChatId === chat.id ? (
-                          <IconLoader2 className="animate-spin" size={16} />
+                          <LoaderCircle className="animate-spin" size={16} />
                         ) : (
-                          <IconTrash size={16} />
+                          <Trash size={16} />
                         )}
                       </Button>
                     </td>
@@ -174,7 +175,7 @@ export const SharedChatsPopup: React.FC<SharedChatsPopupProps> = ({
             >
               {isDeletingAll ? (
                 <>
-                  <IconLoader2 className="mr-2 animate-spin" size={16} />
+                  <LoaderCircle className="mr-2 animate-spin" size={16} />
                   Deleting...
                 </>
               ) : (

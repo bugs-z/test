@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { useCopyToClipboard } from '@/lib/hooks/use-copy-to-clipboard';
-import { IconCheck, IconCopy } from '@tabler/icons-react';
+import { Check, Copy } from 'lucide-react';
 import { type FC, memo } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import {
@@ -75,7 +75,7 @@ export const CopyButton: FC<{
       aria-label={isCopied ? 'Copied' : 'Copy to clipboard'}
     >
       <span className="flex items-center space-x-1">
-        {isCopied ? <IconCheck size={16} /> : <IconCopy size={16} />}
+        {isCopied ? <Check size={16} /> : <Copy size={16} />}
         <span className="hidden sm:inline">
           {isCopied ? 'Copied!' : 'Copy'}
         </span>

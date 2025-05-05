@@ -1,13 +1,11 @@
 import {
-  IconFile,
-  IconFileText,
   IconFileTypeCsv,
   IconFileTypeDocx,
   IconFileTypePdf,
-  IconJson,
   IconMarkdown,
   IconPhoto,
 } from '@tabler/icons-react';
+import { File, FileJson, FileText } from 'lucide-react';
 import type { FC } from 'react';
 
 interface FileIconProps {
@@ -25,12 +23,12 @@ export const FileIcon: FC<FileIconProps> = ({ type, size = 32 }) => {
   } else if (type.includes('docx')) {
     return <IconFileTypeDocx size={size} />;
   } else if (type.includes('plain')) {
-    return <IconFileText size={size} />;
+    return <FileText size={size} />;
   } else if (type.includes('json')) {
-    return <IconJson size={size} />;
+    return <FileJson size={size} />;
   } else if (type.includes('markdown')) {
     return <IconMarkdown size={size} />;
   } else {
-    return <IconFile size={size} />;
+    return <File size={size} />;
   }
 };

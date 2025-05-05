@@ -30,7 +30,7 @@ export const getMessagesByChatId = async (
   chatId: string,
   limit = 20,
   lastSequenceNumber?: number,
-  useStored: boolean = true,
+  useStored = true,
 ): Promise<MessageWithFileItemsAndFeedback[]> => {
   if (useStored) {
     const storedMessages = await localDB.messages.getByChatId(

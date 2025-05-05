@@ -1,4 +1,4 @@
-import { IconMoon, IconSun } from '@tabler/icons-react';
+import { Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import type { FC } from 'react';
 import { Button } from '../ui/button';
@@ -21,7 +21,7 @@ export const ThemeSwitcher: FC<ThemeSwitcherProps> = () => {
       size="icon"
       onClick={() => handleChange(theme === 'light' ? 'dark' : 'light')}
     >
-      {theme === 'dark' ? <IconMoon size={24} /> : <IconSun size={24} />}
+      {theme === 'dark' ? <Moon size={24} /> : <Sun size={24} />}
     </Button>
   );
 };

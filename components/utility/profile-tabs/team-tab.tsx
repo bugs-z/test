@@ -9,7 +9,7 @@ import {
   ChevronLeft,
   ChevronRight,
   MoreHorizontal,
-  RefreshCw,
+  RefreshCcw,
   Trash2,
   UserPlus,
 } from 'lucide-react';
@@ -102,7 +102,7 @@ export const TeamTab: FC = () => {
               size="sm"
               disabled={isRefreshing}
             >
-              <RefreshCw
+              <RefreshCcw
                 className={`size-4 ${isRefreshing ? 'animate-spin' : ''}`}
               />
             </Button>

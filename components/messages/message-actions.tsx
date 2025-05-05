@@ -1,14 +1,11 @@
 import { PentestGPTContext } from '@/context/context';
 import {
-  IconCheck,
-  IconCopy,
-  IconEdit,
-  IconRepeat,
   IconThumbDown,
   IconThumbDownFilled,
   IconThumbUp,
   IconThumbUpFilled,
 } from '@tabler/icons-react';
+import { Check, Copy, Edit, Repeat } from 'lucide-react';
 import { type FC, useContext, useEffect, useState } from 'react';
 import { WithTooltip } from '../ui/with-tooltip';
 import { SwitchModel } from '../ui/switch-model';
@@ -88,7 +85,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
             side="bottom"
             display={<div>Edit</div>}
             trigger={
-              <IconEdit
+              <Edit
                 className="cursor-pointer hover:opacity-50"
                 size={MESSAGE_ICON_SIZE}
                 onClick={onEdit}
@@ -106,9 +103,9 @@ export const MessageActions: FC<MessageActionsProps> = ({
             display={<div>Copy</div>}
             trigger={
               showCheckmark ? (
-                <IconCheck size={MESSAGE_ICON_SIZE} />
+                <Check size={MESSAGE_ICON_SIZE} />
               ) : (
-                <IconCopy
+                <Copy
                   className="cursor-pointer hover:opacity-50"
                   size={MESSAGE_ICON_SIZE}
                   onClick={handleCopy}
@@ -170,7 +167,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
           side="bottom"
           display={<div>Regenerate</div>}
           trigger={
-            <IconRepeat
+            <Repeat
               className="cursor-pointer hover:opacity-50"
               size={MESSAGE_ICON_SIZE}
               onClick={onRegenerate}

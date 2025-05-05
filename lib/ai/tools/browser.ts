@@ -308,7 +308,6 @@ export async function getPageContent(
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown error';
-    console.error('[BrowserTool] Error getting page content:', url, error);
     return `Error getting page content: ${url}. ${errorMessage}`;
   }
 }

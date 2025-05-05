@@ -13,7 +13,7 @@ import { PentestGPTContext } from '@/context/context';
 import { deleteChat } from '@/db/chats';
 import useHotkey from '@/lib/hooks/use-hotkey';
 import type { Tables } from '@/supabase/types';
-import { IconTrash } from '@tabler/icons-react';
+import { Trash } from 'lucide-react';
 import { type FC, useContext, useCallback, useState } from 'react';
 
 interface DeleteChatProps {
@@ -62,7 +62,7 @@ export const DeleteChat: FC<DeleteChatProps> = ({ chat, onAction }) => {
       <DialogTrigger asChild>
         <div className="w-full cursor-pointer" onClick={handleTriggerClick}>
           <div className="text-error flex items-center p-3 hover:opacity-50">
-            <IconTrash className="mr-2" size={20} />
+            <Trash className="mr-2" size={20} />
             <span>Delete</span>
           </div>
         </div>

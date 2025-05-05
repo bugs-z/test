@@ -1,7 +1,7 @@
 import { PentestGPTContext } from '@/context/context';
 import { inviteUserToTeam } from '@/db/teams';
 import { DialogPanel, DialogTitle } from '@headlessui/react';
-import { IconUserPlus, IconX } from '@tabler/icons-react';
+import { UserPlus, X } from 'lucide-react';
 import { type FC, useContext, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../ui/button';
@@ -65,7 +65,7 @@ export const InviteMembersDialog: FC<InviteMembersDialogProps> = ({
             onClick={onClose}
             className="hover:bg-muted rounded-full p-2 transition-colors"
           >
-            <IconX size={20} />
+            <X size={20} />
           </button>
         </div>
 
@@ -81,7 +81,7 @@ export const InviteMembersDialog: FC<InviteMembersDialogProps> = ({
             className="mb-4"
           />
           <Button onClick={handleInvite} className="w-full">
-            <IconUserPlus size={20} className="mr-2" />
+            <UserPlus size={20} className="mr-2" />
             Send Invitation
           </Button>
         </div>

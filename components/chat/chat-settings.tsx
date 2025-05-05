@@ -1,6 +1,6 @@
 import { PentestGPTContext } from '@/context/context';
 import { LLM_LIST } from '@/lib/models/llm-list';
-import { IconChevronDown, IconRefresh } from '@tabler/icons-react';
+import { ChevronDown, RefreshCcw } from 'lucide-react';
 import { type FC, useContext, useRef, useState } from 'react';
 import { Button } from '../ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
@@ -46,7 +46,7 @@ export const ChatSettings: FC<ChatSettingsProps> = ({ handleCleanChat }) => {
                 <WithTooltip
                   display="Clear chat"
                   trigger={
-                    <IconRefresh
+                    <RefreshCcw
                       className="cursor-pointer hover:opacity-50"
                       size={24}
                       onClick={handleCleanChat}
@@ -70,7 +70,7 @@ export const ChatSettings: FC<ChatSettingsProps> = ({ handleCleanChat }) => {
                     : fullModel?.modelName || chatSettings.model}
                 </div>
 
-                <IconChevronDown className="ml-1" size={18} />
+                <ChevronDown className="ml-1" size={18} />
               </Button>
             </PopoverTrigger>
 

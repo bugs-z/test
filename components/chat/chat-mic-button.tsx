@@ -1,4 +1,4 @@
-import { IconLoader2, IconMicrophone } from '@tabler/icons-react';
+import { Mic, LoaderCircle } from 'lucide-react';
 import { WithTooltip } from '../ui/with-tooltip';
 import type { FC } from 'react';
 
@@ -39,7 +39,7 @@ export const ChatMicButton: FC<ChatMicButtonProps> = ({
 
   if (isRequestingMicAccess) {
     return (
-      <IconLoader2
+      <LoaderCircle
         className="animate-spin cursor-pointer p-1 hover:opacity-50"
         size={30}
       />
@@ -57,7 +57,7 @@ export const ChatMicButton: FC<ChatMicButtonProps> = ({
         </div>
       }
       trigger={
-        <IconMicrophone
+        <Mic
           className="cursor-pointer rounded-lg rounded-bl-xl p-1 hover:bg-black/10 focus-visible:outline-black dark:hover:bg-white/10 dark:focus-visible:outline-white"
           onClick={async () => {
             if (hasMicAccess) {

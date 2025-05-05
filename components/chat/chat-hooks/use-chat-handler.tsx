@@ -28,10 +28,12 @@ import {
 import { getMessageFileItemsByMessageId } from '@/db/message-file-items';
 import { useRetrievalLogic } from './retrieval-logic';
 import { toast } from 'sonner';
+import { useAgentSidebar } from '@/components/chat/chat-hooks/use-agent-sidebar';
 
 export const useChatHandler = () => {
   const router = useRouter();
   const { dispatch: alertDispatch } = useAlertContext();
+  const { resetAgentSidebar } = useAgentSidebar();
 
   const {
     chatFiles,
@@ -98,6 +100,7 @@ export const useChatHandler = () => {
   ) => {
     await handleStopMessage();
     setIsReadyToChat(false);
+    resetAgentSidebar();
 
     // Handle both full chat object and search result
     const chatId = 'id' in chat ? chat.id : chat.chat_id;
@@ -114,6 +117,7 @@ export const useChatHandler = () => {
 
   const handleNewChat = async () => {
     await handleStopMessage();
+    resetAgentSidebar();
 
     setUserInput('');
     setChatMessages([]);

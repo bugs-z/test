@@ -4,7 +4,7 @@ import { localDB } from './local/db';
 
 export const getMessageFileItemsByMessageId = async (
   messageId: string,
-  useStored: boolean = true,
+  useStored = true,
 ) => {
   if (useStored) {
     const fileItems = await localDB.fileItems.getByMessageId(messageId);

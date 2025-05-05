@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
-import { IconArrowUpRight } from '@tabler/icons-react';
+import { ArrowUpRight } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Download PentestGPT',
@@ -78,7 +78,7 @@ function DownloadOption({
         >
           Download for {platform}
           {showAsterisk ? '*' : ''}
-          <IconArrowUpRight
+          <ArrowUpRight
             className="transition-transform group-hover:translate-x-0.5"
             size={16}
           />
@@ -152,7 +152,7 @@ export default function DownloadPage() {
             className="text-primary hover:text-primary/90 group inline-flex items-center gap-2 transition-colors"
           >
             Learn more about the desktop app
-            <IconArrowUpRight
+            <ArrowUpRight
               className="transition-transform group-hover:translate-x-0.5"
               size={16}
             />

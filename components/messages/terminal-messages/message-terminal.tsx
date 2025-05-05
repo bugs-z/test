@@ -80,12 +80,7 @@ export const MessageTerminal: React.FC<MessageTerminalProps> = ({
           ) : block.type === 'info-search-web' ? (
             <InfoSearchWebBlockComponent block={block.content} />
           ) : (
-            <FileContentBlockComponent
-              block={block.content}
-              index={index}
-              isClosed={closedBlocks.has(index)}
-              onToggleBlock={toggleBlock}
-            />
+            <FileContentBlockComponent block={block.content} index={index} />
           )}
         </React.Fragment>
       ))}

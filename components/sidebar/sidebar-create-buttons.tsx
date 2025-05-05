@@ -1,6 +1,7 @@
 import { useChatHandler } from '@/components/chat/chat-hooks/use-chat-handler';
 import type { ContentType } from '@/types';
-import { IconMessagePlus, IconRefresh } from '@tabler/icons-react';
+import { IconMessagePlus } from '@tabler/icons-react';
+import { RefreshCcw } from 'lucide-react';
 import { type FC, useContext } from 'react';
 import { Button } from '../ui/button';
 import { PentestGPTContext } from '@/context/context';
@@ -52,7 +53,7 @@ export const SidebarCreateButtons: FC<SidebarCreateButtonsProps> = ({
             onClick={getCreateFunction()}
           >
             {isTemporaryChat && contentType === 'chats' ? (
-              <IconRefresh size={SIDEBAR_ICON_SIZE} />
+              <RefreshCcw size={SIDEBAR_ICON_SIZE} />
             ) : (
               <IconMessagePlus size={SIDEBAR_ICON_SIZE} />
             )}

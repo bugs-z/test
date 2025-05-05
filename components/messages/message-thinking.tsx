@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { MessageMarkdown } from './message-markdown';
-import { IconChevronDown, IconChevronUp, IconAtom } from '@tabler/icons-react';
+import { ChevronDown, ChevronUp, Atom } from 'lucide-react';
 import { useUIContext } from '@/context/ui-context';
 import { PluginID } from '@/types/plugins';
 import { MessageCitations } from './message-citations';
@@ -80,12 +80,12 @@ export const MessageThinking: React.FC<MessageThinkingProps> = ({
           <div
             className={`flex items-center ${isThinking ? 'animate-pulse' : ''}`}
           >
-            <IconAtom size={20} />
+            <Atom size={20} />
             <h4 className="text-muted-foreground ml-2 mr-1">{thinkingTitle}</h4>
             {closedBlocks.has(0) ? (
-              <IconChevronDown size={16} />
+              <ChevronDown size={16} />
             ) : (
-              <IconChevronUp size={16} />
+              <ChevronUp size={16} />
             )}
           </div>
         </button>

@@ -27,6 +27,7 @@ import type { User } from '@supabase/supabase-js';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { type FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { AgentSidebarProvider } from '@/components/chat/chat-hooks/use-agent-sidebar';
 
 const MESSAGES_PER_FETCH = 20;
 
@@ -437,7 +438,7 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
         setUserEmail,
       }}
     >
-      {children}
+      <AgentSidebarProvider>{children}</AgentSidebarProvider>
     </PentestGPTContext.Provider>
   );
 };

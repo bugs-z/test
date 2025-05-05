@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 import type { Tables } from '@/supabase/types';
 import type { MessageImage } from '@/types';
-import { IconFileFilled } from '@tabler/icons-react';
+import { File } from 'lucide-react';
 import Image from 'next/image';
 import { Dialog, DialogContent } from './dialog';
 import { DialogTitle } from '@radix-ui/react-dialog';
@@ -58,7 +58,7 @@ export default function FilePreview({
           } else if (type === 'file') {
             return (
               <div className="rounded bg-blue-500 p-2">
-                <IconFileFilled />
+                <File />
               </div>
             );
           }

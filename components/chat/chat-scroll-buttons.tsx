@@ -1,4 +1,4 @@
-import { IconArrowDown } from '@tabler/icons-react';
+import { ArrowDown } from 'lucide-react';
 import type { FC } from 'react';
 
 interface ChatScrollButtonsProps {
@@ -19,7 +19,7 @@ export const ChatScrollButtons: FC<ChatScrollButtonsProps> = ({
             void scrollToBottom({ force: true });
           }}
         >
-          <IconArrowDown size={18} />
+          <ArrowDown size={18} />
         </div>
       )}
     </>

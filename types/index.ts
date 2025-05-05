@@ -10,3 +10,4 @@ export * from './sidebar-data';
 export * from './stream';
 export * from './plugins';
 export * from './files';
+export * from './agent';

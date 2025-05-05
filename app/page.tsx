@@ -1,7 +1,7 @@
 'use client';
 
 import { Brand } from '@/components/ui/brand';
-import { IconArrowRight } from '@tabler/icons-react';
+import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
@@ -25,7 +25,7 @@ export default function HomePage() {
         href="/login"
       >
         Start Chatting
-        <IconArrowRight className="ml-1" size={20} />
+        <ArrowRight className="ml-1" size={20} />
       </Link>
     </div>
   );

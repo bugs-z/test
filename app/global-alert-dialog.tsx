@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useAlertContext } from '@/context/alert-context';
-import { IconX } from '@tabler/icons-react';
+import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export const GlobalAlertDialog = () => {
@@ -26,7 +26,7 @@ export const GlobalAlertDialog = () => {
         <DialogHeader>
           <div className="flex justify-between">
             <DialogTitle>{state.title || 'Alert'}</DialogTitle>
-            <IconX
+            <X
               className="cursor-pointer text-gray-500 hover:opacity-50"
               size={24}
               onClick={() => handleOpenChange()}

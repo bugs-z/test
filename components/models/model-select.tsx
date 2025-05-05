@@ -1,6 +1,6 @@
 import { PentestGPTContext } from '@/context/context';
 import type { LLM, LLMID } from '@/types';
-import { IconCircle, IconCircleCheck } from '@tabler/icons-react';
+import { Circle, CircleCheck } from 'lucide-react';
 import { type FC, useContext, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ModelIcon } from './model-icon';
@@ -112,9 +112,9 @@ export const ModelSelect: FC<ModelSelectProps> = ({
                     Upgrade
                   </Button>
                 ) : selectedModelId === model.modelId ? (
-                  <IconCircleCheck size={22} />
+                  <CircleCheck size={22} />
                 ) : (
-                  <IconCircle size={22} className="text-muted-foreground" />
+                  <Circle size={22} className="text-muted-foreground" />
                 )}
               </div>
             </div>
@@ -151,9 +151,9 @@ export const ModelSelect: FC<ModelSelectProps> = ({
                         </div>
                         <div className="shrink-0">
                           {selectedModelId === model.modelId ? (
-                            <IconCircleCheck size={22} />
+                            <CircleCheck size={22} />
                           ) : (
-                            <IconCircle size={22} className="opacity-50" />
+                            <Circle size={22} className="opacity-50" />
                           )}
                         </div>
                       </div>

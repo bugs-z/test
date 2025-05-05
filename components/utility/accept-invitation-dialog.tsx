@@ -1,7 +1,7 @@
 import { PentestGPTContext } from '@/context/context';
 import { acceptTeamInvitation, rejectTeamInvitation } from '@/db/teams';
 import { DialogPanel, DialogTitle } from '@headlessui/react';
-import { IconCheck, IconX } from '@tabler/icons-react';
+import { Check, X } from 'lucide-react';
 import { type FC, useContext } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../ui/button';
@@ -77,7 +77,7 @@ export const AcceptInvitationDialog: FC<AcceptInvitationDialogProps> = ({
             onClick={onClose}
             className="hover:bg-muted rounded-full p-2 transition-colors"
           >
-            <IconX size={20} />
+            <X size={20} />
           </button>
         </div>
 
@@ -87,11 +87,11 @@ export const AcceptInvitationDialog: FC<AcceptInvitationDialogProps> = ({
             &quot; team. Would you like to accept the invitation?
           </p>
           <Button onClick={handleAccept} className="mb-2 w-full">
-            <IconCheck size={20} className="mr-2" />
+            <Check size={20} className="mr-2" />
             Accept Invitation
           </Button>
           <Button onClick={handleReject} className="w-full" variant="secondary">
-            <IconX size={20} className="mr-2" />
+            <X size={20} className="mr-2" />
             Reject Invitation
           </Button>
         </div>

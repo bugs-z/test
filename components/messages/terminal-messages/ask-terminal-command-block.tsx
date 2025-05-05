@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { IconTerminal2 } from '@tabler/icons-react';
+import { SquareTerminal } from 'lucide-react';
 import { useUIContext } from '@/context/ui-context';
 import { useAgentModePreference } from './use-auto-run-preference';
 import { useChatHandler } from '@/components/chat/chat-hooks/use-chat-handler';
@@ -50,7 +50,7 @@ export const AskTerminalCommandBlock: React.FC<
     <div className="overflow-hidden rounded-lg border border-border my-3">
       <div className="flex flex-col bg-muted px-4 py-2">
         <div className="flex items-center text-xs text-muted-foreground mb-1">
-          <IconTerminal2 size={16} className="mr-2" />
+          <SquareTerminal size={16} className="mr-2" />
           <span>{execDir}</span>
         </div>
         <div className="text-sm hover:bg-primary/10">

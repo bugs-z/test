@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { IconArrowDown, IconArrowUp } from '@tabler/icons-react';
+import { ArrowDown, ArrowUp } from 'lucide-react';
 
 interface ShowMoreButtonProps {
   isExpanded: boolean;
@@ -26,12 +26,12 @@ export const ShowMoreButton: React.FC<ShowMoreButtonProps> = ({
     >
       {isExpanded ? (
         <>
-          {icon || <IconArrowUp size={14} className="mr-1" />}
+          {icon || <ArrowUp size={14} className="mr-1" />}
           Show Less
         </>
       ) : (
         <>
-          {icon || <IconArrowDown size={14} className="mr-1" />}
+          {icon || <ArrowDown size={14} className="mr-1" />}
           Show More ({remainingCount} more {type})
         </>
       )}

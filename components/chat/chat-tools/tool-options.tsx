@@ -1,7 +1,7 @@
 import { PentestGPTContext } from '@/context/context';
 import { cn } from '@/lib/utils';
 import { PluginID } from '@/types/plugins';
-import { IconPaperclip, IconTerminal2, IconAtom } from '@tabler/icons-react';
+import { SquareTerminal, Paperclip, Atom } from 'lucide-react';
 import { useContext, useState } from 'react';
 import { WithTooltip } from '../../ui/with-tooltip';
 import { useUIContext } from '@/context/ui-context';
@@ -74,7 +74,7 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
               className="flex flex-row items-center"
               onClick={handleFileClick}
             >
-              <IconPaperclip
+              <Paperclip
                 className="cursor-pointer rounded-lg rounded-bl-xl p-1 hover:bg-black/10 focus-visible:outline-black dark:hover:bg-white/10 dark:focus-visible:outline-white"
                 size={32}
               />
@@ -105,7 +105,7 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
             )}
             onClick={handleReasonLLMToggle}
           >
-            <IconAtom
+            <Atom
               className={cn(
                 'cursor-pointer rounded-lg rounded-bl-xl p-1 focus-visible:outline-black dark:focus-visible:outline-white',
                 selectedPlugin === PluginID.REASONING
@@ -163,7 +163,7 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
               )}
               onClick={handleTerminalToggle}
             >
-              <IconTerminal2
+              <SquareTerminal
                 className={cn(
                   'cursor-pointer rounded-lg rounded-bl-xl p-1 focus-visible:outline-black dark:focus-visible:outline-white',
                   selectedPlugin === PluginID.TERMINAL

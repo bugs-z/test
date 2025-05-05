@@ -3,7 +3,7 @@
 import { useContext, useState, useEffect, useRef } from 'react';
 import { Brand } from '@/components/ui/brand';
 import { Button } from '@/components/ui/button';
-import { IconAlertCircle } from '@tabler/icons-react';
+import { AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase/browser-client';
 import { useRouter } from 'next/navigation';
 import { PentestGPTContext } from '@/context/context';
@@ -169,7 +169,7 @@ export function MFAVerification({ onVerify }: MFAVerificationProps) {
 
         {error && (
           <div className="flex items-center justify-center gap-2 text-sm text-red-500">
-            <IconAlertCircle size={16} />
+            <AlertCircle size={16} />
             <span>{error}</span>
           </div>
         )}

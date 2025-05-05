@@ -1,4 +1,4 @@
-import { IconDownload } from '@tabler/icons-react';
+import { Download } from 'lucide-react';
 import { useCallback } from 'react';
 import { WithTooltip } from './with-tooltip';
 import { useUIContext } from '@/context/ui-context';
@@ -84,7 +84,7 @@ export function DownloadCSVTable() {
         delayDuration={0}
         side="bottomRight"
         display={'Download CSV'}
-        trigger={<IconDownload size={18} onClick={handleDownloadCSV} />}
+        trigger={<Download size={18} onClick={handleDownloadCSV} />}
       />
     </div>
   );

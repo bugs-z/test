@@ -6,7 +6,6 @@ import {
   processTxt,
   convert,
   TOKEN_LIMIT,
-  PDF_TOKEN_LIMIT,
 } from '@/lib/retrieval/processing';
 import { getServerProfile } from '@/lib/server/server-chat-helpers';
 import { createSupabaseAdminClient } from '@/lib/server/server-utils';
@@ -88,7 +87,7 @@ export async function POST(req: Request) {
     }
 
     const totalTokens = chunks.reduce((acc, chunk) => acc + chunk.tokens, 0);
-    const limit = fileExtension === 'pdf' ? PDF_TOKEN_LIMIT : TOKEN_LIMIT;
+    const limit = TOKEN_LIMIT;
     if (totalTokens > limit) {
       throw new Error(`File content exceeds token limit of ${limit}`);
     }
@@ -114,7 +113,15 @@ export async function POST(req: Request) {
       status: 200,
     });
   } catch (error: any) {
-    console.error(`Error in retrieval/process: ${error.stack}`);
+    // Only log stack trace for unexpected errors
+    const knownErrors = ['Empty file', 'exceeds token limit'];
+
+    if (
+      !knownErrors.some((knownError) => error.message?.includes(knownError))
+    ) {
+      console.error(`Error in retrieval/process: ${error.stack}`);
+    }
+
     const errorMessage = error?.message || 'An unexpected error occurred';
     const errorCode = error.status || 500;
     return new Response(JSON.stringify({ message: errorMessage }), {

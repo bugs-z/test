@@ -4,7 +4,7 @@ import { type FC, useState, useContext, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
-import { IconArrowLeft, IconLoader2 } from '@tabler/icons-react';
+import { ArrowLeft, LoaderCircle } from 'lucide-react';
 import Loading from '@/app/loading';
 
 import { Button } from '@/components/ui/button';
@@ -127,7 +127,7 @@ const NewTeamPage: FC = () => {
           className="absolute left-4 p-2"
           aria-label="Back"
         >
-          <IconArrowLeft size={24} />
+          <ArrowLeft size={24} />
         </Button>
         <div className="flex w-full items-center justify-center">
           <PentestGPTTextSVG
@@ -206,7 +206,7 @@ const NewTeamPage: FC = () => {
             >
               {isLoading ? (
                 <>
-                  <IconLoader2 size={22} className="mr-2 animate-spin" />
+                  <LoaderCircle size={22} className="mr-2 animate-spin" />
                   <span>Creating...</span>
                 </>
               ) : (

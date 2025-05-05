@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { PentestGPTContext } from '@/context/context';
 import { updateChat } from '@/db/chats';
 import type { Tables } from '@/supabase/types';
-import { IconEdit } from '@tabler/icons-react';
+import { Edit } from 'lucide-react';
 import { type FC, useContext, useState, useCallback, useRef } from 'react';
 
 interface UpdateChatProps {
@@ -76,7 +76,7 @@ export const UpdateChat: FC<UpdateChatProps> = ({ chat, onAction }) => {
       <DialogTrigger asChild>
         <div className="w-full cursor-pointer" onClick={handleTriggerClick}>
           <div className="flex items-center p-3 hover:opacity-50">
-            <IconEdit size={20} className="mr-2" />
+            <Edit size={20} className="mr-2" />
             <span>Rename</span>
           </div>
         </div>

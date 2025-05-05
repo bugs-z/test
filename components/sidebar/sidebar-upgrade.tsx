@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import { useRouter } from 'next/navigation';
-import { IconLockOpen } from '@tabler/icons-react';
+import { LockOpen } from 'lucide-react';
 
 export const SidebarUpgrade: FC = () => {
   const router = useRouter();
@@ -16,7 +16,7 @@ export const SidebarUpgrade: FC = () => {
         onClick={handleUpgradeClick}
       >
         <div className="flex items-center">
-          <IconLockOpen className="mr-2" size={28} />
+          <LockOpen className="mr-2" size={28} />
           <div className="flex flex-col">
             <div className="text-sm font-semibold">Upgrade plan</div>
             <div className="text-muted-foreground mt-1 text-xs">

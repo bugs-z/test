@@ -6,11 +6,12 @@ import { PentestGPTContext } from '@/context/context';
 import { getCheckoutUrl } from '@/lib/server/stripe-url';
 import { getSubscriptionByUserId } from '@/db/subscriptions';
 import {
-  IconLoader2,
-  IconCircleCheck,
-  IconArrowLeft,
-} from '@tabler/icons-react';
-import { Sparkles, Users } from 'lucide-react';
+  Sparkles,
+  Users,
+  ArrowLeft,
+  CircleCheck,
+  LoaderCircle,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { type FC, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
@@ -133,7 +134,7 @@ export const UpgradePlan: FC = () => {
           className="absolute left-4 p-2"
           aria-label="Exit"
         >
-          <IconArrowLeft size={24} />
+          <ArrowLeft size={24} />
         </Button>
         <div className="flex w-full items-center justify-center">
           <PentestGPTTextSVG
@@ -258,7 +259,9 @@ const PlanCard: FC<PlanCardProps> = ({
       disabled={buttonLoading || buttonDisabled}
       className="mb-6 w-full"
     >
-      {buttonLoading && <IconLoader2 size={22} className="mr-2 animate-spin" />}
+      {buttonLoading && (
+        <LoaderCircle size={22} className="mr-2 animate-spin" />
+      )}
       <span>{buttonText}</span>
     </Button>
     <div className="grow space-y-3">{children}</div>
@@ -280,7 +283,7 @@ const PlanCard: FC<PlanCardProps> = ({
 const PlanStatement: FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="mb-2 flex items-center">
     <div className="icon-container mr-2">
-      <IconCircleCheck size={18} strokeWidth={1.5} />
+      <CircleCheck size={18} strokeWidth={1.5} />
     </div>
     <div className="text-container flex-1 text-base">
       <p>{children}</p>
