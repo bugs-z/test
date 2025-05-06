@@ -56,7 +56,7 @@ export const createShellExecTool = (context: ToolContext) => {
 
       dataStream.writeData({
         type: 'text-delta',
-        content: `<terminal-command exec-dir="${exec_dir}">${command}</terminal-command>`,
+        content: `<pgptml:terminal_command exec-dir="${exec_dir}">${command}</pgptml:terminal_command>`,
       });
 
       // Execute command

@@ -39,7 +39,7 @@ export const createShellWaitTool = (context: ToolContext) => {
 
       dataStream.writeData({
         type: 'text-delta',
-        content: `<shell-wait>${seconds} seconds</shell-wait>`,
+        content: `<pgptml:shell_wait>${seconds} seconds</pgptml:shell_wait>`,
       });
 
       // Wait for specified duration

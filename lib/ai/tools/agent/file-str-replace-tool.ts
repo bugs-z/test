@@ -25,7 +25,7 @@ const replaceFileContent = async (
     // Write back to file
     await sandbox.files.write(file, finalContent);
 
-    const wrappedContent = `<file-str-replace file="${file}">${finalContent}</file-str-replace>\n\n`;
+    const wrappedContent = `<pgptml:file_str_replace file="${file}">${finalContent}</pgptml:file_str_replace>\n\n`;
     dataStream.writeData({
       type: 'text-delta',
       content: wrappedContent,

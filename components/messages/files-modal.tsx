@@ -10,7 +10,6 @@ import {
   DialogClose,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { WithTooltip } from '@/components/ui/with-tooltip';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -182,21 +181,14 @@ export const FilesModal: React.FC<FilesModalProps> = ({
             </Button>
             {!isBatchMode && (
               <DialogClose asChild>
-                <WithTooltip
-                  display="Close"
-                  trigger={
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-8"
-                      aria-label="Close"
-                    >
-                      <X className="size-5" />
-                    </Button>
-                  }
-                  side="top"
-                  delayDuration={300}
-                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
+                  aria-label="Close"
+                >
+                  <X className="size-5" />
+                </Button>
               </DialogClose>
             )}
           </div>

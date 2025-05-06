@@ -33,14 +33,14 @@ const readAndProcessFile = async (
 
     const content = await sandbox.files.read(filePath);
     const processedContent = processFileContent(content, start_line, end_line);
-    const wrappedContent = `<file-read path="${filePath}">${truncateContentByTokens(processedContent, 2048)}</file-read>\n\n`;
+    const wrappedContent = `<pgptml:file_read path="${filePath}">${truncateContentByTokens(processedContent, 2048)}</pgptml:file_read>\n\n`;
 
     dataStream.writeData({
       type: 'text-delta',
       content: wrappedContent,
     });
 
-    return `<file-read path="${filePath}">${truncateContentByTokens(processedContent)}</file-read>\n\n`;
+    return `<pgptml:file_read path="${filePath}">${truncateContentByTokens(processedContent)}</pgptml:file_read>\n\n`;
   } catch (error) {
     return handleFileError(error, 'processing file');
   }

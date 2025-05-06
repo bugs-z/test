@@ -55,7 +55,7 @@ const writeFileContent = async (
     }
 
     // Use a single file-write tag with a mode parameter
-    const wrappedContent = `<file-write path="${file}" mode="${mode}">${finalContent}</file-write>\n\n`;
+    const wrappedContent = `<pgptml:file_write path="${file}" mode="${mode}">${finalContent}</pgptml:file_write>\n\n`;
 
     dataStream.writeData({
       type: 'text-delta',

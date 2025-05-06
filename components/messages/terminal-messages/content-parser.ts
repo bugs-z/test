@@ -3,27 +3,28 @@ import type { ContentBlock } from './types';
 export const parseContent = (content: string): ContentBlock[] => {
   const blocks: ContentBlock[] = [];
   const blockRegex =
-    /((?:<terminal-command[^>]*>[\s\S]*?<\/terminal-command>|```terminal\n[\s\S]*?```|<file-content[^>]*>[\s\S]*?<\/file-content>|<file-read[^>]*>[\s\S]*?<\/file-read>|<file-write[^>]*>[\s\S]*?<\/file-write>|<file-str-replace[^>]*>[\s\S]*?<\/file-str-replace>|<shell-wait[^>]*>[\s\S]*?<\/shell-wait>|<info_search_web[^>]*>[\s\S]*?<\/info_search_web>)(?:\n```(?:stdout)[\s\S]*?(?:```|$))*(?:\s*<terminal-error>[\s\S]*?<\/terminal-error>)?)/g;
+    /((?:<terminal-command[^>]*>[\s\S]*?<\/terminal-command>|```terminal\n[\s\S]*?```|<file-content[^>]*>[\s\S]*?<\/file-content>|<file-read[^>]*>[\s\S]*?<\/file-read>|<file-write[^>]*>[\s\S]*?<\/file-write>|<file-str-replace[^>]*>[\s\S]*?<\/file-str-replace>|<shell-wait[^>]*>[\s\S]*?<\/shell-wait>|<info_search_web[^>]*>[\s\S]*?<\/info_search_web>|<pgptml:[^>]*>[\s\S]*?<\/pgptml:[^>]*>)(?:\n```(?:stdout)[\s\S]*?(?:```|$))*(?:\s*<terminal-error>[\s\S]*?<\/terminal-error>)?)/g;
   const terminalXmlRegex =
-    /<terminal-command(?:\s+[^>]*)?>([\s\S]*?)<\/terminal-command>/;
+    /<(?:terminal-command|pgptml:terminal_command)(?:\s+[^>]*)?>([\s\S]*?)<\/(?:terminal-command|pgptml:terminal_command)>/;
   const terminalMarkdownRegex = /```terminal\n([\s\S]*?)```/;
-  // For file-read tool
+  // For file-read tool (both old and new format)
   const fileReadRegex =
-    /<file-read(?:\s+path="([^"]*)")?>([\s\S]*?)<\/file-read>/;
+    /<(?:file-read|pgptml:file_read)(?:\s+path="([^"]*)")?>([\s\S]*?)<\/(?:file-read|pgptml:file_read)>/;
   // For file-read tool (old format)
   const fileContentRegex =
     /<file-content(?:\s+path="([^"]*)")?>([\s\S]*?)<\/file-content>/;
-  // For file-write tool
+  // For file-write tool (both old and new format)
   const fileWriteRegex =
-    /<file-write(?:\s+file="([^"]*)"|\s+path="([^"]*)")(?:\s+mode="([^"]*)")?>([\s\S]*?)<\/file-write>/;
-  // For file-str-replace tool
+    /<(?:file-write|pgptml:file_write)(?:\s+file="([^"]*)"|\s+path="([^"]*)")(?:\s+mode="([^"]*)")?>([\s\S]*?)<\/(?:file-write|pgptml:file_write)>/;
+  // For file-str-replace tool (both old and new format)
   const fileStrReplaceRegex =
-    /<file-str-replace(?:\s+file="([^"]*)")?>([\s\S]*?)<\/file-str-replace>/;
-  // For shell-wait tool
-  const shellWaitRegex = /<shell-wait[^>]*>([\s\S]*?)<\/shell-wait>/;
-  // For info-search-web tool
+    /<(?:file-str-replace|pgptml:file_str_replace)(?:\s+file="([^"]*)")?>([\s\S]*?)<\/(?:file-str-replace|pgptml:file_str_replace)>/;
+  // For shell-wait tool (both old and new format)
+  const shellWaitRegex =
+    /<(?:shell-wait|pgptml:shell_wait)[^>]*>([\s\S]*?)<\/(?:shell-wait|pgptml:shell_wait)>/;
+  // For info-search-web tool (both old and new format)
   const infoSearchWebRegex =
-    /<info_search_web(?:\s+query="([^"]*)")?[^>]*>([\s\S]*?)<\/info_search_web>/;
+    /<(?:info_search_web|pgptml:info_search_web)(?:\s+query="([^"]*)")?[^>]*>([\s\S]*?)<\/(?:info_search_web|pgptml:info_search_web)>/;
   const stdoutRegex = /```stdout\n([\s\S]*?)(?:```|$)/;
   const errorRegex = /<terminal-error>([\s\S]*?)<\/terminal-error>/;
   const execDirRegex = /exec-dir="([^"]*)"/;

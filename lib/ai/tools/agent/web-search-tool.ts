@@ -55,7 +55,7 @@ export const createWebSearchTool = (context: ToolContext) => {
           tbs: date_range ? tbsMap[date_range] : undefined,
         });
 
-        const wrappedContent = `<info_search_web query="${query}">${JSON.stringify(searchResult.data)}</info_search_web>\n\n`;
+        const wrappedContent = `<pgptml:info_search_web query="${query}">${JSON.stringify(searchResult.data)}</pgptml:info_search_web>\n\n`;
         dataStream.writeData({
           type: 'text-delta',
           content: wrappedContent,
