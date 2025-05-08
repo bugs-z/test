@@ -20,10 +20,6 @@ interface UIContextType {
   setIsReadyToChat: Dispatch<SetStateAction<boolean>>;
   showSidebar: boolean;
   setShowSidebar: (value: boolean | ((prevState: boolean) => boolean)) => void;
-  showTerminalOutput: boolean;
-  setShowTerminalOutput: (
-    value: boolean | ((prevState: boolean) => boolean),
-  ) => void;
 
   // Tools
   toolInUse: string;
@@ -53,8 +49,6 @@ export const UIContext = createContext<UIContextType>({
   setIsReadyToChat: () => {},
   showSidebar: false,
   setShowSidebar: () => {},
-  showTerminalOutput: false,
-  setShowTerminalOutput: () => {},
 
   // Tools UI
   toolInUse: 'none',

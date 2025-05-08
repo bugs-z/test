@@ -38,10 +38,9 @@ export const MessageTypeResolver: FC<MessageTypeResolverProps> = ({
   // })
 
   if (
-    message.role === 'assistant' &&
-    ((isPluginOutput &&
+    (isPluginOutput &&
       allTerminalPlugins.includes(message.plugin as PluginID)) ||
-      allTerminalPlugins.includes(toolInUse as PluginID))
+    allTerminalPlugins.includes(toolInUse as PluginID)
   ) {
     return (
       <MessageTerminal

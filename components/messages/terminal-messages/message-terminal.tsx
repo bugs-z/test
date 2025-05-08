@@ -1,6 +1,5 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { MessageMarkdown } from '../message-markdown';
-import { useUIContext } from '@/context/ui-context';
 import type { MessageTerminalProps } from './types';
 import { parseContent } from './content-parser';
 import { TerminalBlockComponent } from './terminal-block';
@@ -13,33 +12,14 @@ export const MessageTerminal: React.FC<MessageTerminalProps> = ({
   isAssistant,
   isLastMessage,
 }) => {
-  const { showTerminalOutput } = useUIContext();
   const contentBlocks = useMemo(() => parseContent(content), [content]);
 
   const [closedBlocks, setClosedBlocks] = useState(() => new Set<number>());
-  const [userInteracted, setUserInteracted] = useState(() => new Set<number>());
   const [expandedOutputs, setExpandedOutputs] = useState(
     () => new Set<number>(),
   );
 
-  useEffect(() => {
-    setClosedBlocks((prev) => {
-      const newSet = new Set(prev);
-      contentBlocks.forEach((_, index) => {
-        if (!userInteracted.has(index)) {
-          if (!showTerminalOutput) {
-            newSet.add(index);
-          } else {
-            newSet.delete(index);
-          }
-        }
-      });
-      return newSet;
-    });
-  }, [showTerminalOutput, contentBlocks, userInteracted]);
-
   const toggleBlock = useCallback((index: number) => {
-    setUserInteracted((prev) => new Set(prev).add(index));
     setClosedBlocks((prev) => {
       const newSet = new Set(prev);
       newSet.has(index) ? newSet.delete(index) : newSet.add(index);

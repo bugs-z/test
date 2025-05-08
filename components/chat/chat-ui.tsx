@@ -237,49 +237,51 @@ export const ChatUI: FC = () => {
 
         <div className="flex min-h-0 flex-1 flex-col gap-2 lg:flex-row">
           {/* Chat messages container */}
-          {(!isMobile || !agentSidebar.isOpen) && (
+          <div
+            className={`relative flex h-[45%] flex-1 flex-col overflow-hidden lg:h-auto ${
+              agentSidebar.isOpen ? 'lg:w-1/2' : 'lg:w-full'
+            }`}
+          >
+            {/* Chat messages */}
             <div
-              className={`relative flex h-[45%] flex-1 flex-col overflow-hidden lg:h-auto ${
-                agentSidebar.isOpen ? 'lg:w-1/2' : 'lg:w-full'
-              }`}
+              ref={scrollRef}
+              className="flex flex-1 flex-col overflow-auto"
+              onScroll={innerHandleScroll}
             >
-              {/* Chat messages */}
-              <div
-                ref={scrollRef}
-                className="flex flex-1 flex-col overflow-auto"
-                onScroll={innerHandleScroll}
-              >
-                <div ref={contentRef}>
-                  <ChatMessages />
-                </div>
+              <div ref={contentRef}>
+                <ChatMessages />
               </div>
+            </div>
 
-              {/* Scroll buttons and continuation button */}
-              <div className="relative w-full items-end">
-                <div className="absolute -top-10 left-1/2 flex -translate-x-1/2 justify-center">
-                  <ChatScrollButtons
-                    isAtBottom={isAtBottom}
-                    scrollToBottom={scrollToBottom}
-                  />
-                </div>
-
-                <ChatContinueButton
-                  isGenerating={isGenerating}
-                  finishReason={selectedChat?.finish_reason}
-                  onTerminalContinue={handleSendTerminalContinuation}
-                  onContinue={handleSendContinuation}
+            {/* Scroll buttons and continuation button */}
+            <div className="relative w-full items-end">
+              <div className="absolute -top-10 left-1/2 flex -translate-x-1/2 justify-center">
+                <ChatScrollButtons
+                  isAtBottom={isAtBottom}
+                  scrollToBottom={scrollToBottom}
                 />
               </div>
 
-              <ChatInput />
-              <ChatHelp />
+              <ChatContinueButton
+                isGenerating={isGenerating}
+                finishReason={selectedChat?.finish_reason}
+                onTerminalContinue={handleSendTerminalContinuation}
+                onContinue={handleSendContinuation}
+              />
             </div>
-          )}
+
+            <ChatInput />
+            <ChatHelp />
+          </div>
 
           {/* Agent Sidebar */}
           {agentSidebar.isOpen && (
             <div
-              className={`${isMobile ? '' : 'relative flex h-[45%] flex-1 flex-col overflow-hidden lg:h-auto lg:w-1/2'}`}
+              className={`${
+                isMobile
+                  ? 'absolute inset-0 z-50 bg-background'
+                  : 'relative flex h-[45%] flex-1 flex-col overflow-hidden lg:h-auto lg:w-1/2'
+              }`}
             >
               <AgentSidebar />
             </div>

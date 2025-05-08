@@ -106,6 +106,9 @@ export async function createOrConnectPersistentTerminal(
               .update({ status: 'active' })
               .eq('sandbox_id', existingSandbox.sandbox_id);
 
+            const metrics = await sandbox.getMetrics();
+            console.log('Sandbox metrics:', metrics);
+
             return sandbox;
           } catch (e) {
             console.error(
@@ -139,6 +142,9 @@ export async function createOrConnectPersistentTerminal(
               },
             );
 
+            const metrics = await sandbox.getMetrics();
+            console.log('Sandbox metrics:', metrics);
+
             return sandbox;
           }
         }
@@ -154,6 +160,9 @@ export async function createOrConnectPersistentTerminal(
             .from('e2b_sandboxes')
             .update({ status: 'active' })
             .eq('sandbox_id', existingSandbox.sandbox_id);
+
+          const metrics = await sandbox.getMetrics();
+          console.log('Sandbox metrics:', metrics);
 
           return sandbox;
         } catch (e: any) {
@@ -193,6 +202,9 @@ export async function createOrConnectPersistentTerminal(
         onConflict: 'user_id,template',
       },
     );
+
+    const metrics = await sandbox.getMetrics();
+    console.log('Sandbox metrics:', metrics);
 
     return sandbox;
   } catch (error) {

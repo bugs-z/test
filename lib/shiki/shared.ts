@@ -1,9 +1,9 @@
 import type { JSX } from 'react';
 import { codeToHast } from 'shiki';
-import type { BundledLanguage } from 'shiki/bundle/web';
 import { toJsxRuntime } from 'hast-util-to-jsx-runtime';
 import { Fragment } from 'react';
 import { jsx, jsxs } from 'react/jsx-runtime';
+import type { AgentCodeBlockLang } from '@/types';
 
 // Theme constants for light and dark modes
 export const CODE_THEMES = {
@@ -12,7 +12,7 @@ export const CODE_THEMES = {
 } as const;
 
 interface HighlightOptions {
-  lang: BundledLanguage;
+  lang: AgentCodeBlockLang;
   theme?: string;
   customComponents?: {
     pre?: (props: any) => JSX.Element;

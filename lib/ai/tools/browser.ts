@@ -47,9 +47,36 @@ export async function browsePage(
 ): Promise<string> {
   try {
     const app = new FirecrawlApp({ apiKey: process.env.FIRECRAWL_API_KEY });
+
+    // First try with default proxy
     const scrapeResult = (await app.scrapeUrl(url, {
       formats: ['markdown', 'html'],
     })) as ScrapeResponse;
+
+    // Check if we got an error status code that warrants stealth retry
+    const statusCode = scrapeResult?.metadata?.statusCode;
+    if (statusCode && [401, 403, 500].includes(statusCode)) {
+      // Retry with stealth proxy
+      const stealthResult = (await app.scrapeUrl(url, {
+        formats: ['markdown', 'html'],
+        proxy: 'stealth',
+      })) as ScrapeResponse;
+
+      if (!stealthResult.success) {
+        return `Error fetching URL: ${url}. Error: ${stealthResult.error}`;
+      }
+
+      const content =
+        format === 'markdown'
+          ? (stealthResult as any).markdown
+          : (stealthResult as any).html;
+
+      if (!content) {
+        return `Error: Empty content received from URL: ${url}`;
+      }
+
+      return truncateContentByTokens(content);
+    }
 
     if (!scrapeResult.success) {
       return `Error fetching URL: ${url}. Error: ${scrapeResult.error}`;
@@ -59,6 +86,7 @@ export async function browsePage(
       format === 'markdown'
         ? (scrapeResult as any).markdown
         : (scrapeResult as any).html;
+
     if (!content) {
       return `Error: Empty content received from URL: ${url}`;
     }
@@ -67,17 +95,6 @@ export async function browsePage(
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown error';
-
-    // Check if the error message contains HTTP status codes we want to skip logging
-    if (
-      !errorMessage.includes('408') &&
-      !errorMessage.includes('403') &&
-      !errorMessage.includes('500') &&
-      !errorMessage.includes('400')
-    ) {
-      console.error('[BrowserTool] Error browsing URL:', url, error);
-    }
-
     return `Error browsing URL: ${url}. ${errorMessage}`;
   }
 }
@@ -279,35 +296,5 @@ export async function executeBrowserTool({
       content: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
     });
     return 'Browser tool executed with errors';
-  }
-}
-
-export async function getPageContent(
-  url: string,
-  format: 'markdown' | 'html' = 'markdown',
-): Promise<string> {
-  try {
-    const app = new FirecrawlApp({ apiKey: process.env.FIRECRAWL_API_KEY });
-    const scrapeResult = (await app.scrapeUrl(url, {
-      formats: ['markdown', 'html'],
-    })) as ScrapeResponse;
-
-    if (!scrapeResult.success) {
-      return `Error fetching URL: ${url}. Error: ${scrapeResult.error}`;
-    }
-
-    const content =
-      format === 'markdown'
-        ? (scrapeResult as any).markdown
-        : (scrapeResult as any).html;
-    if (!content) {
-      return `Error: Empty content received from URL: ${url}`;
-    }
-
-    return truncateContentByTokens(content);
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error';
-    return `Error getting page content: ${url}. ${errorMessage}`;
   }
 }

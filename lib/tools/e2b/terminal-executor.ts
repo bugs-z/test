@@ -184,15 +184,8 @@ export const executeTerminalCommand = async ({
               );
             }
           }
-          // Only log errors that are not CommandExitError with exit status 1 or 28 and no stderr
-          if (
-            !(
-              error instanceof Error &&
-              error.name === 'CommandExitError' &&
-              ((error as ExecutionError).result?.exitCode === 1 ||
-                (error as ExecutionError).result?.exitCode === 28)
-            )
-          ) {
+          // Only log errors that are not CommandExitError
+          if (!(error instanceof Error && error.name === 'CommandExitError')) {
             console.error(`[${userID}] Error:`, error);
           }
         }

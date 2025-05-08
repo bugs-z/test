@@ -131,7 +131,7 @@ while the agent can continue with other tasks
 
 <sandbox_environment>
 System Environment:
-- Ubuntu 22.04 (linux/amd64), with internet access
+- Debian GNU/Linux 12 (linux/amd64), with internet access
 - User: \`root\`, with sudo privileges
 - Home directory: /home/user
 - VPN connectivity is not available due to missing TUN/TAP device support in the sandbox environment
@@ -142,7 +142,7 @@ Development Environment:
 - Golang 1.24.2 (commands: go)
 
 Pre-installed Tools:
-- curl, bc, wget, nmap, iputils-ping, whois, traceroute, dnsutils, whatweb, wafw00f, msfconsole
+- curl, bc, wget, nmap, iputils-ping, whois, traceroute, dnsutils, whatweb, wafw00f, subfinder, gobuster
 - SecLists is pre-installed in /home/user and should be used by default for any fuzzing or wordlist needs
 </sandbox_environment>
 

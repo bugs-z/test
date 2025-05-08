@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { useAgentSidebar } from '@/components/chat/chat-hooks/use-agent-sidebar';
 import { useUIContext } from '@/context/ui-context';
 import { AgentCodeBlock } from '@/components/ui/agent-codeblock';
-import type { BundledLanguage } from 'shiki/bundle/web';
+import { bundledLanguages } from 'shiki/bundle/web';
+import type { AgentCodeBlockLang } from '@/types';
 
 export const AgentSidebar = () => {
   const { isMobile } = useUIContext();
@@ -16,10 +17,12 @@ export const AgentSidebar = () => {
     ? 'fixed inset-0 z-50 w-full h-full bg-background flex flex-col overflow-hidden border-0'
     : 'flex h-full w-full flex-col overflow-hidden border-l border-border bg-background';
 
-  // Get language from file extension
-  const getLanguage = (filePath: string) => {
+  // Get language from file extension if not provided
+  const getLanguage = (filePath: string): AgentCodeBlockLang => {
     const extension = filePath.split('.').pop()?.toLowerCase() || 'text';
-    return extension;
+    return Object.keys(bundledLanguages).includes(extension)
+      ? (extension as AgentCodeBlockLang)
+      : 'text';
   };
 
   return (
@@ -53,8 +56,14 @@ export const AgentSidebar = () => {
       <div className="flex-1 overflow-auto p-4">
         <AgentCodeBlock
           code={agentSidebar.item.content}
-          lang={getLanguage(agentSidebar.item.filePath) as BundledLanguage}
-          filename={agentSidebar.item.filePath.split('/').pop()}
+          lang={
+            agentSidebar.item.lang || getLanguage(agentSidebar.item.filePath)
+          }
+          filename={
+            agentSidebar.item.lang === 'ansi'
+              ? 'terminal'
+              : agentSidebar.item.filePath.split('/').pop()
+          }
         />
       </div>
     </div>

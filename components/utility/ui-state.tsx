@@ -24,10 +24,6 @@ export const UIState: FC<UIStateProps> = ({ children }) => {
     'showSidebar',
     false,
   );
-  const [showTerminalOutput, setShowTerminalOutput] = useLocalStorageState(
-    'showTerminalOutput',
-    true,
-  );
 
   // Tools
   const [toolInUse, setToolInUse] = useState('none');
@@ -65,8 +61,6 @@ export const UIState: FC<UIStateProps> = ({ children }) => {
         setIsReadyToChat,
         showSidebar,
         setShowSidebar,
-        showTerminalOutput,
-        setShowTerminalOutput,
 
         // Tools
         toolInUse,
