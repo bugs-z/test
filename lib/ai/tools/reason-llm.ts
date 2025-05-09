@@ -77,12 +77,6 @@ export async function executeReasonLLMTool({
           messages: toVercelChatMessages(messages),
           maxTokens: 8192,
           abortSignal: abortSignal,
-          providerOptions: {
-            openai: {
-              reasoningSummary: 'auto',
-              reasoningEffort: 'high',
-            },
-          },
           maxSteps: 2,
           tools: {
             open_url: tool({
@@ -122,6 +116,11 @@ beneficial for the user's needs.`,
               dataStream.writeData({
                 type: 'agent-status',
                 content: 'none',
+              });
+
+              dataStream.writeData({
+                type: 'reasoning',
+                content: '\n\n',
               });
             }
           },

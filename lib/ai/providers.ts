@@ -1,5 +1,10 @@
-import { customProvider } from 'ai';
+import {
+  customProvider,
+  extractReasoningMiddleware,
+  wrapLanguageModel,
+} from 'ai';
 import { openai } from '@ai-sdk/openai';
+import { openrouter } from '@openrouter/ai-sdk-provider';
 
 export const myProvider = customProvider({
   languageModels: {
@@ -14,6 +19,13 @@ export const myProvider = customProvider({
     'chat-model-agent': openai('gpt-4.1-2025-04-14', {
       parallelToolCalls: false,
     }),
-    'chat-model-reasoning': openai('o4-mini'),
+    'chat-model-reasoning': wrapLanguageModel({
+      model: openrouter('x-ai/grok-3-mini-beta', {
+        extraBody: {
+          reasoning: { effort: 'high' },
+        },
+      }),
+      middleware: extractReasoningMiddleware({ tagName: 'think' }),
+    }),
   },
 });
