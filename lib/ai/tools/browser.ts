@@ -1,5 +1,8 @@
 import { buildSystemPrompt } from '@/lib/ai/prompts';
-import { toVercelChatMessages } from '@/lib/ai/message-utils';
+import {
+  extractTextContent,
+  toVercelChatMessages,
+} from '@/lib/ai/message-utils';
 import llmConfig from '@/lib/models/llm-config';
 import { streamText } from 'ai';
 import { myProvider } from '@/lib/ai/providers';
@@ -101,37 +104,6 @@ export async function browsePage(
   }
 }
 
-export async function browseMultiplePages(
-  urls: string[],
-): Promise<Record<string, string>> {
-  const results: Record<string, string> = {};
-  const urlsToProcess = urls.slice(0, 3);
-
-  try {
-    await Promise.all(
-      urlsToProcess.map(async (url) => {
-        try {
-          const content = await browsePage(url);
-          results[url] = content;
-        } catch (error) {
-          console.error(`[BrowserTool] Error browsing URL: ${url}`, error);
-          results[url] =
-            `Error accessing URL: ${url}. ${error instanceof Error ? error.message : 'Unknown error'}`;
-        }
-      }),
-    );
-  } catch (error) {
-    console.error('[BrowserTool] Error in browseMultiplePages:', error);
-    // If there's an error in Promise.all, mark all URLs as failed
-    urlsToProcess.forEach((url) => {
-      results[url] =
-        `Error: Failed to process URL: ${url}. ${error instanceof Error ? error.message : 'Unknown error'}`;
-    });
-  }
-
-  return results;
-}
-
 export function createBrowserPrompt(
   browserResult: string,
   url: string,
@@ -196,14 +168,17 @@ export async function executeBrowserTool({
   }
 
   try {
-    const lastUserMessage = getLastUserMessage(messages);
+    const message =
+      messages.find((m: { role: string }) => m.role === 'user') ||
+      messages[messages.length - 1];
+    const lastUserMessage = extractTextContent(message.content);
     dataStream.writeData({ type: 'tool-call', content: 'browser' });
 
     const browserResult = await browsePage(open_url, format_output);
     const browserPrompt = createBrowserPrompt(
       browserResult,
-      lastUserMessage,
       open_url,
+      lastUserMessage,
     );
 
     let generatedTitle: string | undefined;
