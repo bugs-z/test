@@ -17,6 +17,7 @@ export const createToolSchemas = ({
   model,
   supabase,
   isPremiumUser,
+  userCountryCode,
 }: {
   messages: any;
   profile: any;
@@ -28,6 +29,7 @@ export const createToolSchemas = ({
   model: LLMID;
   supabase: SupabaseClient | null;
   isPremiumUser: boolean;
+  userCountryCode: string | null;
 }) => {
   const allSchemas = {
     browser: {
@@ -39,20 +41,17 @@ Some examples of when to use the browser tool include:
 
 Do not use browser tool for general information queries that can be answered without visiting a URL.
 Do not use browser tool if the user merely mentions a URL without explicitly asking you to open it.
-The browser tool can only visit HTTPS websites with valid domain names. \
-The browser tool cannot access HTTP-only sites, IP addresses (like http://192.168.1.1), or non-standard URLs.
+The browser tool cannot IP addresses (like http://192.168.1.1), or non-standard URLs.
 
 The browser tool can extract content in two formats:
 - markdown: Use for general content reading and information extraction (default).
 - html: Use for security testing, vulnerability assessment, and penetration testing to analyze HTML \
 structure, forms, scripts, and potential security issues. Also use when HTML content would be more \
-beneficial for the user's needs.
-`,
+beneficial for the user's needs.`,
       parameters: z.object({
         open_url: z.string().url().describe('The URL of the webpage to open'),
         format_output: z
           .enum(['markdown', 'html'])
-          .default('markdown')
           .describe('The format of the output content.'),
       }),
       execute: async ({
@@ -70,18 +69,28 @@ beneficial for the user's needs.
             chatMetadata,
             model,
             supabase,
+            userCountryCode,
           },
         });
       },
     },
     webSearch: {
-      description: `Use the web search tool to search the web for latest information. Use this tool only in specific circumstances:
+      description: `Use the webSearch tool to access up-to-date information from the web \
+or when responding to the user requires information about their location. \
+Some examples of when to use the webSearch tool include:
 
-1) When the user inquires about current events or requires real-time information such as weather conditions or sports scores. \
-2) When the user explicitly requests or instructs to google, search the web or similar.
-
-Do not use this tool to open URLs, links, or videos. \
-Do not use this tool if the user is merely asking about the possibility of searching the web.`,
+- Local Information: Use the \`webSearch\` tool to respond to questions that require information \
+about the user's location, such as the weather, local businesses, or events.
+- Freshness: If up-to-date information on a topic could potentially change or enhance the answer, \
+call the \`webSearch\` tool any time you would otherwise refuse to answer a question because your \
+knowledge might be out of date.
+- Niche Information: If the answer would benefit from detailed information not widely known or understood \
+(which might be found on the internet), such as details about a small neighborhood, a less well-known \
+company, or arcane regulations, use web sources directly rather than relying on the distilled knowledge \
+from pretraining.
+- Accuracy: If the cost of a small mistake or outdated information is high (e.g., using an outdated \
+version of a software library or not knowing the date of the next game for a sports team), then use the \
+\`webSearch\` tool.`,
       parameters: z.object({
         search: z.boolean().describe('Set to true to search the web'),
       }),
@@ -96,6 +105,7 @@ Do not use this tool if the user is merely asking about the possibility of searc
             chatMetadata,
             model,
             supabase,
+            userCountryCode,
           },
         });
       },
@@ -127,6 +137,7 @@ This tool executes terminal commands in a Debian GNU/Linux 12 environment with r
             model,
             supabase,
             isPremiumUser,
+            userCountryCode,
             autoSelected: true,
           },
         });

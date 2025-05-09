@@ -9,40 +9,17 @@ export const availablePlugins: PluginSummary[] = [
     isInstalled: false,
     isPremium: false,
     createdAt: '2023-01-01',
-    starters: [
-      // {
-      //   title: "Explain How To",
-      //   description: "identify and exploit XSS vulnerabilities",
-      //   chatMessage: "Explain how to identify and exploit XSS vulnerabilities."
-      // },
-      // {
-      //   title: "Explain How To",
-      //   description: "identify information disclosure vulnerabilities",
-      //   chatMessage:
-      //     "Explain how to identify information disclosure vulnerabilities."
-      // },
-      // {
-      //   title: "Provide General Methodology",
-      //   description: "for file upload vulnerabilities",
-      //   chatMessage:
-      //     "Provide General Methodology for file upload vulnerabilities."
-      // },
-      // {
-      //   title: "Provide Techniques",
-      //   description: "to bypass rate limit",
-      //   chatMessage: "Provide techniques to bypass rate limit."
-      // }
-    ],
+    starters: [],
   },
   {
     id: 2,
-    name: 'Terminal',
+    name: 'Pentest Agent',
     value: PluginID.TERMINAL,
     categories: ['utils'],
     icon: 'https://cdn-icons-png.flaticon.com/128/5576/5576886.png',
     invertInDarkMode: true,
     description:
-      'Execute terminal commands, install and configure tools, and perform advanced pentesting tasks',
+      'Run security scans, analyze vulnerabilities, and automate penetration testing tasks with AI assistance',
     githubRepoUrl: pluginUrls.PENTESTGPT,
     isInstalled: false,
     isPremium: true,

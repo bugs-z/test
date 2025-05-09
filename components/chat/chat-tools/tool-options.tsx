@@ -141,11 +141,11 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
               {!isPremiumSubscription ? (
                 <UpgradePrompt
                   title="Upgrade to Pro"
-                  description="Get access to terminal and more features with Pro"
+                  description="Get access to pentest agent and more features with Pro"
                   buttonText="Upgrade Now"
                 />
               ) : (
-                <p className="font-medium">Execute terminal commands</p>
+                <p className="font-medium">Use pentest agent</p>
               )}
             </div>
           }
@@ -183,7 +183,7 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
                       : 'max-w-0 opacity-0'),
                 )}
               >
-                Terminal
+                {isMobile ? 'Agent' : 'Pentest Agent'}
               </div>
             </div>
           }

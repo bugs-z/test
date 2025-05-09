@@ -133,6 +133,19 @@ export const executeTerminalCommand = async ({
           clearTimeout(timeoutId);
         }
 
+        // Handle empty output
+        if (!hasTerminalOutput && !isStreamClosed && !execution.error) {
+          if (currentBlock !== 'stdout') {
+            controller.enqueue(ENCODER.encode('\n```stdout\n'));
+            currentBlock = 'stdout';
+          }
+          controller.enqueue(
+            ENCODER.encode(
+              'Command ran successfully and did not produce any output.',
+            ),
+          );
+        }
+
         // Close any open block at the end
         if (currentBlock && !isStreamClosed) {
           controller.enqueue(ENCODER.encode('\n```'));

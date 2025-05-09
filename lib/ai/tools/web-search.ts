@@ -21,6 +21,7 @@ interface WebSearchConfig {
   chatMetadata: ChatMetadata;
   model: LLMID;
   supabase: SupabaseClient | null;
+  userCountryCode: string | null;
 }
 
 async function getProviderConfig(isLargeModel: boolean, profile: any) {
@@ -59,6 +60,7 @@ export async function executeWebSearchTool({
     chatMetadata,
     model,
     supabase,
+    userCountryCode,
   } = config;
   const { systemPrompt, selectedModel } = await getProviderConfig(
     isLargeModel,
@@ -95,10 +97,20 @@ export async function executeWebSearchTool({
           providerOptions: {
             perplexity: {
               search_context_size: 'medium',
+              ...(userCountryCode && {
+                user_location: [
+                  {
+                    country: userCountryCode,
+                  },
+                ],
+              }),
             },
           },
           maxTokens: 2048,
           abortSignal,
+          onError: async (error) => {
+            console.error('[WebSearch] Stream Error:', error);
+          },
           onFinish: async ({ finishReason }: { finishReason: string }) => {
             if (supabase) {
               await handleChatWithMetadata({

@@ -9,7 +9,7 @@ import FirecrawlApp from '@mendable/firecrawl-js';
  * @returns The web search tool
  */
 export const createWebSearchTool = (context: ToolContext) => {
-  const { dataStream } = context;
+  const { dataStream, userCountryCode } = context;
 
   return tool({
     description:
@@ -52,6 +52,7 @@ export const createWebSearchTool = (context: ToolContext) => {
         // Perform the search
         const searchResult = await app.search(query, {
           limit: 10,
+          ...(userCountryCode && { country: userCountryCode }),
           tbs: date_range ? tbsMap[date_range] : undefined,
         });
 

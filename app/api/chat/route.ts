@@ -42,6 +42,7 @@ export const preferredRegion = [
 
 export async function POST(request: Request) {
   try {
+    const userCountryCode = request.headers.get('x-vercel-ip-country');
     const { messages, model, modelParams, chatMetadata } = await request.json();
 
     const profile = await getAIProfile();
@@ -112,6 +113,7 @@ export async function POST(request: Request) {
       model,
       supabase,
       isPremiumUser: config.isPremiumUser,
+      userCountryCode,
     });
     if (toolResponse) {
       return toolResponse;
@@ -132,19 +134,6 @@ export async function POST(request: Request) {
             type: 'ratelimit',
             content: config.rateLimitInfo,
           });
-
-          const toolConfig = {
-            messages: validatedMessages,
-            profile,
-            agentMode: modelParams.agentMode,
-            confirmTerminalCommand: modelParams.confirmTerminalCommand,
-            dataStream,
-            abortSignal: request.signal,
-            chatMetadata,
-            model,
-            supabase,
-            isPremiumUser: config.isPremiumUser,
-          };
 
           const result = streamText({
             model: myProvider.languageModel(config.selectedModel),
@@ -169,7 +158,19 @@ export async function POST(request: Request) {
                 console.error('[Chat] Stream Error:', error);
               }
             },
-            tools: createToolSchemas(toolConfig).getSelectedSchemas(
+            tools: createToolSchemas({
+              messages: validatedMessages,
+              profile,
+              agentMode: modelParams.agentMode,
+              confirmTerminalCommand: modelParams.confirmTerminalCommand,
+              dataStream,
+              abortSignal: request.signal,
+              chatMetadata,
+              model,
+              supabase,
+              isPremiumUser: config.isPremiumUser,
+              userCountryCode,
+            }).getSelectedSchemas(
               config.isLargeModel && !modelParams.isTemporaryChat
                 ? ['browser', 'webSearch', 'terminal']
                 : ['browser', 'webSearch'],

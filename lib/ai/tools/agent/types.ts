@@ -17,6 +17,7 @@ export interface ToolContext {
   setSandbox: (sandbox: Sandbox) => void;
   agentMode: AgentMode;
   sandboxManager?: SandboxManager;
+  userCountryCode: string | null;
 }
 
 // Constants for sandbox creation

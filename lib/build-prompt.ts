@@ -30,7 +30,7 @@ export async function buildFinalMessages(
 
   let CHUNK_SIZE = 12000;
   if (model === LargeModel.modelId) {
-    CHUNK_SIZE = 32000 - 4000; // -4000 for the system prompt, custom instructions, and more
+    CHUNK_SIZE = 24000 - 4000; // -4000 for the system prompt, custom instructions, and more
   } else if (model === SmallModel.modelId) {
     CHUNK_SIZE = 12000 - 4000; // -4000 for the system prompt, custom instructions, and more
   }

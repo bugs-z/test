@@ -1,12 +1,14 @@
 import { getSystemPrompt } from '@/lib/ai/prompts';
 import { toVercelChatMessages } from '@/lib/ai/message-utils';
-import { streamText } from 'ai';
+import { streamText, tool } from 'ai';
 import PostHogClient from '@/app/posthog';
 import { handleChatWithMetadata } from '../actions';
 import type { ChatMetadata, LLMID } from '@/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { generateTitleFromUserMessage } from '@/lib/ai/actions';
 import { myProvider } from '../providers';
+import { z } from 'zod';
+import { getPageContent } from './browser';
 
 interface ReasonLLMConfig {
   messages: any[];
@@ -75,6 +77,54 @@ export async function executeReasonLLMTool({
           messages: toVercelChatMessages(messages),
           maxTokens: 8192,
           abortSignal: abortSignal,
+          providerOptions: {
+            openai: {
+              reasoningSummary: 'auto',
+              reasoningEffort: 'high',
+            },
+          },
+          maxSteps: 2,
+          tools: {
+            open_url: tool({
+              description: `Use the browser tool to open a specific URL and extract its content. \
+Some examples of when to use the browser tool include:
+- When the user explicitly requests to visit, open, browse, or view a specific webpage or URL.
+- When the user directly instructs you to access a specific website they've mentioned.
+- When performing security testing, vulnerability assessment, or penetration testing of a website.
+
+Do not use browser tool for general information queries that can be answered without visiting a URL.
+Do not use browser tool if the user merely mentions a URL without explicitly asking you to open it.
+The browser tool cannot access IP addresses (like http://192.168.1.1), or non-standard URLs.
+
+The browser tool can extract content in two formats:
+- markdown: Use for general content reading and information extraction (default).
+- html: Use for security testing, vulnerability assessment, and penetration testing to analyze HTML \
+structure, forms, scripts, and potential security issues. Also use when HTML content would be more \
+beneficial for the user's needs.`,
+              parameters: z.object({
+                url: z.string().describe('The URL of the webpage to open'),
+                format: z
+                  .enum(['markdown', 'html'])
+                  .describe('The format of the output content.'),
+              }),
+              execute: async ({ url, format }) => {
+                dataStream.writeData({
+                  type: 'agent-status',
+                  content: 'browser',
+                });
+                const content = await getPageContent(url, format);
+                return content;
+              },
+            }),
+          },
+          onChunk: async (chuck) => {
+            if (chuck.chunk.type === 'tool-result') {
+              dataStream.writeData({
+                type: 'agent-status',
+                content: 'none',
+              });
+            }
+          },
           onError: async (error) => {
             console.error('[ReasonLLM] Stream Error:', error);
           },

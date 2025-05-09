@@ -19,6 +19,7 @@ interface ToolHandlerConfig {
   model: LLMID;
   supabase: SupabaseClient | null;
   isPremiumUser: boolean;
+  userCountryCode: string | null;
 }
 
 export async function handleToolExecution(config: ToolHandlerConfig) {
@@ -35,6 +36,7 @@ export async function handleToolExecution(config: ToolHandlerConfig) {
     model,
     supabase,
     isPremiumUser,
+    userCountryCode,
   } = config;
 
   switch (selectedPlugin) {
@@ -51,6 +53,7 @@ export async function handleToolExecution(config: ToolHandlerConfig) {
             chatMetadata,
             model,
             supabase,
+            userCountryCode,
           },
         });
       });
@@ -90,6 +93,7 @@ export async function handleToolExecution(config: ToolHandlerConfig) {
               model,
               supabase,
               isPremiumUser,
+              userCountryCode,
             },
           });
         });

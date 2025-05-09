@@ -28,6 +28,7 @@ interface TerminalToolConfig {
   model: LLMID;
   supabase: SupabaseClient | null;
   isPremiumUser: boolean;
+  userCountryCode: string | null;
   autoSelected?: boolean;
 }
 
@@ -45,6 +46,7 @@ export async function executeTerminalAgent({
     model,
     supabase,
     isPremiumUser,
+    userCountryCode,
     autoSelected,
   } = config;
   let messages = config.messages;
@@ -113,6 +115,7 @@ export async function executeTerminalAgent({
             setSandbox: sandboxManager.setSandbox.bind(sandboxManager),
             agentMode,
             sandboxManager,
+            userCountryCode,
           }),
           maxSteps: 10,
           toolChoice: 'required',

@@ -12,6 +12,7 @@ import {
   handleChatWithMetadata,
 } from '@/lib/ai/actions';
 import { truncateContentByTokens } from '@/lib/ai/terminal-utils';
+import { perplexity } from '@ai-sdk/perplexity';
 
 interface BrowserToolConfig {
   profile: any;
@@ -21,6 +22,7 @@ interface BrowserToolConfig {
   chatMetadata: ChatMetadata;
   model: LLMID;
   supabase: SupabaseClient | null;
+  userCountryCode: string | null;
 }
 
 async function getProviderConfig(profile: any) {
@@ -132,8 +134,8 @@ export async function browseMultiplePages(
 
 export function createBrowserPrompt(
   browserResult: string,
-  lastUserMessage: string,
   url: string,
+  lastUserMessage?: string,
 ): string {
   return `You have just browsed a webpage. The content you found is enclosed below:
 
@@ -142,12 +144,16 @@ export function createBrowserPrompt(
 <webpage_content>${browserResult}</webpage_content>
 </webpage>
 
-The user has the following query about this webpage:
+${
+  lastUserMessage
+    ? `The user has the following query about this webpage:
 
 <user_query>
 ${lastUserMessage}
 </user_query>
-
+`
+    : ''
+}
 With the information from the webpage content above, \
 respond to the user's query as if you have comprehensive knowledge of the page. \
 Provide a direct and insightful answer to the query. \
@@ -158,41 +164,6 @@ clearly state that you couldn't access the information and explain why.
 
 Important: Do not refer to "the webpage content provided" or "the information given" in your response. \
 Instead, answer as if you have directly attempted to view the webpage and are sharing your experience with it.`;
-}
-
-export function createMultiBrowserPrompt(
-  browserResults: Record<string, string>,
-  lastUserMessage: string,
-): string {
-  const webpageContentSections = Object.entries(browserResults)
-    .map(
-      ([url, content]) => `<webpage>
-<source>${url}</source>
-<webpage_content>${content}</webpage_content>
-</webpage>`,
-    )
-    .join('\n\n');
-
-  return `You have just browsed multiple webpages. The content you found is enclosed below:
-
-${webpageContentSections}
-
-The user has the following query about these webpages:
-
-<user_query>
-${lastUserMessage}
-</user_query>
-
-With the information from the webpage contents above, \
-respond to the user's query as if you have comprehensive knowledge of the pages. \
-Provide a direct and insightful answer to the query. \
-If the specific details are not present, draw upon related information to \
-offer valuable insights or suggest practical alternatives. \
-If any webpage content is empty, irrelevant, or indicates an error, \
-clearly state that you couldn't access the information and explain why.
-
-Important: Do not refer to "the webpage content provided" or "the information given" in your response. \
-Instead, answer as if you have directly attempted to view the webpages and are sharing your experience with them.`;
 }
 
 export async function executeBrowserTool({
@@ -240,12 +211,24 @@ export async function executeBrowserTool({
     await Promise.all([
       (async () => {
         const { fullStream } = streamText({
-          model,
+          model: perplexity('sonar'),
           system: systemPrompt,
           messages: [
             ...toVercelChatMessages(messages.slice(0, -1)),
             { role: 'user', content: browserPrompt },
           ],
+          providerOptions: {
+            perplexity: {
+              search_context_size: 'medium',
+              ...(config.userCountryCode && {
+                user_location: [
+                  {
+                    country: config.userCountryCode,
+                  },
+                ],
+              }),
+            },
+          },
           maxTokens: 2048,
           onError: async (error) => {
             console.error('[BrowserTool] Stream Error:', error);
@@ -265,8 +248,23 @@ export async function executeBrowserTool({
           },
         });
 
+        const citations: string[] = [];
+        let hasFirstTextDelta = false;
+
         for await (const delta of fullStream) {
+          if (delta.type === 'source') {
+            if (delta.source.sourceType === 'url') {
+              citations.push(delta.source.url);
+            }
+          }
+
           if (delta.type === 'text-delta') {
+            if (!hasFirstTextDelta) {
+              // Send citations after first text-delta
+              dataStream.writeData({ citations });
+              hasFirstTextDelta = true;
+            }
+
             dataStream.writeData({
               type: 'text-delta',
               content: delta.textDelta,
@@ -296,5 +294,20 @@ export async function executeBrowserTool({
       content: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
     });
     return 'Browser tool executed with errors';
+  }
+}
+
+export async function getPageContent(
+  url: string,
+  format: 'markdown' | 'html' = 'markdown',
+): Promise<string> {
+  try {
+    const browserResult = await browsePage(url, format);
+    const browserPrompt = createBrowserPrompt(browserResult, url);
+    return browserPrompt;
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
+    return `Error getting page content: ${url}. ${errorMessage}`;
   }
 }
