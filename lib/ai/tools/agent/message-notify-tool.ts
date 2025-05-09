@@ -17,6 +17,7 @@ export const createMessageNotifyTool = (context: ToolContext) => {
       text: z.string().describe('Message text to display to user'),
       attachments: z
         .union([z.string(), z.array(z.string())])
+        .nullable()
         .optional()
         .describe(
           '(Optional) List of attachments to show to user, should be file paths',
@@ -26,6 +27,11 @@ export const createMessageNotifyTool = (context: ToolContext) => {
       dataStream.writeData({
         type: 'agent-status',
         content: 'thinking',
+      });
+
+      dataStream.writeData({
+        type: 'text-delta',
+        content: `${text}\n\n`,
       });
 
       // Handle attachments if provided
@@ -42,12 +48,7 @@ export const createMessageNotifyTool = (context: ToolContext) => {
         });
       }
 
-      dataStream.writeData({
-        type: 'text-delta',
-        content: `${text}\n\n`,
-      });
-
-      return text;
+      return null;
     },
   });
 };

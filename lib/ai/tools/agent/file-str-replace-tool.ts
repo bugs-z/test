@@ -22,6 +22,10 @@ const replaceFileContent = async (
     // Perform string replacement
     const finalContent = existingContent.replace(oldStr, newStr);
 
+    // Count the number of replacements
+    const replacements = (existingContent.match(new RegExp(oldStr, 'g')) || [])
+      .length;
+
     // Write back to file
     await sandbox.files.write(file, finalContent);
 
@@ -31,7 +35,7 @@ const replaceFileContent = async (
       content: wrappedContent,
     });
 
-    return `Successfully replaced content in file: ${file}`;
+    return `Successfully replaced ${replacements} occurrence(s) of '${oldStr}' with '${newStr}' in ${file}`;
   } catch (error) {
     return handleFileError(error, 'replacing content in file');
   }
@@ -43,7 +47,7 @@ const replaceFileContent = async (
  * @returns The file string replacement tool
  */
 export const createFileStrReplaceTool = (context: ToolContext) => {
-  const { dataStream, userID, sandboxManager } = context;
+  const { dataStream, sandboxManager } = context;
 
   return tool({
     description:

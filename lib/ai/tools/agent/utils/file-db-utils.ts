@@ -8,7 +8,7 @@ export const saveFileToDatabase = async (
   userId: string,
   dataStream: any,
   append?: boolean,
-): Promise<FileAttachment | null> => {
+): Promise<FileAttachment | string> => {
   // Extract filename from path
   const fileName = filePath.split('/').pop() || 'untitled.txt';
 
@@ -30,8 +30,11 @@ export const saveFileToDatabase = async (
     const createdFile = await createAdminFile(file, fileRecord, append);
 
     if (!createdFile) {
-      console.error('Failed to create file');
-      return null;
+      dataStream.writeData({
+        type: 'text-delta',
+        content: `⚠️ Failed to attach file: ${fileName}\n`,
+      });
+      return `Failed to attach file: ${fileName}`;
     }
 
     const fileData: FileAttachment = {
@@ -52,8 +55,22 @@ export const saveFileToDatabase = async (
 
     return fileData;
   } catch (error) {
-    console.error('Error creating file:', error);
-    return null;
+    if (
+      error instanceof Error &&
+      error.message.includes('File must be less than')
+    ) {
+      dataStream.writeData({
+        type: 'text-delta',
+        content: `⚠️ File "${fileName}" is too large to be attached (must be less than 30MB)\n`,
+      });
+    } else {
+      console.error('Error creating file:', error);
+      dataStream.writeData({
+        type: 'text-delta',
+        content: `⚠️ Failed to attach file: ${fileName}\n`,
+      });
+    }
+    return `Failed to attach file: ${fileName}`;
   }
 };
 
@@ -70,24 +87,42 @@ export const handleMessageAttachments = async ({
   userID: string;
   dataStream: any;
   sandboxManager: SandboxManager;
-}) => {
-  if (!attachments) return;
+}): Promise<string | null> => {
+  if (!attachments) return null;
 
   try {
     // Get sandbox from manager
     const { sandbox: currentSandbox } = await sandboxManager.getSandbox();
 
     const filePaths = Array.isArray(attachments) ? attachments : [attachments];
+    const errors: string[] = [];
 
     for (const filePath of filePaths) {
       try {
         const content = await currentSandbox.files.read(filePath);
-        await saveFileToDatabase(filePath, content, userID, dataStream);
+        const result = await saveFileToDatabase(
+          filePath,
+          content,
+          userID,
+          dataStream,
+        );
+
+        if (typeof result === 'string') {
+          errors.push(`Error processing ${filePath}: ${result}`);
+        }
       } catch (error) {
-        // Continue with other attachments even if one fails
+        errors.push(
+          `Error processing ${filePath}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        );
       }
     }
+
+    if (errors.length > 0) {
+      return errors.join('\n');
+    }
+
+    return null;
   } catch (error) {
-    // Continue with message even if attachment handling fails
+    return `Error handling attachments: ${error instanceof Error ? error.message : 'Unknown error'}`;
   }
 };

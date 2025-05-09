@@ -1,5 +1,5 @@
 import { executeWebSearchTool } from './web-search';
-import { executeTerminalAgent } from './terminal-agent';
+import { executeTerminalAgent } from './pentest-agent';
 import { executeBrowserTool } from './browser';
 import { z } from 'zod';
 import type { AgentMode, LLMID } from '@/types/llms';

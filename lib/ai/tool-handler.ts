@@ -1,6 +1,5 @@
 import { PluginID } from '@/types/plugins';
-import { executeWebSearchTool } from '@/lib/ai/tools/web-search';
-import { executeTerminalAgent } from '@/lib/ai/tools/terminal-agent';
+import { executeTerminalAgent } from '@/lib/ai/tools/pentest-agent';
 import { executeReasonLLMTool } from '@/lib/ai/tools/reason-llm';
 import { createStreamResponse } from '@/lib/ai-helper';
 import type { ChatMetadata, BuiltChatMessage, AgentMode, LLMID } from '@/types';
@@ -40,24 +39,6 @@ export async function handleToolExecution(config: ToolHandlerConfig) {
   } = config;
 
   switch (selectedPlugin) {
-    case PluginID.WEB_SEARCH:
-      return createStreamResponse(async (dataStream) => {
-        await executeWebSearchTool({
-          config: {
-            messages,
-            profile,
-            dataStream,
-            isLargeModel,
-            directToolCall: true,
-            abortSignal,
-            chatMetadata,
-            model,
-            supabase,
-            userCountryCode,
-          },
-        });
-      });
-
     case PluginID.REASONING:
       return createStreamResponse(async (dataStream) => {
         await executeReasonLLMTool({

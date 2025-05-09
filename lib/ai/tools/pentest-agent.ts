@@ -170,6 +170,11 @@ export async function executeTerminalAgent({
               customFinishReason = 'idle';
               shouldStop = true;
             } else if (chunk.toolName === 'message_ask_user') {
+              dataStream.writeData({
+                type: 'text-delta',
+                content: chunk.args?.text,
+              });
+
               // Handle attachments if provided
               if (chunk.args?.attachments) {
                 await handleMessageAttachments({
@@ -180,10 +185,6 @@ export async function executeTerminalAgent({
                 });
               }
 
-              dataStream.writeData({
-                type: 'text-delta',
-                content: chunk.args?.text,
-              });
               dataStream.writeData({ finishReason: 'message_ask_user' });
               customFinishReason = 'message_ask_user';
               shouldStop = true;

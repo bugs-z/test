@@ -62,7 +62,7 @@ export const createWebSearchTool = (context: ToolContext) => {
           content: wrappedContent,
         });
 
-        return wrappedContent;
+        return JSON.stringify(searchResult.data);
       } catch (error) {
         console.error('Web search error:', error);
         return 'Failed to perform web search';

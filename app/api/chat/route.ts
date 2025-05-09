@@ -70,15 +70,14 @@ export async function POST(request: Request) {
     let toolUsed = '';
     supabase = await createClient();
 
-    const { messages: validatedMessages, systemPrompt } =
-      await processChatMessages(
-        messages,
-        config.selectedModel,
-        modelParams,
-        config.isLargeModel,
-        profile,
-        supabase,
-      );
+    const { processedMessages, systemPrompt } = await processChatMessages(
+      messages,
+      config.selectedModel,
+      modelParams,
+      config.isLargeModel,
+      profile,
+      supabase,
+    );
 
     request.signal.addEventListener('abort', async () => {
       const isTerminalUsed =
@@ -94,14 +93,14 @@ export async function POST(request: Request) {
           profile,
           model,
           title: generatedTitle,
-          messages: validatedMessages,
+          messages: processedMessages,
           finishReason: isTerminalUsed ? 'aborted' : 'stop',
         });
       }
     });
 
     const toolResponse = await handleToolExecution({
-      messages: validatedMessages,
+      messages: processedMessages,
       profile,
       isTerminalContinuation: modelParams.isTerminalContinuation,
       selectedPlugin: modelParams.selectedPlugin,
@@ -138,7 +137,7 @@ export async function POST(request: Request) {
           const result = streamText({
             model: myProvider.languageModel(config.selectedModel),
             system: systemPrompt,
-            messages: toVercelChatMessages(validatedMessages, true),
+            messages: toVercelChatMessages(processedMessages, true),
             maxTokens: 2048,
             abortSignal: request.signal,
             experimental_transform: smoothStream({ chunking: 'word' }),
@@ -159,7 +158,7 @@ export async function POST(request: Request) {
               }
             },
             tools: createToolSchemas({
-              messages: validatedMessages,
+              messages: processedMessages,
               profile,
               agentMode: modelParams.agentMode,
               confirmTerminalCommand: modelParams.confirmTerminalCommand,
@@ -183,7 +182,7 @@ export async function POST(request: Request) {
                   profile,
                   model,
                   title: generatedTitle,
-                  messages: validatedMessages,
+                  messages: processedMessages,
                   finishReason,
                 });
               }

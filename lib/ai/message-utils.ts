@@ -185,32 +185,35 @@ export function messagesIncludeImages(messages: BuiltChatMessage[]): boolean {
 }
 
 /**
- * Filters out empty assistant messages and their preceding user messages
+ * Validates and filters chat messages to ensure they are properly structured and non-empty
  * @param messages - Array of messages to validate
  * @returns Filtered array with valid messages only
  */
-export function validateMessages(messages: any[]) {
-  const validMessages = [];
+export function validateMessages(
+  messages: BuiltChatMessage[],
+): BuiltChatMessage[] {
+  const validMessages: BuiltChatMessage[] = [];
 
   for (let i = 0; i < messages.length; i++) {
     const currentMessage = messages[i];
-    const nextMessage = messages[i + 1];
 
-    // Skip empty assistant responses (Mistral-specific)
-    const isInvalidExchange =
+    // Skip messages without required properties
+    if (!currentMessage || !currentMessage.role || !currentMessage.content) {
+      continue;
+    }
+
+    // Skip user messages that are followed by empty assistant responses
+    const nextMessage = messages[i + 1];
+    if (
       currentMessage.role === 'user' &&
       nextMessage?.role === 'assistant' &&
-      !nextMessage.content;
-
-    if (isInvalidExchange) {
+      !nextMessage.content
+    ) {
       i++; // Skip next message
       continue;
     }
 
-    // Keep valid messages
-    if (currentMessage.role !== 'assistant' || currentMessage.content) {
-      validMessages.push(currentMessage);
-    }
+    validMessages.push(currentMessage);
   }
 
   return validMessages;
@@ -278,7 +281,7 @@ export async function processChatMessages(
   profile: { user_id: string; profile_context: string },
   supabase?: SupabaseClient,
 ): Promise<{
-  messages: BuiltChatMessage[];
+  processedMessages: BuiltChatMessage[];
   systemPrompt: string;
 }> {
   let shouldUncensor = false;
@@ -308,18 +311,18 @@ export async function processChatMessages(
 
   filterEmptyAssistantMessages(processedMessages);
 
-  // Validate total token count before processing attachments
+  // Validate total token count
   validateMessageTokens(processedMessages, profile?.user_id);
+
+  // Remove invalid message exchanges before processing attachments
+  const validatedMessages = validateMessages(processedMessages);
 
   // Process attachments and file content for the last message
   const messagesWithAttachments = await processMessageContentWithAttachments(
-    processedMessages,
+    validatedMessages,
     profile.user_id,
     isReasoning,
   );
-
-  // Remove invalid message exchanges
-  const validatedMessages = validateMessages(messagesWithAttachments);
 
   const systemPrompt = getSystemPrompt({
     selectedChatModel: selectedModel,
@@ -327,7 +330,7 @@ export async function processChatMessages(
   });
 
   return {
-    messages: validatedMessages,
+    processedMessages: messagesWithAttachments,
     systemPrompt,
   };
 }

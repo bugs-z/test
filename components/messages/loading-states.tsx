@@ -34,7 +34,7 @@ export const loadingStates = {
   },
   [PluginID.TERMINAL]: {
     icon: <SquareTerminal size={20} />,
-    text: 'Using terminal agent...',
+    text: 'Using pentest agent...',
   },
 };
 

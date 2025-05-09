@@ -40,7 +40,7 @@ const readAndProcessFile = async (
       content: wrappedContent,
     });
 
-    return `<pgptml:file_read path="${filePath}">${truncateContentByTokens(processedContent)}</pgptml:file_read>\n\n`;
+    return `${truncateContentByTokens(processedContent)}`;
   } catch (error) {
     return handleFileError(error, 'processing file');
   }

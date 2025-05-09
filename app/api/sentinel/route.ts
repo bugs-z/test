@@ -5,7 +5,10 @@ export async function POST(req: Request) {
     const { error } = await req.json();
 
     // Only log errors that are not "Failed to fetch"
-    if (error?.message !== 'TypeError: Failed to fetch') {
+    if (
+      error?.message !== 'TypeError: Load failed' &&
+      error?.message !== 'Failed to fetch'
+    ) {
       console.error(error);
     }
 

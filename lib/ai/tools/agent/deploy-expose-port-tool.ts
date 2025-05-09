@@ -26,7 +26,7 @@ export const createDeployExposePortTool = (context: ToolContext) => {
       const host = sandbox.getHost(port);
       const publicUrl = `https://${host}`;
 
-      const message = `Port ${port} has been exposed. Public URL: ${publicUrl}\n\n`;
+      const message = `Port ${port} has been successfully exposed. Public URL: ${publicUrl}`;
       return message;
     },
   });

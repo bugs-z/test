@@ -62,7 +62,7 @@ const writeFileContent = async (
       content: wrappedContent,
     });
 
-    return wrappedContent;
+    return `Successfully ${mode} file ${file}`;
   } catch (error) {
     return handleFileError(error, 'writing to file');
   }
@@ -74,7 +74,7 @@ const writeFileContent = async (
  * @returns The file write tool
  */
 export const createFileWriteTool = (context: ToolContext) => {
-  const { dataStream, userID, sandboxManager } = context;
+  const { dataStream, sandboxManager } = context;
 
   return tool({
     description:

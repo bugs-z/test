@@ -12,6 +12,7 @@ export const createMessageAskTool = () => {
       text: z.string().describe('Question text to present to user'),
       attachments: z
         .union([z.string(), z.array(z.string())])
+        .nullable()
         .optional()
         .describe(
           '(Optional) List of attachments to show to user, should be file paths',
