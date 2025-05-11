@@ -3,7 +3,6 @@ export interface DataPartValue {
   type?: string;
   content?: string;
   finishReason?: string;
-  sandboxType?: 'persistent-sandbox' | 'temporary-sandbox';
   elapsed_secs?: number;
   chatTitle?: string | null;
 }

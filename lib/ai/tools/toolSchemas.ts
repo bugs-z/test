@@ -1,34 +1,27 @@
 import { executeWebSearchTool } from './web-search';
-import { executeTerminalAgent } from './pentest-agent';
 import { executeBrowserTool } from './browser';
 import { z } from 'zod';
-import type { AgentMode, LLMID } from '@/types/llms';
+import type { LLMID } from '@/types/llms';
 import type { ChatMetadata } from '@/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 export const createToolSchemas = ({
   messages,
   profile,
-  agentMode,
-  confirmTerminalCommand,
   dataStream,
   abortSignal,
   chatMetadata,
   model,
   supabase,
-  isPremiumUser,
   userCountryCode,
 }: {
   messages: any;
   profile: any;
-  agentMode: AgentMode;
-  confirmTerminalCommand: boolean;
   dataStream: any;
   abortSignal: AbortSignal;
   chatMetadata: ChatMetadata;
   model: LLMID;
   supabase: SupabaseClient | null;
-  isPremiumUser: boolean;
   userCountryCode: string | null;
 }) => {
   const allSchemas = {
@@ -124,24 +117,6 @@ This tool executes terminal commands in a Debian GNU/Linux 12 environment with r
             'Set to true to use the terminal for executing terminal commands. Select immediately when terminal operations are needed.',
           ),
       }),
-      execute: async () => {
-        return executeTerminalAgent({
-          config: {
-            messages,
-            profile,
-            agentMode,
-            confirmTerminalCommand,
-            dataStream,
-            abortSignal,
-            chatMetadata,
-            model,
-            supabase,
-            isPremiumUser,
-            userCountryCode,
-            autoSelected: true,
-          },
-        });
-      },
     },
   };
 

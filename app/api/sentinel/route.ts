@@ -7,7 +7,8 @@ export async function POST(req: Request) {
     // Only log errors that are not "Failed to fetch"
     if (
       error?.message !== 'TypeError: Load failed' &&
-      error?.message !== 'Failed to fetch'
+      error?.message !== 'Failed to fetch' &&
+      error?.message !== 'TypeError: Failed to fetch'
     ) {
       console.error(error);
     }

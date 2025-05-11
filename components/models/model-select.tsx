@@ -1,12 +1,16 @@
 import { PentestGPTContext } from '@/context/context';
-import type { LLM, LLMID } from '@/types';
+import type { LLMID } from '@/types';
 import { Circle, CircleCheck } from 'lucide-react';
 import { type FC, useContext, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ModelIcon } from './model-icon';
 import { Button } from '../ui/button';
 import { LLM_LIST } from '@/lib/models/llm-list';
-import { LargeModel, SmallModel } from '@/lib/models/hackerai-llm-list';
+import {
+  LargeModel,
+  ReasoningModel,
+  SmallModel,
+} from '@/lib/models/hackerai-llm-list';
 
 interface ModelSelectProps {
   selectedModelId: LLMID;
@@ -37,7 +41,11 @@ export const ModelSelect: FC<ModelSelectProps> = ({
   };
 
   // Define the specific order of models
-  const modelOrder: LLMID[] = [LargeModel.modelId, SmallModel.modelId];
+  const modelOrder: LLMID[] = [
+    LargeModel.modelId,
+    SmallModel.modelId,
+    ReasoningModel.modelId,
+  ];
 
   // Sort the models based on the predefined order
   const sortedModels = LLM_LIST.sort((a, b) => {
@@ -45,19 +53,6 @@ export const ModelSelect: FC<ModelSelectProps> = ({
     const indexB = modelOrder.indexOf(b.modelId as LLMID);
     return indexA - indexB;
   });
-
-  // Group the sorted models by provider
-  const groupedSortedModels = sortedModels.reduce<Record<string, LLM[]>>(
-    (groups, model) => {
-      const key = model.provider;
-      if (!groups[key]) {
-        groups[key] = [];
-      }
-      groups[key].push(model);
-      return groups;
-    },
-    {},
-  );
 
   if (!profile) return null;
 
@@ -78,11 +73,6 @@ export const ModelSelect: FC<ModelSelectProps> = ({
       description: 'Great for everyday tasks',
     },
   ];
-
-  const modelDescriptions: Record<string, string> = {
-    [LargeModel.modelId]: 'Great for most questions',
-    [SmallModel.modelId]: 'Faster for most questions',
-  };
 
   return (
     <div className="flex size-full flex-col">
@@ -124,44 +114,33 @@ export const ModelSelect: FC<ModelSelectProps> = ({
             <div className="px-2 py-1 text-sm font-light text-muted-foreground">
               Model
             </div>
-            {Object.entries(groupedSortedModels).map(([provider, models]) => {
-              const filteredModels = models;
-
-              if (filteredModels.length === 0) return null;
-
-              return (
-                <div key={provider}>
-                  <div className="space-y-2">
-                    {filteredModels.map((model) => (
-                      <div
-                        key={model.modelId}
-                        className="hover:bg-accent flex w-full cursor-pointer items-center space-x-3 truncate rounded p-2"
-                        onClick={() => handleSelectModel(model.modelId)}
-                      >
-                        <div className="flex min-w-0 flex-1 items-center space-x-3">
-                          <div className="min-w-0 flex-1">
-                            <div className="truncate text-sm font-medium">
-                              {model.modelName}
-                            </div>
-                            <div className="text-muted-foreground truncate text-xs">
-                              {modelDescriptions[model.modelId] ||
-                                'Advanced AI model'}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="shrink-0">
-                          {selectedModelId === model.modelId ? (
-                            <CircleCheck size={22} />
-                          ) : (
-                            <Circle size={22} className="opacity-50" />
-                          )}
-                        </div>
+            <div className="space-y-2">
+              {sortedModels.map((model) => (
+                <div
+                  key={model.modelId}
+                  className="hover:bg-accent flex w-full cursor-pointer items-center space-x-3 truncate rounded p-2"
+                  onClick={() => handleSelectModel(model.modelId)}
+                >
+                  <div className="flex min-w-0 flex-1 items-center space-x-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium">
+                        {model.modelName}
                       </div>
-                    ))}
+                      <div className="text-muted-foreground truncate text-xs">
+                        {model.description}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="shrink-0">
+                    {selectedModelId === model.modelId ? (
+                      <CircleCheck size={22} />
+                    ) : (
+                      <Circle size={22} className="opacity-50" />
+                    )}
                   </div>
                 </div>
-              );
-            })}
+              ))}
+            </div>
           </>
         )}
       </div>

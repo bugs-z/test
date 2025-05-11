@@ -14,7 +14,7 @@ export const availablePlugins: PluginSummary[] = [
   {
     id: 2,
     name: 'Pentest Agent',
-    value: PluginID.TERMINAL,
+    value: PluginID.PENTEST_AGENT,
     categories: ['utils'],
     icon: 'https://cdn-icons-png.flaticon.com/128/5576/5576886.png',
     invertInDarkMode: true,

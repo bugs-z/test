@@ -12,6 +12,10 @@ export const loadingStates = {
     icon: <FileText size={20} />,
     text: 'Reading documents...',
   },
+  thinking: {
+    icon: <Atom size={20} />,
+    text: 'Thinking...',
+  },
   [PluginID.WEB_SEARCH]: {
     icon: <Globe size={20} />,
     text: 'Searching the web...',
@@ -20,19 +24,7 @@ export const loadingStates = {
     icon: <Globe size={20} />,
     text: 'Browsing the web...',
   },
-  [PluginID.REASONING]: {
-    icon: <Atom size={20} />,
-    text: 'Thinking...',
-  },
-  'temporary-sandbox': {
-    icon: <SquareTerminal size={20} />,
-    text: 'Connecting to sandbox...',
-  },
-  'persistent-sandbox': {
-    icon: <SquareTerminal size={20} />,
-    text: 'Connecting to sandbox...',
-  },
-  [PluginID.TERMINAL]: {
+  [PluginID.PENTEST_AGENT]: {
     icon: <SquareTerminal size={20} />,
     text: 'Using pentest agent...',
   },

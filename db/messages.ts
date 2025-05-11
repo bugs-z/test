@@ -108,49 +108,73 @@ export const createMessages = async (
   chatId: string | null,
   setChatFiles?: React.Dispatch<React.SetStateAction<Tables<'files'>[]>>,
 ) => {
-  const { data: createdMessages, error } = await supabase
-    .from('messages')
-    .insert(messages)
-    .select('*');
+  const maxRetries = 3;
+  const retryDelay = 2000;
 
-  if (error) {
-    throw new Error(error.message);
-  }
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const { data: createdMessages, error } = await supabase
+        .from('messages')
+        .insert(messages)
+        .select('*');
 
-  const fileIds = newChatFiles
-    .map((file) => file.id)
-    .filter((id) => id !== undefined);
+      if (error) {
+        // When user aborts, we need to retry because the chat might not be created yet
+        // This happens because the abort signal is sent before the chat is fully created
+        if (error.code === '23503' && error.details.includes('chats')) {
+          if (attempt < maxRetries) {
+            console.log(
+              `Retrying message creation (attempt ${attempt}/${maxRetries})...`,
+            );
+            await new Promise((resolve) => setTimeout(resolve, retryDelay));
+            continue;
+          }
+        }
+        throw new Error(error.message);
+      }
 
-  if (fileIds.length > 0) {
-    const { data: files, error: filesError } = await supabase
-      .from('files')
-      .update({ message_id: createdMessages[0].id, chat_id: chatId })
-      .in('id', fileIds)
-      .is('message_id', null)
-      .select('*');
+      const fileIds = newChatFiles
+        .map((file) => file.id)
+        .filter((id) => id !== undefined);
 
-    if (setChatFiles) {
-      setChatFiles((prev) =>
-        prev.map((file) =>
-          fileIds.includes(file.id)
-            ? { ...file, message_id: createdMessages[0].id }
-            : file,
-        ),
-      );
+      if (fileIds.length > 0) {
+        const { data: files, error: filesError } = await supabase
+          .from('files')
+          .update({ message_id: createdMessages[0].id, chat_id: chatId })
+          .in('id', fileIds)
+          .is('message_id', null)
+          .select('*');
+
+        if (setChatFiles) {
+          setChatFiles((prev) =>
+            prev.map((file) =>
+              fileIds.includes(file.id)
+                ? { ...file, message_id: createdMessages[0].id }
+                : file,
+            ),
+          );
+        }
+
+        if (filesError) {
+          throw new Error(filesError.message);
+        }
+
+        await localDB.files.updateMany(files);
+      }
+
+      for (const message of createdMessages) {
+        await localDB.messages.update(message);
+      }
+
+      return createdMessages;
+    } catch (error: any) {
+      if (attempt === maxRetries) {
+        throw error;
+      }
     }
-
-    if (filesError) {
-      throw new Error(filesError.message);
-    }
-
-    await localDB.files.updateMany(files);
   }
 
-  for (const message of createdMessages) {
-    await localDB.messages.update(message);
-  }
-
-  return createdMessages;
+  throw new Error('Failed to create messages after maximum retries');
 };
 
 export const updateMessage = async (

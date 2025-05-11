@@ -1,8 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { MessageMarkdown } from './message-markdown';
-import { ChevronDown, ChevronUp, Atom } from 'lucide-react';
+import { ChevronRight, ChevronDown, Atom } from 'lucide-react';
 import { useUIContext } from '@/context/ui-context';
-import { PluginID } from '@/types/plugins';
 import { MessageCitations } from './message-citations';
 
 interface MessageThinkingProps {
@@ -20,8 +19,8 @@ export const MessageThinking: React.FC<MessageThinkingProps> = ({
   isAssistant,
   citations = [],
 }) => {
-  const { toolInUse } = useUIContext();
-  const [closedBlocks, setClosedBlocks] = useState(new Set<number>());
+  const { isGenerating } = useUIContext();
+  const [closedBlocks, setClosedBlocks] = useState(new Set<number>([0]));
   const toggleBlock = useCallback((index: number) => {
     setClosedBlocks((prev) => {
       const newSet = new Set(prev);
@@ -59,10 +58,7 @@ export const MessageThinking: React.FC<MessageThinkingProps> = ({
     return <MessageMarkdown content={content} isAssistant={isAssistant} />;
   }
 
-  const isThinking =
-    (toolInUse === PluginID.REASONING ||
-      toolInUse === PluginID.REASONING_WEB_SEARCH) &&
-    !content;
+  const isThinking = isGenerating && !content;
   const thinkingTitle = isThinking
     ? 'Thinking...'
     : formatThinkingTime(thinking_elapsed_secs);
@@ -83,9 +79,9 @@ export const MessageThinking: React.FC<MessageThinkingProps> = ({
             <Atom size={20} />
             <h4 className="text-muted-foreground ml-2 mr-1">{thinkingTitle}</h4>
             {closedBlocks.has(0) ? (
-              <ChevronDown size={16} />
+              <ChevronRight size={16} />
             ) : (
-              <ChevronUp size={16} />
+              <ChevronDown size={16} />
             )}
           </div>
         </button>

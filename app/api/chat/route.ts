@@ -17,8 +17,10 @@ import {
 } from '@/lib/ai/actions';
 import { createClient } from '@/lib/supabase/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { waitUntil } from '@vercel/functions';
 
-export const maxDuration = 600;
+// Increased max duration to allow for long reasoning tool responses
+export const maxDuration = 180;
 
 export const preferredRegion = [
   'iad1',
@@ -65,6 +67,8 @@ export async function POST(request: Request) {
       );
     }
 
+    const isReasoningModel =
+      model === 'reasoning-model' || modelParams.selectedPlugin === 'reasoning';
     let supabase: SupabaseClient | null = null;
     let generatedTitle: string | undefined;
     let toolUsed = '';
@@ -76,43 +80,36 @@ export async function POST(request: Request) {
       modelParams,
       config.isLargeModel,
       profile,
+      isReasoningModel,
       supabase,
     );
 
     request.signal.addEventListener('abort', async () => {
-      const isTerminalUsed =
-        modelParams.isTerminalContinuation ||
-        modelParams.confirmTerminalCommand ||
-        modelParams.selectedPlugin === PluginID.TERMINAL ||
-        toolUsed === 'terminal';
-
       if (chatMetadata.id) {
-        await handleChatWithMetadata({
-          supabase,
-          chatMetadata,
-          profile,
-          model,
-          title: generatedTitle,
-          messages: processedMessages,
-          finishReason: isTerminalUsed ? 'aborted' : 'stop',
-        });
+        waitUntil(
+          handleChatWithMetadata({
+            supabase,
+            chatMetadata,
+            profile,
+            model,
+            title: generatedTitle,
+            messages,
+            finishReason: 'stop',
+          }),
+        );
       }
     });
 
     const toolResponse = await handleToolExecution({
       messages: processedMessages,
       profile,
-      isTerminalContinuation: modelParams.isTerminalContinuation,
-      selectedPlugin: modelParams.selectedPlugin,
       isLargeModel: config.isLargeModel,
-      agentMode: modelParams.agentMode,
-      confirmTerminalCommand: modelParams.confirmTerminalCommand,
       abortSignal: request.signal,
       chatMetadata,
       model,
       supabase,
-      isPremiumUser: config.isPremiumUser,
-      userCountryCode,
+      isReasoningModel,
+      rateLimitInfo: config.rateLimitInfo,
     });
     if (toolResponse) {
       return toolResponse;
@@ -160,14 +157,11 @@ export async function POST(request: Request) {
             tools: createToolSchemas({
               messages: processedMessages,
               profile,
-              agentMode: modelParams.agentMode,
-              confirmTerminalCommand: modelParams.confirmTerminalCommand,
               dataStream,
               abortSignal: request.signal,
               chatMetadata,
               model,
               supabase,
-              isPremiumUser: config.isPremiumUser,
               userCountryCode,
             }).getSelectedSchemas(
               config.isLargeModel && !modelParams.isTemporaryChat
@@ -182,7 +176,7 @@ export async function POST(request: Request) {
                   profile,
                   model,
                   title: generatedTitle,
-                  messages: processedMessages,
+                  messages,
                   finishReason,
                 });
               }
@@ -226,6 +220,7 @@ async function getProviderConfig(
     'mistral-medium': 'chat-model-small-with-tools',
     'mistral-large': 'chat-model-large-with-tools',
     'gpt-4-turbo-preview': 'chat-model-large-with-tools',
+    'reasoning-model': 'reasoning-model',
   };
   // Moving away from gpt-4-turbo-preview to pentestgpt-pro
   const rateLimitModelMap: Record<string, string> = {

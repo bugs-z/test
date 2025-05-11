@@ -1,7 +1,7 @@
 import { PentestGPTContext } from '@/context/context';
 import { cn } from '@/lib/utils';
 import { PluginID } from '@/types/plugins';
-import { SquareTerminal, Paperclip, Atom } from 'lucide-react';
+import { SquareTerminal, Paperclip } from 'lucide-react';
 import { useContext, useState } from 'react';
 import { WithTooltip } from '../../ui/with-tooltip';
 import { useUIContext } from '@/context/ui-context';
@@ -43,17 +43,9 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
     }
 
     setSelectedPlugin(
-      selectedPlugin === PluginID.TERMINAL ? PluginID.NONE : PluginID.TERMINAL,
-    );
-  };
-
-  const handleReasonLLMToggle = () => {
-    if (hasImageAttached) return;
-
-    setSelectedPlugin(
-      selectedPlugin === PluginID.REASONING
+      selectedPlugin === PluginID.PENTEST_AGENT
         ? PluginID.NONE
-        : PluginID.REASONING,
+        : PluginID.PENTEST_AGENT,
     );
   };
 
@@ -83,54 +75,6 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
         />
       )}
 
-      {/* Reason LLM Toggle */}
-      <WithTooltip
-        delayDuration={TOOLTIP_DELAY}
-        side="top"
-        display={
-          selectedPlugin !== PluginID.REASONING && (
-            <div className="flex flex-col">
-              <p className="font-medium">Think before responding</p>
-            </div>
-          )
-        }
-        trigger={
-          <div
-            className={cn(
-              'relative flex flex-row items-center rounded-lg transition-colors duration-300',
-              selectedPlugin === PluginID.REASONING
-                ? 'bg-primary/10'
-                : 'hover:bg-black/10 dark:hover:bg-white/10',
-              hasImageAttached && 'pointer-events-none opacity-50',
-            )}
-            onClick={handleReasonLLMToggle}
-          >
-            <Atom
-              className={cn(
-                'cursor-pointer rounded-lg rounded-bl-xl p-1 focus-visible:outline-black dark:focus-visible:outline-white',
-                selectedPlugin === PluginID.REASONING
-                  ? 'text-primary'
-                  : 'opacity-50',
-              )}
-              size={32}
-            />
-            <div
-              className={cn(
-                'whitespace-nowrap text-xs font-medium',
-                'transition-all duration-300',
-                !isMobile && 'max-w-[100px] pr-2',
-                isMobile &&
-                  (selectedPlugin === PluginID.REASONING
-                    ? 'max-w-[100px] pr-2 opacity-100'
-                    : 'max-w-0 opacity-0'),
-              )}
-            >
-              Reason
-            </div>
-          </div>
-        }
-      />
-
       {/* Terminal Tool - Only show if not in temporary chat */}
       {!isTemporaryChat && (
         <WithTooltip
@@ -153,7 +97,7 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
             <div
               className={cn(
                 'relative flex flex-row items-center rounded-lg transition-colors duration-300',
-                selectedPlugin === PluginID.TERMINAL
+                selectedPlugin === PluginID.PENTEST_AGENT
                   ? 'bg-primary/10'
                   : 'hover:bg-black/10 dark:hover:bg-white/10',
                 hasImageAttached &&
@@ -166,7 +110,7 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
               <SquareTerminal
                 className={cn(
                   'cursor-pointer rounded-lg rounded-bl-xl p-1 focus-visible:outline-black dark:focus-visible:outline-white',
-                  selectedPlugin === PluginID.TERMINAL
+                  selectedPlugin === PluginID.PENTEST_AGENT
                     ? 'text-primary'
                     : 'opacity-50',
                 )}
@@ -178,7 +122,7 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
                   'transition-all duration-300',
                   !isMobile && 'max-w-[100px] pr-2',
                   isMobile &&
-                    (selectedPlugin === PluginID.TERMINAL
+                    (selectedPlugin === PluginID.PENTEST_AGENT
                       ? 'max-w-[100px] pr-2 opacity-100'
                       : 'max-w-0 opacity-0'),
                 )}

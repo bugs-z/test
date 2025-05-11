@@ -25,11 +25,6 @@ export const createMessageNotifyTool = (context: ToolContext) => {
     }),
     execute: async ({ text, attachments }) => {
       dataStream.writeData({
-        type: 'agent-status',
-        content: 'thinking',
-      });
-
-      dataStream.writeData({
         type: 'text-delta',
         content: `${text}\n\n`,
       });

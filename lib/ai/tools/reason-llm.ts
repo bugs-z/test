@@ -3,7 +3,7 @@ import { toVercelChatMessages } from '@/lib/ai/message-utils';
 import { streamText, tool } from 'ai';
 import PostHogClient from '@/app/posthog';
 import { handleChatWithMetadata } from '../actions';
-import type { ChatMetadata, LLMID } from '@/types';
+import type { ChatMetadata, LLMID, RateLimitInfo } from '@/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { generateTitleFromUserMessage } from '@/lib/ai/actions';
 import { myProvider } from '../providers';
@@ -19,6 +19,7 @@ interface ReasonLLMConfig {
   chatMetadata: ChatMetadata;
   model: LLMID;
   supabase: SupabaseClient | null;
+  rateLimitInfo: RateLimitInfo;
 }
 
 async function getProviderConfig(profile: any) {
@@ -65,6 +66,11 @@ export async function executeReasonLLMTool({
       },
     });
   }
+
+  dataStream.writeData({
+    type: 'ratelimit',
+    content: config.rateLimitInfo,
+  });
 
   let generatedTitle: string | undefined;
 

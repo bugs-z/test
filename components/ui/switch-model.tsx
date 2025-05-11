@@ -8,8 +8,11 @@ import React, {
 } from 'react';
 import { ChevronDown, Repeat } from 'lucide-react';
 import { WithTooltip } from './with-tooltip';
-import { GPT4 } from '@/lib/models/openai-llm-list';
-import { SmallModel, LargeModel } from '@/lib/models/hackerai-llm-list';
+import {
+  SmallModel,
+  LargeModel,
+  ReasoningModel,
+} from '@/lib/models/hackerai-llm-list';
 import type { LLMID } from '@/types';
 import {
   Menu,
@@ -28,12 +31,12 @@ interface SwitchModelProps {
 
 const getModelDisplayName = (modelId: string): string => {
   switch (modelId) {
-    case GPT4.modelId:
-      return '4.1';
     case SmallModel.modelId:
       return 'small';
     case LargeModel.modelId:
       return 'large';
+    case ReasoningModel.modelId:
+      return 'reason';
     default:
       return modelId;
   }
@@ -136,7 +139,7 @@ export const SwitchModel: FC<SwitchModelProps> = ({
               shouldOpenUpward ? 'bottom-full mb-2' : 'top-full mt-2'
             } ${
               shouldCenter ? 'left-1/2 -translate-x-1/2' : 'left-0'
-            } origin- min-w-[180px] whitespace-nowrap${shouldOpenUpward ? 'bottom' : 'top'} bg-secondary ring/5 rounded-md shadow-lg ring-1 ring-black focus:outline-hidden`}
+            } origin- min-w-[220px] whitespace-nowrap${shouldOpenUpward ? 'bottom' : 'top'} bg-secondary ring/5 rounded-md shadow-lg ring-1 ring-black focus:outline-hidden`}
           >
             <div className="p-1">
               <div className="text-muted-foreground p-2 text-sm">
@@ -146,6 +149,7 @@ export const SwitchModel: FC<SwitchModelProps> = ({
               {[
                 { id: LargeModel.modelId, name: 'Large Model' },
                 { id: SmallModel.modelId, name: 'Small Model' },
+                { id: ReasoningModel.modelId, name: 'Reasoning Model' },
               ]
                 .filter((model) => model.id !== currentModel)
                 .map(({ id, name }) => (
@@ -175,6 +179,7 @@ export const SwitchModel: FC<SwitchModelProps> = ({
               {[
                 { id: LargeModel.modelId, name: 'Large Model' },
                 { id: SmallModel.modelId, name: 'Small Model' },
+                { id: ReasoningModel.modelId, name: 'Reasoning Model' },
               ]
                 .filter((model) => model.id === currentModel)
                 .map(({ id, name }) => (

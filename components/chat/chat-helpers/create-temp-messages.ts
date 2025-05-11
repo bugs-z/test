@@ -1,7 +1,7 @@
 import { CONTINUE_PROMPT } from '@/lib/models/llm-prompting';
 import { lastSequenceNumber } from '@/lib/utils';
 import type { ChatMessage, LLMID } from '@/types';
-import { PluginID } from '@/types';
+import type { PluginID } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
 export const createTempMessages = ({
@@ -28,7 +28,7 @@ export const createTempMessages = ({
       chat_id: '',
       content: messageContentInternal,
       thinking_content: null,
-      thinking_enabled: selectedPlugin === PluginID.REASONING,
+      thinking_enabled: model === 'reasoning-model',
       thinking_elapsed_secs: null,
       model,
       plugin: selectedPlugin,
@@ -50,7 +50,7 @@ export const createTempMessages = ({
       chat_id: '',
       content: '',
       thinking_content: null,
-      thinking_enabled: selectedPlugin === PluginID.REASONING,
+      thinking_enabled: model === 'reasoning-model',
       thinking_elapsed_secs: null,
       model,
       plugin: selectedPlugin,

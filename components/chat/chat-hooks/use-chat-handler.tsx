@@ -152,13 +152,7 @@ export const useChatHandler = () => {
       }
       await new Promise((resolve) => setTimeout(resolve, 100));
 
-      // Update chat's finish reason to 'aborted' when terminal in use
-      if (
-        selectedChat &&
-        (toolInUse === PluginID.TERMINAL ||
-          toolInUse === 'temporary-sandbox' ||
-          toolInUse === 'persistent-sandbox')
-      ) {
+      if (selectedChat && toolInUse === PluginID.PENTEST_AGENT) {
         const updatedChat = {
           ...selectedChat,
           updated_at: new Date().toISOString(),
@@ -468,9 +462,11 @@ export const useChatHandler = () => {
         modelParams.selectedPlugin &&
           modelParams.selectedPlugin !== PluginID.NONE
           ? modelParams.selectedPlugin
-          : retrievalUsed
-            ? 'retrieval'
-            : PluginID.NONE,
+          : baseModel === 'reasoning-model'
+            ? 'thinking'
+            : retrievalUsed
+              ? 'retrieval'
+              : PluginID.NONE,
       );
 
       const {

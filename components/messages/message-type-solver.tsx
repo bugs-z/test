@@ -14,11 +14,10 @@ interface MessageTypeResolverProps {
 
 export const allTerminalPlugins = [
   PluginID.TERMINAL,
+  PluginID.PENTEST_AGENT,
   PluginID.WAF_DETECTOR,
   PluginID.WHOIS_LOOKUP,
   PluginID.SUBDOMAIN_FINDER,
-  'persistent-sandbox',
-  'temporary-sandbox',
 ];
 
 export const MessageTypeResolver: FC<MessageTypeResolverProps> = ({
@@ -51,12 +50,7 @@ export const MessageTypeResolver: FC<MessageTypeResolverProps> = ({
     );
   }
 
-  if (
-    message.role === 'assistant' &&
-    (toolInUse === PluginID.REASONING ||
-      toolInUse === PluginID.REASONING_WEB_SEARCH ||
-      message.thinking_content)
-  ) {
+  if (message.role === 'assistant' && message.thinking_content) {
     return (
       <MessageThinking
         content={message.content}

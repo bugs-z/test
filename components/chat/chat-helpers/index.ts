@@ -11,6 +11,7 @@ import type {
   LLMID,
   ChatMetadata,
 } from '@/types';
+import { PluginID } from '@/types';
 import type { Dispatch, SetStateAction } from 'react';
 import { toast } from 'sonner';
 import { processResponse } from './stream-processor';
@@ -38,6 +39,16 @@ export const handleHostedChat = async (
   modelParams: ModelParams,
   chatMetadata: ChatMetadata,
 ) => {
+  let apiEndpoint = '/api/chat';
+
+  if (
+    modelParams.confirmTerminalCommand ||
+    modelParams.isTerminalContinuation ||
+    modelParams.selectedPlugin === PluginID.PENTEST_AGENT
+  ) {
+    apiEndpoint = '/api/agent';
+  }
+
   const formattedMessages = await buildFinalMessages(
     payload,
     model,
@@ -52,6 +63,7 @@ export const handleHostedChat = async (
   };
 
   const chatResponse = await fetchChatResponse(
+    apiEndpoint,
     requestBody,
     newAbortController,
     setIsGenerating,
@@ -78,17 +90,19 @@ export const handleHostedChat = async (
     modelParams.selectedPlugin,
     modelParams.isContinuation,
     setAgentStatus,
+    requestBody,
   );
 };
 
 export const fetchChatResponse = async (
+  apiEndpoint: string,
   body: object,
   controller: AbortController,
   setIsGenerating: Dispatch<SetStateAction<boolean>>,
   setChatMessages: Dispatch<SetStateAction<ChatMessage[]>>,
   alertDispatch: Dispatch<AlertAction>,
 ) => {
-  const response = await fetch(`/api/chat`, {
+  const response = await fetch(apiEndpoint, {
     method: 'POST',
     body: JSON.stringify(body),
     signal: controller.signal,

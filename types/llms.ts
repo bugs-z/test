@@ -2,9 +2,9 @@ import type { ModelProvider } from './models';
 import type { PluginID } from './plugins';
 
 export const VALID_MODEL_IDS = [
-  'gpt-4-turbo-preview',
   'mistral-medium',
   'mistral-large',
+  'reasoning-model',
 ] as const;
 
 export type LLMID = (typeof VALID_MODEL_IDS)[number];
@@ -15,6 +15,7 @@ export interface LLM {
   provider: ModelProvider;
   imageInput: boolean;
   shortModelName?: string;
+  description: string;
 }
 
 export type ModelWithWebSearch = LLMID | `${LLMID}:websearch`;
