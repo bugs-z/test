@@ -1,8 +1,5 @@
 import { SANDBOX_TEMPLATE, BASH_SANDBOX_TIMEOUT } from '../types';
-import {
-  createOrConnectTemporaryTerminal,
-  createOrConnectPersistentTerminal,
-} from '@/lib/tools/e2b/sandbox';
+import { createOrConnectPersistentTerminal } from '@/lib/tools/e2b/sandbox';
 
 export interface SandboxContext {
   userID: string;
@@ -36,56 +33,26 @@ export const createPersistentSandbox = async (
   }
 };
 
-export const createTemporarySandbox = async (
-  userID: string,
-  template: string,
-  timeout: number,
-  setSandbox?: (sandbox: any) => void,
-) => {
-  try {
-    const sandbox = await createOrConnectTemporaryTerminal(
-      userID,
-      template,
-      timeout,
-    );
-    if (setSandbox) {
-      setSandbox(sandbox);
-    }
-    return sandbox;
-  } catch (error) {
-    throw new Error(handleFileError(error, 'creating temporary sandbox'));
-  }
-};
-
 export const ensureSandboxConnection = async (
   context: SandboxContext,
   options: {
     initialSandbox?: any;
-    initialPersistentSandbox?: boolean;
   } = {},
-): Promise<{ sandbox: any; persistentSandbox: boolean }> => {
+): Promise<{ sandbox: any }> => {
   const { userID, setSandbox } = context;
 
-  const { initialSandbox, initialPersistentSandbox = true } = options;
+  const { initialSandbox } = options;
 
   let sandbox = initialSandbox;
-  const persistentSandbox = initialPersistentSandbox;
 
   if (!sandbox) {
-    sandbox = persistentSandbox
-      ? await createPersistentSandbox(
-          userID,
-          SANDBOX_TEMPLATE,
-          BASH_SANDBOX_TIMEOUT,
-          setSandbox,
-        )
-      : await createTemporarySandbox(
-          userID,
-          SANDBOX_TEMPLATE,
-          BASH_SANDBOX_TIMEOUT,
-          setSandbox,
-        );
+    sandbox = await createPersistentSandbox(
+      userID,
+      SANDBOX_TEMPLATE,
+      BASH_SANDBOX_TIMEOUT,
+      setSandbox,
+    );
   }
 
-  return { sandbox, persistentSandbox };
+  return { sandbox };
 };

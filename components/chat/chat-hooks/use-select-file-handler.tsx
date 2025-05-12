@@ -135,6 +135,15 @@ export const useSelectFileHandler = () => {
     if (!profile || !chatSettings) return;
     if (!validateFile(file)) return;
 
+    // Prevent image uploads for reasoning model
+    if (
+      file.type.startsWith('image/') &&
+      chatSettings.model === 'reasoning-model'
+    ) {
+      toast.error('Image uploads are not supported with the Reasoning Model');
+      return;
+    }
+
     const loadingId = `loading-${crypto.randomUUID()}`;
     const processor = getFileProcessor(file);
 

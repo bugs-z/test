@@ -72,6 +72,8 @@ export async function POST(request: Request) {
     let supabase: SupabaseClient | null = null;
     let generatedTitle: string | undefined;
     let toolUsed = '';
+    let hasGeneratedTitle = false;
+    let titleGenerationPromise: Promise<void> | null = null;
     supabase = await createClient();
 
     const { processedMessages, systemPrompt } = await processChatMessages(
@@ -141,6 +143,21 @@ export async function POST(request: Request) {
             onChunk: async (chunk: any) => {
               if (chunk.chunk.type === 'tool-call') {
                 toolUsed = chunk.chunk.toolName;
+              } else if (
+                !hasGeneratedTitle &&
+                chatMetadata.id &&
+                chatMetadata.newChat &&
+                !toolUsed &&
+                chunk.chunk.type === 'text-delta'
+              ) {
+                hasGeneratedTitle = true;
+                titleGenerationPromise = (async () => {
+                  generatedTitle = await generateTitleFromUserMessage({
+                    messages,
+                    abortSignal: request.signal,
+                  });
+                  dataStream.writeData({ chatTitle: generatedTitle });
+                })();
               }
             },
             onError: async (error) => {
@@ -170,6 +187,10 @@ export async function POST(request: Request) {
             ),
             onFinish: async ({ finishReason }: { finishReason: string }) => {
               if (chatMetadata.id && !toolUsed) {
+                // Wait for title generation if it's in progress
+                if (titleGenerationPromise) {
+                  await titleGenerationPromise;
+                }
                 await handleChatWithMetadata({
                   supabase,
                   chatMetadata,
@@ -183,18 +204,12 @@ export async function POST(request: Request) {
             },
           });
 
-          await Promise.all([
-            result.mergeIntoDataStream(dataStream),
-            (async () => {
-              if (chatMetadata.id && chatMetadata.newChat) {
-                generatedTitle = await generateTitleFromUserMessage({
-                  messages,
-                  abortSignal: request.signal,
-                });
-                dataStream.writeData({ chatTitle: generatedTitle });
-              }
-            })(),
-          ]);
+          result.mergeIntoDataStream(dataStream);
+
+          // Then ensure title generation completes if it was started
+          if (titleGenerationPromise) {
+            await titleGenerationPromise;
+          }
         },
       });
     } catch (error) {

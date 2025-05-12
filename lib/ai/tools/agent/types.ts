@@ -2,7 +2,7 @@ import type { Sandbox } from '@e2b/code-interpreter';
 import type { AgentMode } from '@/types/llms';
 
 export interface SandboxManager {
-  getSandbox: () => Promise<{ sandbox: Sandbox; persistentSandbox: boolean }>;
+  getSandbox: () => Promise<{ sandbox: Sandbox }>;
   setSandbox: (sandbox: Sandbox) => void;
 }
 
@@ -13,7 +13,6 @@ export interface ToolContext {
   dataStream: any;
   sandbox?: Sandbox | null;
   userID: string;
-  persistentSandbox?: boolean;
   setSandbox: (sandbox: Sandbox) => void;
   agentMode: AgentMode;
   sandboxManager?: SandboxManager;

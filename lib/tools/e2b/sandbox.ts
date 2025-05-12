@@ -1,45 +1,8 @@
 import { createSupabaseAdminClient } from '@/lib/server/server-utils';
-import { Sandbox, type SandboxInfo } from '@e2b/code-interpreter';
+import { Sandbox } from '@e2b/code-interpreter';
 import { waitUntil } from '@vercel/functions';
 
 const supabaseAdmin = createSupabaseAdminClient();
-
-/**
- * Creates or connects to a temporary sandbox instance
- * Temporary sandboxes are destroyed after the session ends
- *
- * @param userID - User identifier for sandbox ownership
- * @param template - Sandbox environment template name
- * @param timeoutMs - Operation timeout in milliseconds
- * @returns Connected or newly created sandbox instance
- */
-export async function createOrConnectTemporaryTerminal(
-  userID: string,
-  template: string,
-  timeoutMs: number,
-): Promise<Sandbox> {
-  const allSandboxes = await Sandbox.list();
-  const sandboxInfo = allSandboxes.find(
-    (sbx: SandboxInfo) =>
-      sbx.metadata?.userID === userID && sbx.metadata?.template === template,
-  );
-
-  if (!sandboxInfo) {
-    try {
-      return await Sandbox.create(template, {
-        metadata: { template, userID },
-        timeoutMs,
-      });
-    } catch (e) {
-      console.error('Error creating sandbox', e);
-      throw e;
-    }
-  }
-
-  const sandbox = await Sandbox.connect(sandboxInfo.sandboxId);
-  await sandbox.setTimeout(timeoutMs);
-  return sandbox;
-}
 
 /**
  * Creates or connects to a persistent sandbox instance

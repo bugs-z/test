@@ -1,7 +1,8 @@
 import type { Sandbox } from '@e2b/code-interpreter';
 
 const MAX_COMMAND_EXECUTION_TIME = 6 * 60 * 1000;
-const STREAM_TIMEOUT = 1 * 60 * 1000;
+// 30 seconds
+const STREAM_TIMEOUT = 30 * 1000;
 const ENCODER = new TextEncoder();
 
 interface ExecutionError {
@@ -59,7 +60,7 @@ export const executeTerminalCommand = async ({
               }
               controller.enqueue(
                 ENCODER.encode(
-                  `<terminal-error>The command's output stream has been paused after ${STREAM_TIMEOUT / 1000} seconds. The command may continue running in the background, but its output will no longer be streamed.</terminal-error>`,
+                  `<terminal-error>The command's output stream has been paused after ${STREAM_TIMEOUT / 1000} seconds. The command will continue running in the background.</terminal-error>`,
                 ),
               );
               controller.close();

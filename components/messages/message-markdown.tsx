@@ -9,6 +9,7 @@ import { Table, Th, Td } from '@/components/ui/table-components';
 import { MessageTerminalBlock } from './terminal-messages/message-terminal-block';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import { DownloadCSVTable } from '@/components/ui/download-csv-table';
+import { LinkWithTooltip } from '@/components/ui/link-with-tooltip';
 
 const urlTransform = (url: string) => {
   if (url.startsWith('data:')) return url;
@@ -31,18 +32,8 @@ const NonMemoizedMarkdown: FC<{
 
   const components: Partial<Components> = {
     a({ children, href, ...props }) {
-      if (typeof children === 'string' && /^\d+$/.test(children)) {
-        return (
-          <a
-            href={href}
-            title={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="bg-foreground/20 hover:bg-foreground/30 ml-1 inline-flex size-[16px] items-center justify-center rounded-full text-[10px] no-underline"
-          >
-            {children}
-          </a>
-        );
+      if (typeof children === 'string' && /^\d+$/.test(children) && href) {
+        return <LinkWithTooltip href={href}>{children}</LinkWithTooltip>;
       }
       return (
         <a href={href} target="_blank" rel="noopener noreferrer" {...props}>

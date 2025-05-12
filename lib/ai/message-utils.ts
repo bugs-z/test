@@ -46,11 +46,12 @@ export function filterEmptyAssistantMessages(messages: BuiltChatMessage[]) {
  * Converts chat messages to Vercel AI SDK format
  * @param messages - Array of chat messages to convert
  * @param supportsImages - Whether the model supports image input
- * @param systemPrompt - Optional system prompt to prepend
+ * @param isPerplexity - Whether to use Perplexity's image format
  */
 export const toVercelChatMessages = (
   messages: BuiltChatMessage[],
   supportsImages = false,
+  isPerplexity = false,
 ): CoreMessage[] => {
   const result: CoreMessage[] = [];
 
@@ -65,18 +66,13 @@ export const toVercelChatMessages = (
           content: (Array.isArray(message.content)
             ? message.content
             : [message.content]
-          ).map((content) => {
-            if (typeof content === 'object' && content.type === 'text') {
-              return {
-                type: 'text',
-                text: content.text,
-              };
-            }
-            return {
-              type: 'text',
-              text: String(content),
-            };
-          }),
+          ).map((content) => ({
+            type: 'text',
+            text:
+              typeof content === 'object' && content.type === 'text'
+                ? content.text
+                : String(content),
+          })),
         } as CoreAssistantMessage;
         break;
       case 'user':
@@ -85,40 +81,34 @@ export const toVercelChatMessages = (
           content: Array.isArray(message.content)
             ? message.content
                 .map((content) => {
+                  // Handle image content
                   if (
                     typeof content === 'object' &&
                     content.type === 'image_url'
                   ) {
-                    if (supportsImages) {
-                      return {
-                        type: 'image',
-                        image: new URL(content.image_url.url),
-                      };
-                    } else {
-                      return null;
-                    }
-                  } else if (
-                    typeof content === 'object' &&
-                    content.type === 'file'
-                  ) {
-                    return content;
-                  } else if (
-                    typeof content === 'object' &&
-                    content.type === 'text'
-                  ) {
-                    return {
-                      type: 'text',
-                      text: content.text,
-                    };
-                  } else {
-                    return {
-                      type: 'text',
-                      text: content,
-                    };
+                    if (!supportsImages) return null;
+                    return isPerplexity
+                      ? {
+                          type: 'image_url',
+                          image_url: { url: content.image_url.url },
+                        }
+                      : {
+                          type: 'image',
+                          image: new URL(content.image_url.url),
+                        };
                   }
+
+                  // Handle all other content types
+                  if (typeof content === 'object') {
+                    return content.type === 'file'
+                      ? content
+                      : { type: 'text', text: content.text || String(content) };
+                  }
+
+                  return { type: 'text', text: String(content) };
                 })
                 .filter(Boolean)
-            : [{ type: 'text', text: message.content as string }],
+            : [{ type: 'text', text: String(message.content) }],
         } as CoreUserMessage;
         break;
       default:

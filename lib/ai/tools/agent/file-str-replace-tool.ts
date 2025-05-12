@@ -2,6 +2,10 @@ import { tool } from 'ai';
 import { z } from 'zod';
 import type { ToolContext } from './types';
 import { handleFileError } from './utils/sandbox-utils';
+import {
+  FILE_READ_MAX_TOKENS,
+  truncateContentByTokens,
+} from '../../terminal-utils';
 
 const replaceFileContent = async (
   sandbox: any,
@@ -29,7 +33,7 @@ const replaceFileContent = async (
     // Write back to file
     await sandbox.files.write(file, finalContent);
 
-    const wrappedContent = `<pgptml:file_str_replace file="${file}">${finalContent}</pgptml:file_str_replace>\n\n`;
+    const wrappedContent = `<pgptml:file_str_replace file="${file}">${truncateContentByTokens(finalContent, FILE_READ_MAX_TOKENS)}</pgptml:file_str_replace>\n\n`;
     dataStream.writeData({
       type: 'text-delta',
       content: wrappedContent,

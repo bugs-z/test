@@ -1,8 +1,6 @@
 import { buildSystemPrompt } from '@/lib/ai/prompts';
 import { toVercelChatMessages } from '@/lib/ai/message-utils';
 import llmConfig from '@/lib/models/llm-config';
-import { streamText } from 'ai';
-import { perplexity } from '@ai-sdk/perplexity';
 import PostHogClient from '@/app/posthog';
 import type { ChatMetadata, LLMID } from '@/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -24,6 +22,38 @@ interface WebSearchConfig {
   userCountryCode: string | null;
 }
 
+interface PerplexityResponse {
+  id: string;
+  model: string;
+  created: number;
+  usage: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+    search_context_size: string;
+  };
+  citations: string[];
+  object: string;
+  choices: Array<{
+    index: number;
+    finish_reason: string | null;
+    message?: {
+      role: string;
+      content: string;
+    };
+    delta?: {
+      role?: string;
+      content?: string;
+    };
+  }>;
+}
+
+interface StreamDelta {
+  type: 'text-delta' | 'citations';
+  textDelta?: string;
+  citations?: string[];
+}
+
 async function getProviderConfig(isLargeModel: boolean, profile: any) {
   const defaultModel = 'sonar';
   const proModel = 'sonar-pro';
@@ -39,6 +69,65 @@ async function getProviderConfig(isLargeModel: boolean, profile: any) {
     systemPrompt,
     selectedModel,
   };
+}
+
+async function* streamPerplexityResponse(
+  response: Response,
+): AsyncGenerator<StreamDelta> {
+  const reader = response.body?.getReader();
+  if (!reader) throw new Error('No response body');
+
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let citationsSent = false;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          if (data === '[DONE]') return;
+
+          try {
+            const parsed: PerplexityResponse = JSON.parse(data);
+
+            // Handle citations from the first message
+            if (!citationsSent && parsed.citations?.length > 0) {
+              yield { type: 'citations', citations: parsed.citations };
+              citationsSent = true;
+            }
+
+            // Handle content from delta
+            const delta = parsed.choices[0]?.delta;
+            if (delta?.content) {
+              yield { type: 'text-delta', textDelta: delta.content };
+            }
+          } catch (e) {
+            console.error('Error parsing SSE data:', e);
+          }
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+async function getResponseBody(response: Response): Promise<string> {
+  try {
+    const clone = response.clone();
+    const text = await clone.text();
+    return text;
+  } catch (e) {
+    return 'Unable to read response body';
+  }
 }
 
 export async function executeWebSearchTool({
@@ -62,6 +151,7 @@ export async function executeWebSearchTool({
     supabase,
     userCountryCode,
   } = config;
+
   const { systemPrompt, selectedModel } = await getProviderConfig(
     isLargeModel,
     profile,
@@ -90,55 +180,62 @@ export async function executeWebSearchTool({
   try {
     await Promise.all([
       (async () => {
-        const { fullStream } = streamText({
-          model: perplexity(selectedModel),
-          system: systemPrompt,
-          messages: toVercelChatMessages(messages),
-          providerOptions: {
-            perplexity: {
-              search_context_size: 'medium',
-              ...(userCountryCode && {
-                user_location: [
-                  {
-                    country: userCountryCode,
-                  },
-                ],
-              }),
+        const requestPayload = {
+          model: selectedModel,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            ...toVercelChatMessages(messages, true, true),
+          ],
+          stream: true,
+          max_tokens: 2048,
+          web_search_options: {
+            search_context_size: 'medium',
+            ...(userCountryCode && {
+              user_location: { country: userCountryCode },
+            }),
+          },
+        };
+
+        const response = await fetch(
+          'https://api.perplexity.ai/chat/completions',
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+              'Content-Type': 'application/json',
             },
+            body: JSON.stringify(requestPayload),
+            signal: abortSignal,
           },
-          maxTokens: 2048,
-          abortSignal,
-          onError: async (error) => {
-            console.error('[WebSearch] Stream Error:', error);
-          },
-          onFinish: async ({ finishReason }: { finishReason: string }) => {
-            if (supabase) {
-              await handleChatWithMetadata({
-                supabase,
-                chatMetadata,
-                profile,
-                model,
-                title: generatedTitle,
-                messages,
-                finishReason,
-              });
-            }
-          },
-        });
+        );
+
+        if (!response.ok) {
+          const responseBody = await getResponseBody(response);
+          console.error('[WebSearch] Error Details:', {
+            status: response.status,
+            statusText: response.statusText,
+            requestPayload: {
+              model: requestPayload.model,
+              messageCount: requestPayload.messages.length,
+            },
+            responseBody,
+            headers: Object.fromEntries(response.headers.entries()),
+          });
+          throw new Error(
+            `Web search failed: ${response.status} ${response.statusText}`,
+          );
+        }
 
         const citations: string[] = [];
         let hasFirstTextDelta = false;
 
-        for await (const delta of fullStream) {
-          if (delta.type === 'source') {
-            if (delta.source.sourceType === 'url') {
-              citations.push(delta.source.url);
-            }
+        for await (const delta of streamPerplexityResponse(response)) {
+          if (delta.type === 'citations' && delta.citations) {
+            citations.push(...delta.citations);
           }
 
-          if (delta.type === 'text-delta') {
+          if (delta.type === 'text-delta' && delta.textDelta) {
             if (!hasFirstTextDelta) {
-              // Send citations after first text-delta
               dataStream.writeData({ citations });
               hasFirstTextDelta = true;
 
@@ -161,6 +258,18 @@ export async function executeWebSearchTool({
             });
           }
         }
+
+        if (supabase) {
+          await handleChatWithMetadata({
+            supabase,
+            chatMetadata,
+            profile,
+            model,
+            title: generatedTitle,
+            messages,
+            finishReason: 'stop',
+          });
+        }
       })(),
       (async () => {
         if (chatMetadata.id && chatMetadata.newChat) {
@@ -175,7 +284,6 @@ export async function executeWebSearchTool({
 
     return 'Web search completed';
   } catch (error) {
-    // Skip logging for terminated errors
     if (!(error instanceof Error && error.message === 'terminated')) {
       console.error('[WebSearch] Error:', {
         error: error instanceof Error ? error.message : 'Unknown error',

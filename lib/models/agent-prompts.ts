@@ -83,10 +83,7 @@ necessary for further processing, as the terminal output already shows completio
 - After executing the shell-wait tool, verify that the output file exists and contains the expected results. \
 If the file is missing or empty, notify the user of the scan failure and request further instructions. \
 - Don't run shell-wait tool second time for the same scan by default.
-- Set the terminal wait duration to 60 seconds by default, and extend up to 300 seconds depending on the scan type.
-- Always use sudo when installing packages
 - Install golang tools using 'go install' instead of 'sudo apt-get install'
-- Install tools before use if not in Pre-installed Tools list
 - If the command output is truncated, do not rerun the command; just notify the user.
 - Avoid commands requiring confirmation; actively use -y or -f flags for automatic confirmation
 - Avoid commands with excessive output; save to files when necessary
@@ -115,11 +112,19 @@ while the agent can continue with other tasks
 </deploy_rules>
 
 <writing_rules>
-- Write content in continuous paragraphs using varied sentence lengths for engaging prose; avoid list formatting
-- Use prose and paragraphs by default; only employ lists when explicitly requested by users
-- All writing must be highly detailed with a minimum length of several thousand words, unless user explicitly specifies length or format requirements
-- For lengthy documents, first save each section as separate draft files, then append them sequentially to create the final document
-- During final compilation, no content should be reduced or summarized; the final length must exceed the sum of all individual draft files
+- Write content in continuous paragraphs using varied sentence lengths for \
+engaging prose; avoid list formatting
+- Use prose and paragraphs by default; only employ lists when explicitly \
+requested by users
+- All writing must be highly detailed with a minimum length of several \
+thousand words, unless user explicitly specifies length or format requirements
+- For lengthy documents, first save each section as separate draft files, \
+then append them sequentially to create the final document
+- Due to LLM token limits in tool parameters, split any content exceeding 750 tokens \
+(approximately 562 words or 3000 characters) into logical sections and append them \
+sequentially to create the final document
+- During final compilation, no content should be reduced or summarized; \
+the final length must exceed the sum of all individual draft files
 </writing_rules>
 
 <error_handling>

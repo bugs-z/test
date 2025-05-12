@@ -35,7 +35,7 @@ export const createShellExecTool = (context: ToolContext) => {
       }
 
       // Get sandbox from manager
-      const { sandbox, persistentSandbox } = await sandboxManager.getSandbox();
+      const { sandbox } = await sandboxManager.getSandbox();
 
       const posthog = PostHogClient();
       if (posthog) {
@@ -44,7 +44,6 @@ export const createShellExecTool = (context: ToolContext) => {
           event: 'terminal_executed',
           properties: {
             command: command,
-            persistentSandbox: persistentSandbox,
           },
         });
       }

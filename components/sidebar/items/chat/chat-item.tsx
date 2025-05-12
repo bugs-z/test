@@ -75,7 +75,7 @@ export const ChatItem: FC<ChatItemProps> = ({ chat }) => {
           'mr-2 flex-1 overflow-hidden text-clip whitespace-nowrap text-sm',
           '[-webkit-mask-image:var(--sidebar-mask)] [mask-image:var(--sidebar-mask)]',
           'group-hover:[-webkit-mask-image:var(--sidebar-mask-active)] group-hover:[mask-image:var(--sidebar-mask-active)]',
-          (isActive || isOpen) &&
+          (isActive || isOpen || isMobile) &&
             '[-webkit-mask-image:var(--sidebar-mask-active)] [mask-image:var(--sidebar-mask-active)]',
         )}
       >
@@ -85,7 +85,7 @@ export const ChatItem: FC<ChatItemProps> = ({ chat }) => {
       <div
         className={cn(
           'absolute right-2 opacity-0',
-          (isActive || isOpen) && 'opacity-100',
+          (isActive || isOpen || isMobile) && 'opacity-100',
           'group-hover:opacity-100',
         )}
       >

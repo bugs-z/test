@@ -2,6 +2,10 @@ import { tool } from 'ai';
 import { z } from 'zod';
 import type { ToolContext } from './types';
 import { handleFileError } from './utils/sandbox-utils';
+import {
+  FILE_READ_MAX_TOKENS,
+  truncateContentByTokens,
+} from '../../terminal-utils';
 
 const writeFileContent = async (
   sandbox: any,
@@ -55,7 +59,7 @@ const writeFileContent = async (
     }
 
     // Use a single file-write tag with a mode parameter
-    const wrappedContent = `<pgptml:file_write path="${file}" mode="${mode}">${finalContent}</pgptml:file_write>\n\n`;
+    const wrappedContent = `<pgptml:file_write path="${file}" mode="${mode}">${truncateContentByTokens(finalContent, FILE_READ_MAX_TOKENS)}</pgptml:file_write>\n\n`;
 
     dataStream.writeData({
       type: 'text-delta',

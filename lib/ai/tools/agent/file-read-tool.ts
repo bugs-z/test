@@ -2,7 +2,10 @@ import { tool } from 'ai';
 import { z } from 'zod';
 import type { ToolContext } from './types';
 import { handleFileError } from './utils/sandbox-utils';
-import { truncateContentByTokens } from '@/lib/ai/terminal-utils';
+import {
+  FILE_READ_MAX_TOKENS,
+  truncateContentByTokens,
+} from '@/lib/ai/terminal-utils';
 
 const processFileContent = (
   content: string,
@@ -33,7 +36,7 @@ const readAndProcessFile = async (
 
     const content = await sandbox.files.read(filePath);
     const processedContent = processFileContent(content, start_line, end_line);
-    const wrappedContent = `<pgptml:file_read path="${filePath}">${truncateContentByTokens(processedContent, 2048)}</pgptml:file_read>\n\n`;
+    const wrappedContent = `<pgptml:file_read path="${filePath}">${truncateContentByTokens(processedContent, FILE_READ_MAX_TOKENS)}</pgptml:file_read>\n\n`;
 
     dataStream.writeData({
       type: 'text-delta',

@@ -23,7 +23,7 @@ interface WebsiteCardProps {
   domain: string;
 }
 
-const WebsiteCard: FC<WebsiteCardProps> = ({ url, domain }) => {
+export const WebsiteCard: FC<WebsiteCardProps> = ({ url, domain }) => {
   const [showFallback, setShowFallback] = useState(false);
   const faviconUrl = useMemo(() => {
     try {

@@ -9,6 +9,7 @@ interface UseKeyboardHandlerProps {
   isMobile: boolean;
   sendMessage: () => void;
   handleSelectDeviceFile: (file: File) => void;
+  chatSettings?: { model: string };
 }
 
 export const useKeyboardHandler = ({
@@ -16,6 +17,7 @@ export const useKeyboardHandler = ({
   isMobile,
   sendMessage,
   handleSelectDeviceFile,
+  chatSettings,
 }: UseKeyboardHandlerProps) => {
   const { selectedPlugin } = useUIContext();
   const { isPremiumSubscription } = useContext(PentestGPTContext);
@@ -38,6 +40,14 @@ export const useKeyboardHandler = ({
           PLUGINS_WITHOUT_IMAGE_SUPPORT.includes(selectedPlugin)
         ) {
           toast.error('Images are not allowed when using this feature');
+          return;
+        }
+
+        // Check if using reasoning model
+        if (chatSettings?.model === 'reasoning-model') {
+          toast.error(
+            'Image uploads are not supported with the Reasoning Model',
+          );
           return;
         }
 
