@@ -122,11 +122,13 @@ export function handleErrorResponse(error: any) {
 
   return new Response(
     JSON.stringify({
-      message:
-        error instanceof APIError ? error.message : 'An unknown error occurred',
+      message: 'An unknown error occurred',
     }),
     {
       status: error instanceof APIError ? error.code : 500,
+      headers: {
+        'Content-Type': 'application/json',
+      },
     },
   );
 }
