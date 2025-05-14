@@ -7,7 +7,6 @@ import type {
   ChatMessage,
   ChatPayload,
   ModelParams,
-  MessageImage,
   LLMID,
   ChatMetadata,
 } from '@/types';
@@ -28,7 +27,6 @@ export const handleHostedChat = async (
   tempAssistantChatMessage: ChatMessage,
   isRegeneration: boolean,
   newAbortController: AbortController,
-  chatImages: MessageImage[],
   setIsGenerating: Dispatch<SetStateAction<boolean>>,
   setFirstTokenReceived: Dispatch<SetStateAction<boolean>>,
   setChatMessages: Dispatch<SetStateAction<ChatMessage[]>>,
@@ -38,6 +36,7 @@ export const handleHostedChat = async (
   model: LLMID,
   modelParams: ModelParams,
   chatMetadata: ChatMetadata,
+  isPremiumSubscription: boolean,
 ) => {
   let apiEndpoint = '/api/chat';
 
@@ -51,8 +50,7 @@ export const handleHostedChat = async (
 
   const formattedMessages = await buildFinalMessages(
     payload,
-    model,
-    chatImages,
+    isPremiumSubscription,
   );
 
   const requestBody = {

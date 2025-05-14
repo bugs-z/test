@@ -1,5 +1,5 @@
 import type { FileItemChunk } from '@/types';
-import { encode } from 'gpt-tokenizer';
+import { countTokens } from 'gpt-tokenizer';
 import { CSVLoader } from '@langchain/community/document_loaders/fs/csv';
 
 export const processCSV = async (csv: Blob): Promise<FileItemChunk[]> => {
@@ -10,7 +10,7 @@ export const processCSV = async (csv: Blob): Promise<FileItemChunk[]> => {
   return [
     {
       content: completeText,
-      tokens: encode(completeText).length,
+      tokens: countTokens(completeText),
     },
   ];
 };

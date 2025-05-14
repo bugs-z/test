@@ -5,7 +5,7 @@ import {
   processPdf,
   processTxt,
   convert,
-  TOKEN_LIMIT,
+  FILE_CONTENT_TOKEN_LIMIT,
 } from '@/lib/retrieval/processing';
 import { getServerProfile } from '@/lib/server/server-chat-helpers';
 import { createSupabaseAdminClient } from '@/lib/server/server-utils';
@@ -87,7 +87,7 @@ export async function POST(req: Request) {
     }
 
     const totalTokens = chunks.reduce((acc, chunk) => acc + chunk.tokens, 0);
-    const limit = TOKEN_LIMIT;
+    const limit = FILE_CONTENT_TOKEN_LIMIT;
     if (totalTokens > limit) {
       throw new Error(`File content exceeds token limit of ${limit}`);
     }

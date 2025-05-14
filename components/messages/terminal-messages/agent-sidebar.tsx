@@ -5,6 +5,8 @@ import { useUIContext } from '@/context/ui-context';
 import { AgentCodeBlock } from '@/components/ui/agent-codeblock';
 import { bundledLanguages } from 'shiki/bundle/web';
 import type { AgentCodeBlockLang } from '@/types';
+import { CopyButton } from '@/components/messages/message-codeblock';
+import stripAnsi from 'strip-ansi';
 
 export const AgentSidebar = () => {
   const { isMobile } = useUIContext();
@@ -24,6 +26,11 @@ export const AgentSidebar = () => {
       ? (extension as AgentCodeBlockLang)
       : 'text';
   };
+
+  const filename =
+    agentSidebar.item.lang === 'ansi'
+      ? 'terminal'
+      : agentSidebar.item.filePath.split('/').pop();
 
   return (
     <div className={sidebarClass}>
@@ -53,18 +60,30 @@ export const AgentSidebar = () => {
         </span>
       </div>
       {/* Content area */}
-      <div className="flex-1 overflow-auto p-4">
-        <AgentCodeBlock
-          code={agentSidebar.item.content}
-          lang={
-            agentSidebar.item.lang || getLanguage(agentSidebar.item.filePath)
-          }
-          filename={
-            agentSidebar.item.lang === 'ansi'
-              ? 'terminal'
-              : agentSidebar.item.filePath.split('/').pop()
-          }
-        />
+      <div className="flex-1 overflow-hidden p-4">
+        <div className="h-full w-full flex flex-col rounded-md border border-border">
+          <div className="flex items-center justify-between px-4 py-1 border-b bg-muted">
+            <span className="text-xs text-muted-foreground font-mono">
+              {filename}
+            </span>
+            <CopyButton
+              value={
+                agentSidebar.item.lang === 'ansi'
+                  ? stripAnsi(agentSidebar.item.content)
+                  : agentSidebar.item.content
+              }
+            />
+          </div>
+          <div className="flex-1 overflow-auto">
+            <AgentCodeBlock
+              code={agentSidebar.item.content}
+              lang={
+                agentSidebar.item.lang ||
+                getLanguage(agentSidebar.item.filePath)
+              }
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

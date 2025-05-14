@@ -61,6 +61,7 @@ export async function POST(request: Request) {
       profile,
       false,
       supabase,
+      true,
     );
 
     return createDataStreamResponse({

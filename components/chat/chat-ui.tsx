@@ -279,7 +279,7 @@ export const ChatUI: FC = () => {
             <div
               className={`${
                 isMobile
-                  ? 'absolute inset-0 z-50 bg-background'
+                  ? 'fixed inset-0 z-50 bg-background'
                   : 'relative flex h-[45%] flex-1 flex-col overflow-hidden lg:h-auto lg:w-1/2'
               }`}
             >

@@ -1,5 +1,5 @@
 import type { FileItemChunk } from '@/types';
-import { encode } from 'gpt-tokenizer';
+import { countTokens } from 'gpt-tokenizer';
 import { JSONLoader } from 'langchain/document_loaders/fs/json';
 
 export const processJSON = async (json: Blob): Promise<FileItemChunk[]> => {
@@ -10,7 +10,7 @@ export const processJSON = async (json: Blob): Promise<FileItemChunk[]> => {
   return [
     {
       content: completeText,
-      tokens: encode(completeText).length,
+      tokens: countTokens(completeText),
     },
   ];
 };

@@ -84,6 +84,7 @@ export async function POST(request: Request) {
       profile,
       isReasoningModel,
       supabase,
+      config.isPremiumUser,
     );
 
     request.signal.addEventListener('abort', async () => {

@@ -211,13 +211,15 @@ export function validateMessages(
 /**
  * Validates that the total tokens in messages don't exceed the maximum limit
  * @param messages - Array of messages to validate
- * @throws Error if total tokens exceed MAX_TOKENS
+ * @throws Error if total tokens exceed Context window
  */
 function validateMessageTokens(
   messages: BuiltChatMessage[],
   userId: string,
+  isPremiumSubscription: boolean,
 ): void {
-  const MAX_TOKENS = 32000;
+  // Extra 999 tokens for continue prompt and other small things
+  const MAX_CONTEXT_WINDOW = isPremiumSubscription ? 32999 : 8999;
   let totalTokens = 0;
 
   for (const message of messages) {
@@ -233,14 +235,14 @@ function validateMessageTokens(
     }
   }
 
-  if (totalTokens > MAX_TOKENS) {
+  if (totalTokens > MAX_CONTEXT_WINDOW) {
     console.error('Token limit exceeded:', {
       totalTokens,
-      maxTokens: MAX_TOKENS,
+      maxTokens: MAX_CONTEXT_WINDOW,
       userId,
     });
     throw new Error(
-      `Message content exceeds maximum token limit of ${MAX_TOKENS}. Please reduce the message length.`,
+      `Message content exceeds maximum token limit of ${MAX_CONTEXT_WINDOW}. Please reduce the message length.`,
     );
   }
 }
@@ -269,7 +271,8 @@ export async function processChatMessages(
   isLargeModel: boolean,
   profile: { user_id: string; profile_context: string },
   isReasoningModel: boolean,
-  supabase?: SupabaseClient,
+  supabase: SupabaseClient,
+  isPremiumSubscription: boolean,
 ): Promise<{
   processedMessages: BuiltChatMessage[];
   systemPrompt: string;
@@ -305,7 +308,11 @@ export async function processChatMessages(
   }
 
   // Validate total token count
-  validateMessageTokens(processedMessages, profile?.user_id);
+  validateMessageTokens(
+    processedMessages,
+    profile?.user_id,
+    isPremiumSubscription,
+  );
 
   // Remove invalid message exchanges before processing attachments
   const validatedMessages = validateMessages(processedMessages);

@@ -1,5 +1,5 @@
 import type { FileItemChunk } from '@/types';
-import { encode } from 'gpt-tokenizer';
+import { countTokens } from 'gpt-tokenizer';
 
 export const processMarkdown = async (
   markdown: Blob,
@@ -15,7 +15,7 @@ export const processMarkdown = async (
   return [
     {
       content: finalContent,
-      tokens: encode(finalContent).length,
+      tokens: countTokens(finalContent),
     },
   ];
 };

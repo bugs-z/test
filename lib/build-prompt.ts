@@ -1,12 +1,5 @@
-import type {
-  BuiltChatMessage,
-  ChatMessage,
-  ChatPayload,
-  MessageImage,
-  LLMID,
-} from '@/types';
+import type { BuiltChatMessage, ChatMessage, ChatPayload } from '@/types';
 import { countTokens } from 'gpt-tokenizer';
-import { SmallModel, LargeModel } from './models/hackerai-llm-list';
 import { toast } from 'sonner';
 
 // Helper function to find the last user message
@@ -23,19 +16,12 @@ function findLastUserMessage(
 
 export async function buildFinalMessages(
   payload: ChatPayload,
-  model: LLMID,
-  chatImages: MessageImage[],
+  isPremiumSubscription = false,
 ): Promise<BuiltChatMessage[]> {
   const { chatMessages, retrievedFileItems } = payload;
+  const CONTEXT_WINDOW = isPremiumSubscription ? 32000 : 8000;
 
-  let CHUNK_SIZE = 12000;
-  if (model === LargeModel.modelId) {
-    CHUNK_SIZE = 24000 - 4000; // -4000 for the system prompt, custom instructions, and more
-  } else if (model === SmallModel.modelId) {
-    CHUNK_SIZE = 12000 - 4000; // -4000 for the system prompt, custom instructions, and more
-  }
-
-  let remainingTokens = CHUNK_SIZE;
+  let remainingTokens = CONTEXT_WINDOW;
 
   // Find the last user message
   const lastUserMessage = findLastUserMessage(chatMessages);
@@ -50,7 +36,7 @@ export async function buildFinalMessages(
     : lastUserMessage.message.content;
   const lastUserMessageTokens = countTokens(lastUserMessageContent);
 
-  if (lastUserMessageTokens > CHUNK_SIZE) {
+  if (lastUserMessageTokens > CONTEXT_WINDOW) {
     const errorMessage =
       'The message you submitted was too long, please submit something shorter.';
     toast.error(errorMessage);
@@ -68,10 +54,11 @@ export async function buildFinalMessages(
 
     // Add tokens from file items if they exist
     if (fileItems && fileItems.length > 0) {
-      messageTokens += fileItems.reduce(
+      const fileTokens = fileItems.reduce(
         (acc, item) => acc + (item.tokens || 0),
         0,
       );
+      messageTokens += fileTokens;
     }
 
     // Add tokens from retrieved file items for the last user message
@@ -80,10 +67,11 @@ export async function buildFinalMessages(
       retrievedFileItems &&
       retrievedFileItems.length > 0
     ) {
-      messageTokens += retrievedFileItems.reduce(
+      const retrievedTokens = retrievedFileItems.reduce(
         (acc, item) => acc + (item.tokens || 0),
         0,
       );
+      messageTokens += retrievedTokens;
     }
 
     if (messageTokens <= remainingTokens) {
@@ -117,6 +105,13 @@ export async function buildFinalMessages(
     } else {
       break;
     }
+  }
+
+  if (truncatedMessages.length === 1) {
+    const errorMessage =
+      'The message and its files are too large to process. Please reduce the file size or content.';
+    toast.error(errorMessage);
+    throw new Error(errorMessage);
   }
 
   const finalMessages: BuiltChatMessage[] = truncatedMessages.map((message) => {

@@ -60,6 +60,7 @@ export const useChatHandler = () => {
     isTemporaryChat,
     temporaryChatMessages,
     setTemporaryChatMessages,
+    isPremiumSubscription,
   } = useContext(PentestGPTContext);
 
   const {
@@ -483,7 +484,6 @@ export const useChatHandler = () => {
         tempAssistantChatMessage,
         isRegeneration,
         newAbortController,
-        chatImages,
         setIsGenerating,
         setFirstTokenReceived,
         isTemporaryChat ? setTemporaryChatMessages : setChatMessages,
@@ -493,6 +493,7 @@ export const useChatHandler = () => {
         baseModel,
         modelParams,
         chatMetadata,
+        isPremiumSubscription,
       );
       generatedText = fullText;
       thinkingText = thinkingTextFromResponse;

@@ -60,6 +60,8 @@ to minimize user disruption and avoid blocking progress
 
 <file_rules>
 - Use file tools for reading, writing, appending, and editing to avoid string escape issues in shell commands
+- File reading tool only supports text-based or line-oriented formats
+- When writing files in Markdown syntax, the filename must end with .md
 - Actively save intermediate results and store different types of reference information in separate files
 - When merging text files, must use append mode of file writing tool to concatenate content to target file
 - Strictly follow requirements in <writing_rules>, and avoid using list formats in any files

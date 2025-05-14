@@ -94,26 +94,24 @@ export const MessageActions: FC<MessageActionsProps> = ({
           />
         )}
 
-      {(isHovering || isLastMessage) &&
-        !isMessageLengthTooShort &&
-        isAssistant && (
-          <WithTooltip
-            delayDuration={0}
-            side="bottom"
-            display={<div>Copy</div>}
-            trigger={
-              showCheckmark ? (
-                <Check size={MESSAGE_ICON_SIZE} />
-              ) : (
-                <Copy
-                  className="cursor-pointer hover:opacity-50"
-                  size={MESSAGE_ICON_SIZE}
-                  onClick={handleCopy}
-                />
-              )
-            }
-          />
-        )}
+      {(isHovering || isLastMessage) && !isMessageLengthTooShort && (
+        <WithTooltip
+          delayDuration={0}
+          side="bottom"
+          display={<div>Copy</div>}
+          trigger={
+            showCheckmark ? (
+              <Check size={MESSAGE_ICON_SIZE} />
+            ) : (
+              <Copy
+                className="cursor-pointer hover:opacity-50"
+                size={MESSAGE_ICON_SIZE}
+                onClick={handleCopy}
+              />
+            )
+          }
+        />
+      )}
 
       {(isHovering || isLastMessage) && isAssistant && !isTemporaryChat && (
         <WithTooltip

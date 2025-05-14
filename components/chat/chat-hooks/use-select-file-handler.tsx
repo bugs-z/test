@@ -88,6 +88,7 @@ export const useSelectFileHandler = () => {
     setNewMessageImages,
     setNewMessageFiles,
     setUseRetrieval,
+    newMessageFiles,
   } = useContext(PentestGPTContext);
 
   const [filesToAccept, setFilesToAccept] = useState(ACCEPTED_FILE_TYPES);
@@ -117,6 +118,8 @@ export const useSelectFileHandler = () => {
     return fileProcessors.text;
   };
 
+  const FILE_CONTENT_TOKEN_LIMIT = 24000;
+
   const validateFile = (file: File): boolean => {
     const sizeLimitMB = Number.parseInt(
       process.env.NEXT_PUBLIC_USER_FILE_SIZE_LIMIT_MB || String(30),
@@ -128,6 +131,19 @@ export const useSelectFileHandler = () => {
       toast.error(`File must be less than ${sizeLimitMB}MB`);
       return false;
     }
+
+    // Check total tokens from existing files
+    const totalTokens = newMessageFiles.reduce(
+      (acc, file) => acc + (file.tokens || 0),
+      0,
+    );
+    if (totalTokens >= FILE_CONTENT_TOKEN_LIMIT) {
+      toast.error(
+        `Total tokens (${totalTokens}) exceeds the limit of ${FILE_CONTENT_TOKEN_LIMIT}. Please upload fewer files or reduce content.`,
+      );
+      return false;
+    }
+
     return true;
   };
 
@@ -201,6 +217,22 @@ export const useSelectFileHandler = () => {
         toast.error(
           'File limit reached. Please delete some chats containing files.',
         );
+        setNewMessageFiles((prev) => prev.filter((f) => f.id !== loadingId));
+        return;
+      }
+
+      // Check total tokens after processing the new file
+      const updatedFiles = [...newMessageFiles, createdFile];
+      const totalTokens = updatedFiles.reduce(
+        (acc, file) => acc + (file.tokens || 0),
+        0,
+      );
+
+      if (totalTokens > FILE_CONTENT_TOKEN_LIMIT) {
+        toast.error(
+          `Adding this file would exceed the token limit of ${FILE_CONTENT_TOKEN_LIMIT}. Please upload a smaller file or remove some existing files.`,
+        );
+        // Remove the newly added file
         setNewMessageFiles((prev) => prev.filter((f) => f.id !== loadingId));
         return;
       }

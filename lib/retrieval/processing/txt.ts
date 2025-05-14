@@ -1,5 +1,5 @@
 import type { FileItemChunk } from '@/types';
-import { encode } from 'gpt-tokenizer';
+import { countTokens } from 'gpt-tokenizer';
 
 export const processTxt = async (txt: Blob): Promise<FileItemChunk[]> => {
   const fileBuffer = Buffer.from(await txt.arrayBuffer());
@@ -9,7 +9,7 @@ export const processTxt = async (txt: Blob): Promise<FileItemChunk[]> => {
   return [
     {
       content: textContent,
-      tokens: encode(textContent).length,
+      tokens: countTokens(textContent),
     },
   ];
 };
