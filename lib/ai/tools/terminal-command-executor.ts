@@ -1,4 +1,3 @@
-import PostHogClient from '@/app/posthog';
 import { executeTerminalCommand } from '@/lib/tools/e2b/terminal-executor';
 import { streamTerminalOutput } from '@/lib/ai/terminal-utils';
 import type { SandboxManager } from './agent/types';
@@ -39,17 +38,6 @@ export async function executeTerminalCommandWithConfig({
   const [, exec_dir, command] = lastMatch;
 
   const { sandbox } = await sandboxManager.getSandbox();
-
-  const posthog = PostHogClient();
-  if (posthog) {
-    posthog.capture({
-      distinctId: userID,
-      event: 'terminal_executed',
-      properties: {
-        command: command,
-      },
-    });
-  }
 
   dataStream.writeData({
     type: 'agent-status',

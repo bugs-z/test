@@ -1,6 +1,7 @@
 import { PentestGPTContext } from '@/context/context';
 import { createFileBasedOnExtension } from '@/db/files';
 import { LLM_LIST } from '@/lib/models/llm-list';
+import { uploadTemporaryImage } from '@/db/storage/message-images';
 import mammoth from 'mammoth';
 import { useContext, useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -169,16 +170,56 @@ export const useSelectFileHandler = () => {
 
       if (type === 'image') {
         const imageUrl = URL.createObjectURL(file);
+
+        // Add loading state for image
+        const tempImageId = crypto.randomUUID();
+
+        // Add image with loading state first
         setNewMessageImages((prev) => [
           ...prev,
           {
-            messageId: crypto.randomUUID(),
+            messageId: tempImageId,
             path: '',
-            base64: content as string,
+            base64: content as string, // Show base64 immediately for preview
             url: imageUrl,
-            file,
+            file, // Keep file reference
+            isLoading: true, // Add loading state
           },
         ]);
+
+        // Upload image to temporary storage
+        try {
+          const path = await uploadTemporaryImage(file, profile.user_id);
+
+          // Update image with path and remove loading state
+          setNewMessageImages((prev) =>
+            prev.map((img) =>
+              img.messageId === tempImageId
+                ? {
+                    ...img,
+                    path, // Store the path for later use in API requests
+                    isLoading: false, // Remove loading state
+                  }
+                : img,
+            ),
+          );
+        } catch (error) {
+          console.error('Error uploading temporary image:', error);
+          // Update to mark upload as failed but keep the image preview
+          setNewMessageImages((prev) =>
+            prev.map((img) =>
+              img.messageId === tempImageId
+                ? {
+                    ...img,
+                    isLoading: false,
+                    hasError: true,
+                  }
+                : img,
+            ),
+          );
+
+          toast.error('Failed to upload image. Using local preview only.');
+        }
         return;
       }
 

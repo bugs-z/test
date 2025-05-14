@@ -8,7 +8,7 @@ import {
   generateTitleFromUserMessage,
   handleChatWithMetadata,
 } from '../actions';
-
+import { removePdfContentFromMessages } from '@/lib/build-prompt-backend';
 interface WebSearchConfig {
   messages: any[];
   profile: any;
@@ -152,6 +152,9 @@ export async function executeWebSearchTool({
     userCountryCode,
   } = config;
 
+  // Filter out PDF content from messages
+  const filteredMessages = removePdfContentFromMessages(messages);
+
   const { systemPrompt, selectedModel } = await getProviderConfig(
     isLargeModel,
     profile,
@@ -182,10 +185,8 @@ export async function executeWebSearchTool({
       (async () => {
         const requestPayload = {
           model: selectedModel,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            ...toVercelChatMessages(messages, true, true),
-          ],
+          system: systemPrompt,
+          messages: toVercelChatMessages(filteredMessages, true, true),
           stream: true,
           max_tokens: 2048,
           web_search_options: {

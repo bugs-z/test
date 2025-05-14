@@ -5,7 +5,10 @@ import {
   deleteMessagesIncludingAndAfter,
   updateMessage,
 } from '@/db/messages';
-import { uploadMessageImage } from '@/db/storage/message-images';
+import {
+  uploadMessageImage,
+  cleanupTemporaryImages,
+} from '@/db/storage/message-images';
 import { lastSequenceNumber } from '@/lib/utils';
 import type { Tables, TablesInsert } from '@/supabase/types';
 import type {
@@ -214,10 +217,18 @@ export const handleCreateMessages = async (
           setChatFiles,
         );
 
+        // Collect temporary paths to clean up later
+        const tempPaths: string[] = [];
+
         // Upload each image (stored in newMessageImages) for the user message to message_images bucket
         const uploadPromises = newMessageImages
           .filter((obj) => obj.file !== null)
           .map((obj) => {
+            // If this image has a temp path, add it to the cleanup list
+            if (obj.path?.includes('/temp/')) {
+              tempPaths.push(obj.path);
+            }
+
             const filePath = `${profile.user_id}/${currentChat.id}/${
               createdMessages[0].id
             }/${uuidv4()}`;
@@ -258,6 +269,11 @@ export const handleCreateMessages = async (
             };
           }),
         );
+
+        // Clean up temporary images after permanent ones have been saved
+        if (tempPaths.length > 0) {
+          cleanupTemporaryImages(tempPaths);
+        }
 
         finalChatMessages = [
           ...(isEdit

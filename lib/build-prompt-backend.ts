@@ -223,3 +223,24 @@ export async function processMessageContentWithAttachments(
 
   return processedMessages;
 }
+
+/**
+ * Removes PDF file content from message arrays
+ * Filters out any objects that have type 'file' and mimeType 'application/pdf'
+ */
+export function removePdfContentFromMessages(messages: any[]) {
+  return messages.map((message) => {
+    // If content is an array, filter out PDF file objects
+    if (Array.isArray(message.content)) {
+      return {
+        ...message,
+        content: message.content.filter(
+          (item: any) =>
+            !(item.type === 'file' && item.mimeType === 'application/pdf'),
+        ),
+      };
+    }
+    // Otherwise leave the message as is
+    return message;
+  });
+}

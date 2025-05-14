@@ -284,6 +284,7 @@ export const processResponse = async (
               setIsGenerating,
               setChatMessages,
               alertDispatch,
+              false,
             );
 
             const result = await processResponse(

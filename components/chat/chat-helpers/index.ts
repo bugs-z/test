@@ -67,6 +67,7 @@ export const handleHostedChat = async (
     setIsGenerating,
     setChatMessages,
     alertDispatch,
+    isRegeneration,
   );
 
   const lastMessage =
@@ -99,6 +100,7 @@ export const fetchChatResponse = async (
   setIsGenerating: Dispatch<SetStateAction<boolean>>,
   setChatMessages: Dispatch<SetStateAction<ChatMessage[]>>,
   alertDispatch: Dispatch<AlertAction>,
+  isRegeneration: boolean,
 ) => {
   const response = await fetch(apiEndpoint, {
     method: 'POST',
@@ -144,7 +146,9 @@ export const fetchChatResponse = async (
     }
 
     setIsGenerating(false);
-    setChatMessages((prevMessages) => prevMessages.slice(0, -2));
+    if (!isRegeneration) {
+      setChatMessages((prevMessages) => prevMessages.slice(0, -2));
+    }
   }
 
   return response;

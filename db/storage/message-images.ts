@@ -20,6 +20,27 @@ export const uploadMessageImage = async (path: string, image: File) => {
   return path;
 };
 
+export const uploadTemporaryImage = async (
+  image: File,
+  userId: string,
+): Promise<string> => {
+  // Create a temporary path for the image
+  const tempId = crypto.randomUUID();
+  const path = `${userId}/temp/${tempId}`;
+  const bucket = 'message_images';
+
+  // Upload image to storage
+  const { error } = await supabase.storage.from(bucket).upload(path, image, {
+    upsert: true,
+  });
+
+  if (error) {
+    throw new Error('Error uploading temporary image');
+  }
+
+  return path;
+};
+
 export const getMessageImageFromStorage = async (filePath: string) => {
   const { data, error } = await supabase.storage
     .from('message_images')
@@ -30,4 +51,15 @@ export const getMessageImageFromStorage = async (filePath: string) => {
   }
 
   return data.signedUrl;
+};
+
+// Helper function to clean up temporary images
+export const cleanupTemporaryImages = async (paths: string[]) => {
+  if (paths.length === 0) return;
+
+  const { error } = await supabase.storage.from('message_images').remove(paths);
+
+  if (error) {
+    console.error('Error cleaning up temporary images:', error);
+  }
 };

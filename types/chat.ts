@@ -8,6 +8,7 @@ export interface ChatSettings {
 export interface ChatPayload {
   chatMessages: ChatMessage[];
   retrievedFileItems: Tables<'file_items'>[];
+  imagePaths?: string[]; // List of image paths to be processed
 }
 
 export interface ChatAPIPayload {

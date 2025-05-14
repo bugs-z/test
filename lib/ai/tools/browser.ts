@@ -15,7 +15,6 @@ import {
   handleChatWithMetadata,
 } from '@/lib/ai/actions';
 import { truncateContentByTokens } from '@/lib/ai/terminal-utils';
-import { perplexity } from '@ai-sdk/perplexity';
 
 interface BrowserToolConfig {
   profile: any;
@@ -186,24 +185,12 @@ export async function executeBrowserTool({
     await Promise.all([
       (async () => {
         const { fullStream } = streamText({
-          model: perplexity('sonar'),
+          model: myProvider.languageModel('browser-model'),
           system: systemPrompt,
           messages: [
             ...toVercelChatMessages(messages.slice(0, -1)),
             { role: 'user', content: browserPrompt },
           ],
-          providerOptions: {
-            perplexity: {
-              search_context_size: 'medium',
-              ...(config.userCountryCode && {
-                user_location: [
-                  {
-                    country: config.userCountryCode,
-                  },
-                ],
-              }),
-            },
-          },
           maxTokens: 2048,
           onError: async (error) => {
             console.error('[BrowserTool] Stream Error:', error);

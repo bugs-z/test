@@ -3,7 +3,6 @@ import { z } from 'zod';
 import type { ToolContext } from './types';
 import { executeTerminalCommand } from '@/lib/tools/e2b/terminal-executor';
 import { streamTerminalOutput } from '@/lib/ai/terminal-utils';
-import PostHogClient from '@/app/posthog';
 
 /**
  * Creates a terminal tool for executing commands in the sandbox environment
@@ -36,17 +35,6 @@ export const createShellExecTool = (context: ToolContext) => {
 
       // Get sandbox from manager
       const { sandbox } = await sandboxManager.getSandbox();
-
-      const posthog = PostHogClient();
-      if (posthog) {
-        posthog.capture({
-          distinctId: userID,
-          event: 'terminal_executed',
-          properties: {
-            command: command,
-          },
-        });
-      }
 
       dataStream.writeData({
         type: 'agent-status',

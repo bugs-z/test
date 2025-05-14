@@ -18,7 +18,7 @@ export async function buildFinalMessages(
   payload: ChatPayload,
   isPremiumSubscription = false,
 ): Promise<BuiltChatMessage[]> {
-  const { chatMessages, retrievedFileItems } = payload;
+  const { chatMessages, retrievedFileItems, imagePaths } = payload;
   const CONTEXT_WINDOW = isPremiumSubscription ? 32000 : 8000;
 
   let remainingTokens = CONTEXT_WINDOW;
@@ -122,13 +122,35 @@ export async function buildFinalMessages(
       message.image_paths.length > 0 &&
       message.role !== 'assistant'
     ) {
-      content = [
-        {
-          type: 'text',
-          text: message.content,
-        },
-        ...message.image_paths
-          .map((path: string) => {
+      // Check if this message matches the last user message (where temp images are)
+      const isLastUserMessageWithTempImages =
+        message.id === lastUserMessage.message.id &&
+        imagePaths &&
+        imagePaths.length > 0;
+
+      if (isLastUserMessageWithTempImages) {
+        // For the last user message, use the temporary paths directly
+        content = [
+          {
+            type: 'text',
+            text: message.content,
+          },
+          ...imagePaths.map((path) => ({
+            type: 'image_url' as const,
+            image_url: {
+              url: path,
+              isPath: true,
+            },
+          })),
+        ];
+      } else {
+        // For other messages, use regular path handling
+        content = [
+          {
+            type: 'text',
+            text: message.content,
+          },
+          ...message.image_paths.map((path: string) => {
             const isBase64 = path.startsWith('data');
             return {
               type: 'image_url' as const,
@@ -137,9 +159,9 @@ export async function buildFinalMessages(
                 isPath: !isBase64,
               },
             };
-          })
-          .filter(Boolean), // Remove any null entries
-      ];
+          }),
+        ];
+      }
     } else {
       content = message.content;
     }

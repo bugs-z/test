@@ -19,6 +19,7 @@ export const myProvider = customProvider({
     'chat-model-agent': openai('gpt-4.1-2025-04-14', {
       parallelToolCalls: false,
     }),
+    'browser-model': openai('gpt-4.1-mini-2025-04-14'),
     'chat-model-reasoning': wrapLanguageModel({
       model: openrouter('x-ai/grok-3-mini-beta', {
         extraBody: {

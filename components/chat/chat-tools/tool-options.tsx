@@ -52,7 +52,7 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
   return (
     <div className="flex space-x-1">
       {/* File Upload Button */}
-      {isPremiumSubscription && (
+      {!isTemporaryChat && isPremiumSubscription && (
         <WithTooltip
           delayDuration={TOOLTIP_DELAY}
           side="top"

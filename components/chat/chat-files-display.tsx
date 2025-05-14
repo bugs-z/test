@@ -3,7 +3,7 @@ import { PentestGPTContext } from '@/context/context';
 import { useUIContext } from '@/context/ui-context';
 import type { Tables } from '@/supabase/types';
 import type { MessageImage } from '@/types';
-import { X } from 'lucide-react';
+import { X, AlertCircle, Loader2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { type FC, useContext, useState } from 'react';
@@ -92,24 +92,49 @@ export const ChatFilesDisplay: FC = () => {
                   key={`${image.messageId}-${image.path}`}
                   className="relative flex h-[64px] cursor-pointer items-center space-x-4 rounded-xl hover:opacity-50"
                 >
-                  <Image
-                    className="rounded"
-                    // Force the image to be 56px by 56px
-                    style={{
-                      minWidth: '56px',
-                      minHeight: '56px',
-                      maxHeight: '56px',
-                      maxWidth: '56px',
-                    }}
-                    src={image.base64} // Preview images will always be base64
-                    alt="File image"
-                    width={56}
-                    height={56}
-                    onClick={() => {
-                      setSelectedImage(image);
-                      setShowPreview(true);
-                    }}
-                  />
+                  <div className="relative">
+                    <Image
+                      className={`rounded ${image.isLoading ? 'opacity-60' : ''}`}
+                      // Force the image to be 56px by 56px
+                      style={{
+                        minWidth: '56px',
+                        minHeight: '56px',
+                        maxHeight: '56px',
+                        maxWidth: '56px',
+                      }}
+                      src={image.base64} // Preview images will always be base64
+                      alt="File image"
+                      width={56}
+                      height={56}
+                      onClick={() => {
+                        if (!image.isLoading) {
+                          setSelectedImage(image);
+                          setShowPreview(true);
+                        }
+                      }}
+                    />
+
+                    {/* Loading overlay */}
+                    {image.isLoading && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Loader2 className="size-6 animate-spin text-primary" />
+                      </div>
+                    )}
+
+                    {/* Error indicator */}
+                    {image.hasError && (
+                      <div className="absolute bottom-0 right-0">
+                        <WithTooltip
+                          delayDuration={0}
+                          side="top"
+                          display={<div>Upload failed</div>}
+                          trigger={
+                            <AlertCircle className="size-5 rounded-full bg-white text-red-500" />
+                          }
+                        />
+                      </div>
+                    )}
+                  </div>
 
                   {(isMobile || isHovering) && (
                     <WithTooltip
