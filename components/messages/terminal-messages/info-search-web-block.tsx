@@ -1,64 +1,17 @@
-import React, { useState } from 'react';
+import React from 'react';
 import type { InfoSearchWebBlock } from './types';
-import { ShowMoreButton } from './show-more-button';
 import { Search } from 'lucide-react';
 import { parse } from 'tldts';
+import { useAgentSidebar } from '@/components/chat/chat-hooks/use-agent-sidebar';
 
-interface InfoSearchWebBlockProps {
-  block: InfoSearchWebBlock;
-}
-
-const getDomain = (url: string) => {
-  try {
-    return new URL(url).hostname;
-  } catch {
-    return '';
-  }
-};
-
-// Returns the main domain (no TLD), capitalized
-const getMainDomain = (url: string) => {
-  try {
-    const hostname = new URL(url).hostname;
-    const parsed = parse(hostname);
-    if (parsed.domainWithoutSuffix) {
-      return (
-        parsed.domainWithoutSuffix.charAt(0).toUpperCase() +
-        parsed.domainWithoutSuffix.slice(1).toLowerCase()
-      );
-    }
-    return hostname;
-  } catch {
-    return '';
-  }
-};
-
-export const InfoSearchWebBlockComponent: React.FC<InfoSearchWebBlockProps> = ({
-  block,
-}) => {
-  const [expanded, setExpanded] = useState(false);
-  const resultsToShow = expanded ? block.results : block.results.slice(0, 3);
-  const showToggle = block.results.length > 3;
-  const remainingResults = block.results.length - 3;
-
+export const SearchResultsView = ({ block }: { block: InfoSearchWebBlock }) => {
   return (
-    <div className="overflow-hidden rounded-lg border border-border my-3 bg-muted">
-      <div className="flex items-center border-b border-border bg-muted px-4 py-2">
-        <div className="flex items-center shrink-0 mr-2">
-          <Search size={16} className="text-muted-foreground mr-2" />
-          <span className="text-sm font-medium text-foreground/80">
-            Searching
-          </span>
-        </div>
-        <span className="flex-1 min-w-0 font-mono text-xs text-foreground">
-          {block.query || ''}
-        </span>
-      </div>
+    <div className="flex-1 overflow-auto p-4">
       <div className="divide-y divide-border">
-        {resultsToShow.map((result, index) => (
+        {block.results.map((result, index) => (
           <div
             key={`${result.url}-${index}`}
-            className="flex flex-col px-4 py-2 bg-background hover:bg-accent transition-colors"
+            className="flex flex-col p-2 bg-background hover:bg-accent transition-colors"
           >
             <div className="flex flex-row items-start gap-3">
               <img
@@ -94,14 +47,72 @@ export const InfoSearchWebBlockComponent: React.FC<InfoSearchWebBlockProps> = ({
           </div>
         ))}
       </div>
-      {showToggle && block.results.length > 0 && (
-        <ShowMoreButton
-          isExpanded={expanded}
-          onClick={() => setExpanded((e) => !e)}
-          remainingCount={remainingResults}
-          type="results"
-        />
-      )}
+    </div>
+  );
+};
+
+interface InfoSearchWebBlockProps {
+  block: InfoSearchWebBlock;
+}
+
+const getDomain = (url: string) => {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return '';
+  }
+};
+
+// Returns the main domain (no TLD), capitalized
+const getMainDomain = (url: string) => {
+  try {
+    const hostname = new URL(url).hostname;
+    const parsed = parse(hostname);
+    if (parsed.domainWithoutSuffix) {
+      return (
+        parsed.domainWithoutSuffix.charAt(0).toUpperCase() +
+        parsed.domainWithoutSuffix.slice(1).toLowerCase()
+      );
+    }
+    return hostname;
+  } catch {
+    return '';
+  }
+};
+
+export const InfoSearchWebBlockComponent: React.FC<InfoSearchWebBlockProps> = ({
+  block,
+}) => {
+  const { setAgentSidebar } = useAgentSidebar();
+
+  const handleActionClick = () => {
+    setAgentSidebar({
+      isOpen: true,
+      item: {
+        action: 'Search Results',
+        filePath: block.query || '',
+        content: block,
+        icon: <Search size={16} />,
+      },
+    });
+  };
+
+  return (
+    <div className="overflow-hidden rounded-lg border border-border my-3 bg-muted">
+      <div
+        className="flex items-center border-b border-border bg-muted px-4 py-2 hover:opacity-50 cursor-pointer"
+        onClick={handleActionClick}
+      >
+        <div className="flex items-center shrink-0 mr-2">
+          <Search size={16} className="text-muted-foreground mr-2" />
+          <span className="text-sm font-medium text-foreground/80">
+            Searching
+          </span>
+        </div>
+        <span className="flex-1 min-w-0 font-mono text-xs text-foreground">
+          {block.query || ''}
+        </span>
+      </div>
     </div>
   );
 };

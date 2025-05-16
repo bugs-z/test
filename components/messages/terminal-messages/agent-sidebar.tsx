@@ -7,6 +7,8 @@ import { bundledLanguages } from 'shiki/bundle/web';
 import type { AgentCodeBlockLang } from '@/types';
 import { CopyButton } from '@/components/messages/message-codeblock';
 import stripAnsi from 'strip-ansi';
+import type { InfoSearchWebBlock } from './types';
+import { SearchResultsView } from './info-search-web-block';
 
 export const AgentSidebar = () => {
   const { isMobile } = useUIContext();
@@ -60,31 +62,37 @@ export const AgentSidebar = () => {
         </span>
       </div>
       {/* Content area */}
-      <div className="flex-1 overflow-hidden p-4">
-        <div className="h-full w-full flex flex-col rounded-md border border-border">
-          <div className="flex items-center justify-between px-4 py-1 border-b bg-muted">
-            <span className="text-xs text-muted-foreground font-mono">
-              {filename}
-            </span>
-            <CopyButton
-              value={
-                agentSidebar.item.lang === 'ansi'
-                  ? stripAnsi(agentSidebar.item.content)
-                  : agentSidebar.item.content
-              }
-            />
-          </div>
-          <div className="flex-1 overflow-auto">
-            <AgentCodeBlock
-              code={agentSidebar.item.content}
-              lang={
-                agentSidebar.item.lang ||
-                getLanguage(agentSidebar.item.filePath)
-              }
-            />
+      {agentSidebar.item.action === 'Search Results' ? (
+        <SearchResultsView
+          block={agentSidebar.item.content as InfoSearchWebBlock}
+        />
+      ) : (
+        <div className="flex-1 overflow-hidden p-4">
+          <div className="h-full w-full flex flex-col rounded-md border border-border">
+            <div className="flex items-center justify-between px-4 py-1 border-b bg-muted">
+              <span className="text-xs text-muted-foreground font-mono">
+                {filename}
+              </span>
+              <CopyButton
+                value={
+                  agentSidebar.item.lang === 'ansi'
+                    ? stripAnsi(agentSidebar.item.content as string)
+                    : (agentSidebar.item.content as string)
+                }
+              />
+            </div>
+            <div className="flex-1 overflow-auto">
+              <AgentCodeBlock
+                code={agentSidebar.item.content as string}
+                lang={
+                  agentSidebar.item.lang ||
+                  getLanguage(agentSidebar.item.filePath)
+                }
+              />
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

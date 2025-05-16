@@ -15,7 +15,6 @@ import type { Dispatch, SetStateAction } from 'react';
 import { toast } from 'sonner';
 import { processResponse } from './stream-processor';
 import type { AgentStatusState } from '@/components/messages/agent-status';
-import { localDB } from '@/db/local/db';
 
 export * from './create-messages';
 export * from './create-temp-messages';
@@ -181,8 +180,6 @@ export const handleCreateChat = async (
     last_file_update: new Date().toISOString(),
     last_message_update: new Date().toISOString(),
   };
-
-  await localDB.chats.update(createdChat);
 
   setSelectedChat(createdChat);
   setChats((chats) => [createdChat, ...chats]);

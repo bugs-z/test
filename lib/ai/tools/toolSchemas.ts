@@ -45,15 +45,18 @@ beneficial for the user's needs.`,
         open_url: z.string().url().describe('The URL of the webpage to open'),
         format_output: z
           .enum(['markdown', 'html'])
+          .default('markdown')
           .describe('The format of the output content.'),
       }),
       execute: async ({
         open_url,
-        format_output,
-      }: { open_url: string; format_output: 'markdown' | 'html' }) => {
+        format_output = 'markdown',
+      }: { open_url: string; format_output?: 'markdown' | 'html' }) => {
+        // Ensure format_output is either markdown or html
+        const safeFormat = format_output === 'html' ? 'html' : 'markdown';
         return executeBrowserTool({
           open_url,
-          format_output,
+          format_output: safeFormat,
           config: {
             profile,
             messages,

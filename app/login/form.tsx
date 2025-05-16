@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { BrandLarge } from '@/components/ui/brand';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,6 @@ import { Label } from '@/components/ui/label';
 import { MicrosoftIcon } from '@/components/icons/microsoft-icon';
 import { GoogleIcon } from '@/components/icons/google-icon';
 import { PasswordInput } from '@/components/ui/password-input';
-import { localDB } from '@/db/local/db';
 
 export function LoginForm({
   onSignIn,
@@ -42,13 +41,6 @@ export function LoginForm({
         return 'text-red-500 bg-red-50 dark:bg-red-950/50';
     }
   };
-
-  useEffect(() => {
-    const clearStorage = async () => {
-      await localDB.storage.clearAll();
-    };
-    clearStorage();
-  }, [errorMessage]);
 
   return (
     <div>

@@ -1,15 +1,6 @@
 import { supabase } from '@/lib/supabase/browser-client';
-import { localDB } from './local/db';
 
-export const getChatFilesByChatId = async (
-  chatId: string,
-  useStored = true,
-) => {
-  const storedChatFiles = await localDB.files.getByChatId(chatId);
-  if (useStored && storedChatFiles) {
-    return storedChatFiles;
-  }
-
+export const getChatFilesByChatId = async (chatId: string) => {
   const { data: chatFiles, error } = await supabase
     .from('files')
     .select('*')
@@ -23,8 +14,6 @@ export const getChatFilesByChatId = async (
     // For other types of errors, we still throw
     throw new Error(`Error fetching chat files: ${error.message}`);
   }
-
-  await localDB.files.updateMany(chatFiles);
 
   return chatFiles;
 };
@@ -42,8 +31,6 @@ export const getChatFilesByMultipleChatIds = async (chatIds: string[]) => {
   if (error) {
     throw new Error(`Error fetching chat files: ${error.message}`);
   }
-
-  await localDB.files.updateMany(chatFiles);
 
   return chatFiles;
 };

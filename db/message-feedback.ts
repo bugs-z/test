@@ -1,6 +1,5 @@
 import { supabase } from '@/lib/supabase/browser-client';
 import type { TablesInsert } from '@/supabase/types';
-import { localDB } from './local/db';
 
 export const createMessageFeedback = async (
   feedback: TablesInsert<'feedback'>,
@@ -13,8 +12,6 @@ export const createMessageFeedback = async (
   if (!createdFeedback) {
     throw new Error(error.message);
   }
-
-  await localDB.feedback.updateMany(createdFeedback);
 
   return createdFeedback;
 };
@@ -36,8 +33,6 @@ export const getFeedbackByMultipleChatIds = async (chatIds: string[]) => {
   if (!feedback) {
     return [];
   }
-
-  await localDB.feedback.updateMany(feedback);
 
   return feedback;
 };

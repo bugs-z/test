@@ -1,21 +1,7 @@
 import { supabase } from '@/lib/supabase/browser-client';
 import type { TablesInsert } from '@/supabase/types';
-import { localDB } from './local/db';
 
-export const getMessageFileItemsByMessageId = async (
-  messageId: string,
-  useStored = true,
-) => {
-  if (useStored) {
-    const fileItems = await localDB.fileItems.getByMessageId(messageId);
-    if (fileItems) {
-      return {
-        id: messageId,
-        file_items: fileItems,
-      };
-    }
-  }
-
+export const getMessageFileItemsByMessageId = async (messageId: string) => {
   const { data: messageFileItems, error } = await supabase
     .from('messages')
     .select(
@@ -36,8 +22,6 @@ export const getMessageFileItemsByMessageId = async (
     throw new Error(error.message);
   }
 
-  await localDB.fileItems.updateMany(messageFileItems.file_items);
-
   return messageFileItems;
 };
 
@@ -52,8 +36,6 @@ export const createMessageFileItems = async (
   if (!createdMessageFileItems) {
     throw new Error(error.message);
   }
-
-  await localDB.messageFileItems.updateMany(createdMessageFileItems);
 
   return createdMessageFileItems;
 };
@@ -71,10 +53,6 @@ export const getFileItemsByMultipleChatIds = async (chatIds: string[]) => {
   if (error) {
     throw new Error(error.message);
   }
-
-  await localDB.fileItems.updateMany(
-    fileItems.flatMap((file) => file.file_items),
-  );
 
   return fileItems;
 };
@@ -94,10 +72,6 @@ export const getMessageFileItemsByMultipleChatIds = async (
   if (error) {
     throw new Error(error.message);
   }
-
-  await localDB.messageFileItems.updateMany(
-    messageFileItems.flatMap((message) => message.message_file_items),
-  );
 
   return messageFileItems;
 };

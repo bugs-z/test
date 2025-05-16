@@ -38,7 +38,6 @@ import { TeamRole } from '@/lib/team-utils';
 import { cancelSubscription, getStripe } from '@/lib/server/stripe';
 import { ProfileButton } from '../ui/profile-button';
 import { useUIContext } from '@/context/ui-context';
-import { localDB } from '@/db/local/db';
 
 export const Settings: FC<{ showEmail?: boolean }> = ({
   showEmail = false,
@@ -61,7 +60,6 @@ export const Settings: FC<{ showEmail?: boolean }> = ({
 
   const handleSignOut = async () => {
     await supabase.auth.signOut({ scope: 'local' });
-    await localDB.storage.clearAll();
     router.push('/login');
     router.refresh();
   };

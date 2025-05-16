@@ -4,15 +4,12 @@ import { Dashboard } from '@/components/ui/dashboard';
 import { PentestGPTContext } from '@/context/context';
 import { useUIContext } from '@/context/ui-context';
 import { getChatsByUserId } from '@/db/chats';
-import { localDB } from '@/db/local/db';
-import { refreshLocalData } from '@/db/refresh-local-data';
 import { getSubscriptionByUserId } from '@/db/subscriptions';
 import { LargeModel, SmallModel } from '@/lib/models/hackerai-llm-list';
-import { supabase } from '@/lib/supabase/browser-client';
 import { useRouter } from 'next/navigation';
 import { type ReactNode, useContext, useEffect, useState } from 'react';
 import Loading from '../loading';
-import { sendAnonymousSentinelReport } from '@/lib/sentinel';
+import { supabase } from '@/lib/supabase/browser-client';
 
 interface WorkspaceLayoutProps {
   children: ReactNode;
@@ -23,13 +20,7 @@ const fetchWorkspaceData = async (
   setChats: (chats: any[]) => void,
 ) => {
   try {
-    const chats = await getChatsByUserId(userId, false);
-    try {
-      await refreshLocalData(chats);
-    } catch (error: any) {
-      await sendAnonymousSentinelReport(error);
-      console.error('Error refreshing local data:', error);
-    }
+    const chats = await getChatsByUserId(userId);
 
     setChats(chats);
     return true;
@@ -112,7 +103,6 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      await localDB.storage.clearAll();
       router.push('/login');
     }
     return !!user;

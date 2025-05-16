@@ -1,48 +1,11 @@
 import { supabase } from '@/lib/supabase/browser-client';
 import type { Tables, TablesInsert, TablesUpdate } from '@/supabase/types';
-import { localDB } from './local/db';
-
-export type MessageWithFileItemsAndFeedback = Tables<'messages'> & {
-  file_items: Tables<'file_items'>[];
-  feedback: Tables<'feedback'>[];
-};
-
-export const getMessageById = async (messageId: string) => {
-  const storedMessage = await localDB.messages.getById(messageId);
-  if (storedMessage) {
-    return storedMessage;
-  }
-
-  const { data: message } = await supabase
-    .from('messages')
-    .select('*')
-    .eq('id', messageId)
-    .single();
-
-  if (!message) {
-    throw new Error('Message not found');
-  }
-
-  return message;
-};
 
 export const getMessagesByChatId = async (
   chatId: string,
   limit = 20,
   lastSequenceNumber?: number,
-  useStored = true,
-): Promise<MessageWithFileItemsAndFeedback[]> => {
-  if (useStored) {
-    const storedMessages = await localDB.messages.getByChatId(
-      chatId,
-      limit,
-      lastSequenceNumber,
-    );
-    if (storedMessages) {
-      return storedMessages;
-    }
-  }
-
+) => {
   let query = supabase
     .from('messages')
     .select('*, feedback(*), file_items (*)')
@@ -63,29 +26,6 @@ export const getMessagesByChatId = async (
   return messages.reverse();
 };
 
-export const getMessagesByMultipleChatIds = async (chatIds: string[]) => {
-  if (chatIds.length === 0) {
-    return [];
-  }
-
-  const { data: messages, error } = await supabase
-    .from('messages')
-    .select('*')
-    .in('chat_id', chatIds);
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  if (!messages) {
-    return [];
-  }
-
-  await localDB.messages.updateMany(messages);
-
-  return messages;
-};
-
 export const createMessage = async (message: TablesInsert<'messages'>) => {
   const { data: createdMessage, error } = await supabase
     .from('messages')
@@ -97,8 +37,6 @@ export const createMessage = async (message: TablesInsert<'messages'>) => {
     throw new Error(error.message);
   }
 
-  await localDB.messages.update(createdMessage);
-
   return createdMessage;
 };
 
@@ -108,73 +46,43 @@ export const createMessages = async (
   chatId: string | null,
   setChatFiles?: React.Dispatch<React.SetStateAction<Tables<'files'>[]>>,
 ) => {
-  const maxRetries = 3;
-  const retryDelay = 2000;
+  const { data: createdMessages, error } = await supabase
+    .from('messages')
+    .insert(messages)
+    .select('*');
 
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      const { data: createdMessages, error } = await supabase
-        .from('messages')
-        .insert(messages)
-        .select('*');
+  if (error) {
+    throw new Error(error.message);
+  }
 
-      if (error) {
-        // When user aborts, we need to retry because the chat might not be created yet
-        // This happens because the abort signal is sent before the chat is fully created
-        if (error.code === '23503' && error.details.includes('chats')) {
-          if (attempt < maxRetries) {
-            console.log(
-              `Retrying message creation (attempt ${attempt}/${maxRetries})...`,
-            );
-            await new Promise((resolve) => setTimeout(resolve, retryDelay));
-            continue;
-          }
-        }
-        throw new Error(error.message);
-      }
+  const fileIds = newChatFiles
+    .map((file) => file.id)
+    .filter((id) => id !== undefined);
 
-      const fileIds = newChatFiles
-        .map((file) => file.id)
-        .filter((id) => id !== undefined);
+  if (fileIds.length > 0) {
+    const { error: filesError } = await supabase
+      .from('files')
+      .update({ message_id: createdMessages[0].id, chat_id: chatId })
+      .in('id', fileIds)
+      .is('message_id', null)
+      .select('*');
 
-      if (fileIds.length > 0) {
-        const { data: files, error: filesError } = await supabase
-          .from('files')
-          .update({ message_id: createdMessages[0].id, chat_id: chatId })
-          .in('id', fileIds)
-          .is('message_id', null)
-          .select('*');
+    if (setChatFiles) {
+      setChatFiles((prev) =>
+        prev.map((file) =>
+          fileIds.includes(file.id)
+            ? { ...file, message_id: createdMessages[0].id }
+            : file,
+        ),
+      );
+    }
 
-        if (setChatFiles) {
-          setChatFiles((prev) =>
-            prev.map((file) =>
-              fileIds.includes(file.id)
-                ? { ...file, message_id: createdMessages[0].id }
-                : file,
-            ),
-          );
-        }
-
-        if (filesError) {
-          throw new Error(filesError.message);
-        }
-
-        await localDB.files.updateMany(files);
-      }
-
-      for (const message of createdMessages) {
-        await localDB.messages.update(message);
-      }
-
-      return createdMessages;
-    } catch (error: any) {
-      if (attempt === maxRetries) {
-        throw error;
-      }
+    if (filesError) {
+      throw new Error(filesError.message);
     }
   }
 
-  throw new Error('Failed to create messages after maximum retries');
+  return createdMessages;
 };
 
 export const updateMessage = async (
@@ -192,8 +100,6 @@ export const updateMessage = async (
     throw new Error(error.message);
   }
 
-  await localDB.messages.update(updatedMessage);
-
   return updatedMessage;
 };
 
@@ -206,8 +112,6 @@ export const deleteMessage = async (messageId: string) => {
   if (error) {
     throw new Error(error.message);
   }
-
-  await localDB.messages.delete(messageId);
 
   return true;
 };
@@ -280,12 +184,6 @@ export async function deleteMessagesIncludingAndAfter(
 
     files = filesData;
   }
-
-  await localDB.messages.deleteIncludingAndAfter(
-    userId,
-    chatId,
-    sequenceNumber,
-  );
 
   const { error } = await supabase.rpc('delete_messages_including_and_after', {
     p_user_id: userId,
