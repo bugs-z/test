@@ -2,17 +2,30 @@ import { getSystemPrompt } from '@/lib/ai/prompts';
 import { toVercelChatMessages } from '@/lib/ai/message-utils';
 import { streamText, tool } from 'ai';
 import PostHogClient from '@/app/posthog';
-import { handleChatWithMetadata } from '../actions';
-import type { ChatMetadata, LLMID, RateLimitInfo } from '@/types';
+import type { ChatMetadata, LLMID, RateLimitInfo, ModelParams } from '@/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { generateTitleFromUserMessage } from '@/lib/ai/actions';
+import {
+  handleChatAndMessages,
+  generateTitleFromUserMessage,
+} from '@/lib/ai/actions';
 import { myProvider } from '../providers';
 import { z } from 'zod';
 import { getPageContent } from './browser';
+import { waitUntil } from '@vercel/functions';
+
+function calculateThinkingElapsedSecs(
+  isThinking: boolean,
+  thinkingStartTime: number | null,
+): number | null {
+  return isThinking && thinkingStartTime
+    ? Math.round((Date.now() - thinkingStartTime) / 1000)
+    : null;
+}
 
 interface ReasonLLMConfig {
   messages: any[];
   profile: any;
+  modelParams: ModelParams;
   dataStream: any;
   isLargeModel: boolean;
   abortSignal: AbortSignal;
@@ -46,6 +59,7 @@ export async function executeReasonLLMTool({
 
   const {
     messages,
+    modelParams,
     profile,
     dataStream,
     abortSignal,
@@ -73,16 +87,43 @@ export async function executeReasonLLMTool({
   });
 
   let generatedTitle: string | undefined;
+  let assistantMessage = '';
+  let thinkingText = '';
+  let thinkingStartTime: number | null = null;
+  let isThinking = false;
+
+  abortSignal.addEventListener('abort', async () => {
+    if (chatMetadata.id) {
+      waitUntil(
+        handleChatAndMessages({
+          supabase: supabase as SupabaseClient,
+          modelParams,
+          chatMetadata,
+          profile,
+          model: config.model,
+          messages,
+          finishReason: 'stop',
+          title: generatedTitle,
+          assistantMessage,
+          thinkingText,
+          thinkingElapsedSecs: calculateThinkingElapsedSecs(
+            isThinking,
+            thinkingStartTime,
+          ),
+        }),
+      );
+    }
+  });
 
   try {
     await Promise.all([
       (async () => {
-        const { fullStream } = streamText({
+        const { textStream } = streamText({
           model: selectedModel,
           system: systemPrompt,
           messages: toVercelChatMessages(messages),
           maxTokens: 8192,
-          abortSignal: abortSignal,
+          abortSignal,
           maxSteps: 2,
           tools: {
             open_url: tool({
@@ -128,50 +169,64 @@ beneficial for the user's needs.`,
                 type: 'reasoning',
                 content: '\n\n',
               });
+            } else if (chuck.chunk.type === 'text-delta') {
+              dataStream.writeData({
+                type: 'text-delta',
+                content: chuck.chunk.textDelta,
+              });
+              assistantMessage += chuck.chunk.textDelta;
+            } else if (chuck.chunk.type === 'reasoning') {
+              if (!isThinking) {
+                isThinking = true;
+                thinkingStartTime = Date.now();
+              }
+
+              thinkingText += chuck.chunk.textDelta;
+              dataStream.writeData({
+                type: 'reasoning',
+                content: chuck.chunk.textDelta,
+              });
             }
           },
           onError: async (error) => {
             console.error('[ReasonLLM] Stream Error:', error);
           },
-          onFinish: async ({ finishReason }: { finishReason: string }) => {
+          onFinish: async ({
+            finishReason,
+            text,
+            reasoning,
+          }: {
+            finishReason: string;
+            text: string;
+            reasoning: string | undefined;
+          }) => {
             if (supabase) {
-              await handleChatWithMetadata({
+              await handleChatAndMessages({
                 supabase,
+                modelParams,
                 chatMetadata,
                 profile,
                 model,
-                title: generatedTitle,
                 messages,
                 finishReason,
+                title: generatedTitle,
+                assistantMessage: text,
+                thinkingText: reasoning || undefined,
+                thinkingElapsedSecs: calculateThinkingElapsedSecs(
+                  isThinking,
+                  thinkingStartTime,
+                ),
               });
             }
           },
         });
 
-        let thinkingStartTime: number | null = null;
-        let isThinking = false;
-
-        for await (const delta of fullStream) {
-          if (delta.type === 'text-delta') {
-            dataStream.writeData({
-              type: 'text-delta',
-              content: delta.textDelta,
-            });
-          }
-
-          if (delta.type === 'reasoning') {
-            if (!isThinking) {
-              isThinking = true;
-              thinkingStartTime = Date.now();
-            }
-
-            dataStream.writeData({
-              type: 'reasoning',
-              content: delta.textDelta,
-            });
-          }
+        // Consume the stream to keep it active
+        for await (const _ of textStream) {
+          // Stream is already handled in onChunk
         }
 
+        // Handle stream completion
         if (isThinking && thinkingStartTime) {
           isThinking = false;
           const thinkingElapsedSecs = Math.round(

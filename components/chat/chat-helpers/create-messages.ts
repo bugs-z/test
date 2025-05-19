@@ -1,16 +1,5 @@
-import { createMessageFileItems } from '@/db/message-file-items';
-import {
-  createMessages,
-  deleteMessage,
-  deleteMessagesIncludingAndAfter,
-  updateMessage,
-} from '@/db/messages';
-import {
-  uploadMessageImage,
-  cleanupTemporaryImages,
-} from '@/db/storage/message-images';
 import { lastSequenceNumber } from '@/lib/utils';
-import type { Tables, TablesInsert } from '@/supabase/types';
+import type { Tables } from '@/supabase/types';
 import type {
   ChatMessage,
   LLM,
@@ -48,265 +37,127 @@ export const handleCreateMessages = async (
   try {
     const isEdit = editSequenceNumber !== undefined;
 
-    // If it's a temporary chat, don't create messages in the database
+    const userMessage: ChatMessage = {
+      message: {
+        id: isEdit
+          ? chatMessages.find(
+              (msg) => msg.message.sequence_number === editSequenceNumber,
+            )?.message.id || uuidv4()
+          : uuidv4(),
+        chat_id: currentChat?.id || '',
+        content: messageContent || '',
+        thinking_content: null,
+        thinking_enabled: modelData.modelId === 'reasoning-model',
+        thinking_elapsed_secs: null,
+        role: 'user',
+        model: modelData.modelId,
+        plugin: selectedPlugin,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        sequence_number: lastSequenceNumber(chatMessages) + 1,
+        user_id: profile.user_id,
+        image_paths: newMessageImages.map((image) => image.path),
+        attachments: [],
+        citations: [],
+      },
+      fileItems: isEdit
+        ? chatMessages.find(
+            (msg) => msg.message.sequence_number === editSequenceNumber,
+          )?.fileItems || []
+        : retrievedFileItems,
+    };
+
+    const assistantMessage: ChatMessage = {
+      message: {
+        id: uuidv4(),
+        chat_id: currentChat?.id || '',
+        content: generatedText,
+        thinking_content: thinkingText || null,
+        thinking_enabled: modelData.modelId === 'reasoning-model',
+        thinking_elapsed_secs: thinkingElapsedSecs || null,
+        model: modelData.modelId,
+        plugin: selectedPlugin,
+        role: 'assistant',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        sequence_number: lastSequenceNumber(chatMessages) + 2,
+        user_id: profile.user_id,
+        image_paths: [],
+        citations: citations || [],
+        attachments: fileAttachments
+          ? convertToJsonAttachments(fileAttachments)
+          : [],
+      },
+      fileItems: [],
+    };
+
+    // If it's a temporary chat, just update UI state
     if (isTemporary || !currentChat) {
-      const tempUserMessage: ChatMessage = {
-        message: {
-          id: uuidv4(),
-          chat_id: '',
-          content: messageContent || '',
-          thinking_content: null,
-          thinking_enabled: modelData.modelId === 'reasoning-model',
-          thinking_elapsed_secs: null,
-          role: 'user',
-          model: modelData.modelId,
-          plugin: selectedPlugin,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          sequence_number: lastSequenceNumber(chatMessages) + 1,
-          user_id: profile.user_id,
-          image_paths: newMessageImages.map((image) => image.path),
-          attachments: [],
-          citations: [],
-        },
-        fileItems: retrievedFileItems,
-      };
-
-      const tempAssistantMessage: ChatMessage = {
-        message: {
-          id: uuidv4(),
-          chat_id: '',
-          content: generatedText,
-          thinking_content: thinkingText || null,
-          thinking_enabled: modelData.modelId === 'reasoning-model',
-          thinking_elapsed_secs: thinkingElapsedSecs || null,
-          model: modelData.modelId,
-          plugin: selectedPlugin,
-          role: 'assistant',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          sequence_number: lastSequenceNumber(chatMessages) + 2,
-          user_id: profile.user_id,
-          image_paths: [],
-          citations: citations || [],
-          attachments: fileAttachments
-            ? convertToJsonAttachments(fileAttachments)
-            : [],
-        },
-        fileItems: [],
-      };
-
-      setMessages([...chatMessages, tempUserMessage, tempAssistantMessage]);
+      setMessages([...chatMessages, userMessage, assistantMessage]);
       return;
     }
 
-    const finalUserMessage: TablesInsert<'messages'> = {
-      chat_id: currentChat.id,
-      user_id: profile.user_id,
-      content: messageContent || '',
-      thinking_content: null,
-      thinking_enabled: modelData.modelId === 'reasoning-model',
-      thinking_elapsed_secs: null,
-      model: modelData.modelId,
-      plugin: selectedPlugin,
-      role: 'user',
-      sequence_number: lastSequenceNumber(chatMessages) + 1,
-      image_paths: [],
-      citations: [],
-      attachments: [],
-    };
-
-    const finalAssistantMessage: TablesInsert<'messages'> = {
-      chat_id: currentChat.id,
-      user_id: profile.user_id,
-      content: generatedText,
-      thinking_content: thinkingText || null,
-      thinking_enabled: modelData.modelId === 'reasoning-model',
-      thinking_elapsed_secs: thinkingElapsedSecs || null,
-      model: modelData.modelId,
-      plugin: selectedPlugin,
-      role: 'assistant',
-      sequence_number: lastSequenceNumber(chatMessages) + 2,
-      image_paths: [],
-      citations: citations || [],
-      attachments: fileAttachments
-        ? convertToJsonAttachments(fileAttachments)
-        : [],
-    };
-
     let finalChatMessages: ChatMessage[] = [];
 
-    // If the user is editing a message, delete all messages after the edited message
-    if (isEdit) {
-      const { files, error } = await deleteMessagesIncludingAndAfter(
-        profile.user_id,
-        currentChat.id,
-        editSequenceNumber,
-        true,
-      );
+    if (isRegeneration) {
+      finalChatMessages = [...chatMessages.slice(0, -1), assistantMessage];
+    } else if (isContinuation) {
+      // For continuation, update the last message
+      const lastMessage = chatMessages[chatMessages.length - 1];
+      const updatedMessage = {
+        ...lastMessage,
+        message: {
+          ...lastMessage.message,
+          content: lastMessage.message.content + generatedText,
+          attachments: [
+            ...(lastMessage.message.attachments || []),
+            ...(fileAttachments
+              ? convertToJsonAttachments(fileAttachments)
+              : []),
+          ],
+        },
+      };
+      finalChatMessages = [...chatMessages.slice(0, -1), updatedMessage];
+    } else {
+      const fileIds = newChatFiles
+        ? newChatFiles.map((file) => file.id).filter((id) => id !== undefined)
+        : [];
 
-      newChatFiles = files.map((file) => ({
-        id: file.id,
+      if (fileIds.length > 0) {
+        if (setChatFiles) {
+          setChatFiles((prev) =>
+            prev.map((file) =>
+              fileIds.includes(file.id)
+                ? { ...file, message_id: userMessage.message.id }
+                : file,
+            ),
+          );
+        }
+      }
+
+      const newImages = newMessageImages.map((obj) => ({
+        ...obj,
+        messageId: userMessage.message.id,
+        path: obj.path,
       }));
 
-      if (error) {
-        toast.error('Error deleting messages:', {
-          description: error,
-        });
-      }
-    }
-
-    if (isRegeneration) {
-      const lastMessageId = chatMessages[chatMessages.length - 1].message.id;
-      await deleteMessage(lastMessageId);
-
-      const createdMessages = await createMessages(
-        [finalAssistantMessage],
-        [],
-        currentChat?.id,
-        setChatFiles,
-      );
-
-      await createMessageFileItems(
-        retrievedFileItems.map((fileItem) => {
-          return {
-            user_id: profile.user_id,
-            message_id: createdMessages[0].id,
-            file_item_id: fileItem.id,
-          };
-        }),
-      );
-
-      setChatImages((prevChatImages) => [...prevChatImages]);
+      setChatImages((prevImages) => [...prevImages, ...newImages]);
 
       finalChatMessages = [
-        ...chatMessages.slice(0, -1),
-        {
-          message: createdMessages[0],
-          fileItems: retrievedFileItems,
-        },
+        ...(isEdit
+          ? chatMessages.filter(
+              (chatMessage) =>
+                chatMessage.message.sequence_number < editSequenceNumber,
+            )
+          : chatMessages),
+        userMessage,
+        assistantMessage,
       ];
-
-      setMessages(finalChatMessages);
-    } else if (isContinuation) {
-      const lastStartingMessage = chatMessages[chatMessages.length - 1].message;
-
-      // Get existing attachments and append new ones
-      const existingAttachments = lastStartingMessage.attachments || [];
-      const newAttachments = fileAttachments
-        ? convertToJsonAttachments(fileAttachments)
-        : [];
-      const combinedAttachments = [...existingAttachments, ...newAttachments];
-
-      const updatedMessage = await updateMessage(lastStartingMessage.id, {
-        content: lastStartingMessage.content + generatedText,
-        attachments: combinedAttachments,
-      });
-
-      chatMessages[chatMessages.length - 1].message = updatedMessage;
-
-      finalChatMessages = [...chatMessages];
-
-      setMessages(finalChatMessages);
-    } else {
-      try {
-        const createdMessages = await createMessages(
-          [finalUserMessage, finalAssistantMessage],
-          newChatFiles || [],
-          currentChat?.id,
-          setChatFiles,
-        );
-
-        // Collect temporary paths to clean up later
-        const tempPaths: string[] = [];
-
-        // Upload each image (stored in newMessageImages) for the user message to message_images bucket
-        const uploadPromises = newMessageImages
-          .filter((obj) => obj.file !== null)
-          .map((obj) => {
-            // If this image has a temp path, add it to the cleanup list
-            if (obj.path?.includes('/temp/')) {
-              tempPaths.push(obj.path);
-            }
-
-            const filePath = `${profile.user_id}/${currentChat.id}/${
-              createdMessages[0].id
-            }/${uuidv4()}`;
-
-            return uploadMessageImage(filePath, obj.file as File).catch(
-              (error) => {
-                console.error(`Failed to upload image at ${filePath}:`, error);
-                return null;
-              },
-            );
-          });
-
-        const paths = (await Promise.all(uploadPromises)).filter(
-          Boolean,
-        ) as string[];
-
-        const newImages = newMessageImages.map((obj, index) => ({
-          ...obj,
-          messageId: createdMessages[0].id,
-          path: paths[index],
-        }));
-
-        setChatImages((prevImages) => [...prevImages, ...newImages]);
-
-        let messageWithPaths = createdMessages[0];
-        if (paths.length > 0) {
-          messageWithPaths = await updateMessage(createdMessages[0].id, {
-            image_paths: paths,
-          });
-        }
-
-        await createMessageFileItems(
-          retrievedFileItems.map((fileItem) => {
-            return {
-              user_id: profile.user_id,
-              message_id: createdMessages[0].id,
-              file_item_id: fileItem.id,
-            };
-          }),
-        );
-
-        // Clean up temporary images after permanent ones have been saved
-        if (tempPaths.length > 0) {
-          cleanupTemporaryImages(tempPaths);
-        }
-
-        finalChatMessages = [
-          ...(isEdit
-            ? chatMessages.filter(
-                (chatMessage) =>
-                  chatMessage.message.sequence_number < editSequenceNumber,
-              )
-            : chatMessages),
-          {
-            message: messageWithPaths,
-            fileItems: retrievedFileItems,
-          },
-          {
-            message: createdMessages[1],
-            fileItems: [],
-          },
-        ];
-
-        setMessages(finalChatMessages);
-      } catch (error: any) {
-        if (
-          error.message.includes('chats') &&
-          error.message.includes('23503')
-        ) {
-          toast.error('Error creating messages. Please try again.');
-          console.error('Foreign key constraint error:', error);
-          return;
-        }
-        throw error;
-      }
     }
+
+    setMessages(finalChatMessages);
   } catch (error: any) {
     console.error('Error in handleCreateMessages:', error);
-    toast.error('Error creating messages. Please try again.');
+    toast.error('Error updating chat messages. Please try again.');
   }
 };

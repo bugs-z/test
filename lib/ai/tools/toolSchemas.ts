@@ -1,25 +1,27 @@
 import { executeWebSearchTool } from './web-search';
 import { executeBrowserTool } from './browser';
 import { z } from 'zod';
-import type { LLMID } from '@/types/llms';
+import type { LLMID, ModelParams } from '@/types/llms';
 import type { ChatMetadata } from '@/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 export const createToolSchemas = ({
   messages,
+  modelParams,
+  chatMetadata,
   profile,
   dataStream,
   abortSignal,
-  chatMetadata,
   model,
   supabase,
   userCountryCode,
 }: {
   messages: any;
+  modelParams: ModelParams;
+  chatMetadata: ChatMetadata;
   profile: any;
   dataStream: any;
   abortSignal: AbortSignal;
-  chatMetadata: ChatMetadata;
   model: LLMID;
   supabase: SupabaseClient | null;
   userCountryCode: string | null;
@@ -60,6 +62,7 @@ beneficial for the user's needs.`,
           config: {
             profile,
             messages,
+            modelParams,
             dataStream,
             abortSignal,
             chatMetadata,
@@ -94,6 +97,7 @@ version of a software library or not knowing the date of the next game for a spo
         return executeWebSearchTool({
           config: {
             messages,
+            modelParams,
             profile,
             dataStream,
             isLargeModel: true,

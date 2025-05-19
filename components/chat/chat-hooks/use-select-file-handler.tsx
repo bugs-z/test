@@ -1,7 +1,7 @@
 import { PentestGPTContext } from '@/context/context';
 import { createFileBasedOnExtension } from '@/db/files';
 import { LLM_LIST } from '@/lib/models/llm-list';
-import { uploadTemporaryImage } from '@/db/storage/message-images';
+import { uploadImage } from '@/db/storage/message-images';
 import mammoth from 'mammoth';
 import { useContext, useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -187,9 +187,9 @@ export const useSelectFileHandler = () => {
           },
         ]);
 
-        // Upload image to temporary storage
+        // Upload image to storage
         try {
-          const path = await uploadTemporaryImage(file, profile.user_id);
+          const path = await uploadImage(file, profile.user_id);
 
           // Update image with path and remove loading state
           setNewMessageImages((prev) =>
@@ -204,7 +204,7 @@ export const useSelectFileHandler = () => {
             ),
           );
         } catch (error) {
-          console.error('Error uploading temporary image:', error);
+          console.error('Error uploading image:', error);
           // Update to mark upload as failed but keep the image preview
           setNewMessageImages((prev) =>
             prev.map((img) =>
@@ -283,9 +283,8 @@ export const useSelectFileHandler = () => {
       );
       setUseRetrieval(true);
     } catch (error: any) {
-      toast.error(`${error?.message}`, {
-        duration: 10000,
-      });
+      console.error('Error processing file:', error);
+      toast.error('Error processing file. Please try again.');
       setNewMessageImages((prev) =>
         prev.filter((img) => img.messageId !== 'temp'),
       );

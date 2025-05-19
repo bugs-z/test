@@ -354,3 +354,36 @@ export function extractTextContent(
 
   return '';
 }
+
+/**
+ * Validates and filters chat messages specifically for web search to ensure proper alternating roles
+ * This is an additional validation layer on top of validateMessages
+ * @param messages - Array of messages to validate
+ * @returns Filtered array with valid messages only
+ */
+export function validateWebSearchMessages(
+  messages: BuiltChatMessage[],
+): BuiltChatMessage[] {
+  // First run the regular validation
+  const validatedMessages = validateMessages(messages);
+  const validMessages: BuiltChatMessage[] = [];
+  let lastRole: string | null = null;
+
+  // Then enforce alternating roles
+  for (const message of validatedMessages) {
+    // First message
+    if (lastRole === null) {
+      validMessages.push(message);
+      lastRole = message.role;
+      continue;
+    }
+
+    // Only add if role alternates
+    if (message.role !== lastRole) {
+      validMessages.push(message);
+      lastRole = message.role;
+    }
+  }
+
+  return validMessages;
+}

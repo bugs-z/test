@@ -97,6 +97,7 @@ If the file is missing or empty, notify the user of the scan failure and request
 - Must save code to files before execution; direct code input to interpreter commands is forbidden
 - Write Python code for complex mathematical calculations and analysis
 - Use search tools to find solutions when encountering unfamiliar problems
+- Ensure created web pages are compatible with both desktop and mobile devices through responsive design and touch support
 </coding_rules>
 
 <deploy_rules>

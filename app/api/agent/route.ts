@@ -4,32 +4,18 @@ import { checkRatelimitOnApi } from '@/lib/server/ratelimiter';
 import { createDataStreamResponse } from 'ai';
 import { executePentestAgent } from '@/lib/ai/tools/pentest-agent';
 import { createClient } from '@/lib/supabase/server';
-import type { SupabaseClient } from '@supabase/supabase-js';
 import { processChatMessages } from '@/lib/ai/message-utils';
 
-export const maxDuration = 600;
-
-export const preferredRegion = [
-  'iad1',
-  'arn1',
-  'bom1',
-  'cdg1',
-  'cle1',
-  'cpt1',
-  'dub1',
-  'fra1',
-  'gru1',
-  'hnd1',
-  'icn1',
-  'kix1',
-  'lhr1',
-  'pdx1',
-  'sfo1',
-  'sin1',
-  'syd1',
-];
+export const maxDuration = 800;
 
 export async function POST(request: Request) {
+  const abortController = new AbortController();
+
+  request.signal.addEventListener('abort', () => {
+    console.log('request aborted');
+    abortController.abort();
+  });
+
   try {
     const userCountryCode = request.headers.get('x-vercel-ip-country');
     const { messages, model, modelParams, chatMetadata } = await request.json();
@@ -50,8 +36,7 @@ export async function POST(request: Request) {
       );
     }
 
-    let supabase: SupabaseClient | null = null;
-    supabase = await createClient();
+    const supabase = await createClient();
 
     const { processedMessages } = await processChatMessages(
       messages,
@@ -74,15 +59,13 @@ export async function POST(request: Request) {
         await executePentestAgent({
           config: {
             messages: processedMessages,
+            modelParams,
             profile,
             dataStream,
-            agentMode: modelParams.agentMode,
-            confirmTerminalCommand: modelParams.confirmTerminalCommand,
             abortSignal: request.signal,
             chatMetadata,
             model,
             supabase,
-            isPremiumUser: config.isPremiumUser,
             userCountryCode,
             isAgentAPI: true,
             originalMessages: messages,

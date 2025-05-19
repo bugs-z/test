@@ -29,4 +29,6 @@ export interface ModelParams {
   agentMode: AgentMode;
   confirmTerminalCommand: boolean;
   isTemporaryChat: boolean;
+  isRegeneration: boolean;
+  editSequenceNumber?: number;
 }

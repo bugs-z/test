@@ -70,7 +70,6 @@ export default async function SharedChatPage({
               <SharedMessage
                 key={message.id}
                 message={message}
-                previousMessage={array[index - 1]}
                 isLastMessage={index === array.length - 1}
               />
             ))}

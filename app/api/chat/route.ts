@@ -13,36 +13,21 @@ import {
 import { type LLMID, PluginID } from '@/types';
 import {
   generateTitleFromUserMessage,
-  handleChatWithMetadata,
+  handleChatAndMessages,
 } from '@/lib/ai/actions';
 import { createClient } from '@/lib/supabase/server';
-import type { SupabaseClient } from '@supabase/supabase-js';
 import { waitUntil } from '@vercel/functions';
 
-// Increased max duration to allow for long reasoning tool responses
 export const maxDuration = 180;
 
-export const preferredRegion = [
-  'iad1',
-  'arn1',
-  'bom1',
-  'cdg1',
-  'cle1',
-  'cpt1',
-  'dub1',
-  'fra1',
-  'gru1',
-  'hnd1',
-  'icn1',
-  'kix1',
-  'lhr1',
-  'pdx1',
-  'sfo1',
-  'sin1',
-  'syd1',
-];
-
 export async function POST(request: Request) {
+  const abortController = new AbortController();
+
+  request.signal.addEventListener('abort', () => {
+    console.log('request aborted');
+    abortController.abort();
+  });
+
   try {
     const userCountryCode = request.headers.get('x-vercel-ip-country');
     const { messages, model, modelParams, chatMetadata } = await request.json();
@@ -67,14 +52,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const isReasoningModel =
-      model === 'reasoning-model' || modelParams.selectedPlugin === 'reasoning';
-    let supabase: SupabaseClient | null = null;
+    const supabase = await createClient();
+    const isReasoningModel = model === 'reasoning-model';
     let generatedTitle: string | undefined;
+    let assistantMessage = '';
     let toolUsed = '';
     let hasGeneratedTitle = false;
     let titleGenerationPromise: Promise<void> | null = null;
-    supabase = await createClient();
 
     const { processedMessages, systemPrompt } = await processChatMessages(
       messages,
@@ -87,17 +71,23 @@ export async function POST(request: Request) {
       config.isPremiumUser,
     );
 
+    // Set up abort handling
     request.signal.addEventListener('abort', async () => {
-      if (chatMetadata.id) {
+      console.log('Chat request aborted');
+      abortController.abort();
+
+      if (chatMetadata.id && !toolUsed && !isReasoningModel) {
         waitUntil(
-          handleChatWithMetadata({
+          handleChatAndMessages({
             supabase,
+            modelParams,
             chatMetadata,
             profile,
             model,
-            title: generatedTitle,
             messages,
             finishReason: 'stop',
+            title: generatedTitle,
+            assistantMessage,
           }),
         );
       }
@@ -105,9 +95,10 @@ export async function POST(request: Request) {
 
     const toolResponse = await handleToolExecution({
       messages: processedMessages,
+      modelParams,
       profile,
       isLargeModel: config.isLargeModel,
-      abortSignal: request.signal,
+      abortSignal: abortController.signal,
       chatMetadata,
       model,
       supabase,
@@ -139,7 +130,7 @@ export async function POST(request: Request) {
             system: systemPrompt,
             messages: toVercelChatMessages(processedMessages, true),
             maxTokens: 2048,
-            abortSignal: request.signal,
+            abortSignal: abortController.signal,
             experimental_transform: smoothStream({ chunking: 'word' }),
             onChunk: async (chunk: any) => {
               if (chunk.chunk.type === 'tool-call') {
@@ -155,10 +146,14 @@ export async function POST(request: Request) {
                 titleGenerationPromise = (async () => {
                   generatedTitle = await generateTitleFromUserMessage({
                     messages,
-                    abortSignal: request.signal,
+                    abortSignal: abortController.signal,
                   });
                   dataStream.writeData({ chatTitle: generatedTitle });
                 })();
+              }
+
+              if (chunk.chunk.type === 'text-delta') {
+                assistantMessage += chunk.chunk.textDelta;
               }
             },
             onError: async (error) => {
@@ -170,8 +165,7 @@ export async function POST(request: Request) {
                 ) &&
                 !(
                   error instanceof Error &&
-                  error.name === 'AI_InvalidToolArgumentsError' &&
-                  error.message.includes('format_output')
+                  error.name === 'AI_InvalidToolArgumentsError'
                 )
               ) {
                 console.error('[Chat] Stream Error:', error);
@@ -179,9 +173,10 @@ export async function POST(request: Request) {
             },
             tools: createToolSchemas({
               messages: processedMessages,
+              modelParams,
               profile,
               dataStream,
-              abortSignal: request.signal,
+              abortSignal: abortController.signal,
               chatMetadata,
               model,
               supabase,
@@ -191,20 +186,25 @@ export async function POST(request: Request) {
                 ? ['browser', 'webSearch', 'terminal']
                 : ['browser', 'webSearch'],
             ),
-            onFinish: async ({ finishReason }: { finishReason: string }) => {
+            onFinish: async ({
+              finishReason,
+              text,
+            }: { finishReason: string; text: string }) => {
               if (chatMetadata.id && !toolUsed) {
                 // Wait for title generation if it's in progress
                 if (titleGenerationPromise) {
                   await titleGenerationPromise;
                 }
-                await handleChatWithMetadata({
+                await handleChatAndMessages({
                   supabase,
+                  modelParams,
                   chatMetadata,
                   profile,
                   model,
-                  title: generatedTitle,
                   messages,
                   finishReason,
+                  title: generatedTitle,
+                  assistantMessage: text,
                 });
               }
             },

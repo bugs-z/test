@@ -1,5 +1,4 @@
 import { supabase } from '@/lib/supabase/browser-client';
-import type { TablesInsert } from '@/supabase/types';
 
 export const getMessageFileItemsByMessageId = async (messageId: string) => {
   const { data: messageFileItems, error } = await supabase
@@ -25,20 +24,20 @@ export const getMessageFileItemsByMessageId = async (messageId: string) => {
   return messageFileItems;
 };
 
-export const createMessageFileItems = async (
-  messageFileItems: TablesInsert<'message_file_items'>[],
-) => {
-  const { data: createdMessageFileItems, error } = await supabase
-    .from('message_file_items')
-    .insert(messageFileItems)
-    .select('*');
+// export const createMessageFileItems = async (
+//   messageFileItems: TablesInsert<'message_file_items'>[],
+// ) => {
+//   const { data: createdMessageFileItems, error } = await supabase
+//     .from('message_file_items')
+//     .insert(messageFileItems)
+//     .select('*');
 
-  if (!createdMessageFileItems) {
-    throw new Error(error.message);
-  }
+//   if (!createdMessageFileItems) {
+//     throw new Error(error.message);
+//   }
 
-  return createdMessageFileItems;
-};
+//   return createdMessageFileItems;
+// };
 
 export const getFileItemsByMultipleChatIds = async (chatIds: string[]) => {
   if (chatIds.length === 0) {

@@ -49,7 +49,6 @@ export const useChatHandler = () => {
     chatSettings,
     newMessageImages,
     chatMessages,
-    chatImages,
     setChatImages,
     setChatFiles,
     setNewMessageFiles,
@@ -147,11 +146,9 @@ export const useChatHandler = () => {
 
   const handleStopMessage = async () => {
     if (abortController && !abortController.signal.aborted) {
-      abortController.abort();
-      while (isGeneratingRef.current) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      }
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      abortController.abort(
+        new DOMException('Generation stopped by user', 'AbortError'),
+      );
 
       if (selectedChat && toolInUse === PluginID.PENTEST_AGENT) {
         const updatedChat = {
@@ -343,6 +340,15 @@ export const useChatHandler = () => {
           (chatMessage) =>
             chatMessage.message.sequence_number < editSequenceNumber,
         );
+
+        // Use the same message ID for editing
+        const editedChatMessage = chatMessages.find(
+          (msg) => msg.message.sequence_number === editSequenceNumber,
+        );
+        if (editedChatMessage) {
+          tempUserChatMessage.message.id = editedChatMessage.message.id;
+          tempUserChatMessage.fileItems = editedChatMessage.fileItems;
+        }
       }
 
       let lastMessageRetrievedFileItems: Tables<'file_items'>[] | null = null;
@@ -373,6 +379,22 @@ export const useChatHandler = () => {
         editedMessageFiles = chatFiles.filter(
           (file) => file.message_id === editedChatMessage?.message.id,
         );
+
+        // Preserve file items for the edited message
+        tempUserChatMessage.fileItems = editedChatMessage?.fileItems || [];
+
+        // Update chat files to point to the new message ID
+        if (editedMessageFiles.length > 0) {
+          setChatFiles((prev) =>
+            prev.map((file) =>
+              editedMessageFiles?.some(
+                (editedFile) => editedFile.id === file.id,
+              )
+                ? { ...file, message_id: tempUserChatMessage.message.id }
+                : file,
+            ),
+          );
+        }
       }
 
       if (isRegeneration) {
@@ -416,7 +438,7 @@ export const useChatHandler = () => {
         chatMessages: sentChatMessages,
         retrievedFileItems: retrievedFileItems,
         imagePaths: newMessageImages
-          .filter((img) => img.path?.includes('/temp/'))
+          .filter((img) => img.path?.includes('/image-'))
           .map((img) => img.path),
       };
       const modelParams: ModelParams = {
@@ -426,11 +448,17 @@ export const useChatHandler = () => {
         agentMode: getStoredAutoRunPreference(),
         confirmTerminalCommand,
         isTemporaryChat,
+        isRegeneration,
+        editSequenceNumber,
       };
       const chatId = currentChat?.id ?? uuidv4();
       const chatMetadata: ChatMetadata = isTemporaryChat
-        ? { newChat: !currentChat }
-        : { id: chatId, newChat: !currentChat };
+        ? { newChat: !currentChat, retrievedFileItems }
+        : {
+            id: chatId,
+            newChat: !currentChat,
+            retrievedFileItems,
+          };
 
       // Create chat early if it doesn't exist
       if (!currentChat && !isTemporaryChat) {

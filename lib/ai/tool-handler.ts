@@ -5,11 +5,13 @@ import type {
   BuiltChatMessage,
   LLMID,
   RateLimitInfo,
+  ModelParams,
 } from '@/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 interface ToolHandlerConfig {
   messages: BuiltChatMessage[];
+  modelParams: ModelParams;
   profile: any;
   isLargeModel: boolean;
   abortSignal: AbortSignal;
@@ -23,6 +25,7 @@ interface ToolHandlerConfig {
 export async function handleToolExecution(config: ToolHandlerConfig) {
   const {
     messages,
+    modelParams,
     profile,
     isLargeModel,
     abortSignal,
@@ -38,6 +41,7 @@ export async function handleToolExecution(config: ToolHandlerConfig) {
       await executeReasonLLMTool({
         config: {
           messages,
+          modelParams,
           profile,
           dataStream,
           isLargeModel,

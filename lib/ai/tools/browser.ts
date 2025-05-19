@@ -8,17 +8,19 @@ import { streamText } from 'ai';
 import { myProvider } from '@/lib/ai/providers';
 import FirecrawlApp, { type ScrapeResponse } from '@mendable/firecrawl-js';
 import PostHogClient from '@/app/posthog';
-import type { ChatMetadata, LLMID } from '@/types';
+import type { ChatMetadata, LLMID, ModelParams } from '@/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   generateTitleFromUserMessage,
-  handleChatWithMetadata,
+  handleChatAndMessages,
 } from '@/lib/ai/actions';
 import { truncateContentByTokens } from '@/lib/ai/terminal-utils';
+import { waitUntil } from '@vercel/functions';
 
 interface BrowserToolConfig {
   profile: any;
   messages: any[];
+  modelParams: ModelParams;
   dataStream: any;
   abortSignal: AbortSignal;
   chatMetadata: ChatMetadata;
@@ -48,6 +50,7 @@ export function getLastUserMessage(messages: any[]): string {
 export async function browsePage(
   url: string,
   format: 'markdown' | 'html' = 'markdown',
+  userCountryCode: string | null = null,
 ): Promise<string> {
   try {
     const app = new FirecrawlApp({ apiKey: process.env.FIRECRAWL_API_KEY });
@@ -55,6 +58,10 @@ export async function browsePage(
     // First try with default proxy
     const scrapeResult = (await app.scrapeUrl(url, {
       formats: ['markdown', 'html'],
+      location: {
+        country: userCountryCode || 'US',
+      },
+      timeout: 15000,
     })) as ScrapeResponse;
 
     // Check if we got an error status code that warrants stealth retry
@@ -63,7 +70,11 @@ export async function browsePage(
       // Retry with stealth proxy
       const stealthResult = (await app.scrapeUrl(url, {
         formats: ['markdown', 'html'],
+        location: {
+          country: userCountryCode || 'US',
+        },
         proxy: 'stealth',
+        timeout: 20000,
       })) as ScrapeResponse;
 
       if (!stealthResult.success) {
@@ -152,7 +163,16 @@ export async function executeBrowserTool({
     );
   }
 
-  const { profile, messages, dataStream, chatMetadata, supabase } = config;
+  const {
+    profile,
+    messages,
+    modelParams,
+    dataStream,
+    chatMetadata,
+    supabase,
+    userCountryCode,
+    abortSignal,
+  } = config;
   const { systemPrompt, model } = await getProviderConfig(profile);
 
   const posthog = PostHogClient();
@@ -173,7 +193,11 @@ export async function executeBrowserTool({
     const lastUserMessage = extractTextContent(message.content);
     dataStream.writeData({ type: 'tool-call', content: 'browser' });
 
-    const browserResult = await browsePage(open_url, format_output);
+    const browserResult = await browsePage(
+      open_url,
+      format_output,
+      userCountryCode,
+    );
     const browserPrompt = createBrowserPrompt(
       browserResult,
       open_url,
@@ -181,6 +205,25 @@ export async function executeBrowserTool({
     );
 
     let generatedTitle: string | undefined;
+    let assistantMessage = '';
+
+    abortSignal.addEventListener('abort', async () => {
+      if (chatMetadata.id) {
+        waitUntil(
+          handleChatAndMessages({
+            supabase: supabase as SupabaseClient,
+            modelParams,
+            chatMetadata,
+            profile,
+            model: config.model,
+            messages,
+            finishReason: 'stop',
+            title: generatedTitle,
+            assistantMessage,
+          }),
+        );
+      }
+    });
 
     await Promise.all([
       (async () => {
@@ -192,19 +235,25 @@ export async function executeBrowserTool({
             { role: 'user', content: browserPrompt },
           ],
           maxTokens: 2048,
+          abortSignal,
           onError: async (error) => {
             console.error('[BrowserTool] Stream Error:', error);
           },
-          onFinish: async ({ finishReason }: { finishReason: string }) => {
+          onFinish: async ({
+            finishReason,
+            text,
+          }: { finishReason: string; text: string }) => {
             if (supabase) {
-              await handleChatWithMetadata({
+              await handleChatAndMessages({
                 supabase,
+                modelParams,
                 chatMetadata,
                 profile,
                 model: config.model,
-                title: generatedTitle,
                 messages,
                 finishReason,
+                title: generatedTitle,
+                assistantMessage: text,
               });
             }
           },
@@ -227,6 +276,7 @@ export async function executeBrowserTool({
               hasFirstTextDelta = true;
             }
 
+            assistantMessage += delta.textDelta;
             dataStream.writeData({
               type: 'text-delta',
               content: delta.textDelta,

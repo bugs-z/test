@@ -1,16 +1,22 @@
 import { buildSystemPrompt } from '@/lib/ai/prompts';
-import { toVercelChatMessages } from '@/lib/ai/message-utils';
+import {
+  toVercelChatMessages,
+  validateWebSearchMessages,
+} from '@/lib/ai/message-utils';
 import llmConfig from '@/lib/models/llm-config';
 import PostHogClient from '@/app/posthog';
-import type { ChatMetadata, LLMID } from '@/types';
+import type { ChatMetadata, LLMID, ModelParams } from '@/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   generateTitleFromUserMessage,
-  handleChatWithMetadata,
-} from '../actions';
+  handleChatAndMessages,
+} from '@/lib/ai/actions';
 import { removePdfContentFromMessages } from '@/lib/build-prompt-backend';
+import { waitUntil } from '@vercel/functions';
+
 interface WebSearchConfig {
   messages: any[];
+  modelParams: ModelParams;
   profile: any;
   dataStream: any;
   isLargeModel: boolean;
@@ -141,10 +147,10 @@ export async function executeWebSearchTool({
 
   const {
     messages,
+    modelParams,
     profile,
     dataStream,
     isLargeModel,
-    directToolCall,
     abortSignal,
     chatMetadata,
     model,
@@ -154,6 +160,9 @@ export async function executeWebSearchTool({
 
   // Filter out PDF content from messages
   const filteredMessages = removePdfContentFromMessages(messages);
+
+  // Validate messages for proper alternating roles
+  const validatedMessages = validateWebSearchMessages(filteredMessages);
 
   const { systemPrompt, selectedModel } = await getProviderConfig(
     isLargeModel,
@@ -171,14 +180,33 @@ export async function executeWebSearchTool({
     });
   }
 
-  if (!directToolCall) {
-    dataStream.writeData({
-      type: 'tool-call',
-      content: 'websearch',
-    });
-  }
+  dataStream.writeData({
+    type: 'tool-call',
+    content: 'websearch',
+  });
 
   let generatedTitle: string | undefined;
+  let assistantMessage = '';
+  const citations: string[] = [];
+
+  abortSignal.addEventListener('abort', async () => {
+    if (chatMetadata.id) {
+      waitUntil(
+        handleChatAndMessages({
+          supabase: supabase as SupabaseClient,
+          modelParams,
+          chatMetadata,
+          profile,
+          model: config.model,
+          messages,
+          finishReason: 'stop',
+          title: generatedTitle,
+          assistantMessage,
+          citations,
+        }),
+      );
+    }
+  });
 
   try {
     await Promise.all([
@@ -186,7 +214,7 @@ export async function executeWebSearchTool({
         const requestPayload = {
           model: selectedModel,
           system: systemPrompt,
-          messages: toVercelChatMessages(filteredMessages, true, true),
+          messages: toVercelChatMessages(validatedMessages, true, true),
           stream: true,
           max_tokens: 2048,
           web_search_options: {
@@ -227,7 +255,6 @@ export async function executeWebSearchTool({
           );
         }
 
-        const citations: string[] = [];
         let hasFirstTextDelta = false;
 
         for await (const delta of streamPerplexityResponse(response)) {
@@ -239,20 +266,9 @@ export async function executeWebSearchTool({
             if (!hasFirstTextDelta) {
               dataStream.writeData({ citations });
               hasFirstTextDelta = true;
-
-              if (!directToolCall) {
-                dataStream.writeData({
-                  type: 'tool-call',
-                  content: 'none',
-                });
-
-                dataStream.writeData({
-                  type: 'text-delta',
-                  content: '\n\n',
-                });
-              }
             }
 
+            assistantMessage += delta.textDelta;
             dataStream.writeData({
               type: 'text-delta',
               content: delta.textDelta,
@@ -261,14 +277,17 @@ export async function executeWebSearchTool({
         }
 
         if (supabase) {
-          await handleChatWithMetadata({
+          await handleChatAndMessages({
             supabase,
+            modelParams,
             chatMetadata,
             profile,
             model,
-            title: generatedTitle,
             messages,
             finishReason: 'stop',
+            title: generatedTitle,
+            assistantMessage,
+            citations,
           });
         }
       })(),

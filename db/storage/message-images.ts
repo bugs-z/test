@@ -1,32 +1,18 @@
 import { supabase } from '@/lib/supabase/browser-client';
+import { v4 as uuidv4 } from 'uuid';
 
-export const uploadMessageImage = async (path: string, image: File) => {
-  const bucket = 'message_images';
-
+export const uploadImage = async (
+  image: File,
+  userId: string,
+): Promise<string> => {
   const imageSizeLimit = 6000000; // 6MB
 
   if (image.size > imageSizeLimit) {
     throw new Error(`Image must be less than ${imageSizeLimit / 1000000}MB`);
   }
 
-  const { error } = await supabase.storage.from(bucket).upload(path, image, {
-    upsert: true,
-  });
-
-  if (error) {
-    throw new Error('Error uploading image');
-  }
-
-  return path;
-};
-
-export const uploadTemporaryImage = async (
-  image: File,
-  userId: string,
-): Promise<string> => {
-  // Create a temporary path for the image
-  const tempId = crypto.randomUUID();
-  const path = `${userId}/temp/${tempId}`;
+  // Create a path for the image
+  const path = `${userId}/image-${uuidv4()}`;
   const bucket = 'message_images';
 
   // Upload image to storage
@@ -35,7 +21,7 @@ export const uploadTemporaryImage = async (
   });
 
   if (error) {
-    throw new Error('Error uploading temporary image');
+    throw new Error('Error uploading image');
   }
 
   return path;
@@ -51,15 +37,4 @@ export const getMessageImageFromStorage = async (filePath: string) => {
   }
 
   return data.signedUrl;
-};
-
-// Helper function to clean up temporary images
-export const cleanupTemporaryImages = async (paths: string[]) => {
-  if (paths.length === 0) return;
-
-  const { error } = await supabase.storage.from('message_images').remove(paths);
-
-  if (error) {
-    console.error('Error cleaning up temporary images:', error);
-  }
 };
