@@ -6,6 +6,7 @@ import { useUIContext } from '@/context/ui-context';
 export enum AgentStatusState {
   THINKING = 'thinking',
   TERMINAL = 'terminal',
+  UPLOADING_FILES = 'uploading_files',
   CREATING_FILE = 'creating_file',
   EDITING_FILE = 'editing_file',
   FILE_READ = 'file_read',
@@ -21,6 +22,7 @@ export enum AgentStatusState {
 export const AgentStatusLabels: Record<AgentStatusState, string> = {
   [AgentStatusState.THINKING]: 'Thinking',
   [AgentStatusState.TERMINAL]: 'Using terminal',
+  [AgentStatusState.UPLOADING_FILES]: 'Uploading files',
   [AgentStatusState.CREATING_FILE]: 'Creating file',
   [AgentStatusState.EDITING_FILE]: 'Editing file',
   [AgentStatusState.FILE_READ]: 'Reading file',
@@ -72,6 +74,10 @@ const AgentStatusColors: Record<
   [AgentStatusState.EDITING_FILE]: {
     ping: 'bg-pink-400',
     base: 'bg-pink-500',
+  },
+  [AgentStatusState.UPLOADING_FILES]: {
+    ping: 'bg-gray-400',
+    base: 'bg-gray-500',
   },
 };
 

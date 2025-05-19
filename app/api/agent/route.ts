@@ -38,16 +38,18 @@ export async function POST(request: Request) {
 
     const supabase = await createClient();
 
-    const { processedMessages } = await processChatMessages(
-      messages,
-      'chat-model-large-with-tools',
-      modelParams,
-      true,
-      profile,
-      false,
-      supabase,
-      true,
-    );
+    const { processedMessages, systemPrompt, pentestFiles } =
+      await processChatMessages(
+        messages,
+        'chat-model-agent',
+        modelParams,
+        true,
+        profile,
+        false,
+        supabase,
+        true,
+        true,
+      );
 
     return createDataStreamResponse({
       execute: async (dataStream) => {
@@ -67,8 +69,9 @@ export async function POST(request: Request) {
             model,
             supabase,
             userCountryCode,
-            isAgentAPI: true,
             originalMessages: messages,
+            systemPrompt,
+            pentestFiles,
           },
         });
       },

@@ -56,3 +56,28 @@ export const ensureSandboxConnection = async (
 
   return { sandbox };
 };
+
+export const writePentestFilesToSandbox = async (
+  sandboxManager: any,
+  pentestFiles: Array<{ path: string; data: string }>,
+  dataStream: any,
+): Promise<boolean> => {
+  if (!pentestFiles || pentestFiles.length === 0) {
+    return true;
+  }
+
+  dataStream.writeData({
+    type: 'agent-status',
+    content: 'uploading_files',
+  });
+
+  try {
+    const { sandbox } = await sandboxManager.getSandbox();
+
+    await sandbox.files.write(pentestFiles);
+    return true;
+  } catch (error) {
+    console.error('[PentestAgent] Error writing files to sandbox:', error);
+    return false;
+  }
+};

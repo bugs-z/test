@@ -88,7 +88,6 @@ export const useSelectFileHandler = () => {
     chatSettings,
     setNewMessageImages,
     setNewMessageFiles,
-    setUseRetrieval,
     newMessageFiles,
   } = useContext(PentestGPTContext);
 
@@ -281,10 +280,10 @@ export const useSelectFileHandler = () => {
       setNewMessageFiles((prev) =>
         prev.map((item) => (item.id === loadingId ? createdFile : item)),
       );
-      setUseRetrieval(true);
     } catch (error: any) {
-      console.error('Error processing file:', error);
-      toast.error('Error processing file. Please try again.');
+      toast.error(`${error?.message}`, {
+        duration: 10000,
+      });
       setNewMessageImages((prev) =>
         prev.filter((img) => img.messageId !== 'temp'),
       );

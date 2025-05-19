@@ -69,8 +69,6 @@ interface PentestGPTContextType {
   setNewMessageImages: Dispatch<SetStateAction<MessageImage[]>>;
 
   // RETRIEVAL STORE
-  useRetrieval: boolean;
-  setUseRetrieval: Dispatch<SetStateAction<boolean>>;
   sourceCount: number;
   setSourceCount: Dispatch<SetStateAction<number>>;
 
@@ -149,8 +147,6 @@ export const PentestGPTContext = createContext<PentestGPTContextType>({
   setNewMessageImages: () => {},
 
   // RETRIEVAL STORE
-  useRetrieval: false,
-  setUseRetrieval: () => {},
   sourceCount: 4,
   setSourceCount: () => {},
 

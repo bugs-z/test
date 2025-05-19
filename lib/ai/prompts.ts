@@ -3,6 +3,7 @@ import {
   getPentestGPTInfo,
   systemPromptEnding,
 } from '@/lib/models/llm-prompting';
+import { PENTESTGPT_AGENT_SYSTEM_PROMPT } from '../models/agent-prompts';
 
 export function buildSystemPrompt(
   basePrompt: string,
@@ -27,6 +28,7 @@ const modelPromptMap: Record<string, string> = {
   'chat-model-small-with-tools': `${getPentestGPTInfo(true, 'June 2024', 'Small Model')}\n${systemPromptEnding}`,
   'chat-model-large-with-tools': `${getPentestGPTInfo(true, 'June 2024', 'Large Model')}\n${systemPromptEnding}`,
   'chat-model-reasoning': `${getPentestGPTInfo(true, 'June 2024', 'reasoningModel')}\n${systemPromptEnding}`,
+  'chat-model-agent': `${PENTESTGPT_AGENT_SYSTEM_PROMPT}`,
 };
 
 export const getSystemPrompt = ({

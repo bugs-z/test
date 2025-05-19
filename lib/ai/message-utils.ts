@@ -273,9 +273,11 @@ export async function processChatMessages(
   isReasoningModel: boolean,
   supabase: SupabaseClient,
   isPremiumSubscription: boolean,
+  isPentestAgent?: boolean,
 ): Promise<{
   processedMessages: BuiltChatMessage[];
   systemPrompt: string;
+  pentestFiles?: Array<{ path: string; data: string }>;
 }> {
   let shouldUncensor = false;
   const apiKey = llmConfig.openai.apiKey;
@@ -318,11 +320,13 @@ export async function processChatMessages(
   const validatedMessages = validateMessages(processedMessages);
 
   // Process attachments and file content for the last message
-  const messagesWithAttachments = await processMessageContentWithAttachments(
-    validatedMessages,
-    profile.user_id,
-    isReasoningModel,
-  );
+  const { processedMessages: messagesWithAttachments, pentestFiles } =
+    await processMessageContentWithAttachments(
+      validatedMessages,
+      profile.user_id,
+      isReasoningModel,
+      isPentestAgent,
+    );
 
   const systemPrompt = getSystemPrompt({
     selectedChatModel: selectedModel,
@@ -332,6 +336,7 @@ export async function processChatMessages(
   return {
     processedMessages: messagesWithAttachments,
     systemPrompt,
+    pentestFiles,
   };
 }
 

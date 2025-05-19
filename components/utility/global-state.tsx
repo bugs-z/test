@@ -82,7 +82,6 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
   const [newMessageImages, setNewMessageImages] = useState<MessageImage[]>([]);
 
   // RETIEVAL STORE
-  const [useRetrieval, setUseRetrieval] = useState<boolean>(false);
   const [sourceCount, setSourceCount] = useState<number>(4);
 
   // Audio
@@ -269,7 +268,6 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
 
     setChatFiles(chatFiles);
 
-    setUseRetrieval(chatFiles.length > 0);
     setAllMessagesLoaded(false);
     setIsLoadingMore(false);
 
@@ -399,8 +397,6 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
         setNewMessageImages,
 
         // RETRIEVAL STORE
-        useRetrieval,
-        setUseRetrieval,
         sourceCount,
         setSourceCount,
 

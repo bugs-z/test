@@ -65,13 +65,14 @@ export const ChatInput: FC = () => {
 
   const { handleSelectDeviceFile } = useSelectFileHandler();
 
-  const { sendMessage, stopMessage, canSend } = useMessageHandler({
-    isGenerating: isGenerating,
-    userInput: userInput,
-    chatMessages: chatMessages,
-    handleSendMessage: handleSendMessage,
-    handleStopMessage: handleStopMessage,
-  });
+  const { sendMessage, stopMessage, canSend, isFileLoading } =
+    useMessageHandler({
+      isGenerating: isGenerating,
+      userInput: userInput,
+      chatMessages: chatMessages,
+      handleSendMessage: handleSendMessage,
+      handleStopMessage: handleStopMessage,
+    });
 
   const { handleKeyDown, handlePaste } = useKeyboardHandler({
     isTyping: isTyping,
@@ -235,6 +236,7 @@ export const ChatInput: FC = () => {
                     canSend={canSend}
                     onSend={sendMessage}
                     onStop={stopMessage}
+                    isFileLoading={isFileLoading}
                   />
                 </div>
               </div>

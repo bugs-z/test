@@ -51,11 +51,8 @@ export const useChatHandler = () => {
     chatMessages,
     setChatImages,
     setChatFiles,
-    setNewMessageFiles,
     newMessageFiles,
-    useRetrieval,
     setChatSettings,
-    setUseRetrieval,
     isTemporaryChat,
     temporaryChatMessages,
     setTemporaryChatMessages,
@@ -128,9 +125,6 @@ export const useChatHandler = () => {
 
     setChatFiles([]);
     setChatImages([]);
-    setNewMessageFiles([]);
-    setNewMessageImages([]);
-    setUseRetrieval(false);
 
     setToolInUse('none');
     setAgentStatus(null);
@@ -416,10 +410,7 @@ export const useChatHandler = () => {
 
       let retrievedFileItems: Tables<'file_items'>[] = [];
       let retrievalUsed = false;
-      if (
-        (newMessageFiles.length > 0 || chatFiles.length > 0) &&
-        useRetrieval
-      ) {
+      if (newMessageFiles.length > 0 || chatFiles.length > 0) {
         retrievalUsed = true;
 
         if (!isContinuation) {

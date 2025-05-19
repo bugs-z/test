@@ -106,20 +106,41 @@ export async function processPdfFileItem(
 }
 
 /**
+ * Creates an array of file objects with paths and content for pentest agent
+ * @param fileItems - Array of file items to process
+ * @returns Array of file objects with paths and content
+ */
+export function createPentestFileArray(
+  localPath: string,
+  fileItems: Tables<'file_items'>[],
+) {
+  return fileItems.map((fileItem) => ({
+    path: `${localPath}/${fileItem.name}`,
+    data: fileItem.content,
+  }));
+}
+
+/**
  * Processes message content and attachments, handling different attachment types appropriately
  * @param messages - The chat messages to process
  * @param userId - The user ID for authorization
- * @returns The processed messages with attachments included
+ * @returns The processed messages with attachments included and pentest files array if applicable
  */
 export async function processMessageContentWithAttachments(
   messages: BuiltChatMessage[],
   userId: string,
   isReasoning: boolean,
-): Promise<BuiltChatMessage[]> {
-  if (!messages.length) return messages;
+  isPentestAgent = false,
+): Promise<{
+  processedMessages: BuiltChatMessage[];
+  pentestFiles?: Array<{ path: string; data: string }>;
+}> {
+  if (!messages.length) return { processedMessages: messages };
 
   // Create a copy to avoid mutating the original
   let processedMessages = [...messages];
+  let pentestFiles: Array<{ path: string; data: string }> | undefined;
+  const localPath = '/mnt/data';
 
   try {
     // Create admin client to access database
@@ -136,6 +157,11 @@ export async function processMessageContentWithAttachments(
       .from('file_items')
       .select('*')
       .in('file_id', allFileIds);
+
+    // If this is a pentest agent, create the file array
+    if (isPentestAgent && allFileItems) {
+      pentestFiles = createPentestFileArray(localPath, allFileItems);
+    }
 
     // Process each message
     for (const message of processedMessages) {
@@ -190,11 +216,27 @@ export async function processMessageContentWithAttachments(
                 userId,
               );
               if (pdfFile) {
+                // Always send PDFs as files
                 processedContent.push(pdfFile as FilePart);
                 hasPdfAttachments = true;
+
+                // If isPentestAgent is true, also add the XML reference
+                if (isPentestAgent) {
+                  const attachmentRef = `<attachment filename="${fileItem.name}" local_path="${localPath}/${fileItem.name}" />`;
+                  processedContent.push({
+                    type: 'text',
+                    text: attachmentRef,
+                  } as TextPart);
+                }
+              } else if (isPentestAgent) {
+                // For pentest agent, add XML-like attachment reference
+                const attachmentRef = `<attachment filename="${fileItem.name}" local_path="${localPath}/${fileItem.name}" />`;
+                processedContent.push({
+                  type: 'text',
+                  text: attachmentRef,
+                } as TextPart);
               } else if (!hasPdfAttachments) {
-                // If it's not a PDF and we haven't found any PDFs yet,
-                // add it to the document text
+                // Normal case: add document text
                 const documentsText = buildDocumentsText([fileItem]);
                 processedContent.push({
                   type: 'text',
@@ -216,12 +258,12 @@ export async function processMessageContentWithAttachments(
         messageWithoutAttachments,
     );
 
-    return processedMessages;
+    return { processedMessages, pentestFiles };
   } catch (error) {
     console.error('Error processing message attachments:', error);
   }
 
-  return processedMessages;
+  return { processedMessages };
 }
 
 /**

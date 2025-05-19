@@ -22,7 +22,7 @@ export const useMessageHandler = ({
   handleSendMessage,
   handleStopMessage,
 }: UseMessageHandlerProps) => {
-  const { newMessageFiles } = useContext(PentestGPTContext);
+  const { newMessageFiles, newMessageImages } = useContext(PentestGPTContext);
 
   const sendMessage = () => {
     if (!userInput || isGenerating) return;
@@ -38,9 +38,12 @@ export const useMessageHandler = ({
     file.id.startsWith('loading'),
   );
 
+  const imageLoading = newMessageImages.some((image) => image.isLoading);
+
   return {
     sendMessage,
     stopMessage,
-    canSend: !!userInput && !isGenerating && !fileLoading,
+    canSend: !!userInput && !isGenerating && !fileLoading && !imageLoading,
+    isFileLoading: fileLoading || imageLoading,
   };
 };
