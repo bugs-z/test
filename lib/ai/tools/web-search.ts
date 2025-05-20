@@ -136,6 +136,26 @@ async function getResponseBody(response: Response): Promise<string> {
   }
 }
 
+async function makePerplexityRequest(payload: any, abortSignal: AbortSignal) {
+  const response = await fetch('https://api.perplexity.ai/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+    signal: abortSignal,
+  });
+
+  if (!response.ok) {
+    const responseBody = await getResponseBody(response);
+    const errorData = JSON.parse(responseBody);
+    return { error: errorData, response };
+  }
+
+  return { response };
+}
+
 export async function executeWebSearchTool({
   config,
 }: {
@@ -225,21 +245,24 @@ export async function executeWebSearchTool({
           },
         };
 
-        const response = await fetch(
-          'https://api.perplexity.ai/chat/completions',
-          {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${process.env.PERPLEXITY_API_KEY}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestPayload),
-            signal: abortSignal,
-          },
+        let { response, error } = await makePerplexityRequest(
+          requestPayload,
+          abortSignal,
         );
 
-        if (!response.ok) {
-          const responseBody = await getResponseBody(response);
+        // If we get a country code error, retry without user location
+        if (error?.error?.type === 'invalid_country_code') {
+          const retryPayload = {
+            ...requestPayload,
+            web_search_options: { search_context_size: 'medium' },
+          };
+          ({ response, error } = await makePerplexityRequest(
+            retryPayload,
+            abortSignal,
+          ));
+        }
+
+        if (error) {
           console.error('[WebSearch] Error Details:', {
             status: response.status,
             statusText: response.statusText,
@@ -247,7 +270,7 @@ export async function executeWebSearchTool({
               model: requestPayload.model,
               messageCount: requestPayload.messages.length,
             },
-            responseBody,
+            responseBody: error,
             headers: Object.fromEntries(response.headers.entries()),
           });
           throw new Error(
