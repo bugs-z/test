@@ -17,20 +17,25 @@ import {
 } from '@/lib/ai/actions';
 import { createClient } from '@/lib/supabase/server';
 import { waitUntil } from '@vercel/functions';
+import { postRequestBodySchema, type PostRequestBody } from './schema';
+import { ChatSDKError } from '@/lib/errors';
 
 export const maxDuration = 180;
 
 export async function POST(request: Request) {
   const abortController = new AbortController();
-
-  request.signal.addEventListener('abort', () => {
-    console.log('request aborted');
-    abortController.abort();
-  });
+  let requestBody: PostRequestBody;
 
   try {
+    const json = await request.json();
+    requestBody = postRequestBodySchema.parse(json);
+  } catch (_) {
+    return new ChatSDKError('bad_request:api').toResponse();
+  }
+
+  try {
+    const { messages, model, modelParams, chatMetadata } = requestBody;
     const userCountryCode = request.headers.get('x-vercel-ip-country');
-    const { messages, model, modelParams, chatMetadata } = await request.json();
 
     const profile = await getAIProfile();
     const config = await getProviderConfig(
@@ -74,7 +79,6 @@ export async function POST(request: Request) {
     // Set up abort handling
     request.signal.addEventListener('abort', async () => {
       console.log('Chat request aborted');
-      abortController.abort();
 
       if (chatMetadata.id && !toolUsed && !isReasoningModel) {
         waitUntil(
@@ -91,6 +95,7 @@ export async function POST(request: Request) {
           }),
         );
       }
+      abortController.abort();
     });
 
     const toolResponse = await handleToolExecution({

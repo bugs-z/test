@@ -5,20 +5,25 @@ import { createDataStreamResponse } from 'ai';
 import { executePentestAgent } from '@/lib/ai/tools/pentest-agent';
 import { createClient } from '@/lib/supabase/server';
 import { processChatMessages } from '@/lib/ai/message-utils';
+import { postRequestBodySchema, type PostRequestBody } from '../chat/schema';
+import { ChatSDKError } from '@/lib/errors';
 
 export const maxDuration = 800;
 
 export async function POST(request: Request) {
   const abortController = new AbortController();
+  let requestBody: PostRequestBody;
 
-  request.signal.addEventListener('abort', () => {
-    console.log('request aborted');
-    abortController.abort();
-  });
+  try {
+    const json = await request.json();
+    requestBody = postRequestBodySchema.parse(json);
+  } catch (_) {
+    return new ChatSDKError('bad_request:api').toResponse();
+  }
 
   try {
     const userCountryCode = request.headers.get('x-vercel-ip-country');
-    const { messages, model, modelParams, chatMetadata } = await request.json();
+    const { messages, model, modelParams, chatMetadata } = requestBody;
 
     const profile = await getAIProfile();
     const config = await getProviderConfig(profile);
@@ -64,7 +69,7 @@ export async function POST(request: Request) {
             modelParams,
             profile,
             dataStream,
-            abortSignal: request.signal,
+            abortSignal: abortController.signal,
             chatMetadata,
             model,
             supabase,
