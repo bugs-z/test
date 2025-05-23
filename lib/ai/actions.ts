@@ -6,14 +6,59 @@ import type {
   BuiltChatMessage,
 } from '@/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { handleUserMessage } from './actions/message-actions';
+import {
+  saveUserMessage,
+  saveAssistantMessage,
+} from './actions/message-actions';
 import { createChat, updateChat } from './actions/chat-actions';
 import { generateObject } from 'ai';
 import { myProvider } from './providers';
 import { DEFAULT_TITLE_GENERATION_PROMPT_TEMPLATE } from './prompts';
 import { z } from 'zod';
 
-export async function handleChatAndMessages({
+export async function handleInitialChatAndUserMessage({
+  supabase,
+  modelParams,
+  chatMetadata,
+  profile,
+  model,
+  messages,
+}: {
+  supabase: SupabaseClient;
+  modelParams: ModelParams;
+  chatMetadata: ChatMetadata;
+  profile: { user_id: string };
+  model: LLMID;
+  messages: any[];
+}) {
+  if (!chatMetadata.id) return;
+
+  const content = extractTextContent(messages[messages.length - 1].content);
+
+  if (chatMetadata.newChat) {
+    await createChat({
+      supabase,
+      chatId: chatMetadata.id,
+      userId: profile.user_id,
+      model,
+      content,
+      finishReason: 'stop', // Initial finish reason
+    });
+  }
+
+  await saveUserMessage({
+    supabase,
+    chatId: chatMetadata.id,
+    userId: profile.user_id,
+    messages,
+    modelParams,
+    model,
+    editSequenceNumber: modelParams.editSequenceNumber,
+    retrievedFileItems: chatMetadata.retrievedFileItems,
+  });
+}
+
+export async function handleFinalChatAndAssistantMessage({
   supabase,
   modelParams,
   chatMetadata,
@@ -46,37 +91,24 @@ export async function handleChatAndMessages({
 
   const content = extractTextContent(messages[messages.length - 1].content);
 
-  if (chatMetadata.newChat) {
-    await createChat({
-      supabase,
-      chatId: chatMetadata.id,
-      userId: profile.user_id,
-      model,
-      title,
-      content,
-      finishReason,
-    });
-  } else {
-    await updateChat({
-      supabase,
-      chatId: chatMetadata.id,
-      userId: profile.user_id,
-      model,
-      title,
-      content,
-      finishReason,
-    });
-  }
-
-  await handleUserMessage({
+  await updateChat({
     supabase,
     chatId: chatMetadata.id,
     userId: profile.user_id,
-    messages,
+    model,
+    title,
+    content,
+    finishReason,
+    newChat: chatMetadata.newChat,
+  });
+
+  await saveAssistantMessage({
+    supabase,
+    chatId: chatMetadata.id,
+    userId: profile.user_id,
     modelParams,
     model,
     editSequenceNumber: modelParams.editSequenceNumber,
-    retrievedFileItems: chatMetadata.retrievedFileItems,
     assistantMessage,
     citations,
     thinkingText,

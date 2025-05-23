@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { CircleDashed, CircleCheck, Pause } from 'lucide-react';
+import { CircleDashed, CircleCheck, Pause, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUIContext } from '@/context/ui-context';
 
@@ -12,9 +12,12 @@ type MessageStatusProps = {
 
 const isValidFinishReason = (
   reason: string | null | undefined,
-): reason is 'message_ask_user' | 'idle' | 'aborted' => {
+): reason is 'message_ask_user' | 'idle' | 'aborted' | 'refusal' => {
   return (
-    reason === 'message_ask_user' || reason === 'idle' || reason === 'aborted'
+    reason === 'message_ask_user' ||
+    reason === 'idle' ||
+    reason === 'aborted' ||
+    reason === 'refusal'
   );
 };
 
@@ -52,6 +55,12 @@ export const MessageStatus: FC<MessageStatusProps> = ({
       text: 'PentestGPT has stopped, send a new message to continue',
       color: 'var(--function-warning)',
       bgClass: 'bg-[var(--function-warning)]/10',
+    },
+    refusal: {
+      icon: AlertCircle,
+      text: 'PentestGPT refused for safety reasons',
+      color: 'var(--function-error)',
+      bgClass: 'bg-[var(--function-error)]/10',
     },
   };
 

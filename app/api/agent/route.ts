@@ -7,6 +7,8 @@ import { createClient } from '@/lib/supabase/server';
 import { processChatMessages } from '@/lib/ai/message-utils';
 import { postRequestBodySchema, type PostRequestBody } from '../chat/schema';
 import { ChatSDKError } from '@/lib/errors';
+import { handleInitialChatAndUserMessage } from '@/lib/ai/actions';
+import { PluginID } from '@/types';
 
 export const maxDuration = 800;
 
@@ -56,6 +58,24 @@ export async function POST(request: Request) {
         true,
       );
 
+    // Handle initial chat creation and user message in parallel
+    const initialChatPromise =
+      chatMetadata.id &&
+      (modelParams.confirmTerminalCommand ||
+        modelParams.isTerminalContinuation ||
+        modelParams.selectedPlugin === PluginID.PENTEST_AGENT)
+        ? handleInitialChatAndUserMessage({
+            supabase,
+            modelParams,
+            chatMetadata,
+            profile,
+            model,
+            messages,
+          })
+        : Promise.resolve();
+    // Set the selected plugin to pentest agent when api/chat automatically calls api/agent
+    modelParams.selectedPlugin = PluginID.PENTEST_AGENT;
+
     return createDataStreamResponse({
       execute: async (dataStream) => {
         dataStream.writeData({
@@ -77,6 +97,7 @@ export async function POST(request: Request) {
             originalMessages: messages,
             systemPrompt,
             pentestFiles,
+            initialChatPromise,
           },
         });
       },

@@ -65,22 +65,25 @@ export async function updateChat({
   chatId,
   userId,
   model,
-  title,
   content,
   finishReason,
+  newChat,
+  title,
 }: {
   supabase: SupabaseClient;
   chatId: string;
   userId: string;
   model: LLMID;
-  finishReason: string;
   content: string;
+  finishReason: string;
+  newChat: boolean;
   title?: string;
 }) {
   try {
     const { data: _, error } = await supabase
       .from('chats')
       .update({
+        ...(newChat && title ? { name: title } : {}),
         updated_at: new Date().toISOString(),
         finish_reason: finishReason,
         model,

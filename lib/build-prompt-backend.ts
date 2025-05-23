@@ -219,15 +219,6 @@ export async function processMessageContentWithAttachments(
                 // Always send PDFs as files
                 processedContent.push(pdfFile as FilePart);
                 hasPdfAttachments = true;
-
-                // If isPentestAgent is true, also add the XML reference
-                if (isPentestAgent) {
-                  const attachmentRef = `<attachment filename="${fileItem.name}" local_path="${localPath}/${fileItem.name}" />`;
-                  processedContent.push({
-                    type: 'text',
-                    text: attachmentRef,
-                  } as TextPart);
-                }
               } else if (isPentestAgent) {
                 // For pentest agent, add XML-like attachment reference
                 const attachmentRef = `<attachment filename="${fileItem.name}" local_path="${localPath}/${fileItem.name}" />`;

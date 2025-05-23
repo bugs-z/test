@@ -159,28 +159,34 @@ export const MessageActions: FC<MessageActionsProps> = ({
         />
       )}
 
-      {isLastMessage && !messageHasImage && !isPremiumSubscription && (
-        <WithTooltip
-          delayDuration={0}
-          side="bottom"
-          display={<div>Regenerate</div>}
-          trigger={
-            <Repeat
-              className="cursor-pointer hover:opacity-50"
-              size={MESSAGE_ICON_SIZE}
-              onClick={onRegenerate}
-            />
-          }
-        />
-      )}
+      {isLastMessage &&
+        isAssistant &&
+        !messageHasImage &&
+        !isPremiumSubscription && (
+          <WithTooltip
+            delayDuration={0}
+            side="bottom"
+            display={<div>Regenerate</div>}
+            trigger={
+              <Repeat
+                className="cursor-pointer hover:opacity-50"
+                size={MESSAGE_ICON_SIZE}
+                onClick={onRegenerate}
+              />
+            }
+          />
+        )}
 
-      {isLastMessage && !messageHasImage && isPremiumSubscription && (
-        <SwitchModel
-          currentModel={messageModel}
-          onChangeModel={onRegenerateSpecificModel}
-          isMobile={isMobile}
-        />
-      )}
+      {isLastMessage &&
+        isAssistant &&
+        !messageHasImage &&
+        isPremiumSubscription && (
+          <SwitchModel
+            currentModel={messageModel}
+            onChangeModel={onRegenerateSpecificModel}
+            isMobile={isMobile}
+          />
+        )}
     </div>
   );
 };

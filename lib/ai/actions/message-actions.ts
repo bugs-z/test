@@ -21,7 +21,7 @@ export function getLastUserMessage(
   return lastUserMessage || null;
 }
 
-export async function handleUserMessage({
+export async function saveUserMessage({
   supabase,
   chatId,
   userId,
@@ -30,11 +30,6 @@ export async function handleUserMessage({
   model,
   editSequenceNumber,
   retrievedFileItems,
-  assistantMessage,
-  citations,
-  thinkingText,
-  thinkingElapsedSecs,
-  fileAttachments,
 }: {
   supabase: SupabaseClient;
   chatId: string;
@@ -44,12 +39,22 @@ export async function handleUserMessage({
   model: LLMID;
   editSequenceNumber?: number;
   retrievedFileItems?: Tables<'file_items'>[];
-  assistantMessage?: string;
-  citations?: string[];
-  thinkingText?: string;
-  thinkingElapsedSecs?: number | null;
-  fileAttachments?: any[];
 }): Promise<void> {
+  // If regeneration, delete the last message
+  if (modelParams.isRegeneration) {
+    await deleteLastMessage(supabase, chatId);
+  }
+
+  // Check if we should save the user message
+  const shouldSaveUserMessage =
+    !modelParams.isContinuation &&
+    !modelParams.isTerminalContinuation &&
+    !modelParams.isRegeneration;
+
+  if (!shouldSaveUserMessage) {
+    return;
+  }
+
   // If editing, delete messages after the edited sequence
   if (editSequenceNumber !== undefined) {
     const { error } = await deleteMessagesIncludingAndAfter({
@@ -65,11 +70,6 @@ export async function handleUserMessage({
     }
   }
 
-  // If regeneration, delete the last message
-  if (modelParams.isRegeneration) {
-    await deleteLastMessage(supabase, chatId);
-  }
-
   const lastUserMessage = getLastUserMessage(messages);
   if (!lastUserMessage) {
     throw new Error('No user message found');
@@ -80,78 +80,37 @@ export async function handleUserMessage({
     editSequenceNumber ?? (await getNextMessageSequence(supabase, chatId));
   const thinkingEnabled = model === 'reasoning-model';
 
-  // Only save user message if not in continuation/regeneration mode
-  const shouldSaveUserMessage =
-    !modelParams.isContinuation &&
-    !modelParams.isTerminalContinuation &&
-    !modelParams.isRegeneration;
+  // Extract image paths before creating message
+  const imageContents = Array.isArray(lastUserMessage.content)
+    ? lastUserMessage.content.filter((item) => item.type === 'image_url')
+    : [];
 
-  // Prepare messages for insertion
-  const messagesToInsert: TablesInsert<'messages'>[] = [];
+  const imagePaths = imageContents.map(
+    (imageContent) => imageContent.image_url.url,
+  );
 
-  if (shouldSaveUserMessage) {
-    // Extract image paths before creating message
-    const imageContents = Array.isArray(lastUserMessage.content)
-      ? lastUserMessage.content.filter((item) => item.type === 'image_url')
-      : [];
-
-    const imagePaths = imageContents.map(
-      (imageContent) => imageContent.image_url.url,
-    );
-
-    const userMessageData: TablesInsert<'messages'> = {
-      chat_id: chatId,
-      user_id: userId,
-      content,
-      thinking_content: null,
-      thinking_enabled: thinkingEnabled,
-      thinking_elapsed_secs: null,
-      model,
-      plugin: modelParams.selectedPlugin,
-      role: 'user',
-      sequence_number: sequence,
-      image_paths: imagePaths,
-      citations: [],
-      attachments: [],
-    };
-    messagesToInsert.push(userMessageData);
-  }
-
-  if (modelParams.isContinuation || modelParams.isTerminalContinuation) {
-    await updateLastAssistantMessage(supabase, chatId, {
-      assistantMessage,
-      thinkingText,
-      thinkingElapsedSecs,
-      citations,
-      fileAttachments,
-    });
-    return;
-  }
-
-  const assistantMessageData: TablesInsert<'messages'> = {
+  const userMessageData: TablesInsert<'messages'> = {
     chat_id: chatId,
     user_id: userId,
-    content: assistantMessage || '',
-    thinking_content: thinkingText || null,
+    content,
+    thinking_content: null,
     thinking_enabled: thinkingEnabled,
-    thinking_elapsed_secs: thinkingElapsedSecs || null,
+    thinking_elapsed_secs: null,
     model,
     plugin: modelParams.selectedPlugin,
-    role: 'assistant',
-    sequence_number: shouldSaveUserMessage ? sequence + 1 : sequence,
-    image_paths: [],
-    citations: citations || [],
-    attachments: fileAttachments || [],
+    role: 'user',
+    sequence_number: sequence,
+    image_paths: imagePaths,
+    citations: [],
+    attachments: [],
   };
-  messagesToInsert.push(assistantMessageData);
 
-  // Insert messages
-  const createdMessages = await insertMessages(supabase, messagesToInsert);
+  // Insert user message
+  const createdMessages = await insertMessages(supabase, [userMessageData]);
+  const savedUserMessage = createdMessages[0];
 
-  const savedUserMessage = shouldSaveUserMessage ? createdMessages[0] : null;
-
-  // Handle image relationships if we saved the user message
-  if (shouldSaveUserMessage && savedUserMessage) {
+  // Handle image relationships
+  if (savedUserMessage) {
     // Handle file updates if there are any
     const fileAttachments = lastUserMessage.attachments || [];
     if (fileAttachments.length > 0) {
@@ -182,4 +141,63 @@ export async function handleUserMessage({
       );
     }
   }
+}
+
+export async function saveAssistantMessage({
+  supabase,
+  chatId,
+  userId,
+  modelParams,
+  model,
+  editSequenceNumber,
+  assistantMessage,
+  citations,
+  thinkingText,
+  thinkingElapsedSecs,
+  fileAttachments,
+}: {
+  supabase: SupabaseClient;
+  chatId: string;
+  userId: string;
+  modelParams: ModelParams;
+  model: LLMID;
+  editSequenceNumber?: number;
+  assistantMessage?: string;
+  citations?: string[];
+  thinkingText?: string;
+  thinkingElapsedSecs?: number | null;
+  fileAttachments?: any[];
+}): Promise<void> {
+  if (modelParams.isContinuation || modelParams.isTerminalContinuation) {
+    await updateLastAssistantMessage(supabase, chatId, {
+      assistantMessage,
+      thinkingText,
+      thinkingElapsedSecs,
+      citations,
+      fileAttachments,
+    });
+    return;
+  }
+
+  const sequence =
+    editSequenceNumber ?? (await getNextMessageSequence(supabase, chatId));
+  const thinkingEnabled = model === 'reasoning-model';
+
+  const assistantMessageData: TablesInsert<'messages'> = {
+    chat_id: chatId,
+    user_id: userId,
+    content: assistantMessage || '',
+    thinking_content: thinkingText || null,
+    thinking_enabled: thinkingEnabled,
+    thinking_elapsed_secs: thinkingElapsedSecs || null,
+    model,
+    plugin: modelParams.selectedPlugin,
+    role: 'assistant',
+    sequence_number: sequence,
+    image_paths: [],
+    citations: citations || [],
+    attachments: fileAttachments || [],
+  };
+
+  await insertMessages(supabase, [assistantMessageData]);
 }

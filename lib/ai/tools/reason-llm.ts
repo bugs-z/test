@@ -5,13 +5,12 @@ import PostHogClient from '@/app/posthog';
 import type { ChatMetadata, LLMID, RateLimitInfo, ModelParams } from '@/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
-  handleChatAndMessages,
+  handleFinalChatAndAssistantMessage,
   generateTitleFromUserMessage,
 } from '@/lib/ai/actions';
 import { myProvider } from '../providers';
 import { z } from 'zod';
 import { getPageContent } from './browser';
-import { waitUntil } from '@vercel/functions';
 
 function calculateThinkingElapsedSecs(
   isThinking: boolean,
@@ -91,29 +90,6 @@ export async function executeReasonLLMTool({
   let thinkingText = '';
   let thinkingStartTime: number | null = null;
   let isThinking = false;
-
-  abortSignal.addEventListener('abort', async () => {
-    if (chatMetadata.id) {
-      waitUntil(
-        handleChatAndMessages({
-          supabase: supabase as SupabaseClient,
-          modelParams,
-          chatMetadata,
-          profile,
-          model: config.model,
-          messages,
-          finishReason: 'stop',
-          title: generatedTitle,
-          assistantMessage,
-          thinkingText,
-          thinkingElapsedSecs: calculateThinkingElapsedSecs(
-            isThinking,
-            thinkingStartTime,
-          ),
-        }),
-      );
-    }
-  });
 
   try {
     await Promise.all([
@@ -201,7 +177,7 @@ beneficial for the user's needs.`,
             reasoning: string | undefined;
           }) => {
             if (supabase) {
-              await handleChatAndMessages({
+              await handleFinalChatAndAssistantMessage({
                 supabase,
                 modelParams,
                 chatMetadata,

@@ -13,10 +13,10 @@ import {
 import { type LLMID, PluginID } from '@/types';
 import {
   generateTitleFromUserMessage,
-  handleChatAndMessages,
+  handleInitialChatAndUserMessage,
+  handleFinalChatAndAssistantMessage,
 } from '@/lib/ai/actions';
 import { createClient } from '@/lib/supabase/server';
-import { waitUntil } from '@vercel/functions';
 import { postRequestBodySchema, type PostRequestBody } from './schema';
 import { ChatSDKError } from '@/lib/errors';
 
@@ -76,27 +76,17 @@ export async function POST(request: Request) {
       config.isPremiumUser,
     );
 
-    // Set up abort handling
-    request.signal.addEventListener('abort', async () => {
-      console.log('Chat request aborted');
-
-      if (chatMetadata.id && !toolUsed && !isReasoningModel) {
-        waitUntil(
-          handleChatAndMessages({
-            supabase,
-            modelParams,
-            chatMetadata,
-            profile,
-            model,
-            messages,
-            finishReason: 'stop',
-            title: generatedTitle,
-            assistantMessage,
-          }),
-        );
-      }
-      abortController.abort();
-    });
+    // Handle initial chat creation and user message in parallel with other operations
+    const initialChatPromise = chatMetadata.id
+      ? handleInitialChatAndUserMessage({
+          supabase,
+          modelParams,
+          chatMetadata,
+          profile,
+          model,
+          messages,
+        })
+      : Promise.resolve();
 
     const toolResponse = await handleToolExecution({
       messages: processedMessages,
@@ -200,7 +190,9 @@ export async function POST(request: Request) {
                 if (titleGenerationPromise) {
                   await titleGenerationPromise;
                 }
-                await handleChatAndMessages({
+                // Wait for initial chat handling to complete before final handling
+                await initialChatPromise;
+                await handleFinalChatAndAssistantMessage({
                   supabase,
                   modelParams,
                   chatMetadata,

@@ -9,10 +9,9 @@ import type { ChatMetadata, LLMID, ModelParams } from '@/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   generateTitleFromUserMessage,
-  handleChatAndMessages,
+  handleFinalChatAndAssistantMessage,
 } from '@/lib/ai/actions';
 import { removePdfContentFromMessages } from '@/lib/build-prompt-backend';
-import { waitUntil } from '@vercel/functions';
 
 interface WebSearchConfig {
   messages: any[];
@@ -209,25 +208,6 @@ export async function executeWebSearchTool({
   let assistantMessage = '';
   const citations: string[] = [];
 
-  abortSignal.addEventListener('abort', async () => {
-    if (chatMetadata.id) {
-      waitUntil(
-        handleChatAndMessages({
-          supabase: supabase as SupabaseClient,
-          modelParams,
-          chatMetadata,
-          profile,
-          model: config.model,
-          messages,
-          finishReason: 'stop',
-          title: generatedTitle,
-          assistantMessage,
-          citations,
-        }),
-      );
-    }
-  });
-
   try {
     await Promise.all([
       (async () => {
@@ -300,7 +280,7 @@ export async function executeWebSearchTool({
         }
 
         if (supabase) {
-          await handleChatAndMessages({
+          await handleFinalChatAndAssistantMessage({
             supabase,
             modelParams,
             chatMetadata,

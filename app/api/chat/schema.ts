@@ -32,10 +32,11 @@ const modelParamsSchema = z.object({
   confirmTerminalCommand: z.boolean(),
   isTemporaryChat: z.boolean(),
   isRegeneration: z.boolean(),
+  editSequenceNumber: z.number().optional(),
 });
 
 const chatMetadataSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().uuid().optional(),
   newChat: z.boolean(),
   retrievedFileItems: z.array(z.any()).default([]),
 });

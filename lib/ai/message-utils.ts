@@ -47,13 +47,26 @@ export function filterEmptyAssistantMessages(messages: BuiltChatMessage[]) {
  * @param messages - Array of chat messages to convert
  * @param supportsImages - Whether the model supports image input
  * @param isPerplexity - Whether to use Perplexity's image format
+ * @param systemPrompt - Optional system prompt to add with caching
  */
 export const toVercelChatMessages = (
   messages: BuiltChatMessage[],
   supportsImages = false,
   isPerplexity = false,
+  systemPrompt?: string,
 ): CoreMessage[] => {
   const result: CoreMessage[] = [];
+
+  // Add system prompt with caching if provided
+  if (systemPrompt) {
+    result.push({
+      role: 'system',
+      content: systemPrompt,
+      providerOptions: {
+        anthropic: { cacheControl: { type: 'ephemeral' } },
+      },
+    });
+  }
 
   // Add the rest of the messages
   messages.forEach((message) => {

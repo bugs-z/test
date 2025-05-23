@@ -12,10 +12,9 @@ import type { ChatMetadata, LLMID, ModelParams } from '@/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   generateTitleFromUserMessage,
-  handleChatAndMessages,
+  handleFinalChatAndAssistantMessage,
 } from '@/lib/ai/actions';
 import { truncateContentByTokens } from '@/lib/ai/terminal-utils';
-import { waitUntil } from '@vercel/functions';
 
 interface BrowserToolConfig {
   profile: any;
@@ -207,24 +206,6 @@ export async function executeBrowserTool({
     let generatedTitle: string | undefined;
     let assistantMessage = '';
 
-    abortSignal.addEventListener('abort', async () => {
-      if (chatMetadata.id) {
-        waitUntil(
-          handleChatAndMessages({
-            supabase: supabase as SupabaseClient,
-            modelParams,
-            chatMetadata,
-            profile,
-            model: config.model,
-            messages,
-            finishReason: 'stop',
-            title: generatedTitle,
-            assistantMessage,
-          }),
-        );
-      }
-    });
-
     await Promise.all([
       (async () => {
         const { fullStream } = streamText({
@@ -244,7 +225,7 @@ export async function executeBrowserTool({
             text,
           }: { finishReason: string; text: string }) => {
             if (supabase) {
-              await handleChatAndMessages({
+              await handleFinalChatAndAssistantMessage({
                 supabase,
                 modelParams,
                 chatMetadata,
