@@ -20,6 +20,7 @@ interface ToolHandlerConfig {
   supabase: SupabaseClient | null;
   isReasoningModel: boolean;
   rateLimitInfo: RateLimitInfo;
+  initialChatPromise: Promise<void>;
 }
 
 export async function handleToolExecution(config: ToolHandlerConfig) {
@@ -34,6 +35,7 @@ export async function handleToolExecution(config: ToolHandlerConfig) {
     supabase,
     isReasoningModel,
     rateLimitInfo,
+    initialChatPromise,
   } = config;
 
   if (isReasoningModel) {
@@ -50,6 +52,7 @@ export async function handleToolExecution(config: ToolHandlerConfig) {
           model,
           supabase,
           rateLimitInfo,
+          initialChatPromise,
         },
       });
     });

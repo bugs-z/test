@@ -26,6 +26,7 @@ interface BrowserToolConfig {
   model: LLMID;
   supabase: SupabaseClient | null;
   userCountryCode: string | null;
+  initialChatPromise: Promise<void>;
 }
 
 async function getProviderConfig(profile: any) {
@@ -171,6 +172,7 @@ export async function executeBrowserTool({
     supabase,
     userCountryCode,
     abortSignal,
+    initialChatPromise,
   } = config;
   const { systemPrompt, model } = await getProviderConfig(profile);
 
@@ -225,6 +227,9 @@ export async function executeBrowserTool({
             text,
           }: { finishReason: string; text: string }) => {
             if (supabase) {
+              // Wait for initial chat handling to complete before final handling
+              await initialChatPromise;
+
               await handleFinalChatAndAssistantMessage({
                 supabase,
                 modelParams,

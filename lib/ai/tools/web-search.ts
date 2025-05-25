@@ -1,7 +1,7 @@
 import { buildSystemPrompt } from '@/lib/ai/prompts';
 import {
   toVercelChatMessages,
-  validateWebSearchMessages,
+  validatePerplexityMessages,
 } from '@/lib/ai/message-utils';
 import llmConfig from '@/lib/models/llm-config';
 import PostHogClient from '@/app/posthog';
@@ -12,6 +12,7 @@ import {
   handleFinalChatAndAssistantMessage,
 } from '@/lib/ai/actions';
 import { removePdfContentFromMessages } from '@/lib/build-prompt-backend';
+import { ChatSDKError } from '@/lib/errors';
 
 interface WebSearchConfig {
   messages: any[];
@@ -25,6 +26,7 @@ interface WebSearchConfig {
   model: LLMID;
   supabase: SupabaseClient | null;
   userCountryCode: string | null;
+  initialChatPromise: Promise<void>;
 }
 
 interface PerplexityResponse {
@@ -148,7 +150,13 @@ async function makePerplexityRequest(payload: any, abortSignal: AbortSignal) {
 
   if (!response.ok) {
     const responseBody = await getResponseBody(response);
-    const errorData = JSON.parse(responseBody);
+    let errorData;
+    try {
+      errorData = JSON.parse(responseBody);
+    } catch (e) {
+      // If parsing fails, create a ChatSDKError with the raw response body
+      throw new ChatSDKError('bad_request:api', responseBody);
+    }
     return { error: errorData, response };
   }
 
@@ -175,13 +183,14 @@ export async function executeWebSearchTool({
     model,
     supabase,
     userCountryCode,
+    initialChatPromise,
   } = config;
 
   // Filter out PDF content from messages
   const filteredMessages = removePdfContentFromMessages(messages);
 
   // Validate messages for proper alternating roles
-  const validatedMessages = validateWebSearchMessages(filteredMessages);
+  const validatedMessages = validatePerplexityMessages(filteredMessages);
 
   const { systemPrompt, selectedModel } = await getProviderConfig(
     isLargeModel,
@@ -280,6 +289,9 @@ export async function executeWebSearchTool({
         }
 
         if (supabase) {
+          // Wait for initial chat handling to complete before final handling
+          await initialChatPromise;
+
           await handleFinalChatAndAssistantMessage({
             supabase,
             modelParams,

@@ -198,10 +198,6 @@ export const executeTerminalCommand = async ({
               );
             }
           }
-          // Only log errors that are not CommandExitError
-          if (!(error instanceof Error && error.name === 'CommandExitError')) {
-            console.error(`[${userID}] Error:`, error);
-          }
         }
       } finally {
         // Clear timeout in case it's still pending

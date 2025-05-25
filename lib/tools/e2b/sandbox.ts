@@ -1,6 +1,6 @@
 import { createSupabaseAdminClient } from '@/lib/server/server-utils';
 import { Sandbox } from '@e2b/code-interpreter';
-import { waitUntil } from '@vercel/functions';
+import { safeWaitUntil } from '@/lib/utils/safe-wait-until';
 
 const supabaseAdmin = createSupabaseAdminClient();
 
@@ -204,7 +204,7 @@ export async function pauseSandbox(sandbox: Sandbox): Promise<string | null> {
     .eq('sandbox_id', sandbox.sandboxId);
 
   // Start background task and return immediately
-  waitUntil(
+  safeWaitUntil(
     sandbox
       .pause()
       .then(async () => {

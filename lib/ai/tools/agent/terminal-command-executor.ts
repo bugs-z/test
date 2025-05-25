@@ -1,6 +1,6 @@
 import { executeTerminalCommand } from '@/lib/tools/e2b/terminal-executor';
 import { streamTerminalOutput } from '@/lib/ai/terminal-utils';
-import type { SandboxManager } from './agent/types';
+import type { SandboxManager } from './types';
 
 interface TerminalCommandExecutorConfig {
   userID: string;

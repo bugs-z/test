@@ -1,7 +1,8 @@
-import { IconPlayerStopFilled, IconArrowUp } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 import type { FC } from 'react';
 import { WithTooltip } from '../ui/with-tooltip';
+import { ArrowUp, Square } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface ChatSendButtonProps {
   isGenerating: boolean;
@@ -20,11 +21,16 @@ export const ChatSendButton: FC<ChatSendButtonProps> = ({
 }) => {
   if (isGenerating) {
     return (
-      <IconPlayerStopFilled
-        className="md:hover:bg-background animate-pulse rounded bg-transparent p-1 md:hover:opacity-50"
-        onClick={onStop}
-        size={30}
-      />
+      <div className="flex items-center justify-center">
+        <Button
+          variant="default"
+          size="icon"
+          className="h-8 w-8"
+          onClick={onStop}
+        >
+          <Square className="animate-pulse" size={14} fill="currentColor" />
+        </Button>
+      </div>
     );
   }
 
@@ -32,15 +38,20 @@ export const ChatSendButton: FC<ChatSendButtonProps> = ({
     <WithTooltip
       display={!canSend && isFileLoading ? 'File upload pending' : undefined}
       trigger={
-        <IconArrowUp
-          className={cn(
-            'bg-primary text-secondary rounded p-1 hover:opacity-50',
-            !canSend && 'cursor-not-allowed opacity-50',
-          )}
-          stroke={2.5}
-          onClick={onSend}
-          size={30}
-        />
+        <div className="flex items-center justify-center">
+          <Button
+            variant="default"
+            size="icon"
+            className={cn(
+              'h-8 w-8',
+              !canSend && 'cursor-not-allowed opacity-50',
+            )}
+            onClick={onSend}
+            disabled={!canSend}
+          >
+            <ArrowUp strokeWidth={2} size={20} />
+          </Button>
+        </div>
       }
     />
   );

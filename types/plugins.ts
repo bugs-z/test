@@ -31,13 +31,7 @@ export enum PluginID {
   BROWSER = 'browser',
   TERMINAL = 'terminal',
   PENTEST_AGENT = 'pentest-agent',
-  // Pentest tools
-  PORT_SCANNER = 'port-scanner',
-  WAF_DETECTOR = 'waf-detector',
-  WHOIS_LOOKUP = 'whois-lookup',
-  SUBDOMAIN_FINDER = 'subdomain-finder',
-  // Artifacts
-  ARTIFACTS = 'artifacts',
+  DEEP_RESEARCH = 'deep-research',
 }
 
 export const Plugins: Record<PluginID, Plugin> = Object.fromEntries(
@@ -52,7 +46,9 @@ export const pluginUrls: PluginUrls = {
   PENTESTGPT: 'https://github.com/hackerai-tech/PentestGPT',
 };
 
-export const PLUGINS_WITHOUT_IMAGE_SUPPORT: PluginID[] = [];
+export const PLUGINS_WITHOUT_IMAGE_SUPPORT: PluginID[] = [
+  PluginID.DEEP_RESEARCH,
+];
 
 export const isPluginWithoutImageSupport = (pluginId: PluginID): boolean => {
   return PLUGINS_WITHOUT_IMAGE_SUPPORT.includes(pluginId);

@@ -53,20 +53,20 @@ export const toVercelChatMessages = (
   messages: BuiltChatMessage[],
   supportsImages = false,
   isPerplexity = false,
-  systemPrompt?: string,
+  // systemPrompt?: string,
 ): CoreMessage[] => {
   const result: CoreMessage[] = [];
 
-  // Add system prompt with caching if provided
-  if (systemPrompt) {
-    result.push({
-      role: 'system',
-      content: systemPrompt,
-      providerOptions: {
-        anthropic: { cacheControl: { type: 'ephemeral' } },
-      },
-    });
-  }
+  // // Add system prompt with caching if provided
+  // if (systemPrompt) {
+  //   result.push({
+  //     role: 'system',
+  //     content: systemPrompt,
+  //     providerOptions: {
+  //       anthropic: { cacheControl: { type: 'ephemeral', ttl: '1h' } },
+  //     },
+  //   });
+  // }
 
   // Add the rest of the messages
   messages.forEach((message) => {
@@ -281,7 +281,6 @@ export async function processChatMessages(
     isTerminalContinuation: boolean;
     selectedPlugin: string;
   },
-  isLargeModel: boolean,
   profile: { user_id: string; profile_context: string },
   isReasoningModel: boolean,
   supabase: SupabaseClient,
@@ -303,7 +302,7 @@ export async function processChatMessages(
 
   // Process images if supabase client is provided
   const processedMessages = supabase
-    ? await processMessagesWithImages(messagesCopy, supabase)
+    ? await processMessagesWithImages(messagesCopy, supabase, selectedModel)
     : messagesCopy;
 
   // Check if we should uncensor the response
@@ -314,7 +313,7 @@ export async function processChatMessages(
     !isReasoningModel
   ) {
     const { shouldUncensorResponse: moderationResult } =
-      await getModerationResult(processedMessages, apiKey, 10, isLargeModel);
+      await getModerationResult(processedMessages, apiKey, 10);
     shouldUncensor = moderationResult;
   }
 
@@ -379,7 +378,7 @@ export function extractTextContent(
  * @param messages - Array of messages to validate
  * @returns Filtered array with valid messages only
  */
-export function validateWebSearchMessages(
+export function validatePerplexityMessages(
   messages: BuiltChatMessage[],
 ): BuiltChatMessage[] {
   // First run the regular validation

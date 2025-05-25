@@ -32,6 +32,7 @@ interface ReasonLLMConfig {
   model: LLMID;
   supabase: SupabaseClient | null;
   rateLimitInfo: RateLimitInfo;
+  initialChatPromise: Promise<void>;
 }
 
 async function getProviderConfig(profile: any) {
@@ -65,6 +66,7 @@ export async function executeReasonLLMTool({
     chatMetadata,
     model,
     supabase,
+    initialChatPromise,
   } = config;
   const { systemPrompt, model: selectedModel } =
     await getProviderConfig(profile);
@@ -177,6 +179,9 @@ beneficial for the user's needs.`,
             reasoning: string | undefined;
           }) => {
             if (supabase) {
+              // Wait for initial chat handling to complete before final handling
+              await initialChatPromise;
+
               await handleFinalChatAndAssistantMessage({
                 supabase,
                 modelParams,

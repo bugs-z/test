@@ -44,6 +44,8 @@ export const handleHostedChat = async (
     modelParams.selectedPlugin === PluginID.PENTEST_AGENT
   ) {
     apiEndpoint = '/api/agent';
+  } else if (modelParams.selectedPlugin === PluginID.DEEP_RESEARCH) {
+    apiEndpoint = '/api/tasks';
   }
 
   const formattedMessages = await buildFinalMessages(

@@ -12,7 +12,6 @@ export async function getModerationResult(
   messages: any[],
   openaiApiKey: string,
   messageMinLength: number,
-  isLargeModel: boolean,
 ): Promise<{ shouldUncensorResponse: boolean }> {
   const openai = new OpenAI({ apiKey: openaiApiKey });
 
@@ -40,7 +39,6 @@ export async function getModerationResult(
     const shouldUncensorResponse = determineShouldUncensorResponse(
       moderationLevel,
       hazardCategories,
-      isLargeModel,
     );
 
     // console.log(
@@ -135,7 +133,6 @@ function calculateModerationLevel(
 function determineShouldUncensorResponse(
   moderationLevel: number,
   hazardCategories: string[],
-  isLargeModel: boolean,
 ): boolean {
   const forbiddenCategories = [
     'sexual',

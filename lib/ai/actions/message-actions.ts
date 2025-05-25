@@ -10,6 +10,7 @@ import {
   insertFileItemRelationships,
   updateLastAssistantMessage,
 } from './message-db-actions';
+import { createChat } from './chat-actions';
 
 // Find the last message with role 'user'
 export function getLastUserMessage(
@@ -105,8 +106,33 @@ export async function saveUserMessage({
     attachments: [],
   };
 
-  // Insert user message
-  const createdMessages = await insertMessages(supabase, [userMessageData]);
+  let createdMessages;
+  try {
+    // Insert user message
+    createdMessages = await insertMessages(supabase, [userMessageData]);
+  } catch (error: any) {
+    // Check if it's a foreign key constraint error
+    if (
+      error?.code === '23503' &&
+      error?.message?.includes('messages_chat_id_fkey')
+    ) {
+      // Try to create the chat if it doesn't exist
+      await createChat({
+        supabase,
+        chatId,
+        userId,
+        model,
+        content,
+        finishReason: 'stop',
+      });
+
+      // Try inserting the message again after creating the chat
+      createdMessages = await insertMessages(supabase, [userMessageData]);
+    } else {
+      throw error;
+    }
+  }
+
   const savedUserMessage = createdMessages[0];
 
   // Handle image relationships

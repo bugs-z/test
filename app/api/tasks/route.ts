@@ -2,15 +2,14 @@ import { getAIProfile } from '@/lib/server/server-chat-helpers';
 import { handleErrorResponse } from '@/lib/models/api-error';
 import { checkRatelimitOnApi } from '@/lib/server/ratelimiter';
 import { createDataStreamResponse } from 'ai';
-import { executePentestAgent } from '@/lib/ai/tools/pentest-agent';
 import { createClient } from '@/lib/supabase/server';
 import { processChatMessages } from '@/lib/ai/message-utils';
 import { postRequestBodySchema, type PostRequestBody } from '../chat/schema';
 import { ChatSDKError } from '@/lib/errors';
 import { handleInitialChatAndUserMessage } from '@/lib/ai/actions';
-import { PluginID } from '@/types';
+import { executeDeepResearchTool } from '@/lib/ai/tools/deep-research';
 
-export const maxDuration = 800;
+export const maxDuration = 300;
 
 export async function POST(request: Request) {
   const abortController = new AbortController();
@@ -45,34 +44,25 @@ export async function POST(request: Request) {
 
     const supabase = await createClient();
 
-    const { processedMessages, systemPrompt, pentestFiles } =
-      await processChatMessages(
-        messages,
-        'chat-model-agent',
-        modelParams,
-        profile,
-        false,
-        supabase,
-        true,
-        true,
-      );
+    const { processedMessages, systemPrompt } = await processChatMessages(
+      messages,
+      'deep-research-model',
+      modelParams,
+      profile,
+      false,
+      supabase,
+      true,
+    );
 
-    // Handle initial chat creation and user message in parallel
-    const initialChatPromise =
-      modelParams.confirmTerminalCommand ||
-      modelParams.isTerminalContinuation ||
-      modelParams.selectedPlugin === PluginID.PENTEST_AGENT
-        ? handleInitialChatAndUserMessage({
-            supabase,
-            modelParams,
-            chatMetadata,
-            profile,
-            model,
-            messages,
-          })
-        : Promise.resolve();
-    // Set the selected plugin to pentest agent when api/chat automatically calls api/agent
-    modelParams.selectedPlugin = PluginID.PENTEST_AGENT;
+    // Handle initial chat creation and user message in parallel with other operations
+    const initialChatPromise = handleInitialChatAndUserMessage({
+      supabase,
+      modelParams,
+      chatMetadata,
+      profile,
+      model,
+      messages,
+    });
 
     return createDataStreamResponse({
       execute: async (dataStream) => {
@@ -81,7 +71,7 @@ export async function POST(request: Request) {
           content: config.rateLimitInfo,
         });
 
-        await executePentestAgent({
+        await executeDeepResearchTool({
           config: {
             messages: processedMessages,
             modelParams,
@@ -94,7 +84,6 @@ export async function POST(request: Request) {
             userCountryCode,
             originalMessages: messages,
             systemPrompt,
-            pentestFiles,
             initialChatPromise,
           },
         });
@@ -108,7 +97,7 @@ export async function POST(request: Request) {
 async function getProviderConfig(profile: any) {
   const rateLimitStatus = await checkRatelimitOnApi(
     profile.user_id,
-    'terminal',
+    'deep-research',
   );
 
   return {

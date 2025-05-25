@@ -12,13 +12,7 @@ interface MessageTypeResolverProps {
   toolInUse: string;
 }
 
-export const allTerminalPlugins = [
-  PluginID.TERMINAL,
-  PluginID.PENTEST_AGENT,
-  PluginID.WAF_DETECTOR,
-  PluginID.WHOIS_LOOKUP,
-  PluginID.SUBDOMAIN_FINDER,
-];
+export const allTerminalPlugins = [PluginID.TERMINAL, PluginID.PENTEST_AGENT];
 
 export const MessageTypeResolver: FC<MessageTypeResolverProps> = ({
   message,

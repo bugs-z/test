@@ -39,12 +39,22 @@ async function getSignedUrls(
  * Processes messages and converts image paths to base64
  * @param messages - Array of chat messages to process
  * @param supabase - Supabase client instance
- * @returns Promise resolving to processed messages with base64 images
+ * @param selectedModel - The selected model to check if it supports images
+ * @returns Promise resolving to processed messages with base64 images or images removed
  */
 export async function processMessagesWithImages(
   messages: BuiltChatMessage[],
   supabase: SupabaseClient,
+  selectedModel?: string,
 ): Promise<BuiltChatMessage[]> {
+  // If model doesn't support images, remove them
+  if (
+    selectedModel === 'deep-research-model' ||
+    selectedModel === 'reasoning-model'
+  ) {
+    return removeImagesFromMessages(messages);
+  }
+
   // Collect all unique image paths that need processing
   const pathsToProcess = new Set<string>();
   messages.forEach((message) => {
@@ -117,6 +127,26 @@ export async function processMessagesWithImages(
         }
         return item;
       });
+      return { ...message, content: processedContent };
+    }
+    return message;
+  });
+}
+
+/**
+ * Removes images from messages when the model doesn't support them
+ * @param messages - Array of chat messages to process
+ * @returns Processed messages with images removed
+ */
+export function removeImagesFromMessages(
+  messages: BuiltChatMessage[],
+): BuiltChatMessage[] {
+  return messages.map((message) => {
+    if (Array.isArray(message.content)) {
+      // Filter out image content and keep only text content
+      const processedContent = message.content.filter(
+        (item) => item.type !== 'image_url',
+      );
       return { ...message, content: processedContent };
     }
     return message;

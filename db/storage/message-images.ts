@@ -5,7 +5,7 @@ export const uploadImage = async (
   image: File,
   userId: string,
 ): Promise<string> => {
-  const imageSizeLimit = 20000000; // 20MB
+  const imageSizeLimit = 5000000; // 5MB
 
   if (image.size > imageSizeLimit) {
     throw new Error(`Image must be less than ${imageSizeLimit / 1000000}MB`);

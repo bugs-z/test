@@ -51,9 +51,7 @@ export const ChatMicButton: FC<ChatMicButtonProps> = ({
       side="top"
       display={
         <div className="flex flex-col">
-          <p className="font-medium">
-            {hasMicAccess ? 'Click to record' : 'Enable microphone'}
-          </p>
+          <p className="font-medium">Dictate</p>
         </div>
       }
       trigger={

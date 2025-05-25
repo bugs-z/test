@@ -1,11 +1,18 @@
-import { IconCircleFilled } from '@tabler/icons-react';
 import { PluginID } from '@/types/plugins';
 import { useUIContext } from '@/context/ui-context';
-import { FileText, Puzzle, Globe, Atom, SquareTerminal } from 'lucide-react';
+import {
+  FileText,
+  Puzzle,
+  Globe,
+  Atom,
+  SquareTerminal,
+  Search,
+  Circle,
+} from 'lucide-react';
 
 export const loadingStates = {
   none: {
-    icon: <IconCircleFilled size={20} />,
+    icon: <Circle size={20} fill="currentColor" className="animate-pulse" />,
     text: '',
   },
   retrieval: {
@@ -24,6 +31,11 @@ export const loadingStates = {
     icon: <Globe size={20} />,
     text: 'Browsing the web...',
   },
+  [PluginID.DEEP_RESEARCH]: {
+    icon: <Search size={20} />,
+    text: 'Researching... (takes 1-5 minutes)',
+  },
+
   [PluginID.PENTEST_AGENT]: {
     icon: <SquareTerminal size={20} />,
     text: 'Using pentest agent...',

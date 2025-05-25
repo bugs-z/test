@@ -5,7 +5,7 @@ import {
 } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { openrouter } from '@openrouter/ai-sdk-provider';
-import { anthropic } from '@ai-sdk/anthropic';
+import { perplexity } from '@ai-sdk/perplexity';
 
 export const myProvider = customProvider({
   languageModels: {
@@ -17,7 +17,9 @@ export const myProvider = customProvider({
     'chat-model-large-with-tools': openai('gpt-4.1-2025-04-14', {
       parallelToolCalls: false,
     }),
-    'chat-model-agent': anthropic('claude-sonnet-4-20250514'),
+    'chat-model-agent': openai('gpt-4.1-2025-04-14', {
+      parallelToolCalls: false,
+    }),
     'browser-model': openai('gpt-4.1-mini-2025-04-14'),
     'chat-model-reasoning': wrapLanguageModel({
       model: openrouter('x-ai/grok-3-mini-beta', {
@@ -27,5 +29,6 @@ export const myProvider = customProvider({
       }),
       middleware: extractReasoningMiddleware({ tagName: 'think' }),
     }),
+    'deep-research-model': perplexity('sonar-deep-research'),
   },
 });
