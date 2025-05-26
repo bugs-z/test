@@ -1,8 +1,15 @@
-import { createSupabaseAdminClient } from '@/lib/server/server-utils';
 import { Sandbox } from '@e2b/code-interpreter';
 import { safeWaitUntil } from '@/lib/utils/safe-wait-until';
+import { ConvexHttpClient } from 'convex/browser';
+import { api } from '@/convex/_generated/api';
 
-const supabaseAdmin = createSupabaseAdminClient();
+if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
+  throw new Error(
+    'NEXT_PUBLIC_CONVEX_URL environment variable is not defined. Please check your environment configuration.',
+  );
+}
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL);
 
 /**
  * Creates or connects to a persistent sandbox instance
@@ -26,28 +33,21 @@ export async function createOrConnectPersistentTerminal(
   timeoutMs: number,
 ): Promise<Sandbox> {
   try {
-    // Only check DB for persistent sandboxes
-    const { data: existingSandbox } = await supabaseAdmin
-      .from('e2b_sandboxes')
-      .select('sandbox_id, status')
-      .eq('user_id', userID)
-      .eq('template', template)
-      .gt(
-        'updated_at',
-        new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      )
-      .single();
+    // Check for existing sandbox
+    const existingSandbox = await convex.query(api.sandboxes.getSandbox, {
+      userId: userID,
+      template,
+    });
 
     if (existingSandbox?.sandbox_id) {
       let currentStatus = existingSandbox.status;
 
       if (currentStatus === 'pausing') {
         for (let i = 0; i < 5; i++) {
-          const { data: updatedSandbox } = await supabaseAdmin
-            .from('e2b_sandboxes')
-            .select('status')
-            .eq('sandbox_id', existingSandbox.sandbox_id)
-            .single();
+          const updatedSandbox = await convex.query(api.sandboxes.getSandbox, {
+            userId: userID,
+            template,
+          });
 
           if (updatedSandbox?.status === 'paused') {
             currentStatus = 'paused';
@@ -64,13 +64,10 @@ export async function createOrConnectPersistentTerminal(
               timeoutMs,
             });
 
-            await supabaseAdmin
-              .from('e2b_sandboxes')
-              .update({ status: 'active' })
-              .eq('sandbox_id', existingSandbox.sandbox_id);
-
-            // const metrics = await sandbox.getMetrics();
-            // console.log('Sandbox metrics:', metrics);
+            await convex.mutation(api.sandboxes.updateSandboxStatus, {
+              sandboxId: existingSandbox.sandbox_id,
+              status: 'active',
+            });
 
             return sandbox;
           } catch (e) {
@@ -83,30 +80,21 @@ export async function createOrConnectPersistentTerminal(
             );
 
             // Delete the stuck sandbox record
-            await supabaseAdmin
-              .from('e2b_sandboxes')
-              .delete()
-              .eq('sandbox_id', existingSandbox.sandbox_id);
+            await convex.mutation(api.sandboxes.deleteSandbox, {
+              sandboxId: existingSandbox.sandbox_id,
+            });
 
             // Create new persistent sandbox
             const sandbox = await Sandbox.create(template, {
               timeoutMs,
             });
 
-            await supabaseAdmin.from('e2b_sandboxes').upsert(
-              {
-                user_id: userID,
-                sandbox_id: sandbox.sandboxId,
-                template,
-                status: 'active',
-              },
-              {
-                onConflict: 'user_id,template',
-              },
-            );
-
-            // const metrics = await sandbox.getMetrics();
-            // console.log('Sandbox metrics:', metrics);
+            await convex.mutation(api.sandboxes.upsertSandbox, {
+              userId: userID,
+              sandboxId: sandbox.sandboxId,
+              template,
+              status: 'active',
+            });
 
             return sandbox;
           }
@@ -119,13 +107,10 @@ export async function createOrConnectPersistentTerminal(
             timeoutMs,
           });
 
-          await supabaseAdmin
-            .from('e2b_sandboxes')
-            .update({ status: 'active' })
-            .eq('sandbox_id', existingSandbox.sandbox_id);
-
-          // const metrics = await sandbox.getMetrics();
-          // console.log('Sandbox metrics:', metrics);
+          await convex.mutation(api.sandboxes.updateSandboxStatus, {
+            sandboxId: existingSandbox.sandbox_id,
+            status: 'active',
+          });
 
           return sandbox;
         } catch (e: any) {
@@ -135,10 +120,9 @@ export async function createOrConnectPersistentTerminal(
               `[${userID}] Sandbox ${existingSandbox.sandbox_id} expired/deleted, creating new one`,
             );
             // Delete the expired sandbox record
-            await supabaseAdmin
-              .from('e2b_sandboxes')
-              .delete()
-              .eq('sandbox_id', existingSandbox.sandbox_id);
+            await convex.mutation(api.sandboxes.deleteSandbox, {
+              sandboxId: existingSandbox.sandbox_id,
+            });
           } else {
             console.error(
               `[${userID}] Failed to resume sandbox ${existingSandbox.sandbox_id}:`,
@@ -154,20 +138,12 @@ export async function createOrConnectPersistentTerminal(
       timeoutMs,
     });
 
-    await supabaseAdmin.from('e2b_sandboxes').upsert(
-      {
-        user_id: userID,
-        sandbox_id: sandbox.sandboxId,
-        template,
-        status: 'active',
-      },
-      {
-        onConflict: 'user_id,template',
-      },
-    );
-
-    // const metrics = await sandbox.getMetrics();
-    // console.log('Sandbox metrics:', metrics);
+    await convex.mutation(api.sandboxes.upsertSandbox, {
+      userId: userID,
+      sandboxId: sandbox.sandboxId,
+      template,
+      status: 'active',
+    });
 
     return sandbox;
   } catch (error) {
@@ -198,30 +174,30 @@ export async function pauseSandbox(sandbox: Sandbox): Promise<string | null> {
   }
 
   // Update status to pausing
-  await supabaseAdmin
-    .from('e2b_sandboxes')
-    .update({ status: 'pausing' })
-    .eq('sandbox_id', sandbox.sandboxId);
+  await convex.mutation(api.sandboxes.updateSandboxStatus, {
+    sandboxId: sandbox.sandboxId,
+    status: 'pausing',
+  });
 
   // Start background task and return immediately
   safeWaitUntil(
     sandbox
       .pause()
       .then(async () => {
-        await supabaseAdmin
-          .from('e2b_sandboxes')
-          .update({ status: 'paused' })
-          .eq('sandbox_id', sandbox.sandboxId);
+        await convex.mutation(api.sandboxes.updateSandboxStatus, {
+          sandboxId: sandbox.sandboxId,
+          status: 'paused',
+        });
       })
       .catch(async (error) => {
         console.error(
           `Background: Error pausing sandbox ${sandbox.sandboxId}:`,
           error,
         );
-        await supabaseAdmin
-          .from('e2b_sandboxes')
-          .update({ status: 'active' })
-          .eq('sandbox_id', sandbox.sandboxId);
+        await convex.mutation(api.sandboxes.updateSandboxStatus, {
+          sandboxId: sandbox.sandboxId,
+          status: 'active',
+        });
       }),
   );
 

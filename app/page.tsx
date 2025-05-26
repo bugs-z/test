@@ -27,6 +27,18 @@ export default function HomePage() {
         Start Chatting
         <ArrowRight className="ml-1" size={20} />
       </Link>
+
+      <div className="mt-8 flex gap-4 text-sm text-muted-foreground">
+        <Link
+          href="/privacy-policy"
+          className="hover:text-primary transition-colors"
+        >
+          Privacy Policy
+        </Link>
+        <Link href="/terms" className="hover:text-primary transition-colors">
+          Terms of Use
+        </Link>
+      </div>
     </div>
   );
 }
