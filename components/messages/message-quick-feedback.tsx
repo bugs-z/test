@@ -1,9 +1,9 @@
-import type { Tables } from '@/supabase/types';
+import { Feedback } from '@/types';
 import { Button } from '../ui/button';
 
 interface QuickFeedbackProps {
   handleBadResponseReason: (reason: string) => void;
-  feedback?: Tables<'feedback'>;
+  feedback?: Feedback;
 }
 
 export const MessageQuickFeedback: React.FC<QuickFeedbackProps> = ({

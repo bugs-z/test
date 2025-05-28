@@ -33,6 +33,7 @@ export const handleCreateMessages = async (
   newChatFiles?: { id: string }[],
   setChatFiles?: React.Dispatch<React.SetStateAction<Tables<'files'>[]>>,
   fileAttachments?: FileAttachment[],
+  assistantMessageId?: string | null,
 ) => {
   try {
     const isEdit = editSequenceNumber !== undefined;
@@ -69,7 +70,7 @@ export const handleCreateMessages = async (
 
     const assistantMessage: ChatMessage = {
       message: {
-        id: uuidv4(),
+        id: assistantMessageId || uuidv4(),
         chat_id: currentChat?.id || '',
         content: generatedText,
         thinking_content: thinkingText || null,

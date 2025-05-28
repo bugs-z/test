@@ -11,3 +11,4 @@ export * from './stream';
 export * from './plugins';
 export * from './files';
 export * from './agent';
+export * from './feedback';

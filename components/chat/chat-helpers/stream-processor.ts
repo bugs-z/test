@@ -67,6 +67,7 @@ export const processResponse = async (
     let shouldSkipFirstChunk = false;
     let chatTitle: string | null = null;
     let fileAttachments: FileAttachment[] = [];
+    let assistantMessageId: string | null = null;
 
     try {
       await processDataStream({
@@ -248,6 +249,10 @@ export const processResponse = async (
               chatTitle = firstValue.chatTitle;
             }
 
+            if (firstValue?.messageId) {
+              assistantMessageId = firstValue.messageId;
+            }
+
             // Handle finishReason
             if (firstValue?.finishReason) {
               if (firstValue.finishReason === 'tool-calls') {
@@ -315,6 +320,33 @@ export const processResponse = async (
 
           toolExecuted = true;
         },
+        onStartStepPart: (value) => {
+          if (value.messageId) {
+            assistantMessageId = value.messageId;
+          }
+        },
+        onReasoningPart: (value) => {
+          if (isFirstChunk) {
+            setFirstTokenReceived(true);
+            isFirstChunk = false;
+          }
+
+          thinkingText += value;
+
+          setChatMessages((prev) =>
+            prev.map((chatMessage) =>
+              chatMessage.message.id === lastChatMessage.message.id
+                ? {
+                    ...chatMessage,
+                    message: {
+                      ...chatMessage.message,
+                      thinking_content: thinkingText,
+                    },
+                  }
+                : chatMessage,
+            ),
+          );
+        },
         onFinishMessagePart: (value) => {
           if (finishReason === '' && !controller.signal.aborted) {
             // Only set finishReason if it hasn't been set before
@@ -351,6 +383,7 @@ export const processResponse = async (
       citations,
       chatTitle,
       fileAttachments,
+      assistantMessageId,
     };
   } else {
     throw new Error('Response body is null');

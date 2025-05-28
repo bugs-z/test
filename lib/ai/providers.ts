@@ -29,6 +29,9 @@ export const myProvider = customProvider({
       }),
       middleware: extractReasoningMiddleware({ tagName: 'think' }),
     }),
-    'deep-research-model': perplexity('sonar-deep-research'),
+    'deep-research-model': wrapLanguageModel({
+      model: perplexity('sonar-deep-research'),
+      middleware: extractReasoningMiddleware({ tagName: 'think' }),
+    }),
   },
 });

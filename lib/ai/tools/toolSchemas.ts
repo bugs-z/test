@@ -16,6 +16,7 @@ export const createToolSchemas = ({
   supabase,
   userCountryCode,
   initialChatPromise,
+  assistantMessageId,
 }: {
   messages: any;
   modelParams: ModelParams;
@@ -27,6 +28,7 @@ export const createToolSchemas = ({
   supabase: SupabaseClient | null;
   userCountryCode: string | null;
   initialChatPromise: Promise<void>;
+  assistantMessageId: string;
 }) => {
   const allSchemas = {
     browser: {
@@ -72,6 +74,7 @@ beneficial for the user's needs.`,
             supabase,
             userCountryCode,
             initialChatPromise,
+            assistantMessageId,
           },
         });
       },
@@ -110,6 +113,7 @@ version of a software library or not knowing the date of the next game for a spo
             supabase,
             userCountryCode,
             initialChatPromise,
+            assistantMessageId,
           },
         });
       },

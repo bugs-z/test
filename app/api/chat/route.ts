@@ -19,6 +19,7 @@ import {
 import { createClient } from '@/lib/supabase/server';
 import { postRequestBodySchema, type PostRequestBody } from './schema';
 import { ChatSDKError } from '@/lib/errors';
+import { v4 as uuidv4 } from 'uuid';
 
 export const maxDuration = 180;
 
@@ -110,6 +111,8 @@ export async function POST(request: Request) {
       });
     }
 
+    const assistantMessageId = uuidv4();
+
     try {
       return createDataStreamResponse({
         execute: async (dataStream) => {
@@ -125,6 +128,7 @@ export async function POST(request: Request) {
             maxTokens: 2048,
             abortSignal: abortController.signal,
             experimental_transform: smoothStream({ chunking: 'word' }),
+            experimental_generateMessageId: () => assistantMessageId,
             onChunk: async (chunk: any) => {
               if (chunk.chunk.type === 'tool-call') {
                 toolUsed = chunk.chunk.toolName;
@@ -175,15 +179,13 @@ export async function POST(request: Request) {
               supabase,
               userCountryCode,
               initialChatPromise,
+              assistantMessageId,
             }).getSelectedSchemas(
               config.isPremiumUser && !modelParams.isTemporaryChat
                 ? ['browser', 'webSearch', 'terminal']
                 : ['browser', 'webSearch'],
             ),
-            onFinish: async ({
-              finishReason,
-              text,
-            }: { finishReason: string; text: string }) => {
+            onFinish: async ({ finishReason, text }) => {
               if (!toolUsed) {
                 // Wait for title generation if it's in progress
                 if (titleGenerationPromise) {
@@ -201,6 +203,7 @@ export async function POST(request: Request) {
                   finishReason,
                   title: generatedTitle,
                   assistantMessage: text,
+                  assistantMessageId,
                 });
               }
             },

@@ -5,4 +5,5 @@ export interface DataPartValue {
   finishReason?: string;
   elapsed_secs?: number;
   chatTitle?: string | null;
+  messageId?: string;
 }

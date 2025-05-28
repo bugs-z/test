@@ -11,6 +11,7 @@ import {
   updateLastAssistantMessage,
 } from './message-db-actions';
 import { createChat } from './chat-actions';
+import { v4 as uuidv4 } from 'uuid';
 
 // Find the last message with role 'user'
 export function getLastUserMessage(
@@ -181,6 +182,7 @@ export async function saveAssistantMessage({
   thinkingText,
   thinkingElapsedSecs,
   fileAttachments,
+  assistantMessageId,
 }: {
   supabase: SupabaseClient;
   chatId: string;
@@ -193,6 +195,7 @@ export async function saveAssistantMessage({
   thinkingText?: string;
   thinkingElapsedSecs?: number | null;
   fileAttachments?: any[];
+  assistantMessageId?: string;
 }): Promise<void> {
   if (modelParams.isContinuation || modelParams.isTerminalContinuation) {
     await updateLastAssistantMessage(supabase, chatId, {
@@ -210,6 +213,7 @@ export async function saveAssistantMessage({
   const thinkingEnabled = model === 'reasoning-model';
 
   const assistantMessageData: TablesInsert<'messages'> = {
+    id: assistantMessageId || uuidv4(),
     chat_id: chatId,
     user_id: userId,
     content: assistantMessage || '',

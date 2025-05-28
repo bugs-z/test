@@ -1,11 +1,12 @@
 import type { Tables } from '@/supabase/types';
 import type { FilePart, TextPart } from 'ai';
 import type { PluginID } from './plugins';
+import type { Feedback } from './feedback';
 
 export interface ChatMessage {
   message: Tables<'messages'>;
   fileItems: Tables<'file_items'>[];
-  feedback?: Tables<'feedback'>;
+  feedback?: Feedback;
   attachments?: Tables<'file_items'>[];
 }
 

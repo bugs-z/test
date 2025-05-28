@@ -27,6 +27,7 @@ interface BrowserToolConfig {
   supabase: SupabaseClient | null;
   userCountryCode: string | null;
   initialChatPromise: Promise<void>;
+  assistantMessageId: string;
 }
 
 async function getProviderConfig(profile: any) {
@@ -173,6 +174,7 @@ export async function executeBrowserTool({
     userCountryCode,
     abortSignal,
     initialChatPromise,
+    assistantMessageId,
   } = config;
   const { systemPrompt, model } = await getProviderConfig(profile);
 
@@ -181,9 +183,6 @@ export async function executeBrowserTool({
     posthog.capture({
       distinctId: profile.user_id,
       event: 'browser_executed',
-      properties: {
-        model: model,
-      },
     });
   }
 
@@ -206,7 +205,6 @@ export async function executeBrowserTool({
     );
 
     let generatedTitle: string | undefined;
-    let assistantMessage = '';
 
     await Promise.all([
       (async () => {
@@ -240,6 +238,7 @@ export async function executeBrowserTool({
                 finishReason,
                 title: generatedTitle,
                 assistantMessage: text,
+                assistantMessageId,
               });
             }
           },
@@ -262,7 +261,6 @@ export async function executeBrowserTool({
               hasFirstTextDelta = true;
             }
 
-            assistantMessage += delta.textDelta;
             dataStream.writeData({
               type: 'text-delta',
               content: delta.textDelta,

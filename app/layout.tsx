@@ -10,6 +10,7 @@ import { UIState } from '@/components/utility/ui-state';
 import { Toaster } from '@/components/ui/sonner';
 import { PostHogProvider } from '@/app/providers';
 import { MFAProvider } from '@/components/utility/mfa/use-mfa';
+import { ConvexClientProvider } from './ConvexClientProvider';
 
 const inter = Inter({ subsets: ['latin'] });
 const APP_NAME = 'PentestGPT';
@@ -112,13 +113,15 @@ export default async function RootLayout({ children }: RootLayoutProps) {
           <Toaster richColors position="top-center" duration={3000} />
           <div className="bg-background text-foreground flex h-dvh flex-col items-center overflow-x-auto">
             {user ? (
-              <GlobalState user={user}>
+              <ConvexClientProvider>
                 <PostHogProvider>
-                  <MFAProvider>
-                    <UIState>{children}</UIState>
-                  </MFAProvider>
+                  <GlobalState user={user}>
+                    <UIState>
+                      <MFAProvider>{children}</MFAProvider>
+                    </UIState>
+                  </GlobalState>
                 </PostHogProvider>
-              </GlobalState>
+              </ConvexClientProvider>
             ) : (
               children
             )}

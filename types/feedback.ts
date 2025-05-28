@@ -1,12 +1,15 @@
-import type { Database } from '@/supabase/types';
-
-export type Feedback = Database['public']['Tables']['feedback']['Row'];
-
-export type FeedbackWithReview = Feedback & {
-  feedback_reviews: {
-    id: string;
-    reviewed_by: string;
-    reviewed_at: string;
-    notes: string | null;
-  } | null;
+export type Feedback = {
+  message_id: string;
+  user_id: string;
+  chat_id: string;
+  feedback: 'good' | 'bad';
+  reason?: string;
+  detailed_feedback?: string;
+  model: string;
+  updated_at: number;
+  sequence_number: number;
+  allow_email?: boolean;
+  allow_sharing?: boolean;
+  has_files: boolean;
+  plugin: string;
 };

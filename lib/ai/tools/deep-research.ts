@@ -12,6 +12,7 @@ import {
 import { removePdfContentFromMessages } from '@/lib/build-prompt-backend';
 import { streamText } from 'ai';
 import { myProvider } from '@/lib/ai/providers';
+import { v4 as uuidv4 } from 'uuid';
 
 interface DeepResearchConfig {
   messages: any[];
@@ -75,12 +76,10 @@ export async function executeDeepResearchTool({
   });
 
   let generatedTitle: string | undefined;
-  let assistantMessage = '';
-  let reasoning = '';
   const citations: string[] = [];
   let isThinking = false;
   let thinkingStartTime: number | null = null;
-  let finalThinkingTime: number | null = null;
+  const assistantMessageId = uuidv4();
 
   // Set up keepalive interval
   const keepaliveInterval = setInterval(() => {
@@ -95,11 +94,12 @@ export async function executeDeepResearchTool({
   try {
     await Promise.all([
       (async () => {
-        const { fullStream } = streamText({
+        const result = streamText({
           model: myProvider.languageModel('deep-research-model'),
           system: systemPrompt,
           messages: toVercelChatMessages(validatedMessages),
           maxTokens: 8192,
+          experimental_generateMessageId: () => assistantMessageId,
           providerOptions: {
             perplexity: {
               web_search_options: {
@@ -110,10 +110,30 @@ export async function executeDeepResearchTool({
               },
             },
           },
+          onChunk: async (chunk) => {
+            if (chunk.chunk.type === 'reasoning') {
+              if (!isThinking) {
+                isThinking = true;
+                thinkingStartTime = Date.now();
+              }
+            }
+          },
           onError: async (error) => {
             console.error('[DeepResearch] Stream Error:', error);
           },
-          onFinish: async () => {
+          onFinish: async ({ text, reasoning }) => {
+            let thinkingElapsedSecs = null;
+            if (isThinking && thinkingStartTime) {
+              isThinking = false;
+              thinkingElapsedSecs = Math.round(
+                (Date.now() - thinkingStartTime) / 1000,
+              );
+              dataStream.writeData({
+                type: 'thinking-time',
+                elapsed_secs: thinkingElapsedSecs,
+              });
+            }
+
             if (supabase) {
               // Wait for initial chat handling to complete before final handling
               await initialChatPromise;
@@ -127,99 +147,24 @@ export async function executeDeepResearchTool({
                 messages: originalMessages,
                 finishReason: 'stop',
                 title: generatedTitle,
-                assistantMessage,
+                assistantMessage: text,
                 citations,
                 thinkingText: reasoning || undefined,
-                thinkingElapsedSecs: finalThinkingTime,
+                thinkingElapsedSecs,
+                assistantMessageId,
               });
             }
           },
         });
 
-        let hasFirstTextDelta = false;
-
-        for await (const delta of fullStream) {
-          if (delta.type === 'source') {
-            if (delta.source.sourceType === 'url') {
-              citations.push(delta.source.url);
-            }
-          }
-
-          if (delta.type === 'text-delta') {
-            const { textDelta } = delta;
-
-            if (!hasFirstTextDelta && textDelta.trim() !== '') {
-              dataStream.writeData({ citations });
-              hasFirstTextDelta = true;
-            }
-
-            if (textDelta.includes('<think>')) {
-              isThinking = true;
-              thinkingStartTime = Date.now();
-
-              const [beforeThink, thinkingContent] = textDelta.split('<think>');
-              if (beforeThink) {
-                dataStream.writeData({
-                  type: 'text-delta',
-                  content: beforeThink,
-                });
-                assistantMessage += beforeThink;
-              }
-              if (thinkingContent) {
-                dataStream.writeData({
-                  type: 'reasoning',
-                  content: thinkingContent,
-                });
-                reasoning += thinkingContent;
-              }
-              continue;
-            }
-
-            if (isThinking) {
-              if (textDelta.includes('</think>')) {
-                isThinking = false;
-                const thinkingElapsedSecs = thinkingStartTime
-                  ? Math.round((Date.now() - thinkingStartTime) / 1000)
-                  : null;
-                finalThinkingTime = thinkingElapsedSecs;
-
-                const [finalThinking, afterThink] = textDelta.split('</think>');
-                if (finalThinking) {
-                  dataStream.writeData({
-                    type: 'reasoning',
-                    content: finalThinking,
-                  });
-                  reasoning += finalThinking;
-                }
-
-                dataStream.writeData({
-                  type: 'thinking-time',
-                  elapsed_secs: thinkingElapsedSecs,
-                });
-
-                if (afterThink) {
-                  dataStream.writeData({
-                    type: 'text-delta',
-                    content: afterThink,
-                  });
-                  assistantMessage += afterThink;
-                }
-              } else {
-                dataStream.writeData({
-                  type: 'reasoning',
-                  content: textDelta,
-                });
-                reasoning += textDelta;
-              }
-            } else {
-              dataStream.writeData({
-                type: 'text-delta',
-                content: textDelta,
-              });
-              assistantMessage += textDelta;
-            }
+        for await (const part of result.fullStream) {
+          if (part.type === 'source' && part.source.sourceType === 'url') {
+            citations.push(part.source.url);
+            dataStream.writeData({ citations });
           }
         }
+
+        result.mergeIntoDataStream(dataStream, { sendReasoning: true });
       })(),
       (async () => {
         if (chatMetadata.id && chatMetadata.newChat) {

@@ -42,9 +42,6 @@ export const createShellBackgroundTool = (context: ToolContext) => {
         posthog.capture({
           distinctId: userID,
           event: 'terminal_background_executed',
-          properties: {
-            command: command,
-          },
         });
       }
 

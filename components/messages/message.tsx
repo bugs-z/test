@@ -2,7 +2,7 @@ import { useChatHandler } from '@/components/chat/chat-hooks/use-chat-handler';
 import { PentestGPTContext } from '@/context/context';
 import { cn } from '@/lib/utils';
 import type { Tables } from '@/supabase/types';
-import type { ChatMessage, LLMID, MessageImage } from '@/types';
+import type { ChatMessage, LLMID, MessageImage, Feedback } from '@/types';
 import Image from 'next/image';
 import {
   type FC,
@@ -407,7 +407,7 @@ export const Message: FC<MessageProps> = ({
       <MessageDetailedFeedback
         isOpen={isFeedbackDialogOpen}
         onClose={() => setIsFeedbackDialogOpen(false)}
-        feedback={feedback as Tables<'feedback'>}
+        feedback={feedback as Feedback}
         onSendFeedback={onSendFeedback}
       />
     </div>

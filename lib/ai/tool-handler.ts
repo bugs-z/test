@@ -8,6 +8,7 @@ import type {
   ModelParams,
 } from '@/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { createDataStreamResponse } from 'ai';
 
 interface ToolHandlerConfig {
   messages: BuiltChatMessage[];
@@ -39,22 +40,24 @@ export async function handleToolExecution(config: ToolHandlerConfig) {
   } = config;
 
   if (isReasoningModel) {
-    return createStreamResponse(async (dataStream) => {
-      await executeReasonLLMTool({
-        config: {
-          messages,
-          modelParams,
-          profile,
-          dataStream,
-          isLargeModel,
-          abortSignal,
-          chatMetadata,
-          model,
-          supabase,
-          rateLimitInfo,
-          initialChatPromise,
-        },
-      });
+    return createDataStreamResponse({
+      execute: async (dataStream) => {
+        await executeReasonLLMTool({
+          config: {
+            messages,
+            modelParams,
+            profile,
+            dataStream,
+            isLargeModel,
+            abortSignal,
+            chatMetadata,
+            model,
+            supabase,
+            rateLimitInfo,
+            initialChatPromise,
+          },
+        });
+      },
     });
   }
 

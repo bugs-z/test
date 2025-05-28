@@ -72,6 +72,7 @@ export async function handleFinalChatAndAssistantMessage({
   thinkingText,
   thinkingElapsedSecs,
   fileAttachments,
+  assistantMessageId,
 }: {
   supabase: SupabaseClient;
   modelParams: ModelParams;
@@ -86,6 +87,7 @@ export async function handleFinalChatAndAssistantMessage({
   thinkingText?: string;
   thinkingElapsedSecs?: number | null;
   fileAttachments?: any[];
+  assistantMessageId?: string;
 }) {
   if (!chatMetadata.id) return;
 
@@ -114,6 +116,7 @@ export async function handleFinalChatAndAssistantMessage({
     thinkingText,
     thinkingElapsedSecs,
     fileAttachments,
+    assistantMessageId,
   });
 }
 

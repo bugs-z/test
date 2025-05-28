@@ -13,6 +13,8 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as crons from "../crons.js";
+import type * as feedback from "../feedback.js";
 import type * as sandboxes from "../sandboxes.js";
 
 /**
@@ -24,6 +26,8 @@ import type * as sandboxes from "../sandboxes.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  crons: typeof crons;
+  feedback: typeof feedback;
   sandboxes: typeof sandboxes;
 }>;
 export declare const api: FilterApi<

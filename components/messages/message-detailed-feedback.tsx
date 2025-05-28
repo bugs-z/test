@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import Modal from '@/components/chat/dialog-portal';
 import { Button } from '../ui/button';
-import type { Tables } from '@/supabase/types';
+import { Feedback } from '@/types';
 
 interface MessageDetailedFeedbackProps {
   isOpen: boolean;
   onClose: () => void;
-  feedback: Tables<'feedback'>;
+  feedback: Feedback;
   onSendFeedback: (
     feedback: 'good' | 'bad',
     reason?: string,

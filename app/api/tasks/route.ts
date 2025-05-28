@@ -9,7 +9,7 @@ import { ChatSDKError } from '@/lib/errors';
 import { handleInitialChatAndUserMessage } from '@/lib/ai/actions';
 import { executeDeepResearchTool } from '@/lib/ai/tools/deep-research';
 
-export const maxDuration = 300;
+export const maxDuration = 800;
 
 export async function POST(request: Request) {
   const abortController = new AbortController();

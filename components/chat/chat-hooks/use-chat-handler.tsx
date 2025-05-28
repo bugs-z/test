@@ -1,6 +1,6 @@
 import { useAlertContext } from '@/context/alert-context';
 import { PentestGPTContext } from '@/context/context';
-import type { Tables, TablesInsert } from '@/supabase/types';
+import type { Tables } from '@/supabase/types';
 import type {
   ChatMessage,
   ChatMetadata,
@@ -17,7 +17,6 @@ import { LLM_LIST } from '../../../lib/models/llm-list';
 import { SmallModel } from '@/lib/models/hackerai-llm-list';
 import { v4 as uuidv4 } from 'uuid';
 import { useUIContext } from '@/context/ui-context';
-import { createMessageFeedback } from '@/db/message-feedback';
 import {
   createTempMessages,
   handleCreateChat,
@@ -29,6 +28,8 @@ import { getMessageFileItemsByMessageId } from '@/db/message-file-items';
 import { useRetrievalLogic } from './retrieval-logic';
 import { toast } from 'sonner';
 import { useAgentSidebar } from '@/components/chat/chat-hooks/use-agent-sidebar';
+import { useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
 
 export const useChatHandler = () => {
   const router = useRouter();
@@ -75,6 +76,8 @@ export const useChatHandler = () => {
   const isGeneratingRef = useRef(isGenerating);
 
   const { retrievalLogic } = useRetrievalLogic();
+
+  const saveFeedback = useMutation(api.feedback.saveFeedback);
 
   useEffect(() => {
     isGeneratingRef.current = isGenerating;
@@ -174,30 +177,29 @@ export const useChatHandler = () => {
     allow_email?: boolean,
     allow_sharing?: boolean,
   ) => {
-    const feedbackInsert: TablesInsert<'feedback'> = {
+    const feedbackData = {
       message_id: chatMessage.message.id,
       user_id: chatMessage.message.user_id,
       chat_id: chatMessage.message.chat_id,
-      feedback: feedback,
+      feedback,
       reason: reason ?? chatMessage.feedback?.reason,
       detailed_feedback:
         detailedFeed ?? chatMessage.feedback?.detailed_feedback,
       model: chatMessage.message.model,
-      created_at: chatMessage.feedback?.created_at || new Date().toISOString(),
-      updated_at: new Date().toISOString(),
       sequence_number: chatMessage.message.sequence_number,
-      allow_email: allow_email,
-      allow_sharing: allow_sharing,
+      allow_email,
+      allow_sharing,
       has_files: chatMessage.fileItems.length > 0,
       plugin: chatMessage.message.plugin || PluginID.NONE,
-      rag_used: false,
-      rag_id: null,
+      updated_at: Date.now(),
     };
-    const newFeedback = await createMessageFeedback(feedbackInsert);
+
+    await saveFeedback(feedbackData);
+
     setChatMessages((prevMessages: ChatMessage[]) =>
       prevMessages.map((message: ChatMessage) =>
         message.message.id === chatMessage.message.id
-          ? { ...message, feedback: newFeedback[0] }
+          ? { ...message, feedback: feedbackData }
           : message,
       ),
     );
@@ -478,7 +480,6 @@ export const useChatHandler = () => {
       let generatedText = '';
       let thinkingText = '';
       let thinkingElapsedSecs: number | null = null;
-      let finishReason = '';
       let citations: string[] = [];
 
       setToolInUse(
@@ -496,11 +497,12 @@ export const useChatHandler = () => {
         fullText,
         thinkingText: thinkingTextFromResponse,
         thinkingElapsedSecs: thinkingElapsedSecsFromResponse,
-        finishReason: finishReasonFromResponse,
+        finishReason,
         selectedPlugin: updatedSelectedPlugin,
         citations: citationsFromResponse,
         chatTitle,
         fileAttachments,
+        assistantMessageId,
       } = await handleHostedChat(
         payload,
         tempAssistantChatMessage,
@@ -520,7 +522,6 @@ export const useChatHandler = () => {
       generatedText = fullText;
       thinkingText = thinkingTextFromResponse;
       thinkingElapsedSecs = thinkingElapsedSecsFromResponse;
-      finishReason = finishReasonFromResponse;
       selectedPlugin = updatedSelectedPlugin;
       citations = citationsFromResponse;
 
@@ -585,6 +586,7 @@ export const useChatHandler = () => {
           newMessageFiles,
           setChatFiles,
           fileAttachments,
+          assistantMessageId,
         );
       }
 
