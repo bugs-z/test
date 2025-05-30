@@ -14,16 +14,12 @@ const createResponse = (
   status: number,
   origin: string | null,
 ) => {
-  // Use CLIENT_ORIGIN from environment variables, fallback to origin if it matches
-  const corsOrigin =
-    origin === process.env.CLIENT_ORIGIN ? origin : process.env.CLIENT_ORIGIN!;
-
   return new Response(JSON.stringify(data), {
     status,
     headers: {
       'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': corsOrigin,
-      'Access-Control-Allow-Methods': 'GET',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       Vary: 'Origin',
     },
@@ -69,9 +65,9 @@ export const getMessagesWithFilesHttp = httpAction(async (ctx, request) => {
       internal.messages.internalGetMessagesWithFiles,
       {
         chatId,
-        limit: limit ? parseInt(limit) : undefined,
+        limit: limit ? Number.parseInt(limit) : undefined,
         lastSequenceNumber: lastSequenceNumber
-          ? parseInt(lastSequenceNumber)
+          ? Number.parseInt(lastSequenceNumber)
           : undefined,
       },
     );
