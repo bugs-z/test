@@ -5,6 +5,7 @@ import { uploadImage } from '@/db/storage/message-images';
 import mammoth from 'mammoth';
 import { useContext, useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import type { Id } from '@/convex/_generated/dataModel';
 
 interface FileProcessor {
   type: string;
@@ -226,19 +227,20 @@ export const useSelectFileHandler = () => {
       setNewMessageFiles((prev) => [
         ...prev,
         {
+          _id: loadingId as Id<'files'>,
+          _creationTime: Date.now(),
           id: loadingId,
           name: file.name,
           type: simplifiedType,
-          file,
-          created_at: '',
           file_path: '',
-          sharing: '',
           size: file.size,
           tokens: 0,
-          updated_at: '',
           user_id: profile.user_id,
-          message_id: null,
-          chat_id: null,
+          message_id: undefined,
+          chat_id: undefined,
+          updated_at: undefined,
+          sequence_number: 0,
+          content: '',
         },
       ]);
 
@@ -278,7 +280,26 @@ export const useSelectFileHandler = () => {
       }
 
       setNewMessageFiles((prev) =>
-        prev.map((item) => (item.id === loadingId ? createdFile : item)),
+        prev.map((item) =>
+          item.id === loadingId
+            ? {
+                _id: createdFile.id as Id<'files'>,
+                _creationTime: Date.now(),
+                id: createdFile.id,
+                name: createdFile.name,
+                type: createdFile.type,
+                file_path: createdFile.file_path,
+                size: createdFile.size,
+                tokens: createdFile.tokens,
+                user_id: createdFile.user_id,
+                message_id: undefined,
+                chat_id: undefined,
+                updated_at: undefined,
+                sequence_number: 0,
+                content: '',
+              }
+            : item,
+        ),
       );
     } catch (error: any) {
       toast.error(`${error?.message}`, {

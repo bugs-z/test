@@ -1,3 +1,4 @@
+import type { Doc } from '@/convex/_generated/dataModel';
 import type { ProcessedTeamMember } from '@/lib/team-utils';
 import type { Tables } from '@/supabase/types';
 import type {
@@ -59,12 +60,12 @@ interface PentestGPTContextType {
   setAbortController: Dispatch<SetStateAction<AbortController | null>>;
 
   // ATTACHMENTS STORE
-  chatFiles: Tables<'files'>[];
-  setChatFiles: Dispatch<SetStateAction<Tables<'files'>[]>>;
+  chatFiles: Doc<'files'>[];
+  setChatFiles: Dispatch<SetStateAction<Doc<'files'>[]>>;
   chatImages: MessageImage[];
   setChatImages: Dispatch<SetStateAction<MessageImage[]>>;
-  newMessageFiles: Tables<'files'>[];
-  setNewMessageFiles: Dispatch<SetStateAction<Tables<'files'>[]>>;
+  newMessageFiles: Doc<'files'>[];
+  setNewMessageFiles: Dispatch<SetStateAction<Doc<'files'>[]>>;
   newMessageImages: MessageImage[];
   setNewMessageImages: Dispatch<SetStateAction<MessageImage[]>>;
 

@@ -1,5 +1,7 @@
 import type { Sandbox } from '@e2b/code-interpreter';
 import { createSupabaseAdminClient } from '@/lib/server/server-utils';
+import { ConvexHttpClient } from 'convex/browser';
+import { api } from '@/convex/_generated/api';
 
 interface FileUploadResult {
   success: boolean;
@@ -13,6 +15,12 @@ interface BatchFileUploadResult {
   uploadedFiles: FileUploadResult[];
   limitExceeded: boolean;
 }
+
+if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
+  throw new Error('NEXT_PUBLIC_CONVEX_URL environment variable is not defined');
+}
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL);
 
 export async function uploadFileToSandbox(
   fileId: string,
@@ -59,16 +67,14 @@ export async function uploadFileToSandbox(
 async function getFileContentFromSupabase(fileId: string) {
   const supabaseAdmin = createSupabaseAdminClient();
 
-  // First get file metadata
-  const { data: fileData, error: fileError } = await supabaseAdmin
-    .from('files')
-    .select('*')
-    .eq('id', fileId)
-    .single();
+  // Get file metadata from Convex
+  const fileData = await convex.query(api.files.getFile, {
+    fileId,
+  });
 
-  if (fileError || !fileData) {
-    console.error('❌ Failed to get file metadata:', fileError?.message);
-    throw new Error(`Failed to get file metadata: ${fileError?.message}`);
+  if (!fileData) {
+    console.error('❌ Failed to get file metadata: File not found');
+    throw new Error('Failed to get file metadata: File not found');
   }
 
   // Then get actual file content from storage

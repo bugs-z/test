@@ -1,9 +1,9 @@
-import { Feedback } from '@/types';
+import type { Doc } from '@/convex/_generated/dataModel';
 import { Button } from '../ui/button';
 
 interface QuickFeedbackProps {
   handleBadResponseReason: (reason: string) => void;
-  feedback?: Feedback;
+  feedback?: Doc<'feedback'>;
 }
 
 export const MessageQuickFeedback: React.FC<QuickFeedbackProps> = ({

@@ -1,36 +1,18 @@
-import { supabase } from '@/lib/supabase/browser-client';
+import { ConvexClient } from 'convex/browser';
+import { api } from '@/convex/_generated/api';
+
+// Create a single instance of the Convex client
+const convex = new ConvexClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export const getChatFilesByChatId = async (chatId: string) => {
-  const { data: chatFiles, error } = await supabase
-    .from('files')
-    .select('*')
-    .eq('chat_id', chatId);
+  try {
+    const chatFiles = await convex.query(api.files.getFiles, {
+      chatId: chatId,
+    });
 
-  if (error) {
-    if (error.code === 'PGRST116') {
-      // No rows returned, chat not found
-      return null;
-    }
-    // For other types of errors, we still throw
-    throw new Error(`Error fetching chat files: ${error.message}`);
+    return chatFiles || [];
+  } catch (error) {
+    console.error('[getChatFilesByChatId] Error fetching chat files:', error);
+    throw error;
   }
-
-  return chatFiles;
-};
-
-export const getChatFilesByMultipleChatIds = async (chatIds: string[]) => {
-  if (chatIds.length === 0) {
-    return [];
-  }
-
-  const { data: chatFiles, error } = await supabase
-    .from('files')
-    .select('*')
-    .in('chat_id', chatIds);
-
-  if (error) {
-    throw new Error(`Error fetching chat files: ${error.message}`);
-  }
-
-  return chatFiles;
 };

@@ -1,12 +1,12 @@
 'use client';
 
 import React from 'react';
-import type { Tables } from '@/supabase/types';
 import { MessageTypeResolver } from '@/components/messages/message-type-solver';
 import { ImageIcon } from 'lucide-react';
+import type { Doc } from '@/convex/_generated/dataModel';
 
 interface SharedMessageProps {
-  message: Tables<'messages'>;
+  message: Doc<'messages'>;
   isLastMessage: boolean;
 }
 

@@ -1,5 +1,5 @@
-import type { Tables } from '@/supabase/types';
 import type { ChatMessage, LLMID } from '.';
+import type { Doc } from '../convex/_generated/dataModel';
 
 export interface ChatSettings {
   model: LLMID;
@@ -7,13 +7,13 @@ export interface ChatSettings {
 
 export interface ChatPayload {
   chatMessages: ChatMessage[];
-  retrievedFileItems: Tables<'file_items'>[];
+  retrievedFileItems: Doc<'file_items'>[];
   imagePaths?: string[]; // List of image paths to be processed
 }
 
 export interface ChatAPIPayload {
   chatSettings: ChatSettings;
-  messages: Tables<'messages'>[];
+  messages: Doc<'messages'>[];
 }
 
 export interface Message {
@@ -34,5 +34,5 @@ export type SubscriptionInfo = {
 export type ChatMetadata = {
   id?: string;
   newChat: boolean;
-  retrievedFileItems?: Tables<'file_items'>[];
+  retrievedFileItems?: Doc<'file_items'>[];
 };

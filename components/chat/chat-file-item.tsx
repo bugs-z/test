@@ -1,4 +1,3 @@
-import type { Tables } from '@/supabase/types';
 import {
   IconFileFilled,
   IconFileTypeCsv,
@@ -12,9 +11,10 @@ import {
 } from '@tabler/icons-react';
 import type { FC } from 'react';
 import { WithTooltip } from '../ui/with-tooltip';
+import type { Doc } from '@/convex/_generated/dataModel';
 
 interface FileItemProps {
-  file: Tables<'files'>;
+  file: Doc<'files'>;
   isLoading?: boolean;
   showRemoveButton: boolean;
   onRemove?: (fileId: string) => void;

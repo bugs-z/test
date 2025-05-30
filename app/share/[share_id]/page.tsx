@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { SharedMessage } from '@/components/chat/shared-message';
-import type { Tables } from '@/supabase/types';
+import type { Doc } from '@/convex/_generated/dataModel';
 
 const MAX_CHAT_NAME_LENGTH = 100;
 
@@ -66,7 +66,7 @@ export default async function SharedChatPage({
             </div>
           </div>
           <div className="space-y-8">
-            {(messages as Tables<'messages'>[]).map((message, index, array) => (
+            {(messages as Doc<'messages'>[]).map((message, index, array) => (
               <SharedMessage
                 key={message.id}
                 message={message}

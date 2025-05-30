@@ -1,3 +1,4 @@
+import type { Id } from '@/convex/_generated/dataModel';
 import { CONTINUE_PROMPT } from '@/lib/models/llm-prompting';
 import { lastSequenceNumber } from '@/lib/utils';
 import type { ChatMessage, LLMID } from '@/types';
@@ -25,17 +26,17 @@ export const createTempMessages = ({
 
   const tempUserChatMessage: ChatMessage = {
     message: {
+      _id: uuidv4() as Id<'messages'>,
+      _creationTime: Date.now(),
       chat_id: '',
       content: messageContentInternal,
-      thinking_content: null,
-      thinking_enabled: model === 'reasoning-model',
-      thinking_elapsed_secs: null,
+      thinking_content: undefined,
+      thinking_elapsed_secs: undefined,
       model,
-      plugin: selectedPlugin,
+      plugin: selectedPlugin || undefined,
       role: 'user',
       sequence_number: lastSequenceNumber(chatMessages) + 1,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      updated_at: Date.now(),
       id: uuidv4(),
       image_paths: b64Images,
       user_id: '',
@@ -47,17 +48,17 @@ export const createTempMessages = ({
 
   const tempAssistantChatMessage: ChatMessage = {
     message: {
+      _id: uuidv4() as Id<'messages'>,
+      _creationTime: Date.now(),
       chat_id: '',
       content: '',
-      thinking_content: null,
-      thinking_enabled: model === 'reasoning-model',
-      thinking_elapsed_secs: null,
+      thinking_content: undefined,
+      thinking_elapsed_secs: undefined,
       model,
-      plugin: selectedPlugin,
+      plugin: selectedPlugin || undefined,
       role: 'assistant',
       sequence_number: lastSequenceNumber(chatMessages) + 2,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      updated_at: Date.now(),
       id: uuidv4(),
       image_paths: [],
       user_id: '',

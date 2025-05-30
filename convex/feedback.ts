@@ -1,7 +1,7 @@
-import { mutation, internalMutation, query } from './_generated/server';
+import { mutation, internalMutation, internalQuery } from './_generated/server';
 import { v } from 'convex/values';
 
-export const getFeedbackByChatId = query({
+export const internalGetFeedbackByChatId = internalQuery({
   args: {
     chat_id: v.string(),
     limit: v.optional(v.number()),

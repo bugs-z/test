@@ -1,33 +1,22 @@
-import { supabase } from '@/lib/supabase/browser-client';
-import type { Tables, TablesInsert, TablesUpdate } from '@/supabase/types';
+import { ConvexClient } from 'convex/browser';
+import { api } from '@/convex/_generated/api';
+import type { TablesInsert, TablesUpdate } from '@/supabase/types';
 import mammoth from 'mammoth';
 import { toast } from 'sonner';
 import { uploadFile } from '@/db/storage/files';
+import { v4 as uuidv4 } from 'uuid';
+
+// Create a single instance of the Convex client
+const convex = new ConvexClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export const getFileById = async (fileId: string) => {
-  const { data: file, error } = await supabase
-    .from('files')
-    .select('*')
-    .eq('id', fileId)
-    .single();
+  const file = await convex.query(api.files.getFile, { fileId });
 
   if (!file) {
-    throw new Error(error.message);
+    throw new Error('File not found');
   }
 
   return file;
-};
-
-export const getAllFilesCount = async () => {
-  const { count, error } = await supabase
-    .from('files')
-    .select('*', { count: 'exact', head: true });
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return count;
 };
 
 export const createFileBasedOnExtension = async (
@@ -54,7 +43,7 @@ const createBaseFile = async (
   fileRecord: TablesInsert<'files'>,
   processFile: (fileId: string) => Promise<void>,
 ) => {
-  const filesCounts = (await getAllFilesCount()) || 0;
+  const filesCounts = await convex.query(api.files.getAllFilesCount, {});
   const maxFiles = Number.parseInt(
     process.env.NEXT_PUBLIC_RATELIMITER_LIMIT_FILES || '100',
   );
@@ -69,15 +58,22 @@ const createBaseFile = async (
     throw new Error(`File must be less than ${sizeLimitMB}MB`);
   }
 
-  const { data: createdFile, error } = await supabase
-    .from('files')
-    .insert([fileRecord])
-    .select('*')
-    .single();
+  const fileData = {
+    id: fileRecord.id || uuidv4(),
+    user_id: fileRecord.user_id,
+    file_path: fileRecord.file_path,
+    name: fileRecord.name,
+    size: fileRecord.size,
+    tokens: fileRecord.tokens,
+    type: fileRecord.type,
+    message_id: fileRecord.message_id || undefined,
+    chat_id: fileRecord.chat_id || undefined,
+    updated_at: Date.now(),
+  };
 
-  if (error) {
-    throw new Error(error.message);
-  }
+  const createdFile = await convex.mutation(api.files.createFile, {
+    fileData,
+  });
 
   const filePath = await uploadFile(file, {
     name: createdFile.name,
@@ -177,66 +173,40 @@ export const updateFile = async (
   fileId: string,
   file: TablesUpdate<'files'>,
 ) => {
-  const { data: updatedFile, error } = await supabase
-    .from('files')
-    .update(file)
-    .eq('id', fileId)
-    .select('*')
-    .single();
+  const fileData = {
+    file_path: file.file_path,
+    name: file.name,
+    size: file.size,
+    tokens: file.tokens,
+    type: file.type,
+    message_id: file.message_id || undefined,
+    chat_id: file.chat_id || undefined,
+  };
 
-  if (error) {
-    throw new Error(error.message);
-  }
+  const updatedFile = await convex.mutation(api.files.updateFile, {
+    fileId,
+    fileData,
+  });
 
   return updatedFile;
 };
 
 export const deleteFile = async (fileId: string) => {
-  const { error } = await supabase.from('files').delete().eq('id', fileId);
+  const success = await convex.mutation(api.files.deleteFile, {
+    fileId,
+  });
 
-  if (error) {
-    throw new Error(error.message);
+  if (!success) {
+    throw new Error('Failed to delete file');
   }
 
   return true;
 };
 
-export const getFileItemsByFileIds = async (fileIds: string[]) => {
-  if (!fileIds.length) return [];
-
-  const returnData: Tables<'file_items'>[] = [];
-
-  const { data, error } = await supabase
-    .from('file_items')
-    .select('*')
-    .in(
-      'file_id',
-      fileIds.filter(
-        (fileId) => !returnData.some((item) => item.file_id === fileId),
-      ),
-    );
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  if (data?.length > 0) {
-    returnData.push(...data);
-  }
-
-  return returnData;
-};
-
 export const getFileItemsByFileId = async (fileId: string) => {
-  const { data, error } = await supabase
-    .from('file_items')
-    .select('*')
-    .eq('file_id', fileId)
-    .order('sequence_number', { ascending: true });
+  const fileItems = await convex.query(api.file_items.getFileItemsByFileId, {
+    fileId: fileId,
+  });
 
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data || [];
+  return fileItems;
 };

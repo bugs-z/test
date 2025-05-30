@@ -1,6 +1,7 @@
 import { useAlertContext } from '@/context/alert-context';
 import { PentestGPTContext } from '@/context/context';
 import type { Tables } from '@/supabase/types';
+import type { Doc } from '@/convex/_generated/dataModel';
 import type {
   ChatMessage,
   ChatMetadata,
@@ -30,6 +31,7 @@ import { toast } from 'sonner';
 import { useAgentSidebar } from '@/components/chat/chat-hooks/use-agent-sidebar';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
+import type { Id } from '@/convex/_generated/dataModel';
 
 export const useChatHandler = () => {
   const router = useRouter();
@@ -194,12 +196,19 @@ export const useChatHandler = () => {
       updated_at: Date.now(),
     };
 
+    // Data for state update (includes _id and _creationTime)
+    const feedbackDataForState = {
+      _id: uuidv4() as Id<'feedback'>,
+      _creationTime: Date.now(),
+      ...feedbackData,
+    };
+
     await saveFeedback(feedbackData);
 
     setChatMessages((prevMessages: ChatMessage[]) =>
       prevMessages.map((message: ChatMessage) =>
         message.message.id === chatMessage.message.id
-          ? { ...message, feedback: feedbackData }
+          ? { ...message, feedback: feedbackDataForState }
           : message,
       ),
     );
@@ -347,8 +356,8 @@ export const useChatHandler = () => {
         }
       }
 
-      let lastMessageRetrievedFileItems: Tables<'file_items'>[] | null = null;
-      let editedMessageFiles: Tables<'files'>[] | null = null;
+      let lastMessageRetrievedFileItems: Doc<'file_items'>[] | null = null;
+      let editedMessageFiles: Doc<'files'>[] | null = null;
 
       if (isContinuation || isRegeneration) {
         // If is continuation or regeneration, get the last message's file items so we don't have to run the retrieval logic
@@ -410,7 +419,7 @@ export const useChatHandler = () => {
         }
       }
 
-      let retrievedFileItems: Tables<'file_items'>[] = [];
+      let retrievedFileItems: Doc<'file_items'>[] = [];
       let retrievalUsed = false;
       if (newMessageFiles.length > 0 || chatFiles.length > 0) {
         retrievalUsed = true;
@@ -535,8 +544,7 @@ export const useChatHandler = () => {
                   ...msg.message,
                   content: generatedText,
                   thinking_content: thinkingText,
-                  thinking_enabled: !!thinkingText,
-                  thinking_elapsed_secs: thinkingElapsedSecs,
+                  thinking_elapsed_secs: thinkingElapsedSecs || undefined,
                   citations: citations || [],
                 },
               }

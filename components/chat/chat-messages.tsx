@@ -1,6 +1,6 @@
 import { useChatHandler } from '@/components/chat/chat-hooks/use-chat-handler';
 import { PentestGPTContext } from '@/context/context';
-import type { Tables } from '@/supabase/types';
+import type { Doc } from '@/convex/_generated/dataModel';
 import { type FC, useContext, useState } from 'react';
 import { Message } from '../messages/message';
 import type { ChatMessage } from '@/types';
@@ -29,7 +29,7 @@ export const ChatMessages: FC = () => {
     );
   };
 
-  const [editingMessage, setEditingMessage] = useState<Tables<'messages'>>();
+  const [editingMessage, setEditingMessage] = useState<Doc<'messages'>>();
 
   const messagesToDisplay = isTemporaryChat
     ? temporaryChatMessages

@@ -27,6 +27,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { type FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { AgentSidebarProvider } from '@/components/chat/chat-hooks/use-agent-sidebar';
+import type { Doc } from '@/convex/_generated/dataModel';
 
 const MESSAGES_PER_FETCH = 20;
 
@@ -76,9 +77,9 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
     useState<AbortController | null>(null);
 
   // ATTACHMENTS STORE
-  const [chatFiles, setChatFiles] = useState<Tables<'files'>[]>([]);
+  const [chatFiles, setChatFiles] = useState<Doc<'files'>[]>([]);
   const [chatImages, setChatImages] = useState<MessageImage[]>([]);
-  const [newMessageFiles, setNewMessageFiles] = useState<Tables<'files'>[]>([]);
+  const [newMessageFiles, setNewMessageFiles] = useState<Doc<'files'>[]>([]);
   const [newMessageImages, setNewMessageImages] = useState<MessageImage[]>([]);
 
   // RETIEVAL STORE

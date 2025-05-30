@@ -1,5 +1,5 @@
 import type { MessageImage } from '@/types/images/message-image';
-import type { Tables } from '@/supabase/types';
+import type { Doc } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
 
 const MAX_TOTAL_FILES = 5;
@@ -10,7 +10,7 @@ export const handleFileUpload = (
   setPendingFiles: (files: File[]) => void,
   handleSelectDeviceFile: (file: File) => void,
   newMessageImages: MessageImage[] = [],
-  newMessageFiles: Tables<'files'>[] = [],
+  newMessageFiles: Doc<'files'>[] = [],
 ) => {
   const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
   const videoExtensions = ['mp4', 'avi', 'mov', 'wmv', 'flv'];

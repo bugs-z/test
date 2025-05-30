@@ -1,8 +1,8 @@
 import type { ChatMessage } from '@/types';
-import type { Tables } from '@/supabase/types';
 import { PentestGPTContext } from '@/context/context';
 import { useContext } from 'react';
 import { getFileItemsByFileId } from '@/db/files';
+import type { Doc } from '@/convex/_generated/dataModel';
 
 /**
  * Retrieval Logic for File Content
@@ -28,14 +28,14 @@ export const useRetrievalLogic = () => {
 
   const retrievalLogic = async (
     messages: ChatMessage[],
-    editedMessageFiles: Tables<'files'>[] | null,
-    existingFiles: Tables<'files'>[],
+    editedMessageFiles: Doc<'files'>[] | null,
+    existingFiles: Doc<'files'>[],
   ) => {
     // Get all files that need to be processed
     const filesToProcess = [...(editedMessageFiles || []), ...newMessageFiles];
 
     // Process each file separately to maintain proper ordering
-    let allFileItems: Tables<'file_items'>[] = [];
+    let allFileItems: Doc<'file_items'>[] = [];
 
     // Process files in batches to avoid too many parallel requests
     const BATCH_SIZE = 5;
@@ -64,7 +64,7 @@ export const useRetrievalLogic = () => {
       ...existingFiles,
       ...newMessageFiles.map((file) => ({
         ...file,
-        chat_id: selectedChat?.id ?? null,
+        chat_id: selectedChat?.id,
         message_id: messages[messages.length - 2].message.id,
       })),
     ]);

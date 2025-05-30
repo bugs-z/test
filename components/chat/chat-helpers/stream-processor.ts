@@ -208,7 +208,8 @@ export const processResponse = async (
                           ...chatMessage,
                           message: {
                             ...chatMessage.message,
-                            thinking_elapsed_secs: thinkingElapsedSecs,
+                            thinking_elapsed_secs:
+                              thinkingElapsedSecs || undefined,
                           },
                         }
                       : chatMessage,

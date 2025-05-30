@@ -11,28 +11,21 @@ import { getServerProfile } from '@/lib/server/server-chat-helpers';
 import { createSupabaseAdminClient } from '@/lib/server/server-utils';
 import type { FileItemChunk } from '@/types';
 import { NextResponse } from 'next/server';
+import { ConvexClient } from 'convex/browser';
+import { api } from '@/convex/_generated/api';
+
+const convex = new ConvexClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export async function POST(req: Request) {
   try {
     const supabaseAdmin = createSupabaseAdminClient();
-
     const profile = await getServerProfile();
-
     const formData = await req.formData();
-
     const file_id = formData.get('file_id') as string;
 
-    const { data: fileMetadata, error: metadataError } = await supabaseAdmin
-      .from('files')
-      .select('*')
-      .eq('id', file_id)
-      .single();
-
-    if (metadataError) {
-      throw new Error(
-        `Failed to retrieve file metadata: ${metadataError.message}`,
-      );
-    }
+    const fileMetadata = await convex.query(api.files.getFile, {
+      fileId: file_id,
+    });
 
     if (!fileMetadata) {
       throw new Error('File not found');
@@ -99,15 +92,18 @@ export async function POST(req: Request) {
       content: chunk.content,
       tokens: chunk.tokens,
       name: fileMetadata.name,
-      openai_embedding: null,
     }));
 
-    await supabaseAdmin.from('file_items').upsert(file_items);
+    await convex.mutation(api.file_items.upsertFileItems, {
+      fileItems: file_items,
+    });
 
-    await supabaseAdmin
-      .from('files')
-      .update({ tokens: totalTokens })
-      .eq('id', file_id);
+    await convex.mutation(api.files.updateFile, {
+      fileId: file_id,
+      fileData: {
+        tokens: totalTokens,
+      },
+    });
 
     return new NextResponse('File processing successful', {
       status: 200,

@@ -47,7 +47,6 @@ export async function handleInitialChatAndUserMessage({
   }
 
   await saveUserMessage({
-    supabase,
     chatId: chatMetadata.id,
     userId: profile.user_id,
     messages,
@@ -105,7 +104,6 @@ export async function handleFinalChatAndAssistantMessage({
   });
 
   await saveAssistantMessage({
-    supabase,
     chatId: chatMetadata.id,
     userId: profile.user_id,
     modelParams,

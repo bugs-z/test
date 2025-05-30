@@ -1,17 +1,25 @@
-import type { Tables } from '@/supabase/types';
 import { createSupabaseAdminClient } from '@/lib/server/server-utils';
 import type { BuiltChatMessage } from '@/types/chat-message';
 import type { MessageContent } from '@/types/chat-message';
 import type { TextPart, FilePart } from 'ai';
+import { ConvexHttpClient } from 'convex/browser';
+import { api } from '@/convex/_generated/api';
+import type { Doc } from '@/convex/_generated/dataModel';
 
-export function buildDocumentsText(fileItems: Tables<'file_items'>[]) {
+if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
+  throw new Error('NEXT_PUBLIC_CONVEX_URL environment variable is not defined');
+}
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL);
+
+export function buildDocumentsText(fileItems: Doc<'file_items'>[]) {
   const fileGroups: Record<
     string,
     { id: string; name: string; content: string[] }
   > = fileItems.reduce(
     (
       acc: Record<string, { id: string; name: string; content: string[] }>,
-      item: Tables<'file_items'>,
+      item: Doc<'file_items'>,
     ) => {
       if (!acc[item.file_id]) {
         acc[item.file_id] = {
@@ -47,7 +55,7 @@ export function buildDocumentsText(fileItems: Tables<'file_items'>[]) {
  */
 export async function processPdfFileItem(
   supabaseAdmin: ReturnType<typeof createSupabaseAdminClient>,
-  fileItem: Tables<'file_items'>,
+  fileItem: Doc<'file_items'>,
   userId: string,
 ) {
   try {
@@ -56,14 +64,12 @@ export async function processPdfFileItem(
       return null;
     }
 
-    // Get the full file metadata
-    const { data: fileMetadata, error: metadataError } = await supabaseAdmin
-      .from('files')
-      .select('*')
-      .eq('id', fileItem.file_id)
-      .single();
+    // Get the file metadata from Convex
+    const fileMetadata = await convex.query(api.files.getFile, {
+      fileId: fileItem.file_id,
+    });
 
-    if (metadataError || !fileMetadata) {
+    if (!fileMetadata) {
       return null;
     }
 
@@ -80,7 +86,7 @@ export async function processPdfFileItem(
       return null;
     }
 
-    // Download the file
+    // Download the file from Supabase storage
     const { data: file, error: fileError } = await supabaseAdmin.storage
       .from('files')
       .download(fileMetadata.file_path);
@@ -112,7 +118,7 @@ export async function processPdfFileItem(
  */
 export function createPentestFileArray(
   localPath: string,
-  fileItems: Tables<'file_items'>[],
+  fileItems: Doc<'file_items'>[],
 ) {
   return fileItems.map((fileItem) => ({
     path: `${localPath}/${fileItem.name}`,
@@ -153,10 +159,12 @@ export async function processMessageContentWithAttachments(
       .filter(Boolean);
 
     // Make a single batch query for all file items
-    const { data: allFileItems } = await supabaseAdmin
-      .from('file_items')
-      .select('*')
-      .in('file_id', allFileIds);
+    const allFileItems = await convex.query(
+      api.file_items.getAllFileItemsByFileIds,
+      {
+        fileIds: allFileIds,
+      },
+    );
 
     // If this is a pentest agent, create the file array
     if (isPentestAgent && allFileItems) {

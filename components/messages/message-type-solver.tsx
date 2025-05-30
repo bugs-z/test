@@ -1,4 +1,4 @@
-import type { Tables } from '@/supabase/types';
+import type { Doc } from '@/convex/_generated/dataModel';
 import { PluginID } from '@/types/plugins';
 import type { FC } from 'react';
 import { MessageMarkdown } from './message-markdown';
@@ -7,7 +7,7 @@ import { MessageCitations } from './message-citations';
 import { MessageThinking } from './message-thinking';
 
 interface MessageTypeResolverProps {
-  message: Tables<'messages'>;
+  message: Doc<'messages'>;
   isLastMessage: boolean;
   toolInUse: string;
 }

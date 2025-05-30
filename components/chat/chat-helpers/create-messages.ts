@@ -10,6 +10,7 @@ import type {
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 import { convertToJsonAttachments } from '@/lib/utils/type-converters';
+import type { Doc, Id } from '@/convex/_generated/dataModel';
 
 export const handleCreateMessages = async (
   chatMessages: ChatMessage[],
@@ -21,7 +22,7 @@ export const handleCreateMessages = async (
   newMessageImages: MessageImage[],
   isRegeneration: boolean,
   isContinuation: boolean,
-  retrievedFileItems: Tables<'file_items'>[],
+  retrievedFileItems: Doc<'file_items'>[],
   setMessages: (messages: ChatMessage[]) => void,
   setChatImages: React.Dispatch<React.SetStateAction<MessageImage[]>>,
   selectedPlugin: PluginID,
@@ -31,7 +32,7 @@ export const handleCreateMessages = async (
   thinkingText?: string,
   thinkingElapsedSecs?: number | null,
   newChatFiles?: { id: string }[],
-  setChatFiles?: React.Dispatch<React.SetStateAction<Tables<'files'>[]>>,
+  setChatFiles?: React.Dispatch<React.SetStateAction<Doc<'files'>[]>>,
   fileAttachments?: FileAttachment[],
   assistantMessageId?: string | null,
 ) => {
@@ -40,6 +41,8 @@ export const handleCreateMessages = async (
 
     const userMessage: ChatMessage = {
       message: {
+        _id: uuidv4() as Id<'messages'>,
+        _creationTime: Date.now(),
         id: isEdit
           ? chatMessages.find(
               (msg) => msg.message.sequence_number === editSequenceNumber,
@@ -47,14 +50,12 @@ export const handleCreateMessages = async (
           : uuidv4(),
         chat_id: currentChat?.id || '',
         content: messageContent || '',
-        thinking_content: null,
-        thinking_enabled: modelData.modelId === 'reasoning-model',
-        thinking_elapsed_secs: null,
+        thinking_content: undefined,
+        thinking_elapsed_secs: undefined,
         role: 'user',
         model: modelData.modelId,
         plugin: selectedPlugin,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        updated_at: Date.now(),
         sequence_number: lastSequenceNumber(chatMessages) + 1,
         user_id: profile.user_id,
         image_paths: newMessageImages.map((image) => image.path),
@@ -70,17 +71,17 @@ export const handleCreateMessages = async (
 
     const assistantMessage: ChatMessage = {
       message: {
+        _id: uuidv4() as Id<'messages'>,
+        _creationTime: Date.now(),
         id: assistantMessageId || uuidv4(),
         chat_id: currentChat?.id || '',
         content: generatedText,
-        thinking_content: thinkingText || null,
-        thinking_enabled: modelData.modelId === 'reasoning-model',
-        thinking_elapsed_secs: thinkingElapsedSecs || null,
+        thinking_content: thinkingText || undefined,
+        thinking_elapsed_secs: thinkingElapsedSecs || undefined,
         model: modelData.modelId,
         plugin: selectedPlugin,
         role: 'assistant',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        updated_at: Date.now(),
         sequence_number: lastSequenceNumber(chatMessages) + 2,
         user_id: profile.user_id,
         image_paths: [],

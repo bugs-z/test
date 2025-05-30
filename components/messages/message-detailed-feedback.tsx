@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import Modal from '@/components/chat/dialog-portal';
 import { Button } from '../ui/button';
-import { Feedback } from '@/types';
+import type { Doc } from '@/convex/_generated/dataModel';
 
 interface MessageDetailedFeedbackProps {
   isOpen: boolean;
   onClose: () => void;
-  feedback: Feedback;
+  feedback: Doc<'feedback'>;
   onSendFeedback: (
     feedback: 'good' | 'bad',
     reason?: string,

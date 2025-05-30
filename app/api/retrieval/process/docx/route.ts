@@ -1,8 +1,12 @@
 import { processDocX } from '@/lib/retrieval/processing';
 import { getServerProfile } from '@/lib/server/server-chat-helpers';
-import { createSupabaseAdminClient } from '@/lib/server/server-utils';
 import type { FileItemChunk } from '@/types';
 import { NextResponse } from 'next/server';
+import { ConvexClient } from 'convex/browser';
+import { api } from '@/convex/_generated/api';
+
+// Create a single instance of the Convex client
+const convex = new ConvexClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export async function POST(req: Request) {
   const json = await req.json();
@@ -13,8 +17,6 @@ export async function POST(req: Request) {
   };
 
   try {
-    const supabaseAdmin = createSupabaseAdminClient();
-
     const profile = await getServerProfile();
 
     let chunks: FileItemChunk[] = [];
@@ -35,17 +37,20 @@ export async function POST(req: Request) {
       sequence_number: 0,
       content: chunk.content,
       tokens: chunk.tokens,
-      openai_embedding: null,
     }));
 
-    await supabaseAdmin.from('file_items').upsert(file_items);
+    await convex.mutation(api.file_items.upsertFileItems, {
+      fileItems: file_items,
+    });
 
     const totalTokens = file_items.reduce((acc, item) => acc + item.tokens, 0);
 
-    await supabaseAdmin
-      .from('files')
-      .update({ tokens: totalTokens })
-      .eq('id', fileId);
+    await convex.mutation(api.files.updateFile, {
+      fileId,
+      fileData: {
+        tokens: totalTokens,
+      },
+    });
 
     return new NextResponse('Embed Successful', {
       status: 200,

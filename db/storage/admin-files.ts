@@ -1,5 +1,14 @@
 import { createSupabaseAdminClient } from '@/lib/server/server-utils';
 import type { TablesInsert } from '@/supabase/types';
+import { ConvexHttpClient } from 'convex/browser';
+import { api } from '@/convex/_generated/api';
+import { v4 as uuidv4 } from 'uuid';
+
+if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
+  throw new Error('NEXT_PUBLIC_CONVEX_URL environment variable is not defined');
+}
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL);
 
 const uploadAdminFile = async (
   file: File,
@@ -35,6 +44,24 @@ const uploadAdminFile = async (
   return filePath;
 };
 
+// Helper function to convert Supabase file record to Convex format
+const convertToConvexFile = (fileRecord: TablesInsert<'files'>) => {
+  return {
+    id: fileRecord.id,
+    user_id: fileRecord.user_id,
+    file_path: fileRecord.file_path,
+    name: fileRecord.name,
+    size: fileRecord.size,
+    tokens: fileRecord.tokens || 0,
+    type: fileRecord.type,
+    message_id: fileRecord.message_id || undefined,
+    chat_id: fileRecord.chat_id || undefined,
+    updated_at: fileRecord.updated_at
+      ? new Date(fileRecord.updated_at).getTime()
+      : undefined,
+  };
+};
+
 export const createAdminFile = async (
   file: File,
   fileRecord: TablesInsert<'files'>,
@@ -57,51 +84,31 @@ export const createAdminFile = async (
 
   // If append is true, check if a file already exists at the same location
   if (append) {
-    const { data: existingFile, error: findError } = await supabaseAdmin
-      .from('files')
-      .select('*')
-      .eq('user_id', fileRecord.user_id)
-      .eq('name', validFilename)
-      .single();
-
-    if (findError && findError.code !== 'PGRST116') {
-      // PGRST116 is "no rows returned"
-      throw new Error(findError.message);
-    }
+    const existingFile = await convex.query(api.files.getFile, {
+      userId: fileRecord.user_id,
+      fileName: validFilename,
+    });
 
     if (existingFile) {
       // Update the existing file
-      const { data: updatedFile, error: updateError } = await supabaseAdmin
-        .from('files')
-        .update({
+      createdFile = await convex.mutation(api.files.updateFile, {
+        fileId: existingFile.id,
+        fileData: {
           size: file.size,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', existingFile.id)
-        .select('*')
-        .single();
-
-      if (updateError) {
-        throw new Error(updateError.message);
-      }
-
-      createdFile = updatedFile;
+        },
+      });
     }
   }
 
   // If no existing file was found or append is false, create a new file
   if (!createdFile) {
-    const { data: newFile, error: insertError } = await supabaseAdmin
-      .from('files')
-      .insert([fileRecord])
-      .select('*')
-      .single();
-
-    if (insertError) {
-      throw new Error(insertError.message);
-    }
-
-    createdFile = newFile;
+    createdFile = await convex.mutation(api.files.createFile, {
+      fileData: {
+        ...convertToConvexFile(fileRecord),
+        id: uuidv4(),
+        size: file.size,
+      },
+    });
   }
 
   // Upload file to storage using admin client
@@ -112,22 +119,12 @@ export const createAdminFile = async (
     supabaseAdmin,
   });
 
-  // Update file path
-  await supabaseAdmin
-    .from('files')
-    .update({ file_path: filePath })
-    .eq('id', createdFile.id);
-
-  // Get the final file record
-  const { data: finalFile, error: finalError } = await supabaseAdmin
-    .from('files')
-    .select('*')
-    .eq('id', createdFile.id)
-    .single();
-
-  if (finalError) {
-    throw new Error(finalError.message);
-  }
+  const finalFile = await convex.mutation(api.files.updateFile, {
+    fileId: createdFile.id,
+    fileData: {
+      file_path: filePath,
+    },
+  });
 
   return finalFile;
 };

@@ -1,14 +1,14 @@
 import { cn } from '@/lib/utils';
-import type { Tables } from '@/supabase/types';
 import type { MessageImage } from '@/types';
 import { File } from 'lucide-react';
 import Image from 'next/image';
 import { Dialog, DialogContent } from './dialog';
 import { DialogTitle } from '@radix-ui/react-dialog';
+import type { Doc } from '@/convex/_generated/dataModel';
 
 interface FilePreviewProps {
   type: 'image' | 'file' | 'file_item';
-  item: Tables<'files'> | MessageImage | Tables<'file_items'>;
+  item: Doc<'files'> | MessageImage | Doc<'file_items'>;
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
 }
@@ -47,7 +47,7 @@ export default function FilePreview({
               />
             );
           } else if (type === 'file_item') {
-            const fileItem = item as Tables<'file_items'>;
+            const fileItem = item as Doc<'file_items'>;
             return (
               <div className="bg-background text-primary max-h-[75vh] max-w-[95vw] overflow-auto whitespace-pre-wrap rounded-xl p-4 shadow-lg md:min-w-[50vw] lg:min-w-[700px]">
                 <div className="text-lg leading-relaxed">

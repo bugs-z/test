@@ -1,8 +1,8 @@
 import { useChatHandler } from '@/components/chat/chat-hooks/use-chat-handler';
 import { PentestGPTContext } from '@/context/context';
 import { cn } from '@/lib/utils';
-import type { Tables } from '@/supabase/types';
-import type { ChatMessage, LLMID, MessageImage, Feedback } from '@/types';
+import type { Doc } from '@/convex/_generated/dataModel';
+import type { ChatMessage, LLMID, MessageImage } from '@/types';
 import Image from 'next/image';
 import {
   type FC,
@@ -34,10 +34,10 @@ const DynamicFilePreview = dynamic(() => import('../ui/file-preview'), {
 
 interface MessageProps {
   chatMessage: ChatMessage;
-  previousMessage: Tables<'messages'> | undefined;
+  previousMessage: Doc<'messages'> | undefined;
   isEditing: boolean;
   isLastMessage: boolean;
-  onStartEdit: (message: Tables<'messages'>) => void;
+  onStartEdit: (message: Doc<'messages'>) => void;
   onCancelEdit: () => void;
   onSubmitEdit: (value: string, sequenceNumber: number) => void;
   onSendFeedback: (
@@ -88,7 +88,7 @@ export const Message: FC<MessageProps> = ({
 
   const [showFileItemPreview, setShowFileItemPreview] = useState(false);
   const [selectedFileItem, setSelectedFileItem] =
-    useState<Tables<'file_items'> | null>(null);
+    useState<Doc<'file_items'> | null>(null);
 
   const [quickFeedback, setQuickFeedback] = useState(false);
   const [sendReportQuery, setSendReportQuery] = useState(false);
@@ -407,7 +407,7 @@ export const Message: FC<MessageProps> = ({
       <MessageDetailedFeedback
         isOpen={isFeedbackDialogOpen}
         onClose={() => setIsFeedbackDialogOpen(false)}
-        feedback={feedback as Feedback}
+        feedback={feedback as Doc<'feedback'>}
         onSendFeedback={onSendFeedback}
       />
     </div>

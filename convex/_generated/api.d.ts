@@ -15,6 +15,11 @@ import type {
 } from "convex/server";
 import type * as crons from "../crons.js";
 import type * as feedback from "../feedback.js";
+import type * as file_items from "../file_items.js";
+import type * as files from "../files.js";
+import type * as http from "../http.js";
+import type * as messages from "../messages.js";
+import type * as messagesHttp from "../messagesHttp.js";
 import type * as sandboxes from "../sandboxes.js";
 
 /**
@@ -28,6 +33,11 @@ import type * as sandboxes from "../sandboxes.js";
 declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   feedback: typeof feedback;
+  file_items: typeof file_items;
+  files: typeof files;
+  http: typeof http;
+  messages: typeof messages;
+  messagesHttp: typeof messagesHttp;
   sandboxes: typeof sandboxes;
 }>;
 export declare const api: FilterApi<

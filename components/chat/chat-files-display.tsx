@@ -1,7 +1,6 @@
 import { dragHelper } from '@/components/chat/chat-helpers/drag';
 import { PentestGPTContext } from '@/context/context';
 import { useUIContext } from '@/context/ui-context';
-import type { Tables } from '@/supabase/types';
 import type { MessageImage } from '@/types';
 import { X, AlertCircle, Loader2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
@@ -10,6 +9,7 @@ import { type FC, useContext, useState } from 'react';
 import { WithTooltip } from '../ui/with-tooltip';
 import { ChatFileItem } from './chat-file-item';
 import { deleteFile } from '@/db/files';
+import type { Doc } from '@/convex/_generated/dataModel';
 
 const DynamicFilePreview = dynamic(() => import('../ui/file-preview'), {
   ssr: false,
@@ -27,9 +27,7 @@ export const ChatFilesDisplay: FC = () => {
 
   const { isMobile } = useUIContext();
 
-  const [selectedFile, setSelectedFile] = useState<Tables<'files'> | null>(
-    null,
-  );
+  const [selectedFile, setSelectedFile] = useState<Doc<'files'> | null>(null);
   const [selectedImage, setSelectedImage] = useState<MessageImage | null>(null);
   const [showPreview, setShowPreview] = useState(false);
 
