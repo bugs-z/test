@@ -1,6 +1,5 @@
 import type { Doc } from '@/convex/_generated/dataModel';
 import type { ProcessedTeamMember } from '@/lib/team-utils';
-import type { Tables } from '@/supabase/types';
 import type {
   ChatMessage,
   ChatSettings,
@@ -21,27 +20,32 @@ interface PentestGPTContextType {
   user: User | null;
 
   // PROFILE STORE
-  profile: Tables<'profiles'> | null;
-  setProfile: Dispatch<SetStateAction<Tables<'profiles'> | null>>;
+  profile: Doc<'profiles'> | null;
+  setProfile: Dispatch<SetStateAction<Doc<'profiles'> | null>>;
   fetchStartingData: () => Promise<void>;
   // CONTENT TYPE STORE
   contentType: ContentType;
   setContentType: React.Dispatch<React.SetStateAction<ContentType>>;
 
   // SUBSCRIPTION STORE
-  subscription: Tables<'subscriptions'> | null;
-  setSubscription: Dispatch<SetStateAction<Tables<'subscriptions'> | null>>;
+  subscription: Doc<'subscriptions'> | null;
+  setSubscription: Dispatch<SetStateAction<Doc<'subscriptions'> | null>>;
   subscriptionStatus: SubscriptionStatus;
   setSubscriptionStatus: Dispatch<SetStateAction<SubscriptionStatus>>;
-  updateSubscription: (newSubscription: Tables<'subscriptions'> | null) => void;
+  subscriptionLoaded: boolean;
+  updateSubscription: (newSubscription: Doc<'subscriptions'> | null) => void;
   isPremiumSubscription: boolean;
   teamMembers: ProcessedTeamMember[] | null;
   refreshTeamMembers: () => Promise<void>;
   membershipData: ProcessedTeamMember | null;
 
   // ITEMS STORE
-  chats: Tables<'chats'>[];
-  setChats: Dispatch<SetStateAction<Tables<'chats'>[]>>;
+  chats: Doc<'chats'>[];
+  setChats: Dispatch<SetStateAction<Doc<'chats'>[]>>;
+  chatsCursor: string | null;
+  setChatsCursor: Dispatch<SetStateAction<string | null>>;
+  chatsIsDone: boolean;
+  setChatsIsDone: Dispatch<SetStateAction<boolean>>;
 
   // PASSIVE CHAT STORE
   userInput: string;
@@ -50,8 +54,8 @@ interface PentestGPTContextType {
   setChatMessages: Dispatch<SetStateAction<ChatMessage[]>>;
   chatSettings: ChatSettings | null;
   setChatSettings: Dispatch<SetStateAction<ChatSettings>>;
-  selectedChat: Tables<'chats'> | null;
-  setSelectedChat: Dispatch<SetStateAction<Tables<'chats'> | null>>;
+  selectedChat: Doc<'chats'> | null;
+  setSelectedChat: Dispatch<SetStateAction<Doc<'chats'> | null>>;
   temporaryChatMessages: ChatMessage[];
   setTemporaryChatMessages: Dispatch<SetStateAction<ChatMessage[]>>;
 
@@ -111,6 +115,7 @@ export const PentestGPTContext = createContext<PentestGPTContextType>({
   setSubscription: () => {},
   subscriptionStatus: 'free',
   setSubscriptionStatus: () => {},
+  subscriptionLoaded: false,
   updateSubscription: () => {},
   isPremiumSubscription: false,
   teamMembers: null,
@@ -120,6 +125,10 @@ export const PentestGPTContext = createContext<PentestGPTContextType>({
   // ITEMS STORE
   chats: [],
   setChats: () => {},
+  chatsCursor: null,
+  setChatsCursor: () => {},
+  chatsIsDone: false,
+  setChatsIsDone: () => {},
 
   // PASSIVE CHAT STORE
   userInput: '',

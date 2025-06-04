@@ -1,23 +1,32 @@
 import { processDocX } from '@/lib/retrieval/processing';
-import { getServerProfile } from '@/lib/server/server-chat-helpers';
+import { getServerUser } from '@/lib/server/server-chat-helpers';
 import type { FileItemChunk } from '@/types';
 import { NextResponse } from 'next/server';
-import { ConvexClient } from 'convex/browser';
+import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@/convex/_generated/api';
+import type { Id } from '@/convex/_generated/dataModel';
 
-// Create a single instance of the Convex client
-const convex = new ConvexClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+if (
+  !process.env.NEXT_PUBLIC_CONVEX_URL ||
+  !process.env.CONVEX_SERVICE_ROLE_KEY
+) {
+  throw new Error(
+    'NEXT_PUBLIC_CONVEX_URL or CONVEX_SERVICE_ROLE_KEY environment variable is not defined',
+  );
+}
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL);
 
 export async function POST(req: Request) {
   const json = await req.json();
   const { text, fileId, fileExtension } = json as {
     text: string;
-    fileId: string;
+    fileId: Id<'files'>;
     fileExtension: string;
   };
 
   try {
-    const profile = await getServerProfile();
+    const user = await getServerUser();
 
     let chunks: FileItemChunk[] = [];
 
@@ -33,15 +42,20 @@ export async function POST(req: Request) {
 
     const file_items = chunks.map((chunk) => ({
       file_id: fileId,
-      user_id: profile.user_id,
+      user_id: user.id,
       sequence_number: 0,
       content: chunk.content,
       tokens: chunk.tokens,
     }));
 
-    await convex.mutation(api.file_items.upsertFileItems, {
+    const upsertResult = await convex.mutation(api.file_items.upsertFileItems, {
+      serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
       fileItems: file_items,
     });
+
+    if (!upsertResult.success) {
+      throw new Error(upsertResult.error || 'Failed to upsert file items');
+    }
 
     const totalTokens = file_items.reduce((acc, item) => acc + item.tokens, 0);
 

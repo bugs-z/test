@@ -9,7 +9,7 @@ import { type FC, useContext, useState } from 'react';
 import { WithTooltip } from '../ui/with-tooltip';
 import { ChatFileItem } from './chat-file-item';
 import { deleteFile } from '@/db/files';
-import type { Doc } from '@/convex/_generated/dataModel';
+import type { Doc, Id } from '@/convex/_generated/dataModel';
 
 const DynamicFilePreview = dynamic(() => import('../ui/file-preview'), {
   ssr: false,
@@ -42,11 +42,11 @@ export const ChatFilesDisplay: FC = () => {
     ),
   ];
 
-  const handleRemoveFile = (fileId: string) => {
-    const fileToRemove = newMessageFiles.find((f) => f.id === fileId);
+  const handleRemoveFile = (fileId: Id<'files'>) => {
+    const fileToRemove = newMessageFiles.find((f) => f._id === fileId);
     if (fileToRemove) {
-      deleteFile(fileToRemove.id);
-      setNewMessageFiles(newMessageFiles.filter((f) => f.id !== fileId));
+      deleteFile(fileToRemove._id);
+      setNewMessageFiles(newMessageFiles.filter((f) => f._id !== fileId));
     }
   };
 
@@ -164,9 +164,9 @@ export const ChatFilesDisplay: FC = () => {
 
               {newMessageFiles.map((file) => (
                 <ChatFileItem
-                  key={file.id}
+                  key={file._id}
                   file={file}
-                  isLoading={file.id.startsWith('loading')}
+                  isLoading={file._id.startsWith('loading')}
                   showRemoveButton={isMobile || isHovering}
                   onRemove={handleRemoveFile}
                   onClick={() => {

@@ -2,6 +2,12 @@ import { defineSchema, defineTable } from 'convex/server';
 import { v } from 'convex/values';
 
 export default defineSchema({
+  profiles: defineTable({
+    user_id: v.string(),
+    image_url: v.optional(v.string()),
+    profile_context: v.optional(v.string()),
+  }).index('by_user_id', ['user_id']),
+
   sandboxes: defineTable({
     user_id: v.string(),
     sandbox_id: v.string(),
@@ -31,11 +37,24 @@ export default defineSchema({
     has_files: v.boolean(),
     plugin: v.string(),
   })
-    .index('by_message', ['message_id'])
-    .index('by_user', ['user_id'])
-    .index('by_updated_at', ['updated_at'])
-    .index('by_chat', ['chat_id'])
+    .index('by_message_id', ['message_id'])
     .index('by_chat_and_sequence', ['chat_id', 'sequence_number']),
+
+  chats: defineTable({
+    id: v.string(),
+    user_id: v.string(),
+    model: v.string(),
+    name: v.string(),
+    finish_reason: v.optional(v.string()),
+    sharing: v.union(v.literal('private'), v.literal('public')),
+    last_shared_message_id: v.optional(v.string()),
+    shared_at: v.optional(v.number()),
+    shared_by: v.optional(v.string()),
+    updated_at: v.optional(v.number()),
+  })
+    .index('by_chat_id', ['id'])
+    .index('by_user_id', ['user_id'])
+    .index('by_user_and_updated', ['user_id', 'updated_at']),
 
   messages: defineTable({
     id: v.string(),
@@ -53,14 +72,12 @@ export default defineSchema({
     attachments: v.optional(v.array(v.any())),
     citations: v.array(v.string()),
   })
-    .index('by_chat', ['chat_id'])
-    .index('by_user', ['user_id'])
+    .index('by_chat_id', ['chat_id'])
     .index('by_chat_and_sequence', ['chat_id', 'sequence_number'])
-    .index('by_updated_at', ['updated_at'])
-    .index('by_message_id', ['id']),
+    .index('by_message_id', ['id'])
+    .index('by_user_id', ['user_id']),
 
   files: defineTable({
-    id: v.string(),
     user_id: v.string(),
     file_path: v.string(),
     name: v.string(),
@@ -71,15 +88,12 @@ export default defineSchema({
     chat_id: v.optional(v.string()),
     updated_at: v.optional(v.number()),
   })
-    .index('by_message', ['message_id'])
-    .index('by_chat', ['chat_id'])
-    .index('by_user', ['user_id'])
-    .index('by_updated_at', ['updated_at'])
-    .index('by_file_id', ['id']),
+    .index('by_message_id', ['message_id'])
+    .index('by_chat_id', ['chat_id'])
+    .index('by_user_id', ['user_id']),
 
   file_items: defineTable({
-    id: v.string(),
-    file_id: v.string(),
+    file_id: v.id('files'),
     user_id: v.string(),
     content: v.string(),
     tokens: v.number(),
@@ -90,11 +104,58 @@ export default defineSchema({
     chat_id: v.optional(v.string()),
   })
     .index('by_file_id', ['file_id'])
-    .index('by_file_and_sequence', ['file_id', 'sequence_number'])
-    .index('by_name', ['name'])
-    .index('by_user', ['user_id'])
-    .index('by_updated_at', ['updated_at'])
-    .index('by_message', ['message_id'])
-    .index('by_chat', ['chat_id'])
-    .index('by_message_and_chat', ['message_id', 'chat_id']),
+    .index('by_message_id', ['message_id'])
+    .index('by_chat_id', ['chat_id']),
+
+  subscriptions: defineTable({
+    id: v.string(),
+    subscription_id: v.string(),
+    user_id: v.string(),
+    customer_id: v.string(),
+    status: v.string(),
+    start_date: v.union(v.string(), v.null()),
+    cancel_at: v.union(v.string(), v.null()),
+    canceled_at: v.union(v.string(), v.null()),
+    ended_at: v.union(v.string(), v.null()),
+    plan_type: v.string(),
+    team_name: v.optional(v.string()),
+    team_id: v.optional(v.string()),
+    quantity: v.number(),
+  })
+    .index('by_subscription_id', ['subscription_id'])
+    .index('by_user_id', ['user_id'])
+    .index('by_user_and_status', ['user_id', 'status'])
+    .index('by_team_id', ['team_id']),
+
+  teams: defineTable({
+    id: v.string(),
+    name: v.string(),
+  }),
+
+  team_invitations: defineTable({
+    id: v.string(),
+    team_id: v.string(),
+    inviter_id: v.string(),
+    invitee_email: v.string(),
+    status: v.union(
+      v.literal('pending'),
+      v.literal('accepted'),
+      v.literal('rejected'),
+    ),
+    updated_at: v.optional(v.number()),
+  })
+    .index('by_team_id', ['team_id'])
+    .index('by_invitee_email', ['invitee_email'])
+    .index('by_team_and_email', ['team_id', 'invitee_email']),
+
+  team_members: defineTable({
+    id: v.string(),
+    team_id: v.string(),
+    user_id: v.string(),
+    invitation_id: v.optional(v.string()),
+    role: v.union(v.literal('member'), v.literal('owner')),
+  })
+    .index('by_user_id', ['user_id'])
+    .index('by_team_and_user', ['team_id', 'user_id'])
+    .index('by_invitation_id', ['invitation_id']),
 });

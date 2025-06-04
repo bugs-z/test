@@ -259,7 +259,7 @@ export const useSelectFileHandler = () => {
         toast.error(
           'File limit reached. Please delete some chats containing files.',
         );
-        setNewMessageFiles((prev) => prev.filter((f) => f.id !== loadingId));
+        setNewMessageFiles((prev) => prev.filter((f) => f._id !== loadingId));
         return;
       }
 
@@ -275,17 +275,16 @@ export const useSelectFileHandler = () => {
           `Adding this file would exceed the token limit of ${FILE_CONTENT_TOKEN_LIMIT}. Please upload a smaller file or remove some existing files.`,
         );
         // Remove the newly added file
-        setNewMessageFiles((prev) => prev.filter((f) => f.id !== loadingId));
+        setNewMessageFiles((prev) => prev.filter((f) => f._id !== loadingId));
         return;
       }
 
       setNewMessageFiles((prev) =>
         prev.map((item) =>
-          item.id === loadingId
+          item._id === loadingId
             ? {
-                _id: createdFile.id as Id<'files'>,
+                _id: createdFile._id,
                 _creationTime: Date.now(),
-                id: createdFile.id,
                 name: createdFile.name,
                 type: createdFile.type,
                 file_path: createdFile.file_path,
@@ -308,7 +307,7 @@ export const useSelectFileHandler = () => {
       setNewMessageImages((prev) =>
         prev.filter((img) => img.messageId !== 'temp'),
       );
-      setNewMessageFiles((prev) => prev.filter((f) => f.id !== loadingId));
+      setNewMessageFiles((prev) => prev.filter((f) => f._id !== loadingId));
     }
   };
 

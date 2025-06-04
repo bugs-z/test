@@ -28,11 +28,7 @@ export const InviteMembersDialog: FC<InviteMembersDialogProps> = ({
       return;
     }
     try {
-      await inviteUserToTeam(
-        teamMembers[0].team_id,
-        teamMembers[0].team_name,
-        email,
-      );
+      await inviteUserToTeam(teamMembers[0].team_id, email);
       await refreshTeamMembers();
 
       toast.success(`Invitation sent to ${email}`);

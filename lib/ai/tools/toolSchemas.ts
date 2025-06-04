@@ -3,9 +3,10 @@ import { executeBrowserTool } from './browser';
 import { z } from 'zod';
 import type { LLMID, ModelParams } from '@/types/llms';
 import type { ChatMetadata } from '@/types';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Doc } from '@/convex/_generated/dataModel';
 
 export const createToolSchemas = ({
+  chat,
   messages,
   modelParams,
   chatMetadata,
@@ -13,11 +14,11 @@ export const createToolSchemas = ({
   dataStream,
   abortSignal,
   model,
-  supabase,
   userCountryCode,
   initialChatPromise,
   assistantMessageId,
 }: {
+  chat: Doc<'chats'> | null;
   messages: any;
   modelParams: ModelParams;
   chatMetadata: ChatMetadata;
@@ -25,7 +26,6 @@ export const createToolSchemas = ({
   dataStream: any;
   abortSignal: AbortSignal;
   model: LLMID;
-  supabase: SupabaseClient | null;
   userCountryCode: string | null;
   initialChatPromise: Promise<void>;
   assistantMessageId: string;
@@ -65,13 +65,13 @@ beneficial for the user's needs.`,
           format_output: safeFormat,
           config: {
             profile,
+            chat,
             messages,
             modelParams,
             dataStream,
             abortSignal,
             chatMetadata,
             model,
-            supabase,
             userCountryCode,
             initialChatPromise,
             assistantMessageId,
@@ -102,6 +102,7 @@ version of a software library or not knowing the date of the next game for a spo
       execute: async () => {
         return executeWebSearchTool({
           config: {
+            chat,
             messages,
             modelParams,
             profile,
@@ -110,7 +111,6 @@ version of a software library or not knowing the date of the next game for a spo
             abortSignal,
             chatMetadata,
             model,
-            supabase,
             userCountryCode,
             initialChatPromise,
             assistantMessageId,

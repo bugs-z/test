@@ -37,7 +37,7 @@ const modelParamsSchema = z.object({
 
 const chatMetadataSchema = z.object({
   id: z.string().uuid().optional(),
-  newChat: z.boolean(),
+  newChat: z.boolean().optional(),
   retrievedFileItems: z.array(z.any()).default([]),
 });
 

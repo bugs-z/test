@@ -9,22 +9,22 @@ import { myProvider } from '@/lib/ai/providers';
 import FirecrawlApp, { type ScrapeResponse } from '@mendable/firecrawl-js';
 import PostHogClient from '@/app/posthog';
 import type { ChatMetadata, LLMID, ModelParams } from '@/types';
-import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   generateTitleFromUserMessage,
   handleFinalChatAndAssistantMessage,
 } from '@/lib/ai/actions';
 import { truncateContentByTokens } from '@/lib/ai/terminal-utils';
+import type { Doc } from '@/convex/_generated/dataModel';
 
 interface BrowserToolConfig {
   profile: any;
+  chat: Doc<'chats'> | null;
   messages: any[];
   modelParams: ModelParams;
   dataStream: any;
   abortSignal: AbortSignal;
   chatMetadata: ChatMetadata;
   model: LLMID;
-  supabase: SupabaseClient | null;
   userCountryCode: string | null;
   initialChatPromise: Promise<void>;
   assistantMessageId: string;
@@ -166,11 +166,11 @@ export async function executeBrowserTool({
 
   const {
     profile,
+    chat,
     messages,
     modelParams,
     dataStream,
     chatMetadata,
-    supabase,
     userCountryCode,
     abortSignal,
     initialChatPromise,
@@ -205,79 +205,75 @@ export async function executeBrowserTool({
     );
 
     let generatedTitle: string | undefined;
+    let titleGenerationPromise: Promise<void> | null = null;
 
-    await Promise.all([
-      (async () => {
-        const { fullStream } = streamText({
-          model: myProvider.languageModel('browser-model'),
-          system: systemPrompt,
-          messages: [
-            ...toVercelChatMessages(messages.slice(0, -1)),
-            { role: 'user', content: browserPrompt },
-          ],
-          maxTokens: 2048,
-          abortSignal,
-          onError: async (error) => {
-            console.error('[BrowserTool] Stream Error:', error);
-          },
-          onFinish: async ({
-            finishReason,
-            text,
-          }: { finishReason: string; text: string }) => {
-            if (supabase) {
-              // Wait for initial chat handling to complete before final handling
-              await initialChatPromise;
-
-              await handleFinalChatAndAssistantMessage({
-                supabase,
-                modelParams,
-                chatMetadata,
-                profile,
-                model: config.model,
-                messages,
-                finishReason,
-                title: generatedTitle,
-                assistantMessage: text,
-                assistantMessageId,
-              });
-            }
-          },
+    // Start title generation if needed
+    if (chatMetadata.id && !chat) {
+      titleGenerationPromise = (async () => {
+        generatedTitle = await generateTitleFromUserMessage({
+          messages,
+          abortSignal: config.abortSignal,
         });
+        dataStream.writeData({ chatTitle: generatedTitle });
+      })();
+    }
 
-        const citations: string[] = [];
-        let hasFirstTextDelta = false;
+    const { fullStream } = streamText({
+      model: myProvider.languageModel('browser-model'),
+      system: systemPrompt,
+      messages: [
+        ...toVercelChatMessages(messages.slice(0, -1)),
+        { role: 'user', content: browserPrompt },
+      ],
+      maxTokens: 2048,
+      abortSignal,
+      onError: async (error) => {
+        console.error('[BrowserTool] Stream Error:', error);
+      },
+      onFinish: async ({
+        finishReason,
+        text,
+      }: { finishReason: string; text: string }) => {
+        // Wait for both title generation and initial chat handling to complete
+        await Promise.all([titleGenerationPromise, initialChatPromise]);
 
-        for await (const delta of fullStream) {
-          if (delta.type === 'source') {
-            if (delta.source.sourceType === 'url') {
-              citations.push(delta.source.url);
-            }
-          }
+        await handleFinalChatAndAssistantMessage({
+          modelParams,
+          chatMetadata,
+          profile,
+          model: config.model,
+          chat,
+          finishReason,
+          title: generatedTitle,
+          assistantMessage: text,
+          assistantMessageId,
+        });
+      },
+    });
 
-          if (delta.type === 'text-delta') {
-            if (!hasFirstTextDelta) {
-              // Send citations after first text-delta
-              dataStream.writeData({ citations });
-              hasFirstTextDelta = true;
-            }
+    const citations: string[] = [];
+    let hasFirstTextDelta = false;
 
-            dataStream.writeData({
-              type: 'text-delta',
-              content: delta.textDelta,
-            });
-          }
+    for await (const delta of fullStream) {
+      if (delta.type === 'source') {
+        if (delta.source.sourceType === 'url') {
+          citations.push(delta.source.url);
         }
-      })(),
-      (async () => {
-        if (chatMetadata.id && chatMetadata.newChat) {
-          generatedTitle = await generateTitleFromUserMessage({
-            messages,
-            abortSignal: config.abortSignal,
-          });
-          dataStream.writeData({ chatTitle: generatedTitle });
+      }
+
+      if (delta.type === 'text-delta') {
+        if (!hasFirstTextDelta) {
+          // Send citations after first text-delta
+          dataStream.writeData({ citations });
+          hasFirstTextDelta = true;
         }
-      })(),
-    ]);
+
+        dataStream.writeData({
+          type: 'text-delta',
+          content: delta.textDelta,
+        });
+      }
+    }
 
     return 'Browser tool executed';
   } catch (error) {

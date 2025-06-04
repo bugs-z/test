@@ -1,3 +1,4 @@
+import type { Doc } from '@/convex/_generated/dataModel';
 import { executeReasonLLMTool } from '@/lib/ai/tools/reason-llm';
 import type {
   ChatMetadata,
@@ -6,10 +7,10 @@ import type {
   RateLimitInfo,
   ModelParams,
 } from '@/types';
-import type { SupabaseClient } from '@supabase/supabase-js';
 import { createDataStreamResponse } from 'ai';
 
 interface ToolHandlerConfig {
+  chat: Doc<'chats'> | null;
   messages: BuiltChatMessage[];
   modelParams: ModelParams;
   profile: any;
@@ -17,7 +18,6 @@ interface ToolHandlerConfig {
   abortSignal: AbortSignal;
   chatMetadata: ChatMetadata;
   model: LLMID;
-  supabase: SupabaseClient | null;
   isReasoningModel: boolean;
   rateLimitInfo: RateLimitInfo;
   initialChatPromise: Promise<void>;
@@ -25,6 +25,7 @@ interface ToolHandlerConfig {
 
 export async function handleToolExecution(config: ToolHandlerConfig) {
   const {
+    chat,
     messages,
     modelParams,
     profile,
@@ -32,7 +33,6 @@ export async function handleToolExecution(config: ToolHandlerConfig) {
     abortSignal,
     chatMetadata,
     model,
-    supabase,
     isReasoningModel,
     rateLimitInfo,
     initialChatPromise,
@@ -43,6 +43,7 @@ export async function handleToolExecution(config: ToolHandlerConfig) {
       execute: async (dataStream) => {
         await executeReasonLLMTool({
           config: {
+            chat,
             messages,
             modelParams,
             profile,
@@ -51,7 +52,6 @@ export async function handleToolExecution(config: ToolHandlerConfig) {
             abortSignal,
             chatMetadata,
             model,
-            supabase,
             rateLimitInfo,
             initialChatPromise,
           },

@@ -7,21 +7,31 @@ import {
   convert,
   FILE_CONTENT_TOKEN_LIMIT,
 } from '@/lib/retrieval/processing';
-import { getServerProfile } from '@/lib/server/server-chat-helpers';
+import { getServerUser } from '@/lib/server/server-chat-helpers';
 import { createSupabaseAdminClient } from '@/lib/server/server-utils';
 import type { FileItemChunk } from '@/types';
 import { NextResponse } from 'next/server';
-import { ConvexClient } from 'convex/browser';
+import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@/convex/_generated/api';
+import type { Id } from '@/convex/_generated/dataModel';
 
-const convex = new ConvexClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+if (
+  !process.env.NEXT_PUBLIC_CONVEX_URL ||
+  !process.env.CONVEX_SERVICE_ROLE_KEY
+) {
+  throw new Error(
+    'NEXT_PUBLIC_CONVEX_URL or CONVEX_SERVICE_ROLE_KEY environment variable is not defined',
+  );
+}
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL);
 
 export async function POST(req: Request) {
   try {
     const supabaseAdmin = createSupabaseAdminClient();
-    const profile = await getServerProfile();
+    const user = await getServerUser();
     const formData = await req.formData();
-    const file_id = formData.get('file_id') as string;
+    const file_id = formData.get('file_id') as Id<'files'>;
 
     const fileMetadata = await convex.query(api.files.getFile, {
       fileId: file_id,
@@ -31,7 +41,7 @@ export async function POST(req: Request) {
       throw new Error('File not found');
     }
 
-    if (fileMetadata.user_id !== profile.user_id) {
+    if (fileMetadata.user_id !== user.id) {
       throw new Error('Unauthorized');
     }
 
@@ -87,16 +97,21 @@ export async function POST(req: Request) {
 
     const file_items = chunks.map((chunk) => ({
       file_id,
-      user_id: profile.user_id,
+      user_id: user.id,
       sequence_number: 0,
       content: chunk.content,
       tokens: chunk.tokens,
       name: fileMetadata.name,
     }));
 
-    await convex.mutation(api.file_items.upsertFileItems, {
+    const upsertResult = await convex.mutation(api.file_items.upsertFileItems, {
+      serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
       fileItems: file_items,
     });
+
+    if (!upsertResult.success) {
+      throw new Error(upsertResult.error || 'Failed to upsert file items');
+    }
 
     await convex.mutation(api.files.updateFile, {
       fileId: file_id,

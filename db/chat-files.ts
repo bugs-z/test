@@ -1,8 +1,11 @@
 import { ConvexClient } from 'convex/browser';
 import { api } from '@/convex/_generated/api';
 
-// Create a single instance of the Convex client
-const convex = new ConvexClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
+  throw new Error('NEXT_PUBLIC_CONVEX_URL environment variable is not defined');
+}
+
+const convex = new ConvexClient(process.env.NEXT_PUBLIC_CONVEX_URL);
 
 export const getChatFilesByChatId = async (chatId: string) => {
   try {

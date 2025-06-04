@@ -4,7 +4,7 @@ import { PentestGPTContext } from '@/context/context';
 import { getChatFilesByChatId } from '@/db/chat-files';
 import { getChatById } from '@/db/chats';
 import { getMessagesByChatId } from '@/db/messages';
-import { getProfileByUserId } from '@/db/profile';
+import { getProfileByUserId } from '@/db/profiles';
 import { getMessageImageFromStorage } from '@/db/storage/message-images';
 import {
   getSubscriptionByTeamId,
@@ -13,7 +13,6 @@ import {
 import { getTeamMembersByTeamId } from '@/db/teams';
 import { convertBlobToBase64 } from '@/lib/blob-to-b64';
 import type { ProcessedTeamMember } from '@/lib/team-utils';
-import type { Tables } from '@/supabase/types';
 import type {
   ChatMessage,
   ChatSettings,
@@ -28,6 +27,7 @@ import { type FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { AgentSidebarProvider } from '@/components/chat/chat-hooks/use-agent-sidebar';
 import type { Doc } from '@/convex/_generated/dataModel';
+import { supabase } from '@/lib/supabase/browser-client';
 
 const MESSAGES_PER_FETCH = 20;
 
@@ -41,23 +41,27 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
   const searchParams = useSearchParams();
 
   // PROFILE STORE
-  const [profile, setProfile] = useState<Tables<'profiles'> | null>(null);
+  const [profile, setProfile] = useState<Doc<'profiles'> | null>(null);
 
   // CONTENT TYPE STORE
   const [contentType, setContentType] = useState<ContentType>('chats');
 
   // SUBSCRIPTION STORE
-  const [subscription, setSubscription] =
-    useState<Tables<'subscriptions'> | null>(null);
+  const [subscription, setSubscription] = useState<Doc<'subscriptions'> | null>(
+    null,
+  );
   const [subscriptionStatus, setSubscriptionStatus] =
     useState<SubscriptionStatus>('free');
+  const [subscriptionLoaded, setSubscriptionLoaded] = useState(false);
   const [teamMembers, setTeamMembers] = useState<ProcessedTeamMember[] | null>(
     null,
   );
   const [membershipData, setMembershipData] =
     useState<ProcessedTeamMember | null>(null);
   // ITEMS STORE
-  const [chats, setChats] = useState<Tables<'chats'>[]>([]);
+  const [chats, setChats] = useState<Doc<'chats'>[]>([]);
+  const [chatsCursor, setChatsCursor] = useState<string | null>(null);
+  const [chatsIsDone, setChatsIsDone] = useState<boolean>(false);
 
   // PASSIVE CHAT STORE
   const [userInput, setUserInput] = useState<string>('');
@@ -68,9 +72,7 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
   const [chatSettings, setChatSettings] = useState<ChatSettings>({
     model: 'mistral-medium',
   });
-  const [selectedChat, setSelectedChat] = useState<Tables<'chats'> | null>(
-    null,
-  );
+  const [selectedChat, setSelectedChat] = useState<Doc<'chats'> | null>(null);
 
   // ACTIVE CHAT STORE
   const [abortController, setAbortController] =
@@ -105,8 +107,28 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
     fetchStartingData();
   }, []);
 
+  // Auth state listener
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        // Clear session storage only
+        Object.entries(window.sessionStorage).forEach(([key]) => {
+          window.sessionStorage.removeItem(key);
+        });
+        router.push('/login');
+      } else if (!session) {
+        router.push('/login');
+      }
+    });
+
+    // Clean up subscription on component unmount
+    return () => subscription.unsubscribe();
+  }, [router]);
+
   const updateSubscription = useCallback(
-    (newSubscription: Tables<'subscriptions'> | null) => {
+    (newSubscription: Doc<'subscriptions'> | null) => {
       setSubscription(newSubscription);
       if (newSubscription) {
         setSubscriptionStatus(newSubscription.plan_type as SubscriptionStatus);
@@ -126,23 +148,24 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
     if (user) {
       setUserEmail(user.email || 'Not available');
 
-      const profile = await getProfileByUserId(user.id);
-      if (!profile) return;
+      const profile = await getProfileByUserId();
 
+      // Set profile even if null to stop loading state
       setProfile(profile);
 
-      // if (!profile.has_onboarded) {
-      //   return router.push("/setup")
-      // }
+      if (!profile) {
+        // User doesn't have a profile yet, show error and set subscription as loaded
+        toast.error('Profile not found. Please contact support.');
+        setSubscriptionLoaded(true);
+        return;
+      }
 
-      const subscription = await getSubscriptionByUserId(user.id);
+      const [subscription, members] = await Promise.all([
+        getSubscriptionByUserId(user.id),
+        getTeamMembersByTeamId(),
+      ]);
+
       updateSubscription(subscription);
-
-      const members = await getTeamMembersByTeamId(
-        user.id,
-        user.email,
-        subscription?.team_id,
-      );
 
       const membershipData = members?.find(
         (member) =>
@@ -150,22 +173,36 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
           member.invitee_email === user.email,
       );
 
-      if (membershipData?.invitation_status !== 'rejected') {
+      // Only consider the user as having team access if their invitation is accepted
+      // Still show all team data for UI purposes (including pending invitations)
+      if (membershipData?.invitation_status === 'accepted') {
         setTeamMembers(members);
-        setMembershipData(membershipData ?? null);
+        setMembershipData(membershipData);
+
+        // Only get team subscription if user has accepted invitation
+        if (
+          (!subscription || subscription.status !== 'active') &&
+          members &&
+          members.length > 0
+        ) {
+          const teamSubscription = await getSubscriptionByTeamId(
+            members[0].team_id,
+          );
+          updateSubscription(teamSubscription);
+        }
+      } else if (membershipData?.invitation_status === 'pending') {
+        // Show team data for pending invitations but don't grant team subscription access
+        setTeamMembers(members);
+        setMembershipData(membershipData);
+        // Don't update subscription - keep user's individual subscription status
       } else {
+        // No valid team membership (rejected or no invitation)
         setTeamMembers(null);
         setMembershipData(null);
       }
 
-      if (
-        (!subscription || subscription.status !== 'active') &&
-        members &&
-        members.length > 0
-      ) {
-        const subscription = await getSubscriptionByTeamId(members[0].team_id);
-        updateSubscription(subscription);
-      }
+      // Mark subscription as loaded after all subscription logic is complete
+      setSubscriptionLoaded(true);
     }
   };
 
@@ -322,6 +359,19 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
     }
 
     try {
+      // First, try to find the chat in the existing chats array
+      const existingChat = chats.find((chat) => chat.id === chatId);
+
+      if (existingChat) {
+        // Chat found in existing data, use it directly
+        setSelectedChat(existingChat);
+        setChatSettings({
+          model: existingChat.model as LLMID,
+        });
+        return;
+      }
+
+      // Only make API call if chat is not found in existing data
       const chat = await getChatById(chatId);
       if (!chat) {
         // Chat not found, redirect to the chat page
@@ -361,6 +411,7 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
         setSubscription,
         subscriptionStatus,
         setSubscriptionStatus,
+        subscriptionLoaded,
         updateSubscription,
         isPremiumSubscription,
         teamMembers,
@@ -370,6 +421,10 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
         // ITEMS STORE
         chats,
         setChats,
+        chatsCursor,
+        setChatsCursor,
+        chatsIsDone,
+        setChatsIsDone,
 
         // PASSIVE CHAT STORE
         userInput,

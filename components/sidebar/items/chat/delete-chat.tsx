@@ -12,12 +12,12 @@ import {
 import { PentestGPTContext } from '@/context/context';
 import { deleteChat } from '@/db/chats';
 import useHotkey from '@/lib/hooks/use-hotkey';
-import type { Tables } from '@/supabase/types';
+import type { Doc } from '@/convex/_generated/dataModel';
 import { Trash } from 'lucide-react';
 import { type FC, useContext, useCallback, useState } from 'react';
 
 interface DeleteChatProps {
-  chat: Tables<'chats'>;
+  chat: Doc<'chats'>;
   onAction: () => void;
 }
 

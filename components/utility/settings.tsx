@@ -1,7 +1,7 @@
 import { PentestGPTContext } from '@/context/context';
 import { deleteAllChats } from '@/db/chats';
 import { PROFILE_CONTEXT_MAX } from '@/db/limits';
-import { updateProfile } from '@/db/profile';
+import { updateProfile, deleteProfile } from '@/db/profiles';
 import { supabase } from '@/lib/supabase/browser-client';
 import {
   DialogPanel,
@@ -21,7 +21,6 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { type FC, useContext, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../ui/button';
@@ -46,8 +45,6 @@ export const Settings: FC<{ showEmail?: boolean }> = ({
     useContext(PentestGPTContext);
   const { isMobile } = useUIContext();
 
-  const router = useRouter();
-
   const [isOpen, setIsOpen] = useState(false);
   const [showConfirmationDialog, setShowConfirmationDialog] = useState(false);
   const [profileInstructions, setProfileInstructions] = useState(
@@ -57,11 +54,11 @@ export const Settings: FC<{ showEmail?: boolean }> = ({
     useState(false);
   const [activeTab, setActiveTab] = useState('profile');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeletingChats, setIsDeletingChats] = useState(false);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut({ scope: 'local' });
-    router.push('/login');
-    router.refresh();
+    // Navigation will be handled by the auth state listener in layout
   };
 
   const handleSave = async () => {
@@ -75,10 +72,7 @@ export const Settings: FC<{ showEmail?: boolean }> = ({
       return;
     }
 
-    const updatedProfile = await updateProfile(profile.id, {
-      ...profile,
-      profile_context: profileInstructions,
-    });
+    const updatedProfile = await updateProfile(profileInstructions);
 
     setProfile(updatedProfile);
     toast.success('Profile updated!', { duration: 2000 });
@@ -91,12 +85,20 @@ export const Settings: FC<{ showEmail?: boolean }> = ({
   };
 
   const handleConfirm = async () => {
-    setShowConfirmationDialog(false);
-    const deleted = await deleteAllChats(profile?.user_id || '');
-    if (deleted) {
-      window.location.reload();
-    } else {
+    setIsDeletingChats(true);
+    try {
+      const deleted = await deleteAllChats(profile?.user_id || '');
+      if (deleted) {
+        setShowConfirmationDialog(false);
+        window.location.reload();
+      } else {
+        toast.error('Failed to delete all chats');
+      }
+    } catch (error) {
+      console.error('Error deleting chats:', error);
       toast.error('Failed to delete all chats');
+    } finally {
+      setIsDeletingChats(false);
     }
   };
 
@@ -114,6 +116,15 @@ export const Settings: FC<{ showEmail?: boolean }> = ({
 
     setIsDeleting(true);
     try {
+      // Delete the user's profile first
+      const profileDeleted = await deleteProfile();
+
+      if (!profileDeleted) {
+        toast.error('Failed to delete profile');
+        setIsDeleting(false);
+        return;
+      }
+
       const { error } = await supabase.rpc('delete_user', {
         sel_user_id: user.id,
       });
@@ -131,6 +142,7 @@ export const Settings: FC<{ showEmail?: boolean }> = ({
 
       await handleSignOut();
     } catch (error) {
+      console.error('Error during account deletion:', error);
       toast.error('Failed to delete account');
       setIsDeleting(false);
     }
@@ -276,6 +288,7 @@ export const Settings: FC<{ showEmail?: boolean }> = ({
         title="Delete All Chats"
         message="Are you sure you want to delete all chats? This action cannot be undone."
         confirmButtonText="Delete All"
+        isLoading={isDeletingChats}
       />
 
       <MultiStepDeleteAccountDialog

@@ -3,11 +3,14 @@ import { extractTextContent } from '../message-utils';
 import { api } from '@/convex/_generated/api';
 import { ConvexHttpClient } from 'convex/browser';
 import { v4 as uuidv4 } from 'uuid';
-import type { Doc } from '@/convex/_generated/dataModel';
+import type { Doc, Id } from '@/convex/_generated/dataModel';
 
-if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
+if (
+  !process.env.NEXT_PUBLIC_CONVEX_URL ||
+  !process.env.CONVEX_SERVICE_ROLE_KEY
+) {
   throw new Error(
-    'NEXT_PUBLIC_CONVEX_URL environment variable is not defined. Please check your environment configuration.',
+    'NEXT_PUBLIC_CONVEX_URL or CONVEX_SERVICE_ROLE_KEY environment variable is not defined',
   );
 }
 
@@ -42,7 +45,15 @@ export async function saveUserMessage({
 }): Promise<void> {
   // If regeneration, delete the last message
   if (modelParams.isRegeneration) {
-    await convex.mutation(api.messages.deleteLastMessage, { chatId });
+    const { success: deleteSuccess, error: deleteError } =
+      await convex.mutation(api.messages.deleteLastMessage, {
+        serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
+        chatId,
+      });
+
+    if (!deleteSuccess) {
+      console.error('Error deleting last message:', deleteError);
+    }
   }
 
   // Check if we should save the user message
@@ -58,24 +69,34 @@ export async function saveUserMessage({
   // If editing, handle file operations and delete messages after the edited sequence
   if (editSequenceNumber !== undefined) {
     // Update files associated with the edited message
-    const { success, error } = await convex.mutation(
+    const { success: fileSuccess, error: fileError } = await convex.mutation(
       api.files.retrieveAndUpdateFilesForMessage,
       {
+        serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
         chatId,
         sequenceNumber: editSequenceNumber,
       },
     );
 
-    if (!success) {
-      console.error('Error handling files during message edit:', error);
+    if (!fileSuccess) {
+      console.error('Error handling files during message edit:', fileError);
       // Continue with message deletion even if file handling fails
     }
 
     // Then delete messages after the edited sequence
-    await convex.mutation(api.messages.deleteMessagesIncludingAndAfter, {
-      chatId,
-      sequenceNumber: editSequenceNumber,
-    });
+    const deleteResult = await convex.mutation(
+      api.messages.deleteMessagesIncludingAndAfter,
+      {
+        serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
+        chatId,
+        sequenceNumber: editSequenceNumber,
+      },
+    );
+
+    if (!deleteResult.success) {
+      console.error('Error deleting messages:', deleteResult.error);
+      throw new Error(deleteResult.error || 'Failed to delete messages');
+    }
   }
 
   const lastUserMessage = getLastUserMessage(messages);
@@ -87,7 +108,6 @@ export async function saveUserMessage({
   const sequence =
     editSequenceNumber ??
     (await convex.query(api.messages.getNextMessageSequence, { chatId }));
-  const thinkingEnabled = model === 'reasoning-model';
 
   // Extract image paths before creating message
   const imageContents = Array.isArray(lastUserMessage.content)
@@ -114,12 +134,17 @@ export async function saveUserMessage({
     attachments: [],
   };
 
-  const savedUserMessageId = await convex.mutation(
-    api.messages.insertMessages,
-    {
-      message: userMessageData,
-    },
-  );
+  const insertResult = await convex.mutation(api.messages.insertMessage, {
+    serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
+    message: userMessageData,
+  });
+
+  if (!insertResult.success) {
+    console.error('Error inserting message:', insertResult.error);
+    throw new Error(insertResult.error || 'Failed to insert message');
+  }
+
+  const savedUserMessageId = insertResult.messageId;
 
   // Handle image relationships
   if (savedUserMessageId) {
@@ -128,28 +153,37 @@ export async function saveUserMessage({
     if (fileAttachments.length > 0) {
       const fileIds = fileAttachments
         .map((attachment) => attachment.file_id)
-        .filter((id): id is string => id !== undefined);
+        .filter((id): id is Id<'files'> => id !== undefined);
 
       if (fileIds.length > 0) {
-        const success = await convex.mutation(api.files.updateFilesMessage, {
-          fileIds,
-          messageId: savedUserMessageId,
-          chatId: chatId,
-        });
+        const updateResult = await convex.mutation(
+          api.files.updateFilesMessage,
+          {
+            serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
+            fileIds,
+            messageId: savedUserMessageId,
+            chatId: chatId,
+          },
+        );
 
-        if (!success) {
-          console.error('Error updating files');
+        if (!updateResult.success) {
+          console.error('Error updating files:', {
+            error: updateResult.error,
+            messageId: savedUserMessageId,
+            chatId: chatId,
+          });
         }
       }
     }
 
     // Handle file items if there are any
     if (retrievedFileItems && retrievedFileItems.length > 0) {
-      const success = await convex.mutation(
+      const fileItemsSuccess = await convex.mutation(
         api.file_items.updateFileItemsWithMessage,
         {
+          serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
           fileItems: retrievedFileItems.map((item) => ({
-            id: item.id,
+            _id: item._id,
             file_id: item.file_id,
             user_id: item.user_id,
             content: item.content,
@@ -163,7 +197,7 @@ export async function saveUserMessage({
         },
       );
 
-      if (!success) {
+      if (!fileItemsSuccess) {
         console.error('Error updating file items with message relationships');
       }
     }
@@ -201,7 +235,8 @@ export async function saveAssistantMessage({
     ? editSequenceNumber + 1
     : undefined;
 
-  await convex.mutation(api.messages.saveAssistantMessage, {
+  const result = await convex.mutation(api.messages.saveAssistantMessage, {
+    serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
     chatId,
     userId,
     content: assistantMessage || '',
@@ -217,4 +252,9 @@ export async function saveAssistantMessage({
     editSequenceNumber: adjustedSequenceNumber,
     assistantMessageId,
   });
+
+  if (!result.success) {
+    console.error('Error saving assistant message:', result.error);
+    throw new Error(result.error || 'Failed to save assistant message');
+  }
 }

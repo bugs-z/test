@@ -1,7 +1,7 @@
 import { PentestGPTContext } from '@/context/context';
 import { removeUserFromTeam } from '@/db/teams';
 import {
-  isTeamAdmin,
+  isTeamOwner,
   type ProcessedTeamMember,
   roleToLabel,
 } from '@/lib/team-utils';
@@ -33,7 +33,7 @@ export const TeamTab: FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const isAdmin = isTeamAdmin(membershipData);
+  const isOwner = isTeamOwner(membershipData);
 
   const handleInvite = () => {
     setIsInviteDialogOpen(true);
@@ -94,7 +94,7 @@ export const TeamTab: FC = () => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold">{teamMembers?.[0]?.team_name}</h2>
-        {isAdmin && (
+        {isOwner && (
           <div className="flex items-center space-x-2">
             <Button
               onClick={handleRefresh}
@@ -121,7 +121,7 @@ export const TeamTab: FC = () => {
         )}
       </div>
       <div className="space-y-2">
-        {isAdmin && (
+        {isOwner && (
           <h3 className="text-base font-semibold">
             Team Members ({teamMembers?.length}/{subscription?.quantity})
           </h3>
@@ -149,14 +149,14 @@ export const TeamTab: FC = () => {
               <div className="flex shrink-0 items-center space-x-2">
                 <span
                   className={`rounded px-2 py-0.5 text-xs ${
-                    isTeamAdmin(member)
+                    isTeamOwner(member)
                       ? 'bg-blue-100 text-blue-800'
                       : 'bg-gray-100 text-gray-800'
                   }`}
                 >
                   {roleToLabel(member.member_role)}
                 </span>
-                {isAdmin && member.member_role !== 'owner' && (
+                {isOwner && member.member_role !== 'owner' && (
                   <Menu as="div" className="relative inline-block text-left">
                     <MenuButton className="flex items-center rounded-full p-1 hover:bg-gray-100">
                       <MoreHorizontal className="size-4 text-gray-500" />

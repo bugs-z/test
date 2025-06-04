@@ -9,6 +9,7 @@ import { postRequestBodySchema, type PostRequestBody } from '../chat/schema';
 import { ChatSDKError } from '@/lib/errors';
 import { handleInitialChatAndUserMessage } from '@/lib/ai/actions';
 import { PluginID } from '@/types';
+import { validateChatAccess } from '@/lib/ai/actions/chat-validation';
 
 export const maxDuration = 800;
 
@@ -27,7 +28,7 @@ export async function POST(request: Request) {
     const userCountryCode = request.headers.get('x-vercel-ip-country');
     const { messages, model, modelParams, chatMetadata } = requestBody;
 
-    const profile = await getAIProfile();
+    const { profile } = await getAIProfile();
     const config = await getProviderConfig(profile);
 
     if (!config.isRateLimitAllowed) {
@@ -42,6 +43,11 @@ export async function POST(request: Request) {
         { status: 429 },
       );
     }
+
+    const chat = await validateChatAccess({
+      chatMetadata,
+      userId: profile.user_id,
+    });
 
     const supabase = await createClient();
 
@@ -63,11 +69,11 @@ export async function POST(request: Request) {
       modelParams.isTerminalContinuation ||
       modelParams.selectedPlugin === PluginID.PENTEST_AGENT
         ? handleInitialChatAndUserMessage({
-            supabase,
             modelParams,
             chatMetadata,
             profile,
             model,
+            chat,
             messages,
           })
         : Promise.resolve();
@@ -83,6 +89,7 @@ export async function POST(request: Request) {
 
         await executePentestAgent({
           config: {
+            chat,
             messages: processedMessages,
             modelParams,
             profile,
@@ -90,7 +97,6 @@ export async function POST(request: Request) {
             abortSignal: abortController.signal,
             chatMetadata,
             model,
-            supabase,
             userCountryCode,
             originalMessages: messages,
             systemPrompt,

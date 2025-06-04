@@ -113,15 +113,15 @@ export default async function RootLayout({ children }: RootLayoutProps) {
           <Toaster richColors position="top-center" duration={3000} />
           <div className="bg-background text-foreground flex h-dvh flex-col items-center overflow-x-auto">
             {user ? (
-              <ConvexClientProvider>
+              <GlobalState user={user}>
                 <PostHogProvider>
-                  <GlobalState user={user}>
+                  <ConvexClientProvider>
                     <UIState>
                       <MFAProvider>{children}</MFAProvider>
                     </UIState>
-                  </GlobalState>
+                  </ConvexClientProvider>
                 </PostHogProvider>
-              </ConvexClientProvider>
+              </GlobalState>
             ) : (
               children
             )}

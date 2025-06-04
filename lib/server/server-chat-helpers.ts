@@ -1,6 +1,17 @@
 import { createClient } from '@/lib/supabase/server';
+import { ConvexHttpClient } from 'convex/browser';
+import { api } from '@/convex/_generated/api';
 
-export async function getServerUserAndProfile() {
+if (
+  !process.env.NEXT_PUBLIC_CONVEX_URL ||
+  !process.env.CONVEX_SERVICE_ROLE_KEY
+) {
+  throw new Error(
+    'NEXT_PUBLIC_CONVEX_URL or CONVEX_SERVICE_ROLE_KEY environment variable is not defined',
+  );
+}
+
+export async function getServerUser() {
   'use server';
 
   const supabase = await createClient();
@@ -9,24 +20,7 @@ export async function getServerUserAndProfile() {
     throw new Error('User not found');
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('user_id', user.id)
-    .single();
-
-  if (!profile) {
-    throw new Error('Profile not found');
-  }
-
-  return { user, profile };
-}
-
-export async function getServerProfile() {
-  'use server';
-
-  const { profile } = await getServerUserAndProfile();
-  return profile;
+  return user;
 }
 
 export async function getAIProfile() {
@@ -39,15 +33,12 @@ export async function getAIProfile() {
     throw new Error('User not found');
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('user_id, profile_context')
-    .eq('user_id', user.id)
-    .single();
+  // Use Convex to get AI profile
+  const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+  const profile = await convex.mutation(api.profiles.getAIProfilePublic, {
+    serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
+    userId: user.id,
+  });
 
-  if (!profile) {
-    throw new Error('Profile not found');
-  }
-
-  return profile;
+  return { user, profile };
 }

@@ -2,7 +2,6 @@
 
 import type { AlertAction } from '@/context/alert-context';
 import { buildFinalMessages } from '@/lib/build-prompt';
-import type { Tables } from '@/supabase/types';
 import type {
   ChatMessage,
   ChatPayload,
@@ -15,6 +14,7 @@ import type { Dispatch, SetStateAction } from 'react';
 import { toast } from 'sonner';
 import { processResponse } from './stream-processor';
 import type { AgentStatusState } from '@/components/messages/agent-status';
+import type { Doc, Id } from '@/convex/_generated/dataModel';
 
 export * from './create-messages';
 export * from './create-temp-messages';
@@ -157,30 +157,27 @@ export const fetchChatResponse = async (
 
 export const handleCreateChat = async (
   model: LLMID,
-  profile: Tables<'profiles'>,
+  profile: Doc<'profiles'>,
   messageContent: string,
   finishReason: string,
-  setSelectedChat: Dispatch<SetStateAction<Tables<'chats'> | null>>,
-  setChats: Dispatch<SetStateAction<Tables<'chats'>[]>>,
+  setSelectedChat: Dispatch<SetStateAction<Doc<'chats'> | null>>,
+  setChats: Dispatch<SetStateAction<Doc<'chats'>[]>>,
   chatId: string,
   chatTitle?: string | null,
 ) => {
   const createdChat = {
+    _id: chatId as Id<'chats'>,
+    _creationTime: Date.now(),
     id: chatId,
     user_id: profile.user_id,
-    include_profile_context: true,
     model,
     name: chatTitle || messageContent.substring(0, 100),
     finish_reason: finishReason,
-    created_at: new Date().toISOString(),
-    updated_at: null,
-    last_shared_message_id: null,
-    shared_at: null,
-    shared_by: null,
-    sharing: 'private',
-    last_feedback_update: new Date().toISOString(),
-    last_file_update: new Date().toISOString(),
-    last_message_update: new Date().toISOString(),
+    updated_at: Date.now(),
+    last_shared_message_id: undefined,
+    shared_at: undefined,
+    shared_by: undefined,
+    sharing: 'private' as const,
   };
 
   setSelectedChat(createdChat);

@@ -1,46 +1,51 @@
-import { getServerUserAndProfile } from '@/lib/server/server-chat-helpers';
-import { createSupabaseAdminClient } from '@/lib/server/server-utils';
+import { getServerUser } from '@/lib/server/server-chat-helpers';
 import { NextResponse } from 'next/server';
+import { ConvexHttpClient } from 'convex/browser';
+import { api } from '@/convex/_generated/api';
+
+if (
+  !process.env.NEXT_PUBLIC_CONVEX_URL ||
+  !process.env.CONVEX_SERVICE_ROLE_KEY
+) {
+  throw new Error(
+    'NEXT_PUBLIC_CONVEX_URL or CONVEX_SERVICE_ROLE_KEY environment variable is not defined',
+  );
+}
+
+const convexKey = process.env.CONVEX_SERVICE_ROLE_KEY;
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL);
 
 export async function POST(req: Request) {
   try {
     const { email } = await req.json();
-    const { user, profile } = await getServerUserAndProfile();
-    const supabaseAdmin = createSupabaseAdminClient();
+    const user = await getServerUser();
     const RESEND_API_KEY = process.env.RESEND_API_KEY;
     const APP_URL = process.env.NEXT_PUBLIC_APP_URL;
 
-    if (!user || !profile) {
-      throw new Error('Unauthorized');
-    }
+    // Use Convex to get inviter team information
+    const inviterTeam = await convex.query(api.teams.getUserTeam, {
+      userId: user.id,
+    });
 
-    const { data: inviterTeam, error: inviterTeamError } = await supabaseAdmin
-      .from('team_members')
-      .select('*, teams(name)')
-      .eq('user_id', user.id)
-      .single();
-
-    if (inviterTeamError) {
+    if (!inviterTeam) {
       throw new Error('Inviter team not found');
     }
 
-    const { data: invite, error: inviteError } = await supabaseAdmin
-      .from('team_invitations')
-      .select('*, teams(name)')
-      .eq('invitee_email', email)
-      .eq('team_id', inviterTeam.team_id)
-      .single();
+    // Use Convex to get the invitation
+    const invite = await convex.query(api.invitations.getTeamInvitation, {
+      serviceKey: convexKey,
+      inviteeEmail: email,
+      teamId: inviterTeam.team_id,
+    });
 
-    // console.log("invite", invite)
-
-    if (inviteError || !invite) {
+    if (!invite) {
       throw new Error('Invite not found');
     }
 
     let emailSent = false;
     let emailMessage = 'Invitation sent, but email delivery is not configured.';
 
-    if (RESEND_API_KEY && invite.teams?.name) {
+    if (RESEND_API_KEY && invite.team_name) {
       await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -50,8 +55,8 @@ export async function POST(req: Request) {
         body: JSON.stringify({
           from: 'PentestGPT <noreply@pentestgpt.ai>',
           to: email,
-          subject: `Invitation to join ${invite.teams?.name}`,
-          html: getInvitationEmailHtml(invite.teams?.name, `${APP_URL}/login`),
+          subject: `Invitation to join ${invite.team_name}`,
+          html: getInvitationEmailHtml(invite.team_name, `${APP_URL}/login`),
         }),
       });
 

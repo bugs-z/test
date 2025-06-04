@@ -1,95 +1,54 @@
-import { supabase } from '@/lib/supabase/browser-client';
+import { makeAuthenticatedRequest } from '@/lib/api/convex';
 import { toast } from 'sonner';
 
-export const getTeamMembersByTeamId = async (
-  userId: string,
-  email?: string,
-  teamId?: string | null,
-) => {
-  if (!teamId) {
-    const { data: teamMember, error: teamMembersError } = await supabase
-      .from('team_members')
-      .select('*')
-      .eq('user_id', userId)
-      .maybeSingle();
+export const getTeamMembersByTeamId = async (): Promise<any[]> => {
+  try {
+    const data = await makeAuthenticatedRequest('/api/teams', 'POST', {
+      type: 'getTeamMembersByUserId',
+    });
 
-    if (teamMembersError) {
-      throw new Error(teamMembersError.message);
-    }
-
-    teamId = teamMember?.team_id;
-  }
-
-  if (!teamId && email) {
-    const { data: teamInvitation, error: teamInvitationError } = await supabase
-      .from('team_invitations')
-      .select('*')
-      .eq('invitee_email', email)
-      .maybeSingle();
-
-    if (teamInvitationError) {
-      throw new Error(teamInvitationError.message);
-    }
-
-    teamId = teamInvitation?.team_id;
-  }
-
-  if (!teamId) {
-    return [];
-  }
-
-  const { data: teamData, error: teamError } = await supabase.rpc(
-    'get_team_members',
-    { p_team_id: teamId },
-  );
-
-  if (teamError) {
-    console.error('Error getting team members', teamError);
-    throw new Error(teamError.message);
-  }
-
-  return teamData;
-};
-
-export const removeUserFromTeam = async (teamId: string, email: string) => {
-  const { data, error } = await supabase.rpc('remove_user_from_team', {
-    p_team_id: teamId,
-    p_user_email: email,
-  });
-
-  if (error) {
+    return data?.data || [];
+  } catch (error) {
+    console.error('Error getting team members:', error);
     throw error;
   }
+};
 
-  return data;
+export const removeUserFromTeam = async (
+  teamId: string,
+  memberEmail: string,
+): Promise<boolean> => {
+  try {
+    const data = await makeAuthenticatedRequest('/api/teams', 'POST', {
+      type: 'removeUserFromTeam',
+      teamId,
+      memberEmail,
+    });
+
+    return data?.data || false;
+  } catch (error) {
+    console.error('Error removing user from team:', error);
+    throw error;
+  }
 };
 
 export const inviteUserToTeam = async (
   teamId: string,
-  teamName: string,
   email: string,
-) => {
+): Promise<boolean> => {
   try {
-    const { data, error } = await supabase.rpc('invite_user_to_team', {
-      p_team_id: teamId,
-      p_invitee_email: email,
+    const data = await makeAuthenticatedRequest('/api/teams', 'POST', {
+      type: 'inviteUserToTeam',
+      teamId,
+      inviteeEmail: email,
     });
 
-    if (error) {
-      if (
-        error.message.includes(
-          'User already has a team, subscription, or pending invitation',
-        )
-      ) {
-        throw new Error('User already has a team or pending invitation');
-      }
-      throw error;
+    // Only send invitation email if the mutation was successful
+    if (data?.data) {
+      await sendInvitationEmail(email);
     }
 
-    // Only send invitation email if the RPC call was successful
-    await sendInvitationEmail(email);
-
-    return data;
+    return data?.data || false;
   } catch (error) {
     console.error('Error in inviteUserToTeam:', error);
     throw error;
@@ -109,7 +68,7 @@ async function sendInvitationEmail(email: string) {
 
   if (!response.ok) {
     throw new Error(
-      data.error || 'An error occurred while restoring the subscription',
+      data.error || 'An error occurred while sending the invitation',
     );
   }
 
@@ -123,22 +82,34 @@ async function sendInvitationEmail(email: string) {
   }
 }
 
-export const acceptTeamInvitation = async (invitationId: string) => {
-  const { data, error } = await supabase.rpc('accept_team_invitation', {
-    p_invitation_id: invitationId,
-  });
+export const acceptTeamInvitation = async (
+  invitationId: string,
+): Promise<boolean> => {
+  try {
+    const data = await makeAuthenticatedRequest('/api/teams', 'POST', {
+      type: 'acceptTeamInvitation',
+      invitationId,
+    });
 
-  if (error) throw error;
-
-  return data;
+    return data?.data || false;
+  } catch (error) {
+    console.error('Error accepting team invitation:', error);
+    throw error;
+  }
 };
 
-export const rejectTeamInvitation = async (invitationId: string) => {
-  const { data, error } = await supabase.rpc('reject_team_invitation', {
-    p_invitation_id: invitationId,
-  });
+export const rejectTeamInvitation = async (
+  invitationId: string,
+): Promise<boolean> => {
+  try {
+    const data = await makeAuthenticatedRequest('/api/teams', 'POST', {
+      type: 'rejectTeamInvitation',
+      invitationId,
+    });
 
-  if (error) throw error;
-
-  return data;
+    return data?.data || false;
+  } catch (error) {
+    console.error('Error rejecting team invitation:', error);
+    throw error;
+  }
 };

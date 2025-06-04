@@ -1,5 +1,4 @@
 export enum TeamRole {
-  ADMIN = 'admin',
   OWNER = 'owner',
   MEMBER = 'member',
 }
@@ -18,19 +17,14 @@ export interface ProcessedTeamMember {
   invitation_updated_at: string;
 }
 
-export const isTeamAdmin = (
+export const isTeamOwner = (
   membershipData: ProcessedTeamMember | null,
 ): boolean => {
-  return (
-    membershipData?.member_role === TeamRole.ADMIN ||
-    membershipData?.member_role === TeamRole.OWNER
-  );
+  return membershipData?.member_role === TeamRole.OWNER;
 };
 
 export const roleToLabel = (role: TeamRole | string): string => {
   switch (role) {
-    case TeamRole.ADMIN:
-      return 'Admin';
     case TeamRole.OWNER:
       return 'Owner';
     default:

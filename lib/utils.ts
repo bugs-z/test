@@ -100,8 +100,8 @@ export type DateCategory =
   | 'Older';
 
 interface DateSortable {
-  updated_at: string | null;
-  created_at: string;
+  updated_at?: number | null;
+  _creationTime: number;
 }
 
 export const getDateBoundaries = () => {
@@ -124,7 +124,7 @@ export const sortByDateCategory = <T extends DateSortable>(
 
   return items
     .filter((item) => {
-      const date = new Date(item.updated_at || item.created_at);
+      const date = new Date(item.updated_at || item._creationTime);
       switch (category) {
         case 'Today':
           return date >= bounds.todayStart;
@@ -140,8 +140,8 @@ export const sortByDateCategory = <T extends DateSortable>(
     })
     .sort(
       (a, b) =>
-        new Date(b.updated_at || b.created_at).getTime() -
-        new Date(a.updated_at || a.created_at).getTime(),
+        new Date(b.updated_at || b._creationTime).getTime() -
+        new Date(a.updated_at || a._creationTime).getTime(),
     );
 };
 

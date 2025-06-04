@@ -115,10 +115,10 @@ export function MFAVerification({ onVerify }: MFAVerificationProps) {
   const handleSignOut = async () => {
     try {
       await supabase.auth.signOut({ scope: 'local' });
-      router.push('/login');
-      router.refresh();
+      // Navigation will be handled by the auth state listener in layout
     } catch (error) {
       console.error('Sign out error:', error);
+      // Fallback navigation in case of error
       router.push('/login');
     }
   };

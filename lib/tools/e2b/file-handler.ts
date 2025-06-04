@@ -2,6 +2,7 @@ import type { Sandbox } from '@e2b/code-interpreter';
 import { createSupabaseAdminClient } from '@/lib/server/server-utils';
 import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@/convex/_generated/api';
+import type { Id } from '@/convex/_generated/dataModel';
 
 interface FileUploadResult {
   success: boolean;
@@ -23,11 +24,11 @@ if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL);
 
 export async function uploadFileToSandbox(
-  fileId: string,
+  fileId: Id<'files'>,
   sandbox: Sandbox,
   dataStream: any,
 ): Promise<FileUploadResult> {
-  let name = fileId;
+  let name = fileId.toString();
   try {
     const { content, name: fileName } =
       await getFileContentFromSupabase(fileId);
@@ -64,7 +65,7 @@ export async function uploadFileToSandbox(
   }
 }
 
-async function getFileContentFromSupabase(fileId: string) {
+async function getFileContentFromSupabase(fileId: Id<'files'>) {
   const supabaseAdmin = createSupabaseAdminClient();
 
   // Get file metadata from Convex
@@ -96,7 +97,7 @@ async function getFileContentFromSupabase(fileId: string) {
 }
 
 export async function uploadFilesToSandbox(
-  files: { fileId: string }[],
+  files: { fileId: Id<'files'> }[],
   sandbox: Sandbox,
   dataStream: any,
 ): Promise<BatchFileUploadResult> {

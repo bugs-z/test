@@ -281,7 +281,7 @@ export async function processChatMessages(
     isTerminalContinuation: boolean;
     selectedPlugin: string;
   },
-  profile: { user_id: string; profile_context: string },
+  profile: { user_id: string; profile_context: string | undefined },
   isReasoningModel: boolean,
   supabase: SupabaseClient,
   isPremiumSubscription: boolean,

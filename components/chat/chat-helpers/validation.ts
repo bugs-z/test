@@ -1,10 +1,10 @@
 import type { ChatSettings, LLM } from '@/types';
-import type { Tables } from '@/supabase/types';
+import type { Doc } from '@/convex/_generated/dataModel';
 
 export const validateChatSettings = (
   chatSettings: ChatSettings | null,
   modelData: LLM | undefined,
-  profile: Tables<'profiles'> | null,
+  profile: Doc<'profiles'> | null,
   isContinuation: boolean,
   messageContent: string | null,
 ) => {

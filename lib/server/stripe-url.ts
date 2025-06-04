@@ -8,6 +8,8 @@ import {
   isRestoreableSubscription,
 } from './stripe';
 import { type Result, errStr, ok } from '../result';
+import { ConvexHttpClient } from 'convex/browser';
+import { api } from '@/convex/_generated/api';
 
 export async function getCheckoutUrl(
   priceId?: string,
@@ -110,7 +112,7 @@ export async function getCheckoutUrl(
   return ok(session.url);
 }
 
-export async function retrievePriceAndValidation(
+async function retrievePriceAndValidation(
   stripe: Stripe,
   productId: string,
 ): Promise<Stripe.Price> {
@@ -128,27 +130,45 @@ export async function retrievePriceAndValidation(
 }
 
 export async function getBillingPortalUrl(): Promise<Result<string>> {
-  const supabase = await createSupabaseAppServerClient();
-  const user = (await supabase.auth.getUser()).data.user;
-  if (!user) {
-    return errStr('User not found');
-  }
-  const { data: subscription } = await supabase
-    .from('subscriptions')
-    .select('*')
-    .eq('user_id', user.id)
-    .single();
-  if (!subscription) {
-    return errStr('Subscription not found');
-  }
+  try {
+    const supabase = await createSupabaseAppServerClient();
+    const user = (await supabase.auth.getUser()).data.user;
+    if (!user) {
+      return errStr('User not found');
+    }
 
-  const stripe = getStripe();
-  const session = await stripe.billingPortal.sessions.create({
-    customer: subscription.customer_id,
-    return_url: process.env.STRIPE_RETURN_URL,
-  });
-  if (session.url === null) {
-    return errStr('Missing checkout URL');
+    if (
+      !process.env.NEXT_PUBLIC_CONVEX_URL ||
+      !process.env.CONVEX_SERVICE_ROLE_KEY
+    ) {
+      return errStr('Missing Convex configuration');
+    }
+
+    const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL);
+
+    const subscription = await convex.query(
+      api.subscriptions.getSubscriptionByUserIdPublic,
+      {
+        serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY,
+        userId: user.id,
+      },
+    );
+
+    if (!subscription) {
+      return errStr('Subscription not found');
+    }
+
+    const stripe = getStripe();
+    const session = await stripe.billingPortal.sessions.create({
+      customer: subscription.customer_id,
+      return_url: process.env.STRIPE_RETURN_URL,
+    });
+    if (session.url === null) {
+      return errStr('Missing checkout URL');
+    }
+    return ok(session.url);
+  } catch (error) {
+    console.error('Error getting subscription for billing portal:', error);
+    return errStr('Failed to get subscription information');
   }
-  return ok(session.url);
 }

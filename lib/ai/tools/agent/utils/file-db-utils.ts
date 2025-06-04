@@ -39,7 +39,7 @@ export const saveFileToDatabase = async (
 
     const fileData: FileAttachment = {
       fileName: createdFile.name,
-      id: createdFile.id,
+      id: createdFile._id,
       mimeType: createdFile.type,
       type: 'text',
       url: createdFile.file_path,

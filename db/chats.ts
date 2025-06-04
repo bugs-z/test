@@ -1,137 +1,127 @@
-import { supabase } from '@/lib/supabase/browser-client';
-import type { Tables, TablesInsert, TablesUpdate } from '@/supabase/types';
+import { makeAuthenticatedRequest } from '@/lib/api/convex';
+import type { Doc } from '@/convex/_generated/dataModel';
 
-export const getChatById = async (chatId: string) => {
-  const { data: chat, error } = await supabase
-    .from('chats')
-    .select('*')
-    .eq('id', chatId)
-    .maybeSingle();
+export type Chat = Doc<'chats'>;
 
-  if (error) {
-    throw new Error(error.message);
+export const getChatById = async (chatId: string): Promise<Chat> => {
+  try {
+    const data = await makeAuthenticatedRequest('/api/chats', 'POST', {
+      type: 'get',
+      chatId,
+    });
+
+    if (!data?.chat) {
+      throw new Error('Chat not found');
+    }
+
+    return data.chat;
+  } catch (error) {
+    console.error('Error fetching chat:', error);
+    throw error;
   }
-
-  return chat;
-};
-
-export const createChat = async (chat: TablesInsert<'chats'>) => {
-  const { data: createdChat, error } = await supabase
-    .from('chats')
-    .insert([chat])
-    .select('*')
-    .single();
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return createdChat;
-};
-
-export const updateChat = async (
-  chatId: string,
-  chat: TablesUpdate<'chats'>,
-) => {
-  const { data: updatedChat, error } = await supabase
-    .from('chats')
-    .update(chat)
-    .eq('id', chatId)
-    .select('*')
-    .single();
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return updatedChat;
-};
-
-export const deleteChat = async (chatId: string) => {
-  const { error } = await supabase.from('chats').delete().eq('id', chatId);
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return true;
-};
-
-export const deleteAllChats = async (userId: string) => {
-  const { error: chatDeleteError } = await supabase
-    .from('chats')
-    .delete()
-    .eq('user_id', userId);
-
-  if (chatDeleteError) {
-    throw new Error(chatDeleteError.message);
-  }
-
-  return true;
 };
 
 export const getChatsByUserId = async (
   userId: string,
-): Promise<Tables<'chats'>[]> => {
-  const { data: chats, error } = await supabase
-    .from('chats')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-    .limit(25);
+  numItems = 25,
+  cursor: string | null = null,
+): Promise<{
+  chats: Chat[];
+  isDone: boolean;
+  continueCursor: string | null;
+}> => {
+  try {
+    const data = await makeAuthenticatedRequest('/api/chats', 'POST', {
+      type: 'get',
+      userId,
+      paginationOpts: {
+        numItems,
+        cursor,
+      },
+    });
 
-  if (error) {
-    throw new Error(error.message);
+    return {
+      chats: data?.chats ?? [],
+      isDone: data?.isDone ?? true,
+      continueCursor: data?.continueCursor ?? null,
+    };
+  } catch (error) {
+    console.error('Error fetching chats:', error);
+    throw error;
   }
-
-  return chats;
 };
 
-export const getMoreChatsByUserId = async (
-  userId: string,
-  lastChatCreatedAt: string,
-) => {
-  const { data: chats, error } = await supabase
-    .from('chats')
-    .select('*')
-    .eq('user_id', userId)
-    .lt('created_at', lastChatCreatedAt)
-    .order('created_at', { ascending: false })
-    .limit(25);
+export const updateChat = async (
+  chatId: string,
+  updates: Partial<Omit<Chat, '_id' | '_creationTime' | 'id' | 'user_id'>>,
+): Promise<Chat> => {
+  try {
+    const data = await makeAuthenticatedRequest('/api/chats', 'POST', {
+      type: 'update',
+      chatId,
+      updates,
+    });
 
-  if (error) {
-    throw new Error(error.message);
+    if (!data?.success) {
+      throw new Error(data?.error || 'Failed to update chat');
+    }
+
+    // Fetch the updated chat to return it
+    return await getChatById(chatId);
+  } catch (error) {
+    console.error('Error updating chat:', error);
+    throw error;
   }
-
-  return chats;
 };
 
-export const getLastSharedMessageId = async (chatId: string) => {
-  const { data, error } = await supabase
-    .from('chats')
-    .select('last_shared_message_id')
-    .eq('id', chatId)
-    .eq('sharing', 'public')
-    .single();
+export const deleteChat = async (chatId: string): Promise<boolean> => {
+  try {
+    const data = await makeAuthenticatedRequest('/api/chats', 'POST', {
+      type: 'delete',
+      chatId,
+    });
 
-  if (error) {
-    throw new Error(error.message);
+    if (!data?.success) {
+      throw new Error(data?.error || 'Failed to delete chat');
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error deleting chat:', error);
+    throw error;
   }
-
-  return data?.last_shared_message_id;
 };
 
-export const getSharedChatsByUserId = async (userId: string) => {
-  const { data, error } = await supabase
-    .from('chats')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('sharing', 'public')
-    .order('shared_at', { ascending: false });
+export const deleteAllChats = async (userId: string): Promise<boolean> => {
+  try {
+    const data = await makeAuthenticatedRequest('/api/chats', 'POST', {
+      type: 'deleteAll',
+      userId,
+    });
 
-  if (error) {
-    throw new Error(error.message);
+    if (!data?.success) {
+      throw new Error(data?.error || 'Failed to delete all chats');
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error deleting all chats:', error);
+    throw error;
   }
-
-  return data || [];
 };
+
+// export const getLastSharedMessageId = async (chatId: string) => {
+//   const messageId = await convex.query(api.chats.getLastSharedMessageId, {
+//     chatId,
+//   });
+
+//   return messageId;
+// };
+
+// export const getSharedChatsByUserId = async (userId: string) => {
+//   const chats = await convex.query(api.chats.getSharedChatsByUserId, {
+//     userId,
+//   });
+
+//   return chats;
+// };

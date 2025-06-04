@@ -1,7 +1,5 @@
 import { useAlertContext } from '@/context/alert-context';
 import { PentestGPTContext } from '@/context/context';
-import type { Tables } from '@/supabase/types';
-import type { Doc } from '@/convex/_generated/dataModel';
 import type {
   ChatMessage,
   ChatMetadata,
@@ -31,7 +29,7 @@ import { toast } from 'sonner';
 import { useAgentSidebar } from '@/components/chat/chat-hooks/use-agent-sidebar';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import type { Id } from '@/convex/_generated/dataModel';
+import type { Id, Doc } from '@/convex/_generated/dataModel';
 
 export const useChatHandler = () => {
   const router = useRouter();
@@ -97,9 +95,7 @@ export const useChatHandler = () => {
     }
   }, [selectedChat, setChatSettings]);
 
-  const handleSelectChat = async (
-    chat: Tables<'chats'> | { chat_id: string },
-  ) => {
+  const handleSelectChat = async (chat: Doc<'chats'> | { chat_id: string }) => {
     await handleStopMessage();
     setIsReadyToChat(false);
     resetAgentSidebar();
@@ -152,7 +148,7 @@ export const useChatHandler = () => {
       if (selectedChat && toolInUse === PluginID.PENTEST_AGENT) {
         const updatedChat = {
           ...selectedChat,
-          updated_at: new Date().toISOString(),
+          updated_at: Date.now(),
           finish_reason: 'aborted',
         };
 
@@ -366,7 +362,7 @@ export const useChatHandler = () => {
         );
 
         lastMessageRetrievedFileItems =
-          messageFileItems.file_items.sort((a, b) => {
+          messageFileItems.sort((a, b) => {
             // First sort by file_id
             if (a.file_id < b.file_id) return -1;
             if (a.file_id > b.file_id) return 1;
@@ -393,7 +389,7 @@ export const useChatHandler = () => {
           setChatFiles((prev) =>
             prev.map((file) =>
               editedMessageFiles?.some(
-                (editedFile) => editedFile.id === file.id,
+                (editedFile) => editedFile._id === file._id,
               )
                 ? { ...file, message_id: tempUserChatMessage.message.id }
                 : file,
@@ -455,10 +451,9 @@ export const useChatHandler = () => {
       };
       const chatId = currentChat?.id ?? uuidv4();
       const chatMetadata: ChatMetadata = isTemporaryChat
-        ? { newChat: !currentChat, retrievedFileItems }
+        ? { retrievedFileItems }
         : {
             id: chatId,
-            newChat: !currentChat,
             retrievedFileItems,
           };
 
@@ -552,10 +547,10 @@ export const useChatHandler = () => {
         );
         setTemporaryChatMessages(updatedMessages);
       } else if (currentChat) {
-        const updatedChat: Tables<'chats'> = {
+        const updatedChat: Doc<'chats'> = {
           ...currentChat,
           ...(chatTitle ? { name: chatTitle } : {}),
-          updated_at: new Date().toISOString(),
+          updated_at: Date.now(),
           finish_reason: finishReason,
           model: chatSettings?.model || currentChat.model,
         };

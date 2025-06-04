@@ -27,7 +27,7 @@ import { ChatSecondaryButtons } from './chat-secondary-buttons';
 import { ChatSettings } from './chat-settings';
 import { GlobalDeleteChatDialog } from './global-delete-chat-dialog';
 import { Settings } from '../utility/settings';
-import { ShareChatButton } from './chat-share-button';
+// import { ShareChatButton } from './chat-share-button';
 import { useUIContext } from '@/context/ui-context';
 import { ChatContinueButton } from './chat-continue-button';
 import { AgentSidebar } from '../messages/terminal-messages/agent-sidebar';
@@ -179,7 +179,7 @@ export const ChatUI: FC = () => {
         <div className="absolute right-[22px] top-2 flex h-[40px] items-center space-x-3">
           {!isMobile ? (
             <>
-              <ShareChatButton variant="chatUI" />
+              {/* <ShareChatButton variant="chatUI" /> */}
               <WithTooltip
                 display={<div>Settings</div>}
                 trigger={<Settings />}

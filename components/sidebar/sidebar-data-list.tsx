@@ -1,6 +1,5 @@
 import { PentestGPTContext } from '@/context/context';
 import { cn } from '@/lib/utils';
-import type { Tables } from '@/supabase/types';
 import type { ContentType, DataItemType, DataListType } from '@/types';
 import {
   type FC,
@@ -11,9 +10,10 @@ import {
   useState,
 } from 'react';
 import { ChatItem } from './items/chat/chat-item';
-import { getMoreChatsByUserId } from '@/db/chats';
+import { getChatsByUserId } from '@/db/chats';
 import { Loader2 } from 'lucide-react';
 import { type DateCategory, sortByDateCategory } from '@/lib/utils';
+import type { Doc } from '@/convex/_generated/dataModel';
 
 interface SidebarDataListProps {
   contentType: ContentType;
@@ -24,78 +24,120 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
   contentType,
   data,
 }) => {
-  const { chats, setChats, isTemporaryChat } = useContext(PentestGPTContext);
+  const {
+    setChats,
+    isTemporaryChat,
+    chatsCursor,
+    setChatsCursor,
+    chatsIsDone,
+    setChatsIsDone,
+  } = useContext(PentestGPTContext);
 
   const divRef = useRef<HTMLDivElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
 
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [hasMoreChats, setHasMoreChats] = useState(true);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const isFetchingRef = useRef<boolean>(false);
 
   const fetchMoreChats = useCallback(async () => {
     if (
       contentType === 'chats' &&
       data.length > 0 &&
       !isLoadingMore &&
-      hasMoreChats
+      !isFetchingRef.current &&
+      !chatsIsDone
     ) {
+      isFetchingRef.current = true;
       setIsLoadingMore(true);
-      const lastChat = data[data.length - 1] as Tables<'chats'>;
-      const moreChats = await getMoreChatsByUserId(
-        lastChat.user_id,
-        lastChat.created_at,
-      );
+      const lastChat = data[data.length - 1] as Doc<'chats'>;
 
-      const newChats = moreChats.filter(
-        (chat) => !chats.some((c) => c.id === chat.id),
-      );
+      try {
+        // Disconnect observer while fetching to prevent multiple triggers
+        if (observerRef.current && loaderRef.current) {
+          observerRef.current.unobserve(loaderRef.current);
+        }
 
-      if (newChats.length > 0) {
-        setChats((prevChats: Tables<'chats'>[]) => {
-          // Create a map of existing chats by ID for quick lookup
-          const existingChatsMap = new Map(
-            prevChats.map((chat) => [chat.id, chat]),
-          );
+        const result = await getChatsByUserId(
+          lastChat.user_id,
+          25,
+          chatsCursor,
+        );
 
-          // Filter out any chats that already exist in prevChats
-          const uniqueNewChats = moreChats.filter(
-            (chat) => !existingChatsMap.has(chat.id),
-          );
+        if (result.chats.length > 0) {
+          setChats((prevChats) => {
+            // Create a map of existing chats by ID for quick lookup
+            const existingChatsMap = new Map(
+              prevChats.map((chat) => [chat.id, chat]),
+            );
 
-          // Return combined array with unique chats
-          return [...prevChats, ...uniqueNewChats];
-        });
-      } else {
-        setHasMoreChats(false);
+            // Filter out any chats that already exist in prevChats
+            const uniqueNewChats = result.chats.filter(
+              (chat) => !existingChatsMap.has(chat.id),
+            );
+
+            // Return combined array with unique chats
+            return [...prevChats, ...uniqueNewChats];
+          });
+
+          setChatsCursor(result.continueCursor);
+          setChatsIsDone(result.isDone);
+        } else {
+          setChatsIsDone(true);
+        }
+      } catch (error) {
+        console.error('Error fetching more chats:', error);
+        setChatsIsDone(true);
+      } finally {
+        isFetchingRef.current = false;
+        setIsLoadingMore(false);
+
+        // Reconnect observer after fetch completes
+        if (observerRef.current && loaderRef.current && !chatsIsDone) {
+          observerRef.current.observe(loaderRef.current);
+        }
       }
-      setIsLoadingMore(false);
     }
-  }, [contentType, data, isLoadingMore, hasMoreChats, setChats]);
+  }, [
+    contentType,
+    data,
+    isLoadingMore,
+    chatsIsDone,
+    setChats,
+    chatsCursor,
+    setChatsCursor,
+    setChatsIsDone,
+  ]);
 
   useEffect(() => {
     const options = {
       root: null,
-      rootMargin: '0px',
-      threshold: 1.0,
+      rootMargin: '100px', // Add some margin to start loading before reaching the end
+      threshold: 0.1, // Trigger when at least 10% of the element is visible
     };
 
-    const observer = new IntersectionObserver((entries) => {
+    observerRef.current = new IntersectionObserver((entries) => {
       const [entry] = entries;
-      if (entry.isIntersecting && !isLoadingMore && hasMoreChats) {
+      if (
+        entry.isIntersecting &&
+        !isLoadingMore &&
+        !isFetchingRef.current &&
+        !chatsIsDone
+      ) {
         fetchMoreChats();
       }
     }, options);
 
     if (loaderRef.current) {
-      observer.observe(loaderRef.current);
+      observerRef.current.observe(loaderRef.current);
     }
 
     return () => {
-      if (loaderRef.current) {
-        observer.unobserve(loaderRef.current);
+      if (observerRef.current) {
+        observerRef.current.disconnect();
       }
     };
-  }, [loaderRef, isLoadingMore, hasMoreChats, fetchMoreChats]);
+  }, [loaderRef, isLoadingMore, chatsIsDone, fetchMoreChats]);
 
   const getDataListComponent = (
     contentType: ContentType,
@@ -103,7 +145,7 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
   ) => {
     switch (contentType) {
       case 'chats':
-        return <ChatItem key={item.id} chat={item as Tables<'chats'>} />;
+        return <ChatItem key={item.id} chat={item as Doc<'chats'>} />;
       default:
         return null;
     }
@@ -179,7 +221,7 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
                 })}
                 {contentType === 'chats' &&
                   data.length > 0 &&
-                  hasMoreChats &&
+                  !chatsIsDone &&
                   !isTemporaryChat && (
                     <div ref={loaderRef} className="mt-4 flex justify-center">
                       {isLoadingMore && (

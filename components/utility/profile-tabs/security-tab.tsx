@@ -42,8 +42,7 @@ export const SecurityTab: FC = () => {
     setIsLoggingOut(true);
     try {
       await supabase.auth.signOut({ scope: 'global' });
-      router.push('/login');
-      router.refresh();
+      // Navigation will be handled by the auth state listener in layout
       toast.success('Logged out of all devices');
     } catch (error) {
       console.error('Error logging out:', error);

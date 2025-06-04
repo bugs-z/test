@@ -56,9 +56,7 @@ export const UpgradePlan: FC = () => {
           setCheckoutUrl(result.value);
         }
       } catch (error) {
-        toast.error(
-          'Failed to load subscription information. Please try again.',
-        );
+        toast.error((error as Error).message);
       } finally {
         setIsLoading(false);
       }

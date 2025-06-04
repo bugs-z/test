@@ -2,7 +2,17 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
-import { updateProfileAvatar } from '@/db/profile';
+import { ConvexHttpClient } from 'convex/browser';
+import { api } from '@/convex/_generated/api';
+
+if (
+  !process.env.NEXT_PUBLIC_CONVEX_URL ||
+  !process.env.CONVEX_SERVICE_ROLE_KEY
+) {
+  throw new Error(
+    'NEXT_PUBLIC_CONVEX_URL or CONVEX_SERVICE_ROLE_KEY environment variable is not defined',
+  );
+}
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
@@ -24,7 +34,15 @@ export async function GET(request: Request) {
 
         if (avatarUrl && data.user) {
           try {
-            await updateProfileAvatar(data.user.id, avatarUrl);
+            // Use Convex mutation directly
+            const convex = new ConvexHttpClient(
+              process.env.NEXT_PUBLIC_CONVEX_URL!,
+            );
+            await convex.mutation(api.profiles.updateProfileAvatar, {
+              serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
+              userId: data.user.id,
+              avatarUrl,
+            });
           } catch (error) {
             console.error('Error updating profile with Google avatar:', error);
           }

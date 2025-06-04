@@ -1,22 +1,22 @@
 import { PentestGPTContext } from '@/context/context';
 import { cn } from '@/lib/utils';
-import type { Tables } from '@/supabase/types';
 import { useParams } from 'next/navigation';
 import { type FC, useContext, useRef, useState, useCallback } from 'react';
 import { DeleteChat } from './delete-chat';
 import { UpdateChat } from './update-chat';
 import { useChatHandler } from '@/components/chat/chat-hooks/use-chat-handler';
-import { Ellipsis, Share } from 'lucide-react';
+import { Ellipsis } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ShareChatButton } from '@/components/chat/chat-share-button';
+// import { ShareChatButton } from '@/components/chat/chat-share-button';
 import { useUIContext } from '@/context/ui-context';
+import type { Doc } from '@/convex/_generated/dataModel';
 
 interface ChatItemProps {
-  chat: Tables<'chats'>;
+  chat: Doc<'chats'>;
 }
 
 export const ChatItem: FC<ChatItemProps> = ({ chat }) => {
@@ -104,14 +104,14 @@ export const ChatItem: FC<ChatItemProps> = ({ chat }) => {
             className="py-2"
             onClick={(e) => e.stopPropagation()}
           >
-            <ShareChatButton chat={chat}>
+            {/* <ShareChatButton chat={chat}>
               <div className="w-full cursor-pointer">
                 <div className="flex items-center p-3 hover:opacity-50">
                   <Share size={20} className="mr-2" />
                   <span>Share</span>
                 </div>
               </div>
-            </ShareChatButton>
+            </ShareChatButton> */}
             <UpdateChat chat={chat} onAction={handleCloseDropdown} />
             <DeleteChat chat={chat} onAction={handleCloseDropdown} />
           </DropdownMenuContent>

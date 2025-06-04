@@ -1,47 +1,43 @@
-import type { SubscriptionInfo } from '@/types';
-import { createSupabaseAdminClient } from './server-utils';
+import { ConvexHttpClient } from 'convex/browser';
+import { api } from '@/convex/_generated/api';
+import type { SubscriptionStatus } from '@/types';
 
+if (
+  !process.env.NEXT_PUBLIC_CONVEX_URL ||
+  !process.env.CONVEX_SERVICE_ROLE_KEY
+) {
+  throw new Error(
+    'NEXT_PUBLIC_CONVEX_URL or CONVEX_SERVICE_ROLE_KEY environment variable is not defined',
+  );
+}
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+
+/**
+ * Get subscription information for a user
+ * This function is meant to be called from the server side
+ */
 export async function getSubscriptionInfo(
   userId: string,
-): Promise<SubscriptionInfo> {
-  const supabaseAdmin = createSupabaseAdminClient();
+): Promise<{ planType: SubscriptionStatus }> {
+  try {
+    // Use the combined subscription check from Convex
+    const subscriptionInfo = await convex.query(
+      api.subscriptions.checkSubscription,
+      {
+        serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
+        userId,
+      },
+    );
 
-  // Check for team membership
-  const { data: teamMemberships, error: teamError } = await supabaseAdmin
-    .from('team_members')
-    .select('team_id, role')
-    .eq('user_id', userId);
-
-  if (teamError) {
-    throw new Error(teamError.message);
-  }
-
-  // If user is a team member, return team subscription info
-  if (teamMemberships && teamMemberships.length > 0) {
     return {
-      isPremium: true,
-      isTeam: true,
-      status: 'team',
+      planType: subscriptionInfo.planType,
+    };
+  } catch (error) {
+    console.error('Error checking subscription:', error);
+    // Return free tier on error
+    return {
+      planType: 'free',
     };
   }
-
-  const { data: subscriptions, error } = await supabaseAdmin
-    .from('subscriptions')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('status', 'active');
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  if (!subscriptions || subscriptions.length === 0) {
-    return { isPremium: false, isTeam: false, status: 'free' };
-  }
-
-  return {
-    isPremium: true,
-    isTeam: false,
-    status: 'pro',
-  };
 }

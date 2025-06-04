@@ -3,9 +3,12 @@ import { safeWaitUntil } from '@/lib/utils/safe-wait-until';
 import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@/convex/_generated/api';
 
-if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
+if (
+  !process.env.NEXT_PUBLIC_CONVEX_URL ||
+  !process.env.CONVEX_SERVICE_ROLE_KEY
+) {
   throw new Error(
-    'NEXT_PUBLIC_CONVEX_URL environment variable is not defined. Please check your environment configuration.',
+    'NEXT_PUBLIC_CONVEX_URL or CONVEX_SERVICE_ROLE_KEY environment variable is not defined',
   );
 }
 
@@ -35,6 +38,7 @@ export async function createOrConnectPersistentTerminal(
   try {
     // Check for existing sandbox
     const existingSandbox = await convex.query(api.sandboxes.getSandbox, {
+      serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
       userId: userID,
       template,
     });
@@ -45,6 +49,7 @@ export async function createOrConnectPersistentTerminal(
       if (currentStatus === 'pausing') {
         for (let i = 0; i < 5; i++) {
           const updatedSandbox = await convex.query(api.sandboxes.getSandbox, {
+            serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
             userId: userID,
             template,
           });
@@ -65,6 +70,7 @@ export async function createOrConnectPersistentTerminal(
             });
 
             await convex.mutation(api.sandboxes.updateSandboxStatus, {
+              serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
               sandboxId: existingSandbox.sandbox_id,
               status: 'active',
             });
@@ -81,6 +87,7 @@ export async function createOrConnectPersistentTerminal(
 
             // Delete the stuck sandbox record
             await convex.mutation(api.sandboxes.deleteSandbox, {
+              serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
               sandboxId: existingSandbox.sandbox_id,
             });
 
@@ -90,6 +97,7 @@ export async function createOrConnectPersistentTerminal(
             });
 
             await convex.mutation(api.sandboxes.upsertSandbox, {
+              serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
               userId: userID,
               sandboxId: sandbox.sandboxId,
               template,
@@ -108,6 +116,7 @@ export async function createOrConnectPersistentTerminal(
           });
 
           await convex.mutation(api.sandboxes.updateSandboxStatus, {
+            serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
             sandboxId: existingSandbox.sandbox_id,
             status: 'active',
           });
@@ -121,6 +130,7 @@ export async function createOrConnectPersistentTerminal(
             );
             // Delete the expired sandbox record
             await convex.mutation(api.sandboxes.deleteSandbox, {
+              serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
               sandboxId: existingSandbox.sandbox_id,
             });
           } else {
@@ -139,6 +149,7 @@ export async function createOrConnectPersistentTerminal(
     });
 
     await convex.mutation(api.sandboxes.upsertSandbox, {
+      serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
       userId: userID,
       sandboxId: sandbox.sandboxId,
       template,
@@ -175,6 +186,7 @@ export async function pauseSandbox(sandbox: Sandbox): Promise<string | null> {
 
   // Update status to pausing
   await convex.mutation(api.sandboxes.updateSandboxStatus, {
+    serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
     sandboxId: sandbox.sandboxId,
     status: 'pausing',
   });
@@ -185,6 +197,7 @@ export async function pauseSandbox(sandbox: Sandbox): Promise<string | null> {
       .pause()
       .then(async () => {
         await convex.mutation(api.sandboxes.updateSandboxStatus, {
+          serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
           sandboxId: sandbox.sandboxId,
           status: 'paused',
         });
@@ -195,6 +208,7 @@ export async function pauseSandbox(sandbox: Sandbox): Promise<string | null> {
           error,
         );
         await convex.mutation(api.sandboxes.updateSandboxStatus, {
+          serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
           sandboxId: sandbox.sandboxId,
           status: 'active',
         });

@@ -35,7 +35,7 @@ export const useMessageHandler = ({
   };
 
   const fileLoading = newMessageFiles.some((file) =>
-    file.id.startsWith('loading'),
+    file._id.startsWith('loading'),
   );
 
   const imageLoading = newMessageImages.some((image) => image.isLoading);

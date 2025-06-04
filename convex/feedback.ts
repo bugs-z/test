@@ -70,7 +70,7 @@ export const saveFeedback = mutation({
     // Check if feedback already exists for this message
     const existingFeedback = await ctx.db
       .query('feedback')
-      .withIndex('by_message', (q) => q.eq('message_id', args.message_id))
+      .withIndex('by_message_id', (q) => q.eq('message_id', args.message_id))
       .first();
 
     const feedbackData = {

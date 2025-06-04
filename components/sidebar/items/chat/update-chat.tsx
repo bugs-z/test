@@ -11,12 +11,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PentestGPTContext } from '@/context/context';
 import { updateChat } from '@/db/chats';
-import type { Tables } from '@/supabase/types';
+import type { Doc } from '@/convex/_generated/dataModel';
 import { Edit } from 'lucide-react';
 import { type FC, useContext, useState, useCallback, useRef } from 'react';
 
 interface UpdateChatProps {
-  chat: Tables<'chats'>;
+  chat: Doc<'chats'>;
   onAction: () => void;
 }
 

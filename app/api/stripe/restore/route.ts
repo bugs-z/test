@@ -1,5 +1,4 @@
-import { getServerUserAndProfile } from '@/lib/server/server-chat-helpers';
-import { createSupabaseAdminClient } from '@/lib/server/server-utils';
+import { getServerUser } from '@/lib/server/server-chat-helpers';
 import {
   getActiveSubscriptions,
   getCustomersByEmail,
@@ -7,14 +6,26 @@ import {
   isRestoreableSubscription,
 } from '@/lib/server/stripe';
 import { unixToDateString } from '@/lib/utils';
-import type { Tables } from '@/supabase/types';
 import type { User } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
+import { ConvexHttpClient } from 'convex/browser';
+import { api } from '@/convex/_generated/api';
+
+if (
+  !process.env.NEXT_PUBLIC_CONVEX_URL ||
+  !process.env.CONVEX_SERVICE_ROLE_KEY
+) {
+  throw new Error(
+    'NEXT_PUBLIC_CONVEX_URL or CONVEX_SERVICE_ROLE_KEY environment variable is not defined',
+  );
+}
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL);
 
 export async function POST() {
   try {
-    const { user } = await getServerUserAndProfile();
+    const user = await getServerUser();
 
     const stripe = getStripe();
     const email = user.email;
@@ -74,98 +85,62 @@ async function restoreToDatabase(
   stripe: Stripe,
   user: User,
   subscriptionId: string,
-): Promise<
-  | { type: 'error'; error: string }
-  | { type: 'ok'; value: Tables<'subscriptions'> }
-> {
-  const supabaseAdmin = createSupabaseAdminClient();
+): Promise<{ type: 'error'; error: string } | { type: 'ok'; value: any }> {
+  try {
+    // Retrieve the subscription details from Stripe
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
 
-  // Retrieve the subscription details from Stripe
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    // Ensure the subscription has a valid customer ID from Stripe
+    if (!subscription.customer || typeof subscription.customer !== 'string') {
+      return { type: 'error', error: 'invalid customer value' };
+    }
 
-  // Ensure the subscription has a valid customer ID from Stripe
-  if (!subscription.customer || typeof subscription.customer !== 'string') {
-    return { type: 'error', error: 'invalid customer value' };
-  }
+    // Determine the plan type and team name
+    const planType = subscription.metadata.teamName ? 'team' : 'pro';
+    const teamName = subscription.metadata.teamName || null;
 
-  // Determine the plan type and team name
-  const planType = subscription.metadata.teamName ? 'team' : 'pro';
-  const teamName = subscription.metadata.teamName || null;
+    // Get the quantity (number of seats) for team plans
+    const quantity = subscription.items.data[0].quantity || 1;
 
-  // Get the quantity (number of seats) for team plans
-  const quantity = subscription.items.data[0].quantity || 1;
-  // Check if the subscription already exists in the database
-  const existingSubscription = await supabaseAdmin
-    .from('subscriptions')
-    .select('*')
-    .eq('subscription_id', subscriptionId)
-    .maybeSingle();
-
-  let result;
-  if (existingSubscription?.data) {
-    // If the subscription exists, update it
-    result = await supabaseAdmin
-      .from('subscriptions')
-      .update({
-        user_id: user.id,
-        customer_id: subscription.customer,
-        status: subscription.status,
-        start_date: unixToDateString(subscription.current_period_start),
-        cancel_at: subscription.cancel_at
-          ? unixToDateString(subscription.cancel_at)
-          : null,
-        canceled_at: subscription.canceled_at
-          ? unixToDateString(subscription.canceled_at)
-          : null,
-        ended_at: subscription.ended_at
-          ? unixToDateString(subscription.ended_at)
-          : null,
-        plan_type: planType,
-        team_name: teamName,
-        quantity: quantity,
-      })
-      .eq('subscription_id', subscriptionId);
-  } else {
-    // If the subscription doesn't exist, insert it
-    result = await supabaseAdmin.from('subscriptions').insert({
-      subscription_id: subscriptionId,
-      user_id: user.id,
-      customer_id: subscription.customer,
+    // Use Convex to upsert the subscription
+    await convex.mutation(api.subscriptions.upsertSubscription, {
+      serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
+      subscriptionId,
+      userId: user.id,
+      customerId: subscription.customer,
       status: subscription.status,
-      start_date: unixToDateString(subscription.current_period_start),
-      cancel_at: subscription.cancel_at
+      startDate: unixToDateString(subscription.current_period_start),
+      cancelAt: subscription.cancel_at
         ? unixToDateString(subscription.cancel_at)
         : null,
-      canceled_at: subscription.canceled_at
+      canceledAt: subscription.canceled_at
         ? unixToDateString(subscription.canceled_at)
         : null,
-      ended_at: subscription.ended_at
+      endedAt: subscription.ended_at
         ? unixToDateString(subscription.ended_at)
         : null,
-      plan_type: planType,
-      team_name: teamName,
-      quantity: quantity,
+      planType,
+      teamName: teamName || undefined,
+      quantity,
+      userEmail: user.email, // Required for team subscriptions to create owner invitation
     });
-  }
-  if (result.error) {
-    console.error(result.error);
+
+    // Get the restored subscription using the public query
+    const restoredSubscription = await convex.query(
+      api.subscriptions.getSubscriptionByUserIdPublic,
+      {
+        serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
+        userId: user.id,
+      },
+    );
+
+    if (!restoredSubscription) {
+      return { type: 'error', error: 'subscription not found after restore' };
+    }
+
+    return { type: 'ok', value: restoredSubscription };
+  } catch (error) {
+    console.error('Error restoring subscription to database:', error);
     return { type: 'error', error: 'error upserting subscription' };
   }
-
-  // Retrieve and return the newly restored subscription from Supabase
-  const newSubscription = await supabaseAdmin
-    .from('subscriptions')
-    .select('*')
-    .eq('status', 'active')
-    .eq('user_id', user.id)
-    .eq('subscription_id', subscriptionId)
-    .maybeSingle();
-  if (newSubscription.error) {
-    console.error(newSubscription.error);
-    return { type: 'error', error: 'error fetching new subscription' };
-  }
-  if (!newSubscription.data) {
-    return { type: 'error', error: 'subscription not found' };
-  }
-  return { type: 'ok', value: newSubscription.data };
 }

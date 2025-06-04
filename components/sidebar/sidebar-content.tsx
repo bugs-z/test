@@ -6,7 +6,7 @@ import { SidebarUpgrade } from './sidebar-upgrade';
 import { SidebarInviteButton } from './sidebar-invite-button';
 import { InviteMembersDialog } from '@/components/utility/invite-members-dialog';
 import { AcceptInvitationDialog } from '@/components/utility/accept-invitation-dialog';
-import { isTeamAdmin } from '@/lib/team-utils';
+import { isTeamOwner } from '@/lib/team-utils';
 import { SidebarHeader } from './sidebar-header';
 import { WithTooltip } from '../ui/with-tooltip';
 import { Settings } from '../utility/settings';
@@ -37,7 +37,7 @@ export const SidebarContent: FC<SidebarContentProps> = ({
   }, [isInvitationPending]);
 
   const canInviteMembers =
-    isTeamAdmin(membershipData) &&
+    isTeamOwner(membershipData) &&
     teamMembers &&
     teamMembers.length < (subscription?.quantity || 0);
 

@@ -1,8 +1,19 @@
 import type { LLMID } from '@/types';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { api } from '@/convex/_generated/api';
+import { ConvexHttpClient } from 'convex/browser';
+
+if (
+  !process.env.NEXT_PUBLIC_CONVEX_URL ||
+  !process.env.CONVEX_SERVICE_ROLE_KEY
+) {
+  throw new Error(
+    'NEXT_PUBLIC_CONVEX_URL or CONVEX_SERVICE_ROLE_KEY environment variable is not defined',
+  );
+}
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL);
 
 export async function createChat({
-  supabase,
   chatId,
   userId,
   model,
@@ -10,7 +21,6 @@ export async function createChat({
   content,
   finishReason,
 }: {
-  supabase: SupabaseClient;
   chatId: string;
   userId: string;
   model: LLMID;
@@ -19,39 +29,22 @@ export async function createChat({
   title?: string;
 }) {
   try {
-    const { data: _, error } = await supabase
-      .from('chats')
-      .insert([
-        {
-          id: chatId,
-          user_id: userId,
-          include_profile_context: true,
-          model,
-          name: title || content.substring(0, 100),
-          finish_reason: finishReason,
-        },
-      ])
-      .select('*')
-      .single();
+    const chatData = {
+      id: chatId,
+      user_id: userId,
+      model,
+      name: title || content.substring(0, 100),
+      finish_reason: finishReason,
+      sharing: 'private' as const,
+      updated_at: Date.now(),
+    };
 
-    if (error) {
-      // If it's a duplicate key error, update instead
-      if (error.code === '23505') {
-        const { error: updateError } = await supabase
-          .from('chats')
-          .update({
-            updated_at: new Date().toISOString(),
-            finish_reason: finishReason,
-            model,
-          })
-          .eq('id', chatId);
+    const { success, error } = await convex.action(api.chats.createChatAction, {
+      serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
+      chat: chatData,
+    });
 
-        if (updateError) {
-          console.error('Error updating chat:', updateError);
-        }
-        return;
-      }
-
+    if (!success) {
       console.error('Error creating chat:', error);
       return;
     }
@@ -61,64 +54,33 @@ export async function createChat({
 }
 
 export async function updateChat({
-  supabase,
   chatId,
-  userId,
   model,
-  content,
   finishReason,
   newChat,
   title,
 }: {
-  supabase: SupabaseClient;
   chatId: string;
-  userId: string;
   model: LLMID;
-  content: string;
   finishReason: string;
   newChat: boolean;
   title?: string;
 }) {
   try {
-    const { data: _, error } = await supabase
-      .from('chats')
-      .update({
-        ...(newChat && title ? { name: title } : {}),
-        updated_at: new Date().toISOString(),
-        finish_reason: finishReason,
-        model,
-      })
-      .eq('id', chatId)
-      .select('*')
-      .single();
+    const updateData = {
+      ...(newChat && title ? { name: title } : {}),
+      updated_at: Date.now(),
+      finish_reason: finishReason,
+      model,
+    };
 
-    if (error) {
-      // If the chat doesn't exist (PGRST116), create it instead
-      if (error.code === 'PGRST116') {
-        const { error: createError } = await supabase
-          .from('chats')
-          .insert([
-            {
-              id: chatId,
-              user_id: userId,
-              include_profile_context: true,
-              model,
-              name: title || content.substring(0, 100),
-              finish_reason: finishReason,
-            },
-          ])
-          .select('*')
-          .single();
+    const { success, error } = await convex.action(api.chats.updateChatAction, {
+      serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
+      chatId,
+      updates: updateData,
+    });
 
-        if (createError) {
-          console.error(
-            'Error creating chat after update failed:',
-            createError.message,
-          );
-        }
-        return;
-      }
-
+    if (!success) {
       console.error('Error updating chat:', error);
       return;
     }

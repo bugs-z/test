@@ -6,6 +6,7 @@ import { v } from 'convex/values';
  */
 export const getSandbox = query({
   args: {
+    serviceKey: v.string(),
     userId: v.string(),
     template: v.string(),
   },
@@ -21,6 +22,10 @@ export const getSandbox = query({
     v.null(),
   ),
   handler: async (ctx, args) => {
+    if (args.serviceKey !== process.env.CONVEX_SERVICE_ROLE_KEY) {
+      return null;
+    }
+
     const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
 
     const sandbox = await ctx.db
@@ -45,6 +50,7 @@ export const getSandbox = query({
  */
 export const upsertSandbox = mutation({
   args: {
+    serviceKey: v.string(),
     userId: v.string(),
     sandboxId: v.string(),
     template: v.string(),
@@ -56,6 +62,10 @@ export const upsertSandbox = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    if (args.serviceKey !== process.env.CONVEX_SERVICE_ROLE_KEY) {
+      return null;
+    }
+
     const existingSandbox = await ctx.db
       .query('sandboxes')
       .withIndex('by_user_and_template', (q) =>
@@ -87,6 +97,7 @@ export const upsertSandbox = mutation({
  */
 export const updateSandboxStatus = mutation({
   args: {
+    serviceKey: v.string(),
     sandboxId: v.string(),
     status: v.union(
       v.literal('active'),
@@ -96,6 +107,10 @@ export const updateSandboxStatus = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    if (args.serviceKey !== process.env.CONVEX_SERVICE_ROLE_KEY) {
+      return null;
+    }
+
     const sandbox = await ctx.db
       .query('sandboxes')
       .withIndex('by_sandbox_id', (q) => q.eq('sandbox_id', args.sandboxId))
@@ -116,10 +131,15 @@ export const updateSandboxStatus = mutation({
  */
 export const deleteSandbox = mutation({
   args: {
+    serviceKey: v.string(),
     sandboxId: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    if (args.serviceKey !== process.env.CONVEX_SERVICE_ROLE_KEY) {
+      return null;
+    }
+
     const sandbox = await ctx.db
       .query('sandboxes')
       .withIndex('by_sandbox_id', (q) => q.eq('sandbox_id', args.sandboxId))

@@ -46,10 +46,10 @@ export const useRetrievalLogic = () => {
       const batchResults = await Promise.all(
         batch.map(async (file) => {
           try {
-            const data = await getFileItemsByFileId(file.id);
+            const data = await getFileItemsByFileId(file._id);
             return data;
           } catch (e) {
-            console.error(`Unexpected error retrieving file ${file.id}:`, e);
+            console.error(`Unexpected error retrieving file ${file._id}:`, e);
             return [];
           }
         }),

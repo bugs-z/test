@@ -1,5 +1,5 @@
-import type { Tables } from '@/supabase/types';
+import type { Doc } from '@/convex/_generated/dataModel';
 
-export type DataListType = Tables<'chats'>[];
+export type DataListType = Doc<'chats'>[];
 
-export type DataItemType = Tables<'chats'>;
+export type DataItemType = Doc<'chats'>;

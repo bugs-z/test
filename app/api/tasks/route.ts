@@ -8,6 +8,7 @@ import { postRequestBodySchema, type PostRequestBody } from '../chat/schema';
 import { ChatSDKError } from '@/lib/errors';
 import { handleInitialChatAndUserMessage } from '@/lib/ai/actions';
 import { executeDeepResearchTool } from '@/lib/ai/tools/deep-research';
+import { validateChatAccess } from '@/lib/ai/actions/chat-validation';
 
 export const maxDuration = 800;
 
@@ -26,8 +27,8 @@ export async function POST(request: Request) {
     const userCountryCode = request.headers.get('x-vercel-ip-country');
     const { messages, model, modelParams, chatMetadata } = requestBody;
 
-    const profile = await getAIProfile();
-    const config = await getProviderConfig(profile);
+    const { profile } = await getAIProfile();
+    const config = await getProviderConfig(profile.user_id);
 
     if (!config.isRateLimitAllowed) {
       return new Response(
@@ -41,6 +42,11 @@ export async function POST(request: Request) {
         { status: 429 },
       );
     }
+
+    const chat = await validateChatAccess({
+      chatMetadata,
+      userId: profile.user_id,
+    });
 
     const supabase = await createClient();
 
@@ -56,11 +62,11 @@ export async function POST(request: Request) {
 
     // Handle initial chat creation and user message in parallel with other operations
     const initialChatPromise = handleInitialChatAndUserMessage({
-      supabase,
       modelParams,
       chatMetadata,
       profile,
       model,
+      chat,
       messages,
     });
 
@@ -73,6 +79,7 @@ export async function POST(request: Request) {
 
         await executeDeepResearchTool({
           config: {
+            chat,
             messages: processedMessages,
             modelParams,
             profile,
@@ -80,7 +87,6 @@ export async function POST(request: Request) {
             abortSignal: abortController.signal,
             chatMetadata,
             model,
-            supabase,
             userCountryCode,
             originalMessages: messages,
             systemPrompt,
@@ -94,11 +100,8 @@ export async function POST(request: Request) {
   }
 }
 
-async function getProviderConfig(profile: any) {
-  const rateLimitStatus = await checkRatelimitOnApi(
-    profile.user_id,
-    'deep-research',
-  );
+async function getProviderConfig(user_id: string) {
+  const rateLimitStatus = await checkRatelimitOnApi(user_id, 'deep-research');
 
   return {
     isRateLimitAllowed: rateLimitStatus.allowed,

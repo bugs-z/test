@@ -2,7 +2,7 @@
 import { epochTimeToNaturalLanguage } from '../utils';
 import { getRedis } from './redis';
 import { getSubscriptionInfo } from './subscription-utils';
-import type { RateLimitInfo, SubscriptionInfo } from '@/types';
+import type { RateLimitInfo, SubscriptionStatus } from '@/types';
 
 export type RateLimitResult =
   | {
@@ -27,7 +27,7 @@ export type RateLimitResult =
 export async function ratelimit(
   userId: string,
   model: string,
-  subscriptionInfo?: SubscriptionInfo,
+  subscriptionInfo?: { planType: SubscriptionStatus },
 ): Promise<RateLimitResult> {
   if (!isRateLimiterEnabled()) {
     return { allowed: true, remaining: -1, timeRemaining: null };
@@ -43,7 +43,7 @@ function isRateLimiterEnabled(): boolean {
 export async function _ratelimit(
   model: string,
   userId: string,
-  subscriptionInfo: SubscriptionInfo,
+  subscriptionInfo: { planType: SubscriptionStatus },
 ): Promise<RateLimitResult> {
   try {
     const storageKey = _makeStorageKey(userId, model);
@@ -53,11 +53,12 @@ export async function _ratelimit(
       subscriptionInfo,
     );
 
-    const subscriptionType = subscriptionInfo.isTeam
-      ? 'team'
-      : subscriptionInfo.isPremium
-        ? 'premium'
-        : 'free';
+    const subscriptionType =
+      subscriptionInfo.planType === 'team'
+        ? 'team'
+        : subscriptionInfo.planType === 'pro'
+          ? 'premium'
+          : 'free';
 
     if (remaining === 0) {
       return {
@@ -83,7 +84,7 @@ export async function _ratelimit(
 export async function getRemaining(
   userId: string,
   model: string,
-  subscriptionInfo: SubscriptionInfo,
+  subscriptionInfo: { planType: SubscriptionStatus },
 ): Promise<[number, number | null]> {
   const storageKey = _makeStorageKey(userId, model);
   const timeWindow = getTimeWindow();
@@ -115,8 +116,12 @@ function getTimeWindow(): number {
   return Number(process.env[key]) * 60 * 1000;
 }
 
-function _getLimit(model: string, subscriptionInfo: SubscriptionInfo): number {
-  const isPaid = subscriptionInfo.isPremium || subscriptionInfo.isTeam;
+function _getLimit(
+  model: string,
+  subscriptionInfo: { planType: SubscriptionStatus },
+): number {
+  const isPaid =
+    subscriptionInfo.planType === 'pro' || subscriptionInfo.planType === 'team';
   const suffix = isPaid ? '_PREMIUM' : '_FREE';
 
   // Standard model handling
@@ -125,7 +130,7 @@ function _getLimit(model: string, subscriptionInfo: SubscriptionInfo): number {
   const defaultLimit = 0;
   const limit = getValidatedLimit(process.env[limitKey], defaultLimit);
 
-  if (subscriptionInfo.isTeam) {
+  if (subscriptionInfo.planType === 'team') {
     const teamMultiplier = Number(process.env.TEAM_LIMIT_MULTIPLIER) || 1.8;
     return Math.floor(limit * teamMultiplier);
   }
@@ -237,23 +242,24 @@ function getModelName(model: string): string {
 export async function checkRatelimitOnApi(
   userId: string,
   model: string,
-  subscriptionInfo?: SubscriptionInfo,
+  subscriptionInfo?: { planType: SubscriptionStatus },
 ): Promise<{ allowed: boolean; info: any }> {
   const result = await ratelimit(userId, model, subscriptionInfo);
   const subInfo = subscriptionInfo || (await getSubscriptionInfo(userId));
   const max = _getLimit(model, subInfo);
   const used = max - result.remaining;
+  const isPremium = subInfo.planType === 'pro' || subInfo.planType === 'team';
   const info: RateLimitInfo = {
     remaining: result.remaining,
     used,
     max,
-    isPremiumUser: subInfo.isPremium,
+    isPremiumUser: isPremium,
   };
   if (!result.allowed) {
     info.timeRemaining = result.timeRemaining;
     info.message = getRateLimitErrorMessage(
       result.timeRemaining!,
-      subInfo.isPremium,
+      isPremium,
       model,
     );
   }
