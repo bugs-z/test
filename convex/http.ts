@@ -4,7 +4,8 @@ import { getMessagesWithFilesHttp } from './messagesHttp';
 import { handleTeamsHttp } from './teamsHttp';
 import { handleSubscriptionsHttp } from './subscriptionsHttp';
 import { handleProfilesHttp } from './profilesHttp';
-import { httpAction } from './_generated/server';
+import { getImageUrlHttp, uploadImageHttp } from './imageHttp';
+import { createOptionsHandler } from './httpUtils';
 
 const http = httpRouter();
 
@@ -43,94 +44,61 @@ http.route({
   handler: getMessagesWithFilesHttp,
 });
 
-// Pre-flight request for /messages
+// Register image upload endpoint
+http.route({
+  path: '/api/upload-image',
+  method: 'POST',
+  handler: uploadImageHttp,
+});
+
+// Register image URL endpoint
+http.route({
+  path: '/api/get-image-url',
+  method: 'GET',
+  handler: getImageUrlHttp,
+});
+
+// Pre-flight requests using reusable handler
 http.route({
   path: '/messages',
   method: 'OPTIONS',
-  handler: httpAction(async (_, request) => {
-    return new Response(null, {
-      status: 204, // No content for OPTIONS
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'Access-Control-Max-Age': '86400',
-        Vary: 'Origin',
-      },
-    });
-  }),
+  handler: createOptionsHandler(['GET', 'OPTIONS']),
 });
 
-// Pre-flight request for /chats
 http.route({
   path: '/api/chats',
   method: 'OPTIONS',
-  handler: httpAction(async (_, request) => {
-    return new Response(null, {
-      status: 204, // No content for OPTIONS
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'Access-Control-Max-Age': '86400',
-        Vary: 'Origin',
-      },
-    });
-  }),
+  handler: createOptionsHandler(['POST', 'OPTIONS']),
 });
 
-// Pre-flight request for /teams
 http.route({
   path: '/api/teams',
   method: 'OPTIONS',
-  handler: httpAction(async (_, request) => {
-    return new Response(null, {
-      status: 204, // No content for OPTIONS
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'Access-Control-Max-Age': '86400',
-        Vary: 'Origin',
-      },
-    });
-  }),
+  handler: createOptionsHandler(['POST', 'OPTIONS']),
 });
 
-// Pre-flight request for /profiles
 http.route({
   path: '/api/profiles',
   method: 'OPTIONS',
-  handler: httpAction(async (_, request) => {
-    return new Response(null, {
-      status: 204, // No content for OPTIONS
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'Access-Control-Max-Age': '86400',
-        Vary: 'Origin',
-      },
-    });
-  }),
+  handler: createOptionsHandler(['POST', 'OPTIONS']),
 });
 
-// Pre-flight request for /subscriptions
 http.route({
   path: '/api/subscriptions',
   method: 'OPTIONS',
-  handler: httpAction(async (_, request) => {
-    return new Response(null, {
-      status: 204, // No content for OPTIONS
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'Access-Control-Max-Age': '86400',
-        Vary: 'Origin',
-      },
-    });
-  }),
+  handler: createOptionsHandler(['POST', 'OPTIONS']),
+});
+
+http.route({
+  path: '/api/upload-image',
+  method: 'OPTIONS',
+  handler: createOptionsHandler(['POST', 'OPTIONS']),
+});
+
+http.route({
+  path: '/api/get-image-url',
+  method: 'OPTIONS',
+  handler: createOptionsHandler(['GET', 'OPTIONS']),
 });
 
 export default http;

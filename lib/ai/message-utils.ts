@@ -302,7 +302,7 @@ export async function processChatMessages(
 
   // Process images if supabase client is provided
   const processedMessages = supabase
-    ? await processMessagesWithImages(messagesCopy, supabase, selectedModel)
+    ? await processMessagesWithImages(messagesCopy, selectedModel)
     : messagesCopy;
 
   // Check if we should uncensor the response

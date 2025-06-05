@@ -1,48 +1,10 @@
 import { httpAction } from './_generated/server';
 import { internal } from './_generated/api';
-import { createClient } from '@supabase/supabase-js';
-
-// Initialize Supabase client
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-);
-
-// Helper function to create response with consistent headers
-const createResponse = (
-  data: unknown,
-  status: number,
-  origin: string | null,
-) => {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      Vary: 'Origin',
-    },
-  });
-};
-
-// Helper function to validate auth token and get user
-const validateAuth = async (authHeader: string | null) => {
-  if (!authHeader?.startsWith('Bearer ')) {
-    throw new Error('Unauthorized');
-  }
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser(authHeader.split(' ')[1]);
-
-  if (authError || !user) {
-    throw new Error('Invalid token');
-  }
-
-  return user;
-};
+import {
+  createResponse,
+  createErrorResponse,
+  validateAuthWithUser,
+} from './httpUtils';
 
 // Helper function to validate user ID
 const validateUserId = (
@@ -56,16 +18,22 @@ const validateUserId = (
 
 // Main HTTP action handler for all chat operations
 export const handleChatsHttp = httpAction(async (ctx, request) => {
-  const origin = request.headers.get('Origin');
-
   // Only allow POST requests
   if (request.method !== 'POST') {
-    return createResponse({ error: 'Method not allowed' }, 405, origin);
+    return createErrorResponse('Method not allowed', 405);
   }
 
   try {
-    // Validate authentication
-    const user = await validateAuth(request.headers.get('Authorization'));
+    // Validate authentication with user verification
+    const authResult = await validateAuthWithUser(request);
+    if (!authResult.success || !authResult.user) {
+      return createErrorResponse(
+        authResult.error || 'Authentication failed',
+        401,
+      );
+    }
+
+    const { user } = authResult;
 
     // Parse request body
     const body = await request.json();
@@ -81,9 +49,9 @@ export const handleChatsHttp = httpAction(async (ctx, request) => {
           });
           // Validate user ID if chat exists
           if (chat && chat.user_id !== user.id) {
-            return createResponse({ error: 'Unauthorized' }, 401, origin);
+            return createErrorResponse('Unauthorized', 401);
           }
-          return createResponse({ chat }, 200, origin);
+          return createResponse({ chat }, 200);
         } else if (userId) {
           // Validate user ID for get chats by user ID
           validateUserId(userId, user.id);
@@ -95,32 +63,24 @@ export const handleChatsHttp = httpAction(async (ctx, request) => {
               cursor: paginationOpts?.cursor ?? null,
             },
           });
-          return createResponse(result, 200, origin);
+          return createResponse(result, 200);
         }
-        return createResponse(
-          { error: 'Missing required parameters' },
-          400,
-          origin,
-        );
+        return createErrorResponse('Missing required parameters', 400);
       }
 
       case 'update': {
         if (!chatId) {
-          return createResponse(
-            { error: 'Missing chat_id parameter' },
-            400,
-            origin,
-          );
+          return createErrorResponse('Missing chat_id parameter', 400);
         }
         if (!updates) {
-          return createResponse({ error: 'Missing updates data' }, 400, origin);
+          return createErrorResponse('Missing updates data', 400);
         }
         // Get chat to validate ownership
         const existingChat = await ctx.runQuery(internal.chats.getChatById, {
           chatId,
         });
         if (!existingChat) {
-          return createResponse({ error: 'Chat not found' }, 404, origin);
+          return createErrorResponse('Chat not found', 404);
         }
         // Validate user ID for chat update
         validateUserId(existingChat.user_id, user.id);
@@ -131,68 +91,50 @@ export const handleChatsHttp = httpAction(async (ctx, request) => {
             updates,
           },
         );
-        return createResponse(result, result.success ? 200 : 400, origin);
+        return createResponse(result, result.success ? 200 : 400);
       }
 
       case 'delete': {
         if (!chatId) {
-          return createResponse(
-            { error: 'Missing chat_id parameter' },
-            400,
-            origin,
-          );
+          return createErrorResponse('Missing chat_id parameter', 400);
         }
         // Get chat to validate ownership
         const existingChat = await ctx.runQuery(internal.chats.getChatById, {
           chatId,
         });
         if (!existingChat) {
-          return createResponse({ error: 'Chat not found' }, 404, origin);
+          return createErrorResponse('Chat not found', 404);
         }
         // Validate user ID for chat deletion
         validateUserId(existingChat.user_id, user.id);
         const result = await ctx.runMutation(internal.chats.deleteChat, {
           chatId,
         });
-        return createResponse(result, result.success ? 200 : 400, origin);
+        return createResponse(result, result.success ? 200 : 400);
       }
 
       case 'deleteAll': {
         if (!userId) {
-          return createResponse(
-            { error: 'Missing user_id parameter' },
-            400,
-            origin,
-          );
+          return createErrorResponse('Missing user_id parameter', 400);
         }
         // Validate user ID for delete all chats
         validateUserId(userId, user.id);
         const result = await ctx.runMutation(internal.chats.deleteAllChats, {
           userId,
         });
-        return createResponse(result, result.success ? 200 : 400, origin);
+        return createResponse(result, result.success ? 200 : 400);
       }
 
       default:
-        return createResponse({ error: 'Invalid operation type' }, 400, origin);
+        return createErrorResponse('Invalid operation type', 400);
     }
   } catch (error) {
     console.error('Error handling chat request:', error);
     if (error instanceof Error) {
-      if (error.message === 'Unauthorized') {
-        return createResponse({ error: 'Unauthorized' }, 401, origin);
-      }
-      if (error.message === 'Invalid token') {
-        return createResponse({ error: 'Invalid token' }, 401, origin);
-      }
       if (error.message === 'Unauthorized: User ID mismatch') {
-        return createResponse(
-          { error: 'Unauthorized: User ID mismatch' },
-          403,
-          origin,
-        );
+        return createErrorResponse('Unauthorized: User ID mismatch', 403);
       }
     }
-    return createResponse({ error: 'Internal server error' }, 500, origin);
+    return createErrorResponse('Internal server error', 500);
   }
 });

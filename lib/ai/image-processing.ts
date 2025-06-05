@@ -1,50 +1,69 @@
 import type { BuiltChatMessage } from '@/types/chat-message';
 import type { ImageContent } from '@/types/chat-message';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { api } from '@/convex/_generated/api';
+import type { Id } from '@/convex/_generated/dataModel';
+import { ConvexHttpClient } from 'convex/browser';
+
+if (
+  !process.env.NEXT_PUBLIC_CONVEX_URL ||
+  !process.env.CONVEX_SERVICE_ROLE_KEY
+) {
+  throw new Error(
+    'NEXT_PUBLIC_CONVEX_URL or CONVEX_SERVICE_ROLE_KEY environment variable is not defined',
+  );
+}
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL);
 
 /**
- * Gets signed URLs for multiple images in a single request
- * @param paths - Array of image paths
- * @param supabase - Supabase client instance
- * @returns Promise resolving to map of path to signed URL
+ * Gets URLs for multiple images from Convex storage
+ * @param storageIds - Array of storage IDs
+ * @returns Promise resolving to map of storage ID to URL
  */
-async function getSignedUrls(
-  paths: string[],
-  supabase: SupabaseClient,
+async function getImageUrls(
+  storageIds: string[],
 ): Promise<Map<string, string>> {
-  // Return empty map if no paths to process
-  if (!paths.length) {
+  // Return empty map if no storage IDs to process
+  if (!storageIds.length) {
     return new Map();
   }
 
-  const { data, error } = await supabase.storage
-    .from('message_images')
-    .createSignedUrls(paths, 60); // 1 minute expiry is enough for our use case
-
-  if (error) {
-    console.error('Error getting signed URLs:', error);
-    throw error;
-  }
-
   const urlMap = new Map<string, string>();
-  for (const item of data) {
-    if (item.path && item.signedUrl) {
-      urlMap.set(item.path, item.signedUrl);
+
+  // Process all storage IDs in parallel
+  const urlPromises = storageIds.map(async (storageId) => {
+    try {
+      // Check if storageId contains "/" which indicates it's a Supabase path with UUIDs
+      // Skip calling getImageUrlPublic for these cases
+      if (storageId.includes('/')) {
+        // Don't add to urlMap, effectively filtering out these storage IDs
+        return;
+      }
+
+      const url = await convex.query(api.fileStorage.getImageUrlPublic, {
+        serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
+        storageId: storageId as Id<'_storage'>,
+      });
+      if (url) {
+        urlMap.set(storageId, url);
+      }
+    } catch (error) {
+      console.error(`Error getting URL for storage ID ${storageId}:`, error);
     }
-  }
+  });
+
+  await Promise.all(urlPromises);
   return urlMap;
 }
 
 /**
- * Processes messages and converts image paths to base64
+ * Processes messages and converts image paths to URLs
  * @param messages - Array of chat messages to process
- * @param supabase - Supabase client instance
  * @param selectedModel - The selected model to check if it supports images
- * @returns Promise resolving to processed messages with base64 images or images removed
+ * @returns Promise resolving to processed messages with image URLs or images removed
  */
 export async function processMessagesWithImages(
   messages: BuiltChatMessage[],
-  supabase: SupabaseClient,
   selectedModel?: string,
 ): Promise<BuiltChatMessage[]> {
   // If model doesn't support images, remove them
@@ -55,8 +74,8 @@ export async function processMessagesWithImages(
     return removeImagesFromMessages(messages);
   }
 
-  // Collect all unique image paths that need processing
-  const pathsToProcess = new Set<string>();
+  // Collect all unique storage IDs that need processing
+  const storageIdsToProcess = new Set<string>();
   messages.forEach((message) => {
     if (Array.isArray(message.content)) {
       message.content.forEach((item) => {
@@ -65,48 +84,21 @@ export async function processMessagesWithImages(
           'isPath' in item.image_url &&
           item.image_url.isPath
         ) {
-          pathsToProcess.add(item.image_url.url);
+          storageIdsToProcess.add(item.image_url.url);
         }
       });
     }
   });
 
-  // If no paths to process, return original messages
-  if (pathsToProcess.size === 0) {
+  // If no storage IDs to process, return original messages
+  if (storageIdsToProcess.size === 0) {
     return messages;
   }
 
-  // Get signed URLs for all images in a single request
-  const signedUrls = await getSignedUrls(Array.from(pathsToProcess), supabase);
+  // Get URLs for all images from Convex storage
+  const imageUrls = await getImageUrls(Array.from(storageIdsToProcess));
 
-  // Process all images in parallel
-  const base64Promises = Array.from(pathsToProcess).map(async (path) => {
-    const signedUrl = signedUrls.get(path);
-    if (!signedUrl) return null;
-
-    try {
-      const response = await fetch(signedUrl);
-      const arrayBuffer = await response.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      const base64 = buffer.toString('base64');
-      const mimeType = response.headers.get('content-type') || 'image/png';
-      return { path, base64: `data:${mimeType};base64,${base64}` };
-    } catch (error) {
-      console.error('Error processing image %s:', JSON.stringify(path), error);
-      return null;
-    }
-  });
-
-  // Wait for all images to be processed and create a map of results
-  const base64Results = new Map(
-    (await Promise.all(base64Promises))
-      .filter(
-        (result): result is { path: string; base64: string } => result !== null,
-      )
-      .map(({ path, base64 }) => [path, base64]),
-  );
-
-  // Process messages using the base64 results
+  // Process messages using the image URLs directly
   return messages.map((message) => {
     if (Array.isArray(message.content)) {
       const processedContent = message.content.map((item) => {
@@ -115,12 +107,12 @@ export async function processMessagesWithImages(
           'isPath' in item.image_url &&
           item.image_url.isPath
         ) {
-          const base64 = base64Results.get(item.image_url.url);
-          if (base64) {
+          const url = imageUrls.get(item.image_url.url);
+          if (url) {
             return {
               type: 'image_url' as const,
               image_url: {
-                url: base64,
+                url: url,
               },
             } as ImageContent;
           }

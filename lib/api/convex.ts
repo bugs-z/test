@@ -29,20 +29,37 @@ export const makeAuthenticatedRequest = async (
   endpoint: string,
   method: 'GET' | 'POST',
   data?: unknown,
+  customHeaders?: Record<string, string>,
 ) => {
   const session = await getAuthenticatedSession();
   if (!session) return null;
 
-  const requestOptions: RequestInit = {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${session.access_token}`,
-    },
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${session.access_token}`,
+    ...customHeaders,
   };
 
+  const requestOptions: RequestInit = {
+    method,
+    headers,
+  };
+
+  // Handle different types of data
   if (data) {
-    requestOptions.body = JSON.stringify(data);
+    if (data instanceof File || data instanceof Blob) {
+      // For file uploads, only delete Content-Type if no custom one is provided
+      // This allows for direct file uploads with specific content types
+      if (!customHeaders?.['Content-Type']) {
+        delete headers['Content-Type'];
+      }
+      requestOptions.body = data;
+    } else {
+      // For JSON data
+      if (!customHeaders?.['Content-Type']) {
+        headers['Content-Type'] = 'application/json';
+      }
+      requestOptions.body = JSON.stringify(data);
+    }
   }
 
   const response = await fetch(
@@ -51,7 +68,7 @@ export const makeAuthenticatedRequest = async (
   );
 
   if (!response.ok) {
-    const errorData = await response.json();
+    const errorData = await response.json().catch(() => ({}));
     throw new Error(
       errorData.error || `Failed to ${method.toLowerCase()} request`,
     );

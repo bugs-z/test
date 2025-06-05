@@ -189,7 +189,7 @@ export const useSelectFileHandler = () => {
 
         // Upload image to storage
         try {
-          const path = await uploadImage(file, profile.user_id);
+          const path = await uploadImage(file);
 
           // Update image with path and remove loading state
           setNewMessageImages((prev) =>

@@ -8,6 +8,7 @@ import {
 import { v } from 'convex/values';
 import { paginationOptsValidator } from 'convex/server';
 import { internal } from './_generated/api';
+import { Id } from './_generated/dataModel';
 
 export const createChatAction = action({
   args: {
@@ -276,11 +277,38 @@ export const deleteChat = internalMutation({
         }
       }
 
-      // Then delete all messages associated with this chat
+      // Get all messages associated with this chat
       const messages = await ctx.db
         .query('messages')
         .withIndex('by_chat_id', (q) => q.eq('chat_id', args.chatId))
         .collect();
+
+      // Delete images from storage before deleting messages
+      const allImagePaths: string[] = [];
+      messages.forEach((message) => {
+        if (message.image_paths && message.image_paths.length > 0) {
+          allImagePaths.push(...message.image_paths);
+        }
+      });
+
+      // Delete all images from storage
+      if (allImagePaths.length > 0) {
+        const imageDeletions = allImagePaths.map((storageIdString) => {
+          try {
+            // Convert string to storage ID
+            const storageId = storageIdString as Id<'_storage'>;
+            return ctx.storage.delete(storageId);
+          } catch (error) {
+            console.error(
+              'Failed to delete storage file:',
+              storageIdString,
+              error,
+            );
+            return Promise.resolve(); // Continue with other deletions even if one fails
+          }
+        });
+        await Promise.all(imageDeletions);
+      }
 
       // Delete all messages
       for (const message of messages) {
@@ -347,11 +375,38 @@ export const deleteAllChats = internalMutation({
         }
       }
 
-      // Then delete all messages for this user
+      // Get all messages for this user
       const messages = await ctx.db
         .query('messages')
         .withIndex('by_user_id', (q) => q.eq('user_id', args.userId))
         .collect();
+
+      // Delete images from storage before deleting messages
+      const allImagePaths: string[] = [];
+      messages.forEach((message) => {
+        if (message.image_paths && message.image_paths.length > 0) {
+          allImagePaths.push(...message.image_paths);
+        }
+      });
+
+      // Delete all images from storage
+      if (allImagePaths.length > 0) {
+        const imageDeletions = allImagePaths.map((storageIdString) => {
+          try {
+            // Convert string to storage ID
+            const storageId = storageIdString as Id<'_storage'>;
+            return ctx.storage.delete(storageId);
+          } catch (error) {
+            console.error(
+              'Failed to delete storage file:',
+              storageIdString,
+              error,
+            );
+            return Promise.resolve(); // Continue with other deletions even if one fails
+          }
+        });
+        await Promise.all(imageDeletions);
+      }
 
       // Delete all messages
       for (const message of messages) {
@@ -491,77 +546,6 @@ export const getChatsByUserId = internalQuery({
 //     } catch (error) {
 //       console.error('Error getting shared chats by user ID:', error);
 //       throw new Error(error instanceof Error ? error.message : 'Failed to get shared chats');
-//     }
-//   },
-// });
-
-/**
- * Clean up duplicate chats by keeping only one chat for each id
- * This is a one-time operation to fix duplicate chats after migration
- */
-// export const cleanupDuplicateChats = mutation({
-//   args: {
-//     paginationOpts: paginationOptsValidator, // Required pagination options
-//   },
-//   returns: v.object({
-//     totalProcessed: v.number(),
-//     duplicatesRemoved: v.number(),
-//     errors: v.array(v.string()),
-//     isDone: v.boolean(), // Whether we've processed all chats
-//     continueCursor: v.union(v.string(), v.null()), // Cursor for the next batch
-//   }),
-//   handler: async (ctx, args) => {
-//     const stats = {
-//       totalProcessed: 0,
-//       duplicatesRemoved: 0,
-//       errors: [] as string[],
-//       isDone: false,
-//       continueCursor: null as string | null,
-//     };
-
-//     try {
-//       // Get chats with pagination
-//       const result = await ctx.db
-//         .query("chats")
-//         .order("desc")
-//         .paginate(args.paginationOpts);
-
-//       const chatsToProcess = result.page;
-//       stats.totalProcessed = chatsToProcess.length;
-//       stats.isDone = result.isDone;
-//       stats.continueCursor = result.continueCursor;
-
-//       // Group chats by id
-//       const chatsById = new Map<string, typeof chatsToProcess>();
-//       for (const chat of chatsToProcess) {
-//         const existing = chatsById.get(chat.id) || [];
-//         existing.push(chat);
-//         chatsById.set(chat.id, existing);
-//       }
-
-//       // For each group with duplicates, keep one and delete others
-//       for (const [id, chats] of chatsById.entries()) {
-//         if (chats.length <= 1) continue; // Skip if no duplicates
-
-//         // Since creation times are the same, we'll keep the first one we find
-//         // and delete the rest
-//         const [keepChat, ...duplicates] = chats;
-
-//         // Delete all duplicates
-//         for (const duplicate of duplicates) {
-//           try {
-//             await ctx.db.delete(duplicate._id);
-//             stats.duplicatesRemoved++;
-//           } catch (error) {
-//             stats.errors.push(`Failed to delete duplicate chat ${duplicate._id}: ${error}`);
-//           }
-//         }
-//       }
-
-//       return stats;
-//     } catch (error) {
-//       stats.errors.push(`Failed to process chats: ${error}`);
-//       return stats;
 //     }
 //   },
 // });

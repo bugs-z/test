@@ -435,9 +435,7 @@ export const useChatHandler = () => {
       const payload: ChatPayload = {
         chatMessages: sentChatMessages,
         retrievedFileItems: retrievedFileItems,
-        imagePaths: newMessageImages
-          .filter((img) => img.path?.includes('/image-'))
-          .map((img) => img.path),
+        imagePaths: newMessageImages.map((img) => img.path),
       };
       const modelParams: ModelParams = {
         isContinuation,

@@ -1,5 +1,6 @@
 import { internalMutation } from './_generated/server';
 import { v } from 'convex/values';
+import { Id } from './_generated/dataModel';
 
 /**
  * Delete a profile and all associated user data
@@ -106,6 +107,33 @@ export const deleteProfile = internalMutation({
       // Delete files (references user)
       const fileDeletions = files.map((file) => ctx.db.delete(file._id));
       await Promise.all(fileDeletions);
+
+      // Delete images from storage before deleting messages
+      const allImagePaths: string[] = [];
+      messages.forEach((message) => {
+        if (message.image_paths && message.image_paths.length > 0) {
+          allImagePaths.push(...message.image_paths);
+        }
+      });
+
+      // Delete all images from storage
+      if (allImagePaths.length > 0) {
+        const imageDeletions = allImagePaths.map((storageIdString) => {
+          try {
+            // Convert string to storage ID
+            const storageId = storageIdString as Id<'_storage'>;
+            return ctx.storage.delete(storageId);
+          } catch (error) {
+            console.error(
+              'Failed to delete storage file:',
+              storageIdString,
+              error,
+            );
+            return Promise.resolve(); // Continue with other deletions even if one fails
+          }
+        });
+        await Promise.all(imageDeletions);
+      }
 
       // Delete messages (references user and chats)
       const messageDeletions = messages.map((message) =>

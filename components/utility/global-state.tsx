@@ -5,13 +5,12 @@ import { getChatFilesByChatId } from '@/db/chat-files';
 import { getChatById } from '@/db/chats';
 import { getMessagesByChatId } from '@/db/messages';
 import { getProfileByUserId } from '@/db/profiles';
-import { getMessageImageFromStorage } from '@/db/storage/message-images';
+import { processMessageImages } from '@/db/storage/message-images';
 import {
   getSubscriptionByTeamId,
   getSubscriptionByUserId,
 } from '@/db/subscriptions';
 import { getTeamMembersByTeamId } from '@/db/teams';
-import { convertBlobToBase64 } from '@/lib/blob-to-b64';
 import type { ProcessedTeamMember } from '@/lib/team-utils';
 import type {
   ChatMessage,
@@ -224,51 +223,7 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
       oldestSequenceNumber,
     );
 
-    const imagePromises: Promise<MessageImage>[] = fetchedMessages.flatMap(
-      (message) =>
-        message.image_paths
-          ? message.image_paths.map(async (imagePath) => {
-              const url = await getMessageImageFromStorage(imagePath);
-
-              if (url) {
-                try {
-                  const response = await fetch(url);
-                  const blob = await response.blob();
-                  const base64 = await convertBlobToBase64(blob);
-
-                  const messageImage = {
-                    messageId: message.id,
-                    path: imagePath,
-                    base64,
-                    url,
-                    file: null,
-                  };
-
-                  return messageImage;
-                } catch (error) {
-                  console.error('Error fetching image:', error);
-                  return {
-                    messageId: message.id,
-                    path: imagePath,
-                    base64: '',
-                    url,
-                    file: null,
-                  };
-                }
-              }
-
-              return {
-                messageId: message.id,
-                path: imagePath,
-                base64: '',
-                url,
-                file: null,
-              };
-            })
-          : [],
-    );
-
-    const images: MessageImage[] = await Promise.all(imagePromises.flat());
+    const images = await processMessageImages(fetchedMessages);
     setChatImages((prevImages) => [...prevImages, ...images]);
 
     return fetchedMessages.map((fetchMessage) => ({

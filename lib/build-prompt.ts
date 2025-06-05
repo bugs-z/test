@@ -128,40 +128,23 @@ export async function buildFinalMessages(
         imagePaths &&
         imagePaths.length > 0;
 
-      if (isLastUserMessageWithTempImages) {
-        // For the last user message, use the temporary paths directly
-        content = [
-          {
-            type: 'text',
-            text: message.content,
+      const imagePathsToUse = isLastUserMessageWithTempImages
+        ? imagePaths
+        : message.image_paths;
+
+      content = [
+        {
+          type: 'text',
+          text: message.content,
+        },
+        ...imagePathsToUse.map((path: string) => ({
+          type: 'image_url' as const,
+          image_url: {
+            url: path,
+            isPath: true,
           },
-          ...imagePaths.map((path) => ({
-            type: 'image_url' as const,
-            image_url: {
-              url: path,
-              isPath: true,
-            },
-          })),
-        ];
-      } else {
-        // For other messages, use regular path handling
-        content = [
-          {
-            type: 'text',
-            text: message.content,
-          },
-          ...message.image_paths.map((path: string) => {
-            const isBase64 = path.startsWith('data');
-            return {
-              type: 'image_url' as const,
-              image_url: {
-                url: path,
-                isPath: !isBase64,
-              },
-            };
-          }),
-        ];
-      }
+        })),
+      ];
     } else {
       content = message.content;
     }
