@@ -1,6 +1,6 @@
 import { ConvexClient } from 'convex/browser';
 import { api } from '@/convex/_generated/api';
-import type { TablesInsert, TablesUpdate } from '@/supabase/types';
+import type { TablesInsert } from '@/supabase/types';
 import mammoth from 'mammoth';
 import { toast } from 'sonner';
 import { uploadFile } from '@/db/storage/files';
@@ -46,57 +46,32 @@ const createBaseFile = async (
   fileRecord: TablesInsert<'files'>,
   processFile: (fileId: Id<'files'>) => Promise<void>,
 ) => {
-  const filesCounts = await convex.query(api.files.getAllFilesCount, {
-    userId: fileRecord.user_id,
-  });
-  const maxFiles = Number.parseInt(
-    process.env.NEXT_PUBLIC_RATELIMITER_LIMIT_FILES || '100',
-  );
-  if (filesCounts >= maxFiles) return false;
-
-  const sizeLimitMB = Number.parseInt(
-    process.env.NEXT_PUBLIC_USER_FILE_SIZE_LIMIT_MB || String(30),
-  );
-  const MB_TO_BYTES = (mb: number) => mb * 1024 * 1024;
-  const SIZE_LIMIT = MB_TO_BYTES(sizeLimitMB);
-  if (file.size > SIZE_LIMIT) {
-    throw new Error(`File must be less than ${sizeLimitMB}MB`);
-  }
-
-  const fileData = {
-    user_id: fileRecord.user_id,
-    file_path: fileRecord.file_path,
-    name: fileRecord.name,
-    size: fileRecord.size,
-    tokens: fileRecord.tokens,
-    type: fileRecord.type,
-  };
-
-  const createdFile = await convex.mutation(api.files.createFile, {
-    fileData,
-  });
-
-  const filePath = await uploadFile(file, {
-    name: createdFile.name,
-    user_id: createdFile.user_id,
-    file_id: createdFile.name,
-  });
-
-  await updateFile(createdFile._id, {
-    file_path: filePath,
-  });
-
   try {
-    await processFile(createdFile._id);
+    // Use the new uploadFileWithRecord function that handles both file upload and database record creation
+    const result = await uploadFile(file, {
+      name: fileRecord.name,
+      size: file.size,
+      tokens: fileRecord.tokens,
+      type: fileRecord.type,
+    });
+
+    const createdFile = result.file;
+
+    try {
+      await processFile(createdFile._id);
+    } catch (error) {
+      await deleteFile(createdFile._id);
+      throw error;
+    }
+
+    const fetchedFile = await getFileById(createdFile._id);
+    await getFileItemsByFileId(createdFile._id);
+
+    return fetchedFile;
   } catch (error) {
-    await deleteFile(createdFile._id);
+    console.error('Error in createBaseFile:', error);
     throw error;
   }
-
-  const fetchedFile = await getFileById(createdFile._id);
-  await getFileItemsByFileId(createdFile._id);
-
-  return fetchedFile;
 };
 
 // For non-docx files
@@ -168,28 +143,6 @@ export const createDocXFile = async (
       throw new Error(`Failed to process file: ${json.message}`);
     }
   });
-};
-
-export const updateFile = async (
-  fileId: Id<'files'>,
-  file: TablesUpdate<'files'>,
-) => {
-  const fileData = {
-    file_path: file.file_path,
-    name: file.name,
-    size: file.size,
-    tokens: file.tokens,
-    type: file.type,
-    message_id: file.message_id || undefined,
-    chat_id: file.chat_id || undefined,
-  };
-
-  const updatedFile = await convex.mutation(api.files.updateFile, {
-    fileId,
-    fileData,
-  });
-
-  return updatedFile;
 };
 
 export const deleteFile = async (fileId: Id<'files'>) => {

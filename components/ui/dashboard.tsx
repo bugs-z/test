@@ -1,7 +1,6 @@
 'use client';
 
 import { handleFileUpload } from '@/components/chat/chat-helpers/file-upload';
-import { UnsupportedFilesDialog } from '@/components/chat/unsupported-files-dialog';
 import { Sidebar } from '@/components/sidebar/sidebar';
 import { Button } from '@/components/ui/button';
 import { Tabs } from '@/components/ui/tabs';
@@ -44,6 +43,7 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
     contentType,
     setContentType,
     newMessageImages,
+    newMessageFiles,
   } = useContext(PentestGPTContext);
   const {
     isReadyToChat,
@@ -62,9 +62,7 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
 
   const { handleSelectDeviceFile } = useSelectFileHandler();
   const [isDragging, setIsDragging] = useState(false);
-  const [showConfirmationDialog, setShowConfirmationDialog] = useState(false);
   const [isKeyboardShortcutsOpen, setIsKeyboardShortcutsOpen] = useState(false);
-  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
 
   const toggleButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -118,32 +116,20 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
       }
       handleFileUpload(
         files,
-        setShowConfirmationDialog,
-        setPendingFiles,
         handleSelectDeviceFile,
         newMessageImages,
+        newMessageFiles,
       );
     }
 
-    if (items.length > 4) {
-      toast.error('Maximum of 4 files can be dropped at a time.');
+    if (items.length > 5) {
+      toast.error('Maximum of 5 files can be dropped at a time.');
     }
 
     setIsDragging(false);
   };
 
   const isDraggingEnabled = isReadyToChat && isPremiumSubscription;
-
-  const handleConversionConfirmation = () => {
-    pendingFiles.forEach((file) => handleSelectDeviceFile(file));
-    setShowConfirmationDialog(false);
-    setPendingFiles([]);
-  };
-
-  const handleCancel = () => {
-    setPendingFiles([]);
-    setShowConfirmationDialog(false);
-  };
 
   const handleDragEnter = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -174,15 +160,6 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
 
   return (
     <div className="flex size-full">
-      {showConfirmationDialog && pendingFiles.length > 0 && (
-        <UnsupportedFilesDialog
-          isOpen={showConfirmationDialog}
-          pendingFiles={pendingFiles}
-          onCancel={handleCancel}
-          onConfirm={handleConversionConfirmation}
-        />
-      )}
-
       {!showSidebar && (
         <WithTooltip
           display={'Open sidebar'}

@@ -17,7 +17,6 @@ import { handleFileUpload } from './chat-helpers/file-upload';
 import { useChatHandler } from './chat-hooks/use-chat-handler';
 import { usePromptAndCommand } from './chat-hooks/use-prompt-and-command';
 import { useSelectFileHandler } from './chat-hooks/use-select-file-handler';
-import { UnsupportedFilesDialog } from './unsupported-files-dialog';
 import { ToolOptions } from './chat-tools/tool-options';
 import { useUIContext } from '@/context/ui-context';
 import { useKeyboardHandler } from './chat-hooks/use-key-handler';
@@ -34,9 +33,6 @@ export const ChatInput: FC = () => {
   });
 
   const [isTyping, setIsTyping] = useState<boolean>(false);
-  const [showConfirmationDialog, setShowConfirmationDialog] =
-    useState<boolean>(false);
-  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
 
   const divRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -110,23 +106,6 @@ export const ChatInput: FC = () => {
   return (
     <div className="flex w-full justify-center">
       <div className="z-10 w-full max-w-[800px] items-end px-4 pb-3 sm:pb-5 md:px-8">
-        {/* Unsupported files dialog */}
-        {showConfirmationDialog && pendingFiles.length > 0 && (
-          <UnsupportedFilesDialog
-            isOpen={showConfirmationDialog}
-            pendingFiles={pendingFiles}
-            onCancel={() => {
-              setPendingFiles([]);
-              setShowConfirmationDialog(false);
-            }}
-            onConfirm={() => {
-              pendingFiles.forEach(handleSelectDeviceFile);
-              setShowConfirmationDialog(false);
-              setPendingFiles([]);
-            }}
-          />
-        )}
-
         {/* Files and Enhanced Menu Container */}
         <div
           className={cn('mb-2 flex flex-col flex-wrap justify-center gap-2')}
@@ -176,8 +155,6 @@ export const ChatInput: FC = () => {
 
                   handleFileUpload(
                     files,
-                    setShowConfirmationDialog,
-                    setPendingFiles,
                     handleSelectDeviceFile,
                     newMessageImages,
                     newMessageFiles,

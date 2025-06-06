@@ -4,7 +4,12 @@ import { getMessagesWithFilesHttp } from './messagesHttp';
 import { handleTeamsHttp } from './teamsHttp';
 import { handleSubscriptionsHttp } from './subscriptionsHttp';
 import { handleProfilesHttp } from './profilesHttp';
-import { getImageUrlHttp, uploadImageHttp } from './imageHttp';
+import {
+  getImageUrlHttp,
+  uploadImageHttp,
+  getFileUrlHttp,
+  uploadFileHttp,
+} from './fileStorageHttp';
 import { createOptionsHandler } from './httpUtils';
 
 const http = httpRouter();
@@ -58,6 +63,20 @@ http.route({
   handler: getImageUrlHttp,
 });
 
+// Register file upload endpoint
+http.route({
+  path: '/api/upload-file',
+  method: 'POST',
+  handler: uploadFileHttp,
+});
+
+// Register file URL endpoint
+http.route({
+  path: '/api/get-file-url',
+  method: 'GET',
+  handler: getFileUrlHttp,
+});
+
 // Pre-flight requests using reusable handler
 http.route({
   path: '/messages',
@@ -97,6 +116,18 @@ http.route({
 
 http.route({
   path: '/api/get-image-url',
+  method: 'OPTIONS',
+  handler: createOptionsHandler(['GET', 'OPTIONS']),
+});
+
+http.route({
+  path: '/api/upload-file',
+  method: 'OPTIONS',
+  handler: createOptionsHandler(['POST', 'OPTIONS']),
+});
+
+http.route({
+  path: '/api/get-file-url',
   method: 'OPTIONS',
   handler: createOptionsHandler(['GET', 'OPTIONS']),
 });

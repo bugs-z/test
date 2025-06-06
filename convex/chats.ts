@@ -8,7 +8,7 @@ import {
 import { v } from 'convex/values';
 import { paginationOptsValidator } from 'convex/server';
 import { internal } from './_generated/api';
-import { Id } from './_generated/dataModel';
+import type { Id } from './_generated/dataModel';
 
 export const createChatAction = action({
   args: {
@@ -269,7 +269,21 @@ export const deleteChat = internalMutation({
             await ctx.db.delete(item._id);
           }
 
-          // Delete the file itself
+          // Delete file from Convex storage if it's a Convex file (no "/" in path)
+          if (file.file_path && !file.file_path.includes('/')) {
+            try {
+              const storageId = file.file_path as Id<'_storage'>;
+              await ctx.storage.delete(storageId);
+            } catch (storageError) {
+              console.error(
+                `Failed to delete file from storage: ${file.file_path}`,
+                storageError,
+              );
+              // Continue with other deletions even if storage deletion fails
+            }
+          }
+
+          // Delete the file record itself
           await ctx.db.delete(file._id);
         } catch (deleteError) {
           console.error(`Error deleting file ${file._id}:`, deleteError);
@@ -368,6 +382,21 @@ export const deleteAllChats = internalMutation({
       // Delete all files
       for (const file of files) {
         try {
+          // Delete file from Convex storage if it's a Convex file (no "/" in path)
+          if (file.file_path && !file.file_path.includes('/')) {
+            try {
+              const storageId = file.file_path as Id<'_storage'>;
+              await ctx.storage.delete(storageId);
+            } catch (storageError) {
+              console.error(
+                `Failed to delete file from storage: ${file.file_path}`,
+                storageError,
+              );
+              // Continue with other deletions even if storage deletion fails
+            }
+          }
+
+          // Delete the file record itself
           await ctx.db.delete(file._id);
         } catch (deleteError) {
           console.error(`Error deleting file ${file._id}:`, deleteError);

@@ -8,12 +8,12 @@ import {
   FILE_CONTENT_TOKEN_LIMIT,
 } from '@/lib/retrieval/processing';
 import { getServerUser } from '@/lib/server/server-chat-helpers';
-import { createSupabaseAdminClient } from '@/lib/server/server-utils';
 import type { FileItemChunk } from '@/types';
 import { NextResponse } from 'next/server';
 import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
+import { isBinaryFile } from 'isbinaryfile';
 
 if (
   !process.env.NEXT_PUBLIC_CONVEX_URL ||
@@ -28,7 +28,6 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL);
 
 export async function POST(req: Request) {
   try {
-    const supabaseAdmin = createSupabaseAdminClient();
     const user = await getServerUser();
     const formData = await req.formData();
     const file_id = formData.get('file_id') as Id<'files'>;
@@ -45,14 +44,32 @@ export async function POST(req: Request) {
       throw new Error('Unauthorized');
     }
 
-    const { data: file, error: fileError } = await supabaseAdmin.storage
-      .from('files')
-      .download(fileMetadata.file_path);
+    // Skip legacy Supabase files (identified by "/" in file_path)
+    if (fileMetadata.file_path.includes('/')) {
+      throw new Error('Legacy file format not supported');
+    }
 
-    if (fileError)
-      throw new Error(`Failed to retrieve file: ${fileError.message}`);
+    // Handle Convex storage files only
+    const fileUrl = await convex.query(
+      api.fileStorage.getFileStorageUrlPublic,
+      {
+        serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
+        storageId: fileMetadata.file_path as Id<'_storage'>,
+      },
+    );
 
-    const fileBuffer = Buffer.from(await file.arrayBuffer());
+    if (!fileUrl) {
+      throw new Error('Failed to get file URL from Convex storage');
+    }
+
+    // Fetch the file content from Convex storage URL
+    const response = await fetch(fileUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch file content: ${response.statusText}`);
+    }
+
+    const fileBuffer = Buffer.from(await response.arrayBuffer());
+
     const blob = new Blob([fileBuffer]);
     const fileExtension = fileMetadata.name.split('.').pop()?.toLowerCase();
 
@@ -75,22 +92,36 @@ export async function POST(req: Request) {
         chunks = await processTxt(blob);
         break;
       default: {
-        const cleanText = await convert(blob);
-        chunks = await processTxt(new Blob([cleanText]));
+        // Check if the original file is binary before text conversion
+        const isBinary = await isBinaryFile(fileBuffer);
+
+        if (isBinary) {
+          // For binary files, create a single chunk with empty content and 0 tokens
+          chunks = [
+            {
+              content: '',
+              tokens: 0,
+            },
+          ];
+        } else {
+          const cleanText: string = await convert(blob);
+          chunks = await processTxt(new Blob([cleanText]));
+        }
         break;
       }
     }
 
     if (fileExtension !== 'pdf') {
-      chunks = chunks.filter((chunk) => chunk.content.trim() !== '');
-    }
-
-    if (chunks.length === 0 && fileExtension !== 'pdf') {
-      throw new Error('Empty file. Please check the file format and content.');
+      // Filter out empty chunks, but preserve binary file chunks (which have empty content by design)
+      chunks = chunks.filter((chunk) => {
+        // Keep chunks that have content or are intentionally empty (0 tokens indicates binary file)
+        return chunk.content.trim() !== '' || chunk.tokens === 0;
+      });
     }
 
     const totalTokens = chunks.reduce((acc, chunk) => acc + chunk.tokens, 0);
     const limit = FILE_CONTENT_TOKEN_LIMIT;
+
     if (totalTokens > limit) {
       throw new Error(`File content exceeds token limit of ${limit}`);
     }
@@ -114,6 +145,7 @@ export async function POST(req: Request) {
     }
 
     await convex.mutation(api.files.updateFile, {
+      serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
       fileId: file_id,
       fileData: {
         tokens: totalTokens,
@@ -125,7 +157,7 @@ export async function POST(req: Request) {
     });
   } catch (error: any) {
     // Only log stack trace for unexpected errors
-    const knownErrors = ['Empty file', 'exceeds token limit'];
+    const knownErrors = ['exceeds token limit'];
 
     if (
       !knownErrors.some((knownError) => error.message?.includes(knownError))

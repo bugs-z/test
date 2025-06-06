@@ -2,9 +2,9 @@ import { internalQuery, query } from './_generated/server';
 import { v } from 'convex/values';
 
 /**
- * Get image URL from storage ID (public function)
+ * Get file/image URL from storage ID (public function)
  */
-export const getImageUrlPublic = query({
+export const getFileStorageUrlPublic = query({
   args: {
     serviceKey: v.string(),
     storageId: v.id('_storage'),
@@ -19,7 +19,7 @@ export const getImageUrlPublic = query({
       const url = await ctx.storage.getUrl(args.storageId);
       return url;
     } catch (error) {
-      console.error('[STORAGE] Failed to get image URL', {
+      console.error('[STORAGE] Failed to get file URL', {
         error: error instanceof Error ? error.message : String(error),
         storageId: args.storageId,
       });
@@ -29,9 +29,9 @@ export const getImageUrlPublic = query({
 });
 
 /**
- * Get image URL from storage ID (internal function)
+ * Get file/image URL from storage ID (internal function)
  */
-export const getImageUrl = internalQuery({
+export const getFileStorageUrl = internalQuery({
   args: {
     storageId: v.id('_storage'),
   },
@@ -41,7 +41,7 @@ export const getImageUrl = internalQuery({
       const url = await ctx.storage.getUrl(args.storageId);
       return url;
     } catch (error) {
-      console.error('[STORAGE] Failed to get image URL', {
+      console.error('[STORAGE] Failed to get file URL', {
         error: error instanceof Error ? error.message : String(error),
         storageId: args.storageId,
       });

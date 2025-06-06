@@ -85,6 +85,7 @@
     "hast-util-to-jsx-runtime": "^2.3.6",
     "husky": "^9.1.7",
     "input-otp": "^1.4.2",
+    "isbinaryfile": "^5.0.4",
     "isomorphic-dompurify": "^2.25.0",
     "jest-environment-jsdom": "^29.7.0",
     "jszip": "^3.10.1",

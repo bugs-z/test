@@ -1,10 +1,9 @@
-import { createSupabaseAdminClient } from '@/lib/server/server-utils';
 import type { BuiltChatMessage } from '@/types/chat-message';
 import type { MessageContent } from '@/types/chat-message';
 import type { TextPart, FilePart } from 'ai';
 import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@/convex/_generated/api';
-import type { Doc } from '@/convex/_generated/dataModel';
+import type { Doc, Id } from '@/convex/_generated/dataModel';
 
 if (
   !process.env.NEXT_PUBLIC_CONVEX_URL ||
@@ -16,6 +15,58 @@ if (
 }
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL);
+
+/**
+ * Gets file content from Convex storage
+ * @param fileId - The file ID to get content for
+ * @param userId - User ID for authorization
+ * @returns Buffer with file content or null if failed
+ */
+async function getFileContentFromStorage(
+  fileId: Id<'files'>,
+  userId: string,
+): Promise<Buffer | null> {
+  try {
+    // Get the file metadata from Convex
+    const fileMetadata = await convex.query(api.files.getFile, {
+      fileId,
+    });
+
+    // Combined validation checks - return null if any condition fails
+    if (
+      !fileMetadata ||
+      fileMetadata.user_id !== userId ||
+      fileMetadata.file_path.includes('/')
+    ) {
+      return null;
+    }
+
+    // Handle Convex storage files only
+    const fileUrl = await convex.query(
+      api.fileStorage.getFileStorageUrlPublic,
+      {
+        serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
+        storageId: fileMetadata.file_path as Id<'_storage'>,
+      },
+    );
+
+    if (!fileUrl) {
+      return null;
+    }
+
+    // Fetch the file content from Convex storage URL
+    const response = await fetch(fileUrl);
+    if (!response.ok) {
+      return null;
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    return Buffer.from(arrayBuffer);
+  } catch (error) {
+    console.error('Error getting file content from storage:', error);
+    return null;
+  }
+}
 
 export function buildDocumentsText(fileItems: Doc<'file_items'>[]) {
   const fileGroups: Record<
@@ -52,14 +103,12 @@ export function buildDocumentsText(fileItems: Doc<'file_items'>[]) {
 }
 
 /**
- * Process PDF file items directly to get file contents
- * @param supabaseAdmin - The Supabase admin client
+ * Processes a PDF file item for chat messages
  * @param fileItem - The file item to process
  * @param userId - User ID for authorization
- * @returns PDF file object or null
+ * @returns File object for PDF or null if not a PDF
  */
 export async function processPdfFileItem(
-  supabaseAdmin: ReturnType<typeof createSupabaseAdminClient>,
   fileItem: Doc<'file_items'>,
   userId: string,
 ) {
@@ -69,40 +118,26 @@ export async function processPdfFileItem(
       return null;
     }
 
-    // Get the file metadata from Convex
+    // Get the file metadata from Convex to check if it's a PDF
     const fileMetadata = await convex.query(api.files.getFile, {
       fileId: fileItem.file_id,
     });
 
-    if (!fileMetadata) {
-      return null;
-    }
-
-    // Check authorization
-    if (fileMetadata.user_id !== userId) {
-      return null;
-    }
-
     // Check if it's a PDF
     if (
-      fileMetadata.type !== 'application/pdf' &&
-      !fileMetadata.name.toLowerCase().endsWith('.pdf')
+      !fileMetadata ||
+      (fileMetadata.type !== 'application/pdf' &&
+        !fileMetadata.name.toLowerCase().endsWith('.pdf'))
     ) {
       return null;
     }
 
-    // Download the file from Supabase storage
-    const { data: file, error: fileError } = await supabaseAdmin.storage
-      .from('files')
-      .download(fileMetadata.file_path);
+    // Get file content using the reusable function
+    const buffer = await getFileContentFromStorage(fileItem.file_id, userId);
 
-    if (fileError || !file) {
+    if (!buffer) {
       return null;
     }
-
-    // Convert to buffer for PDF handling
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
 
     return {
       type: 'file' as const,
@@ -118,17 +153,40 @@ export async function processPdfFileItem(
 
 /**
  * Creates an array of file objects with paths and content for pentest agent
+ * @param localPath - The local path prefix for files
  * @param fileItems - Array of file items to process
- * @returns Array of file objects with paths and content
+ * @param userId - User ID for authorization
+ * @returns Array of file objects with paths and raw buffer data
  */
-export function createPentestFileArray(
+export async function createPentestFileArray(
   localPath: string,
   fileItems: Doc<'file_items'>[],
-) {
-  return fileItems.map((fileItem) => ({
-    path: `${localPath}/${fileItem.name}`,
-    data: fileItem.content,
-  }));
+  userId: string,
+): Promise<Array<{ path: string; data: Buffer }>> {
+  const pentestFiles: Array<{ path: string; data: Buffer }> = [];
+
+  for (const fileItem of fileItems) {
+    try {
+      // Get file content from storage
+      const buffer = await getFileContentFromStorage(fileItem.file_id, userId);
+
+      if (buffer) {
+        // Provide data as raw buffer
+        pentestFiles.push({
+          path: `${localPath}/${fileItem.name}`,
+          data: buffer,
+        });
+      }
+    } catch (error) {
+      console.error(
+        `Error processing file ${fileItem.name} for pentest:`,
+        error,
+      );
+      // Continue with other files even if one fails
+    }
+  }
+
+  return pentestFiles;
 }
 
 /**
@@ -144,19 +202,16 @@ export async function processMessageContentWithAttachments(
   isPentestAgent = false,
 ): Promise<{
   processedMessages: BuiltChatMessage[];
-  pentestFiles?: Array<{ path: string; data: string }>;
+  pentestFiles?: Array<{ path: string; data: Buffer }>;
 }> {
   if (!messages.length) return { processedMessages: messages };
 
   // Create a copy to avoid mutating the original
   let processedMessages = [...messages];
-  let pentestFiles: Array<{ path: string; data: string }> | undefined;
+  let pentestFiles: Array<{ path: string; data: Buffer }> | undefined;
   const localPath = '/mnt/data';
 
   try {
-    // Create admin client to access database
-    const supabaseAdmin = createSupabaseAdminClient();
-
     // Collect all file IDs from user messages only
     const allFileIds = processedMessages
       .filter((m) => m.role === 'user') // Only process user messages
@@ -174,7 +229,11 @@ export async function processMessageContentWithAttachments(
 
     // If this is a pentest agent, create the file array
     if (isPentestAgent && allFileItems) {
-      pentestFiles = createPentestFileArray(localPath, allFileItems);
+      pentestFiles = await createPentestFileArray(
+        localPath,
+        allFileItems,
+        userId,
+      );
     }
 
     // Process each message
@@ -222,24 +281,20 @@ export async function processMessageContentWithAttachments(
                 type: 'text',
                 text: documentsText,
               } as TextPart);
+            } else if (isPentestAgent) {
+              // For pentest agent, add XML-like attachment reference (skip PDF processing)
+              const attachmentRef = `<attachment filename="${fileItem.name}" local_path="${localPath}/${fileItem.name}" />`;
+              processedContent.push({
+                type: 'text',
+                text: attachmentRef,
+              } as TextPart);
             } else {
-              // Check if it's a PDF
-              const pdfFile = await processPdfFileItem(
-                supabaseAdmin,
-                fileItem,
-                userId,
-              );
+              // Check if it's a PDF for non-pentest agents
+              const pdfFile = await processPdfFileItem(fileItem, userId);
               if (pdfFile) {
                 // Always send PDFs as files
                 processedContent.push(pdfFile as FilePart);
                 hasPdfAttachments = true;
-              } else if (isPentestAgent) {
-                // For pentest agent, add XML-like attachment reference
-                const attachmentRef = `<attachment filename="${fileItem.name}" local_path="${localPath}/${fileItem.name}" />`;
-                processedContent.push({
-                  type: 'text',
-                  text: attachmentRef,
-                } as TextPart);
               } else if (!hasPdfAttachments) {
                 // Normal case: add document text
                 const documentsText = buildDocumentsText([fileItem]);

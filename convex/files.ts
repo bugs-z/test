@@ -1,4 +1,9 @@
-import { mutation, query } from './_generated/server';
+import {
+  mutation,
+  query,
+  internalMutation,
+  internalQuery,
+} from './_generated/server';
 import { v } from 'convex/values';
 import type { Doc } from './_generated/dataModel';
 import { internal } from './_generated/api';
@@ -6,7 +11,7 @@ import { internal } from './_generated/api';
 /**
  * Get count of files for a specific user
  */
-export const getAllFilesCount = query({
+export const internalGetAllFilesCount = internalQuery({
   args: {
     userId: v.string(),
   },
@@ -293,6 +298,51 @@ export const getFiles = query({
  */
 export const createFile = mutation({
   args: {
+    serviceKey: v.string(),
+    fileData: v.object({
+      user_id: v.string(),
+      file_path: v.string(),
+      name: v.string(),
+      size: v.number(),
+      tokens: v.number(),
+      type: v.string(),
+    }),
+  },
+  returns: v.object({
+    _id: v.id('files'),
+    _creationTime: v.number(),
+    user_id: v.string(),
+    file_path: v.string(),
+    name: v.string(),
+    size: v.number(),
+    tokens: v.number(),
+    type: v.string(),
+    message_id: v.optional(v.string()),
+    chat_id: v.optional(v.string()),
+    updated_at: v.optional(v.number()),
+  }),
+  handler: async (ctx, args) => {
+    if (args.serviceKey !== process.env.CONVEX_SERVICE_ROLE_KEY) {
+      throw new Error('Unauthorized: Invalid service key');
+    }
+
+    const fileId = await ctx.db.insert('files', {
+      ...args.fileData,
+      updated_at: Date.now(),
+    });
+    const file = await ctx.db.get(fileId);
+    if (!file) {
+      throw new Error('Failed to create file');
+    }
+    return file;
+  },
+});
+
+/**
+ * Internal version: Create a new file
+ */
+export const internalCreateFile = internalMutation({
+  args: {
     fileData: v.object({
       user_id: v.string(),
       file_path: v.string(),
@@ -332,6 +382,60 @@ export const createFile = mutation({
  * Update a file
  */
 export const updateFile = mutation({
+  args: {
+    serviceKey: v.string(),
+    fileId: v.id('files'),
+    fileData: v.object({
+      file_path: v.optional(v.string()),
+      name: v.optional(v.string()),
+      size: v.optional(v.number()),
+      tokens: v.optional(v.number()),
+      type: v.optional(v.string()),
+      message_id: v.optional(v.string()),
+      chat_id: v.optional(v.string()),
+    }),
+  },
+  returns: v.object({
+    _id: v.id('files'),
+    _creationTime: v.number(),
+    user_id: v.string(),
+    file_path: v.string(),
+    name: v.string(),
+    size: v.number(),
+    tokens: v.number(),
+    type: v.string(),
+    message_id: v.optional(v.string()),
+    chat_id: v.optional(v.string()),
+    updated_at: v.optional(v.number()),
+  }),
+  handler: async (ctx, args) => {
+    if (args.serviceKey !== process.env.CONVEX_SERVICE_ROLE_KEY) {
+      throw new Error('Unauthorized: Invalid service key');
+    }
+
+    const file = await ctx.db.get(args.fileId);
+
+    if (!file) {
+      throw new Error('File not found');
+    }
+
+    await ctx.db.patch(file._id, {
+      ...args.fileData,
+      updated_at: Date.now(),
+    });
+
+    const updatedFile = await ctx.db.get(file._id);
+    if (!updatedFile) {
+      throw new Error('Failed to get updated file');
+    }
+    return updatedFile;
+  },
+});
+
+/**
+ * Internal version: Update a file
+ */
+export const internalUpdateFile = internalMutation({
   args: {
     fileId: v.id('files'),
     fileData: v.object({

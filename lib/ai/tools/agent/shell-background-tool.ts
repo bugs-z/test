@@ -1,7 +1,7 @@
 import { tool } from 'ai';
 import { z } from 'zod';
 import type { ToolContext } from './types';
-import { executeTerminalCommand } from '@/lib/tools/e2b/terminal-executor';
+import { executeTerminalCommand } from '@/lib/ai/tools/agent/terminal-executor';
 import { streamTerminalOutput } from '@/lib/ai/terminal-utils';
 import PostHogClient from '@/app/posthog';
 

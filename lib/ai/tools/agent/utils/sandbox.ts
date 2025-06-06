@@ -81,7 +81,7 @@ export async function createOrConnectPersistentTerminal(
               `[${existingSandbox.sandbox_id}] Failed to recover sandbox from pausing state:`,
               e,
             );
-            console.log(
+            console.error(
               `[${userID}] Sandbox ${existingSandbox.sandbox_id} is stuck in pausing state, creating new one`,
             );
 
@@ -125,7 +125,7 @@ export async function createOrConnectPersistentTerminal(
         } catch (e: any) {
           // Handle sandbox not found error (expired/deleted)
           if (e.name === 'NotFoundError' || e.message?.includes('not found')) {
-            console.log(
+            console.error(
               `[${userID}] Sandbox ${existingSandbox.sandbox_id} expired/deleted, creating new one`,
             );
             // Delete the expired sandbox record

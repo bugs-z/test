@@ -60,6 +60,7 @@ export async function POST(req: Request) {
     const totalTokens = file_items.reduce((acc, item) => acc + item.tokens, 0);
 
     await convex.mutation(api.files.updateFile, {
+      serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
       fileId,
       fileData: {
         tokens: totalTokens,

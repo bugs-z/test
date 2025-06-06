@@ -289,7 +289,7 @@ export async function processChatMessages(
 ): Promise<{
   processedMessages: BuiltChatMessage[];
   systemPrompt: string;
-  pentestFiles?: Array<{ path: string; data: string }>;
+  pentestFiles?: Array<{ path: string; data: Buffer }>;
 }> {
   let shouldUncensor = false;
   const apiKey = llmConfig.openai.apiKey;

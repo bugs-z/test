@@ -8,7 +8,7 @@ import { ChatUI } from '@/components/chat/chat-ui';
 import { PentestGPTContext } from '@/context/context';
 import useHotkey from '@/lib/hooks/use-hotkey';
 import { useContext } from 'react';
-import { availablePlugins } from '@/lib/tools/tool-store/available-tools';
+import { availablePlugins } from '@/lib/available-tools';
 import { ChatPluginInfo } from '@/components/chat/chat-plugin-info';
 import { TemporaryChatInfo } from '@/components/chat/temporary-chat-info';
 import { Settings } from '@/components/utility/settings';

@@ -40,7 +40,7 @@ async function getImageUrls(
         return;
       }
 
-      const url = await convex.query(api.fileStorage.getImageUrlPublic, {
+      const url = await convex.query(api.fileStorage.getFileStorageUrlPublic, {
         serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
         storageId: storageId as Id<'_storage'>,
       });

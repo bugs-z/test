@@ -1,11 +1,11 @@
 import { PentestGPTContext } from '@/context/context';
 import { createFileBasedOnExtension } from '@/db/files';
-import { LLM_LIST } from '@/lib/models/llm-list';
 import { uploadImage } from '@/db/storage/message-images';
 import mammoth from 'mammoth';
-import { useContext, useEffect, useState } from 'react';
+import { useContext } from 'react';
 import { toast } from 'sonner';
 import type { Id } from '@/convex/_generated/dataModel';
+import { SUPPORTED_IMAGE_EXTENSIONS } from '../chat-helpers/file-constants';
 
 interface FileProcessor {
   type: string;
@@ -17,17 +17,6 @@ interface ProcessedFile {
   content: string | ArrayBuffer | null;
   type: string;
 }
-
-// Constants
-export const ACCEPTED_FILE_TYPES = [
-  'text/csv',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/json',
-  'text/markdown',
-  'application/pdf',
-  'text/plain',
-  'text/html',
-].join(',');
 
 const fileProcessors: Record<string, FileProcessor> = {
   image: {
@@ -92,27 +81,16 @@ export const useSelectFileHandler = () => {
     newMessageFiles,
   } = useContext(PentestGPTContext);
 
-  const [filesToAccept, setFilesToAccept] = useState(ACCEPTED_FILE_TYPES);
-
-  useEffect(() => {
-    handleFilesToAccept();
-  }, [chatSettings?.model]);
-
-  const handleFilesToAccept = () => {
-    const model = chatSettings?.model;
-    const FULL_MODEL = LLM_LIST.find((llm) => llm.modelId === model);
-
-    if (!FULL_MODEL) return;
-
-    setFilesToAccept(
-      FULL_MODEL.imageInput
-        ? `${ACCEPTED_FILE_TYPES},image/*`
-        : ACCEPTED_FILE_TYPES,
-    );
-  };
-
   const getFileProcessor = (file: File): FileProcessor => {
-    if (file.type.includes('image')) return fileProcessors.image;
+    const fileExtension = file.name.split('.').pop()?.toLowerCase() || '';
+
+    // Only treat as image if it has both image MIME type AND supported extension
+    if (
+      file.type.includes('image') &&
+      SUPPORTED_IMAGE_EXTENSIONS.includes(fileExtension)
+    ) {
+      return fileProcessors.image;
+    }
     if (file.type.includes('docx') || file.type.includes('wordprocessingml'))
       return fileProcessors.docx;
     if (file.type.includes('pdf')) return fileProcessors.pdf;
@@ -122,9 +100,8 @@ export const useSelectFileHandler = () => {
   const FILE_CONTENT_TOKEN_LIMIT = 24000;
 
   const validateFile = (file: File): boolean => {
-    const sizeLimitMB = Number.parseInt(
-      process.env.NEXT_PUBLIC_USER_FILE_SIZE_LIMIT_MB || String(30),
-    );
+    // 20MB limit for files
+    const sizeLimitMB = 20;
     const MB_TO_BYTES = (mb: number) => mb * 1024 * 1024;
     const SIZE_LIMIT = MB_TO_BYTES(sizeLimitMB);
 
@@ -152,9 +129,12 @@ export const useSelectFileHandler = () => {
     if (!profile || !chatSettings) return;
     if (!validateFile(file)) return;
 
-    // Prevent image uploads for reasoning model
+    const fileExtension = file.name.split('.').pop()?.toLowerCase() || '';
+
+    // Prevent image uploads for reasoning model - but only for supported image extensions
     if (
       file.type.startsWith('image/') &&
+      SUPPORTED_IMAGE_EXTENSIONS.includes(fileExtension) &&
       chatSettings.model === 'reasoning-model'
     ) {
       toast.error('Image uploads are not supported with the Reasoning Model');
@@ -168,7 +148,12 @@ export const useSelectFileHandler = () => {
       const { content, type } = await processor.process(file);
       const simplifiedType = processor.simplifyType(file.type);
 
-      if (type === 'image') {
+      // Only treat as image if it has both image MIME type AND supported extension
+      if (
+        type === 'image' &&
+        file.type.startsWith('image/') &&
+        SUPPORTED_IMAGE_EXTENSIONS.includes(fileExtension)
+      ) {
         const imageUrl = URL.createObjectURL(file);
 
         // Add loading state for image
@@ -223,7 +208,7 @@ export const useSelectFileHandler = () => {
         return;
       }
 
-      // Handle non-image files
+      // Handle non-image files (including images with unsupported extensions)
       setNewMessageFiles((prev) => [
         ...prev,
         {
@@ -313,6 +298,5 @@ export const useSelectFileHandler = () => {
 
   return {
     handleSelectDeviceFile,
-    filesToAccept,
   };
 };

@@ -1,39 +1,100 @@
 import { supabase } from '@/lib/supabase/browser-client';
+import { makeAuthenticatedRequest } from '@/lib/api/convex';
 import JSZip from 'jszip';
+import type { TablesInsert } from '@/supabase/types';
+import type { Id } from '@/convex/_generated/dataModel';
 
 export const uploadFile = async (
   file: File,
-  payload: {
-    name: string;
+  fileRecord: Omit<TablesInsert<'files'>, 'file_path' | 'user_id'>,
+): Promise<{
+  file: {
+    _id: Id<'files'>;
+    _creationTime: number;
     user_id: string;
-    file_id: string;
-  },
-) => {
-  const filePath = `${payload.user_id}/${Buffer.from(payload.file_id).toString('base64')}`;
+    file_path: string;
+    name: string;
+    size: number;
+    tokens: number;
+    type: string;
+    message_id?: string;
+    chat_id?: string;
+    updated_at?: number;
+  };
+  storageId: string;
+}> => {
+  // 20MB limit for files
+  const sizeLimitMB = 20;
+  const MB_TO_BYTES = (mb: number) => mb * 1024 * 1024;
+  const SIZE_LIMIT = MB_TO_BYTES(sizeLimitMB);
 
-  const { error } = await supabase.storage
-    .from('files')
-    .upload(filePath, file, {
-      upsert: true,
-    });
-
-  if (error) {
-    throw new Error('Error uploading file');
+  if (file.size > SIZE_LIMIT) {
+    throw new Error(`File must be less than ${sizeLimitMB}MB`);
   }
 
-  return filePath;
+  try {
+    // Prepare form data with file and metadata
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append(
+      'metadata',
+      JSON.stringify({
+        name: fileRecord.name,
+        tokens: fileRecord.tokens || 0,
+        type: fileRecord.type,
+      }),
+    );
+
+    // Use makeAuthenticatedRequest with form data
+    const result = await makeAuthenticatedRequest(
+      `/api/upload-file`,
+      'POST',
+      formData,
+    );
+
+    if (!result?.success) {
+      throw new Error(result?.error || 'Upload failed');
+    }
+
+    return {
+      file: result.file,
+      storageId: result.storageId,
+    };
+  } catch (error) {
+    console.error('Error uploading file with record to Convex:', error);
+    throw error;
+  }
 };
 
-export const getFileFromStorage = async (filePath: string) => {
-  const { data, error } = await supabase.storage
-    .from('files')
-    .createSignedUrl(filePath, 60 * 60 * 24); // 24hrs
+export const getFileFromStorage = async (
+  storageId: string,
+): Promise<string> => {
+  try {
+    // Check if storageId contains "/" which indicates it's a Supabase path with UUIDs
+    if (storageId.includes('/')) {
+      // Handle legacy Supabase files
+      const { data, error } = await supabase.storage
+        .from('files')
+        .createSignedUrl(storageId, 60 * 60 * 24); // 24hrs
 
-  if (error) {
-    throw new Error('Error downloading file');
+      if (error) {
+        throw new Error('Error downloading file');
+      }
+
+      return data.signedUrl;
+    }
+
+    // Handle Convex storage files
+    const result = await makeAuthenticatedRequest(
+      `/api/get-file-url?storage_id=${encodeURIComponent(storageId)}`,
+      'GET',
+    );
+
+    return result?.url || '';
+  } catch (error) {
+    console.error('Error getting file URL:', error);
+    return '';
   }
-
-  return data.signedUrl;
 };
 
 /**

@@ -1,4 +1,4 @@
-import { executeTerminalCommand } from '@/lib/tools/e2b/terminal-executor';
+import { executeTerminalCommand } from '@/lib/ai/tools/agent/terminal-executor';
 import { streamTerminalOutput } from '@/lib/ai/terminal-utils';
 import type { SandboxManager } from './types';
 

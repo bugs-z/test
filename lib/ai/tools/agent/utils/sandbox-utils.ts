@@ -1,5 +1,5 @@
 import { SANDBOX_TEMPLATE, BASH_SANDBOX_TIMEOUT } from '../types';
-import { createOrConnectPersistentTerminal } from '@/lib/tools/e2b/sandbox';
+import { createOrConnectPersistentTerminal } from '@/lib/ai/tools/agent/utils/sandbox';
 
 export interface SandboxContext {
   userID: string;
@@ -59,7 +59,7 @@ export const ensureSandboxConnection = async (
 
 export const writePentestFilesToSandbox = async (
   sandboxManager: any,
-  pentestFiles: Array<{ path: string; data: string }>,
+  pentestFiles: Array<{ path: string; data: Buffer }>,
   dataStream: any,
 ): Promise<boolean> => {
   if (!pentestFiles || pentestFiles.length === 0) {
