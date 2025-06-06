@@ -9,6 +9,7 @@ import { type FC, useContext, useState } from 'react';
 import { WithTooltip } from '../ui/with-tooltip';
 import { ChatFileItem } from './chat-file-item';
 import { deleteFile } from '@/db/files';
+import { deleteImage } from '@/db/storage/message-images';
 import type { Doc, Id } from '@/convex/_generated/dataModel';
 
 const DynamicFilePreview = dynamic(() => import('../ui/file-preview'), {
@@ -144,6 +145,8 @@ export const ChatFilesDisplay: FC = () => {
                           className="bg-secondary border-primary absolute right-[-6px] top-[-2px] flex size-5 cursor-pointer items-center justify-center rounded-full border text-[10px] hover:border-red-500 hover:bg-white hover:text-red-500"
                           onClick={(e) => {
                             e.stopPropagation();
+
+                            // Remove from UI state first
                             setNewMessageImages(
                               newMessageImages.filter(
                                 (f) => f.messageId !== image.messageId,
@@ -154,6 +157,17 @@ export const ChatFilesDisplay: FC = () => {
                                 (f) => f.messageId !== image.messageId,
                               ),
                             );
+
+                            // Delete from storage if it has a path (storage ID)
+                            if (image.path && !image.hasError) {
+                              deleteImage(image.path).catch((error) => {
+                                console.error(
+                                  'Failed to delete image from storage:',
+                                  error,
+                                );
+                                // Image is already removed from UI, so we don't need to show error to user
+                              });
+                            }
                           }}
                         />
                       }

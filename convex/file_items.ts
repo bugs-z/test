@@ -67,12 +67,19 @@ export const getAllFileItemsByFileIds = query({
     }
 
     try {
-      // Since Convex doesn't support 'in' queries directly, we'll use a more efficient approach
-      // by querying all file items and filtering in memory
-      const allFileItems = await ctx.db.query('file_items').collect();
+      const allFileItems = [];
 
-      // Filter items that match any of the provided file IDs
-      return allFileItems.filter((item) => args.fileIds.includes(item.file_id));
+      // Query each file ID individually using the existing index
+      for (const fileId of args.fileIds) {
+        const fileItems = await ctx.db
+          .query('file_items')
+          .withIndex('by_file_id', (q) => q.eq('file_id', fileId))
+          .collect();
+
+        allFileItems.push(...fileItems);
+      }
+
+      return allFileItems;
     } catch (error) {
       console.error('Error in getAllFileItemsByFileIds:', error);
       return null;

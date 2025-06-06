@@ -44,9 +44,8 @@ export const checkSubscription = query({
     // If no team membership, check for active subscription
     const subscription = await ctx.db
       .query('subscriptions')
-      .withIndex('by_user_and_status', (q) =>
-        q.eq('user_id', args.userId).eq('status', 'active'),
-      )
+      .withIndex('by_user_id', (q) => q.eq('user_id', args.userId))
+      .filter((q) => q.eq(q.field('status'), 'active'))
       .first();
 
     if (!subscription) {
@@ -284,7 +283,9 @@ export const manageTeamOnSubscriptionChange = internalMutation({
       // Delete all team members
       const teamMembers = await ctx.db
         .query('team_members')
-        .filter((q) => q.eq(q.field('team_id'), oldSubscription.team_id!))
+        .withIndex('by_team_id', (q) =>
+          q.eq('team_id', oldSubscription.team_id!),
+        )
         .collect();
 
       for (const member of teamMembers) {
@@ -306,7 +307,7 @@ export const manageTeamOnSubscriptionChange = internalMutation({
       // Delete the team
       const team = await ctx.db
         .query('teams')
-        .filter((q) => q.eq(q.field('id'), oldSubscription.team_id!))
+        .withIndex('by_team_id', (q) => q.eq('id', oldSubscription.team_id!))
         .first();
 
       if (team) {
@@ -526,7 +527,7 @@ export const cleanupTeamOnSubscriptionDeletion = internalMutation({
     // Delete all team members
     const teamMembers = await ctx.db
       .query('team_members')
-      .filter((q) => q.eq(q.field('team_id'), teamId))
+      .withIndex('by_team_id', (q) => q.eq('team_id', teamId))
       .collect();
 
     for (const member of teamMembers) {
@@ -546,7 +547,7 @@ export const cleanupTeamOnSubscriptionDeletion = internalMutation({
     // Delete the team
     const team = await ctx.db
       .query('teams')
-      .filter((q) => q.eq(q.field('id'), teamId))
+      .withIndex('by_team_id', (q) => q.eq('id', teamId))
       .first();
 
     if (team) {
@@ -589,9 +590,8 @@ export const getSubscriptionByUserId = internalQuery({
     // Get active subscription for user
     const subscription = await ctx.db
       .query('subscriptions')
-      .withIndex('by_user_and_status', (q) =>
-        q.eq('user_id', args.userId).eq('status', 'active'),
-      )
+      .withIndex('by_user_id', (q) => q.eq('user_id', args.userId))
+      .filter((q) => q.eq(q.field('status'), 'active'))
       .first();
 
     return subscription;
@@ -676,9 +676,8 @@ export const getSubscriptionByUserIdPublic = query({
     // Get active subscription for user
     const subscription = await ctx.db
       .query('subscriptions')
-      .withIndex('by_user_and_status', (q) =>
-        q.eq('user_id', args.userId).eq('status', 'active'),
-      )
+      .withIndex('by_user_id', (q) => q.eq('user_id', args.userId))
+      .filter((q) => q.eq(q.field('status'), 'active'))
       .first();
 
     return subscription;

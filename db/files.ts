@@ -5,6 +5,7 @@ import mammoth from 'mammoth';
 import { toast } from 'sonner';
 import { uploadFile } from '@/db/storage/files';
 import type { Id } from '@/convex/_generated/dataModel';
+import { makeAuthenticatedRequest } from '@/lib/api/convex';
 
 if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
   throw new Error('NEXT_PUBLIC_CONVEX_URL environment variable is not defined');
@@ -146,15 +147,25 @@ export const createDocXFile = async (
 };
 
 export const deleteFile = async (fileId: Id<'files'>) => {
-  const success = await convex.mutation(api.files.deleteFile, {
-    fileId,
-  });
+  try {
+    const result = await makeAuthenticatedRequest(
+      '/api/delete-storage-item',
+      'POST',
+      {
+        fileId,
+        type: 'file',
+      },
+    );
 
-  if (!success) {
-    throw new Error('Failed to delete file');
+    if (!result?.success) {
+      throw new Error(result?.message || 'Failed to delete file');
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error deleting file:', error);
+    throw error;
   }
-
-  return true;
 };
 
 export const getFileItemsByFileId = async (fileId: Id<'files'>) => {

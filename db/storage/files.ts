@@ -1,4 +1,3 @@
-import { supabase } from '@/lib/supabase/browser-client';
 import { makeAuthenticatedRequest } from '@/lib/api/convex';
 import JSZip from 'jszip';
 import type { TablesInsert } from '@/supabase/types';
@@ -70,23 +69,9 @@ export const getFileFromStorage = async (
   storageId: string,
 ): Promise<string> => {
   try {
-    // Check if storageId contains "/" which indicates it's a Supabase path with UUIDs
-    if (storageId.includes('/')) {
-      // Handle legacy Supabase files
-      const { data, error } = await supabase.storage
-        .from('files')
-        .createSignedUrl(storageId, 60 * 60 * 24); // 24hrs
-
-      if (error) {
-        throw new Error('Error downloading file');
-      }
-
-      return data.signedUrl;
-    }
-
     // Handle Convex storage files
     const result = await makeAuthenticatedRequest(
-      `/api/get-file-url?storage_id=${encodeURIComponent(storageId)}`,
+      `/api/get-storage-url?storage_id=${encodeURIComponent(storageId)}`,
       'GET',
     );
 
@@ -102,16 +87,15 @@ export const getFileFromStorage = async (
  */
 export const downloadFile = async (fileUrl: string, fileName: string) => {
   try {
-    const { data, error } = await supabase.storage
-      .from('files')
-      .download(fileUrl);
+    // Fetch the file from the Convex storage URL
+    const response = await fetch(fileUrl);
 
-    if (error) {
+    if (!response.ok) {
       throw new Error('Error downloading file');
     }
 
     // Create blob and download link
-    const blob = new Blob([await data.arrayBuffer()]);
+    const blob = await response.blob();
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.style.display = 'none';
@@ -199,16 +183,15 @@ export const downloadFilesAsZip = async (
           onProgress(i, files.length * 2); // First half of progress is fetching
         }
 
-        const { data, error } = await supabase.storage
-          .from('files')
-          .download(file.url);
+        // Fetch the file from Convex storage URL
+        const response = await fetch(file.url);
 
-        if (error) {
-          throw error;
+        if (!response.ok) {
+          throw new Error('Failed to fetch file');
         }
 
         // Add file to zip
-        const arrayBuffer = await data.arrayBuffer();
+        const arrayBuffer = await response.arrayBuffer();
         zip.file(file.fileName, arrayBuffer);
         successCount++;
       } catch (error) {

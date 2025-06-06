@@ -34,7 +34,7 @@ export const getUserTeam = query({
     // Get the team details
     const team = await ctx.db
       .query('teams')
-      .filter((q) => q.eq(q.field('id'), teamMember.team_id))
+      .withIndex('by_team_id', (q) => q.eq('id', teamMember.team_id))
       .first();
 
     if (!team) {
@@ -81,7 +81,7 @@ export const getTeamMembers = internalQuery({
     // Get the team
     const team = await ctx.db
       .query('teams')
-      .filter((q) => q.eq(q.field('id'), args.teamId))
+      .withIndex('by_team_id', (q) => q.eq('id', args.teamId))
       .first();
 
     if (!team) {
@@ -177,9 +177,8 @@ export const removeUserFromTeam = internalMutation({
     // Check if current user is admin/owner of the team
     const currentUserMember = await ctx.db
       .query('team_members')
-      .withIndex('by_team_and_user', (q) =>
-        q.eq('team_id', args.teamId).eq('user_id', args.currentUserId),
-      )
+      .withIndex('by_team_id', (q) => q.eq('team_id', args.teamId))
+      .filter((q) => q.eq(q.field('user_id'), args.currentUserId))
       .first();
 
     if (!currentUserMember || !['owner'].includes(currentUserMember.role)) {
@@ -189,9 +188,8 @@ export const removeUserFromTeam = internalMutation({
     // Find the invitation for the user to be removed
     const invitation = await ctx.db
       .query('team_invitations')
-      .withIndex('by_team_and_email', (q) =>
-        q.eq('team_id', args.teamId).eq('invitee_email', args.memberEmail),
-      )
+      .withIndex('by_team_id', (q) => q.eq('team_id', args.teamId))
+      .filter((q) => q.eq(q.field('invitee_email'), args.memberEmail))
       .first();
 
     if (!invitation) {
@@ -280,7 +278,7 @@ export const deleteTeam = internalMutation({
     // Delete all team members
     const teamMembers = await ctx.db
       .query('team_members')
-      .filter((q) => q.eq(q.field('team_id'), teamId))
+      .withIndex('by_team_id', (q) => q.eq('team_id', teamId))
       .collect();
 
     for (const member of teamMembers) {
@@ -300,7 +298,7 @@ export const deleteTeam = internalMutation({
     // Delete the team
     const team = await ctx.db
       .query('teams')
-      .filter((q) => q.eq(q.field('id'), teamId))
+      .withIndex('by_team_id', (q) => q.eq('id', teamId))
       .first();
 
     if (team) {
@@ -331,7 +329,7 @@ export const getTeamById = internalQuery({
   handler: async (ctx, args) => {
     const team = await ctx.db
       .query('teams')
-      .filter((q) => q.eq(q.field('id'), args.teamId))
+      .withIndex('by_team_id', (q) => q.eq('id', args.teamId))
       .first();
 
     return team;

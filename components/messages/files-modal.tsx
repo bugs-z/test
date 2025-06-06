@@ -18,7 +18,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import { downloadFile, downloadFilesAsZip } from '@/db/storage/files';
+import {
+  downloadFile,
+  downloadFilesAsZip,
+  getFileFromStorage,
+} from '@/db/storage/files';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -82,7 +86,14 @@ export const FilesModal: React.FC<FilesModalProps> = ({
   const handleDownload = async (file: FileAttachment) => {
     try {
       setIsDownloading(file.url);
-      await downloadFile(file.url, file.fileName);
+
+      // Get the actual file URL from storage
+      const actualFileUrl = await getFileFromStorage(file.url);
+      if (!actualFileUrl) {
+        throw new Error('Failed to get file URL');
+      }
+
+      await downloadFile(actualFileUrl, file.fileName);
       toast.success('File downloaded successfully');
     } catch (error) {
       console.error('Download error:', error);
@@ -106,14 +117,24 @@ export const FilesModal: React.FC<FilesModalProps> = ({
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const zipFileName = `PentestGPT-Files-${timestamp}.zip`;
 
-      // Prepare the files array for batch download
-      const filesToDownload = selectedFiles.map((fileUrl) => {
-        const file = files.find((f) => f.url === fileUrl);
-        return {
-          url: fileUrl,
-          fileName: file?.fileName || 'unknown',
-        };
-      });
+      // Prepare the files array for batch download - get actual URLs first
+      const filesToDownload = await Promise.all(
+        selectedFiles.map(async (fileUrl) => {
+          const file = files.find((f) => f.url === fileUrl);
+          const actualFileUrl = await getFileFromStorage(fileUrl);
+
+          if (!actualFileUrl) {
+            throw new Error(
+              `Failed to get URL for file: ${file?.fileName || 'unknown'}`,
+            );
+          }
+
+          return {
+            url: actualFileUrl,
+            fileName: file?.fileName || 'unknown',
+          };
+        }),
+      );
 
       // Use the ZIP download function
       const result = await downloadFilesAsZip(

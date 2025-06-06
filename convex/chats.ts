@@ -307,20 +307,22 @@ export const deleteChat = internalMutation({
 
       // Delete all images from storage
       if (allImagePaths.length > 0) {
-        const imageDeletions = allImagePaths.map((storageIdString) => {
-          try {
-            // Convert string to storage ID
-            const storageId = storageIdString as Id<'_storage'>;
-            return ctx.storage.delete(storageId);
-          } catch (error) {
-            console.error(
-              'Failed to delete storage file:',
-              storageIdString,
-              error,
-            );
-            return Promise.resolve(); // Continue with other deletions even if one fails
-          }
-        });
+        const imageDeletions = allImagePaths
+          .filter((imagePath) => !imagePath.includes('/')) // Only delete Convex storage files
+          .map((storageIdString) => {
+            try {
+              // Convert string to storage ID
+              const storageId = storageIdString as Id<'_storage'>;
+              return ctx.storage.delete(storageId);
+            } catch (error) {
+              console.error(
+                'Failed to delete storage file:',
+                storageIdString,
+                error,
+              );
+              return Promise.resolve(); // Continue with other deletions even if one fails
+            }
+          });
         await Promise.all(imageDeletions);
       }
 
@@ -360,7 +362,7 @@ export const deleteAllChats = internalMutation({
       // First delete all file items for this user
       const fileItems = await ctx.db
         .query('file_items')
-        .filter((q) => q.eq('user_id', args.userId))
+        .withIndex('by_user_id', (q) => q.eq('user_id', args.userId))
         .collect();
 
       // Delete all file items
@@ -420,20 +422,22 @@ export const deleteAllChats = internalMutation({
 
       // Delete all images from storage
       if (allImagePaths.length > 0) {
-        const imageDeletions = allImagePaths.map((storageIdString) => {
-          try {
-            // Convert string to storage ID
-            const storageId = storageIdString as Id<'_storage'>;
-            return ctx.storage.delete(storageId);
-          } catch (error) {
-            console.error(
-              'Failed to delete storage file:',
-              storageIdString,
-              error,
-            );
-            return Promise.resolve(); // Continue with other deletions even if one fails
-          }
-        });
+        const imageDeletions = allImagePaths
+          .filter((imagePath) => !imagePath.includes('/')) // Only delete Convex storage files
+          .map((storageIdString) => {
+            try {
+              // Convert string to storage ID
+              const storageId = storageIdString as Id<'_storage'>;
+              return ctx.storage.delete(storageId);
+            } catch (error) {
+              console.error(
+                'Failed to delete storage file:',
+                storageIdString,
+                error,
+              );
+              return Promise.resolve(); // Continue with other deletions even if one fails
+            }
+          });
         await Promise.all(imageDeletions);
       }
 

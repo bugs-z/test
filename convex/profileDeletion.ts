@@ -29,13 +29,13 @@ export const deleteProfile = internalMutation({
         // 1. Get feedback (references messages)
         ctx.db
           .query('feedback')
-          .filter((q) => q.eq(q.field('user_id'), args.userId))
+          .withIndex('by_user_id', (q) => q.eq('user_id', args.userId))
           .collect(),
 
         // 2. Get file_items (references files and user)
         ctx.db
           .query('file_items')
-          .filter((q) => q.eq(q.field('user_id'), args.userId))
+          .withIndex('by_user_id', (q) => q.eq('user_id', args.userId))
           .collect(),
 
         // 3. Get files (references user)
@@ -59,7 +59,7 @@ export const deleteProfile = internalMutation({
         // 6. Get sandboxes (references user)
         ctx.db
           .query('sandboxes')
-          .filter((q) => q.eq(q.field('user_id'), args.userId))
+          .withIndex('by_user_id', (q) => q.eq('user_id', args.userId))
           .collect(),
 
         // 7. Get team_members (references user)

@@ -61,9 +61,9 @@ export const uploadImageHttp = httpAction(async (ctx, request) => {
 });
 
 /**
- * HTTP action to get image URLs from Convex storage
+ * HTTP action to get URLs from Convex storage for both files and images
  */
-export const getImageUrlHttp = httpAction(async (ctx, request) => {
+export const getStorageUrlHttp = httpAction(async (ctx, request) => {
   // Validate authentication with user verification
   const authResult = await validateAuthWithUser(request);
   if (!authResult.success) {
@@ -82,18 +82,18 @@ export const getImageUrlHttp = httpAction(async (ctx, request) => {
       return createErrorResponse('Missing storage_id parameter', 400);
     }
 
-    // Get image URL from storage
+    // Get URL from storage using the internal function
     const url = await ctx.runQuery(internal.fileStorage.getFileStorageUrl, {
       storageId: storageId as Id<'_storage'>,
     });
 
     if (!url) {
-      return createErrorResponse('Image not found', 404);
+      return createErrorResponse('Storage item not found', 404);
     }
 
     return createResponse({ url }, 200);
   } catch (error) {
-    console.error('Error getting image URL:', error);
+    console.error('Error getting storage URL:', error);
     return createErrorResponse('Internal server error', 500);
   }
 });
@@ -206,12 +206,13 @@ export const uploadFileHttp = httpAction(async (ctx, request) => {
 });
 
 /**
- * HTTP action to get file URLs from Convex storage
+ * HTTP action to delete files or images from Convex storage
+ * Handles both file deletion (with database cleanup) and direct image deletion
  */
-export const getFileUrlHttp = httpAction(async (ctx, request) => {
+export const deleteStorageItemHttp = httpAction(async (ctx, request) => {
   // Validate authentication with user verification
   const authResult = await validateAuthWithUser(request);
-  if (!authResult.success) {
+  if (!authResult.success || !authResult.user) {
     return createErrorResponse(
       authResult.error || 'Authentication failed',
       401,
@@ -219,26 +220,70 @@ export const getFileUrlHttp = httpAction(async (ctx, request) => {
   }
 
   try {
-    // Get parameters from URL
-    const params = getUrlParams(request, ['storage_id']);
-    const { storage_id: storageId } = params;
+    // Parse request body to get parameters
+    const body = await request.json();
+    const { fileId, storageId, type } = body;
 
-    if (!storageId) {
-      return createErrorResponse('Missing storage_id parameter', 400);
+    // Handle file deletion (includes database cleanup)
+    if (type === 'file') {
+      if (!fileId) {
+        return createErrorResponse('Missing fileId for file deletion', 400);
+      }
+
+      // Use the existing deleteFile mutation which handles storage deletion
+      const success = await ctx.runMutation(internal.files.deleteFile, {
+        fileId: fileId as Id<'files'>,
+      });
+
+      if (!success) {
+        return createErrorResponse('Failed to delete file', 500);
+      }
+
+      return createResponse(
+        {
+          success: true,
+          message: 'File deleted successfully',
+          type: 'file',
+        },
+        200,
+      );
     }
 
-    // Get file URL from storage
-    const url = await ctx.runQuery(internal.fileStorage.getFileStorageUrl, {
-      storageId: storageId as Id<'_storage'>,
-    });
+    // Handle direct image deletion (storage only)
+    if (type === 'image') {
+      if (!storageId) {
+        return createErrorResponse('Missing storageId for image deletion', 400);
+      }
 
-    if (!url) {
-      return createErrorResponse('File not found', 404);
+      // Delete image from Convex storage
+      try {
+        await ctx.storage.delete(storageId as Id<'_storage'>);
+      } catch (storageError) {
+        console.error(
+          `Failed to delete image from storage: ${storageId}`,
+          storageError,
+        );
+        return createErrorResponse('Failed to delete image from storage', 500);
+      }
+
+      return createResponse(
+        {
+          success: true,
+          message: 'Image deleted successfully',
+          type: 'image',
+        },
+        200,
+      );
     }
 
-    return createResponse({ url }, 200);
+    return createErrorResponse(
+      'Invalid or missing type parameter. Must be "file" or "image"',
+      400,
+    );
   } catch (error) {
-    console.error('Error getting file URL:', error);
+    console.error('[DELETE_STORAGE_ITEM] Error deleting storage item:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return createErrorResponse('Internal server error', 500);
   }
 });

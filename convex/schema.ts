@@ -19,7 +19,7 @@ export default defineSchema({
     ),
     updated_at: v.number(),
   })
-    .index('by_user_and_template', ['user_id', 'template'])
+    .index('by_user_id', ['user_id'])
     .index('by_sandbox_id', ['sandbox_id']),
 
   feedback: defineTable({
@@ -37,7 +37,9 @@ export default defineSchema({
     has_files: v.boolean(),
     plugin: v.string(),
   })
+    .index('by_user_id', ['user_id'])
     .index('by_message_id', ['message_id'])
+    .index('by_updated_at', ['updated_at'])
     .index('by_chat_and_sequence', ['chat_id', 'sequence_number']),
 
   chats: defineTable({
@@ -105,7 +107,8 @@ export default defineSchema({
   })
     .index('by_file_id', ['file_id'])
     .index('by_message_id', ['message_id'])
-    .index('by_chat_id', ['chat_id']),
+    .index('by_chat_id', ['chat_id'])
+    .index('by_user_id', ['user_id']),
 
   subscriptions: defineTable({
     id: v.string(),
@@ -124,13 +127,12 @@ export default defineSchema({
   })
     .index('by_subscription_id', ['subscription_id'])
     .index('by_user_id', ['user_id'])
-    .index('by_user_and_status', ['user_id', 'status'])
     .index('by_team_id', ['team_id']),
 
   teams: defineTable({
     id: v.string(),
     name: v.string(),
-  }),
+  }).index('by_team_id', ['id']),
 
   team_invitations: defineTable({
     id: v.string(),
@@ -144,9 +146,9 @@ export default defineSchema({
     ),
     updated_at: v.optional(v.number()),
   })
+    .index('by_team_invitations_id', ['id'])
     .index('by_team_id', ['team_id'])
-    .index('by_invitee_email', ['invitee_email'])
-    .index('by_team_and_email', ['team_id', 'invitee_email']),
+    .index('by_invitee_email', ['invitee_email']),
 
   team_members: defineTable({
     id: v.string(),
@@ -156,6 +158,6 @@ export default defineSchema({
     role: v.union(v.literal('member'), v.literal('owner')),
   })
     .index('by_user_id', ['user_id'])
-    .index('by_team_and_user', ['team_id', 'user_id'])
+    .index('by_team_id', ['team_id'])
     .index('by_invitation_id', ['invitation_id']),
 });

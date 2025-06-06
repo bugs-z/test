@@ -1,5 +1,30 @@
-import { internalQuery, query } from './_generated/server';
+import { internalQuery, mutation, query } from './_generated/server';
 import { v } from 'convex/values';
+
+/**
+ * Generate upload URL for admin file uploads
+ */
+export const generateUploadUrl = mutation({
+  args: {
+    serviceKey: v.string(),
+  },
+  returns: v.union(v.string(), v.null()),
+  handler: async (ctx, args) => {
+    if (args.serviceKey !== process.env.CONVEX_SERVICE_ROLE_KEY) {
+      return null;
+    }
+
+    try {
+      const uploadUrl = await ctx.storage.generateUploadUrl();
+      return uploadUrl;
+    } catch (error) {
+      console.error('[STORAGE] Failed to generate upload URL', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return null;
+    }
+  },
+});
 
 /**
  * Get file/image URL from storage ID (public function)

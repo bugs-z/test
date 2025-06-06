@@ -5,7 +5,11 @@ import mammoth from 'mammoth';
 import { useContext } from 'react';
 import { toast } from 'sonner';
 import type { Id } from '@/convex/_generated/dataModel';
-import { SUPPORTED_IMAGE_EXTENSIONS } from '../chat-helpers/file-constants';
+import {
+  SUPPORTED_IMAGE_EXTENSIONS,
+  FILE_CONTENT_TOKEN_LIMIT,
+  validateFileUpload,
+} from '../chat-helpers/file-constants';
 
 interface FileProcessor {
   type: string;
@@ -79,6 +83,7 @@ export const useSelectFileHandler = () => {
     setNewMessageImages,
     setNewMessageFiles,
     newMessageFiles,
+    newMessageImages,
   } = useContext(PentestGPTContext);
 
   const getFileProcessor = (file: File): FileProcessor => {
@@ -97,37 +102,9 @@ export const useSelectFileHandler = () => {
     return fileProcessors.text;
   };
 
-  const FILE_CONTENT_TOKEN_LIMIT = 24000;
-
-  const validateFile = (file: File): boolean => {
-    // 20MB limit for files
-    const sizeLimitMB = 20;
-    const MB_TO_BYTES = (mb: number) => mb * 1024 * 1024;
-    const SIZE_LIMIT = MB_TO_BYTES(sizeLimitMB);
-
-    if (file.size > SIZE_LIMIT) {
-      toast.error(`File must be less than ${sizeLimitMB}MB`);
-      return false;
-    }
-
-    // Check total tokens from existing files
-    const totalTokens = newMessageFiles.reduce(
-      (acc, file) => acc + (file.tokens || 0),
-      0,
-    );
-    if (totalTokens >= FILE_CONTENT_TOKEN_LIMIT) {
-      toast.error(
-        `Total tokens (${totalTokens}) exceeds the limit of ${FILE_CONTENT_TOKEN_LIMIT}. Please upload fewer files or reduce content.`,
-      );
-      return false;
-    }
-
-    return true;
-  };
-
   const handleSelectDeviceFile = async (file: File) => {
     if (!profile || !chatSettings) return;
-    if (!validateFile(file)) return;
+    if (!validateFileUpload(file, newMessageImages, newMessageFiles)) return;
 
     const fileExtension = file.name.split('.').pop()?.toLowerCase() || '';
 

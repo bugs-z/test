@@ -35,9 +35,8 @@ export const getTeamInvitation = query({
     // Get the team invitation
     const invitation = await ctx.db
       .query('team_invitations')
-      .withIndex('by_team_and_email', (q) =>
-        q.eq('team_id', args.teamId).eq('invitee_email', args.inviteeEmail),
-      )
+      .withIndex('by_team_id', (q) => q.eq('team_id', args.teamId))
+      .filter((q) => q.eq(q.field('invitee_email'), args.inviteeEmail))
       .first();
 
     if (!invitation) {
@@ -47,7 +46,7 @@ export const getTeamInvitation = query({
     // Get the team details
     const team = await ctx.db
       .query('teams')
-      .filter((q) => q.eq(q.field('id'), invitation.team_id))
+      .withIndex('by_team_id', (q) => q.eq('id', invitation.team_id))
       .first();
 
     if (!team) {
@@ -80,9 +79,8 @@ export const inviteUserToTeam = internalMutation({
     // Check if current user is admin/owner of the team
     const inviterMember = await ctx.db
       .query('team_members')
-      .withIndex('by_team_and_user', (q) =>
-        q.eq('team_id', args.teamId).eq('user_id', args.inviterId),
-      )
+      .withIndex('by_team_id', (q) => q.eq('team_id', args.teamId))
+      .filter((q) => q.eq(q.field('user_id'), args.inviterId))
       .first();
 
     if (!inviterMember || !['owner'].includes(inviterMember.role)) {
@@ -111,9 +109,8 @@ export const inviteUserToTeam = internalMutation({
     // Check if user is already a team member or has a pending invitation for this specific team
     const existingInvitation = await ctx.db
       .query('team_invitations')
-      .withIndex('by_team_and_email', (q) =>
-        q.eq('team_id', args.teamId).eq('invitee_email', args.inviteeEmail),
-      )
+      .withIndex('by_team_id', (q) => q.eq('team_id', args.teamId))
+      .filter((q) => q.eq(q.field('invitee_email'), args.inviteeEmail))
       .first();
 
     if (existingInvitation && existingInvitation.status === 'pending') {
@@ -148,7 +145,7 @@ export const acceptTeamInvitation = internalMutation({
     // Get the invitation
     const invitation = await ctx.db
       .query('team_invitations')
-      .filter((q) => q.eq(q.field('id'), args.invitationId))
+      .withIndex('by_team_invitations_id', (q) => q.eq('id', args.invitationId))
       .first();
 
     if (!invitation || invitation.status !== 'pending') {
@@ -192,7 +189,7 @@ export const rejectTeamInvitation = internalMutation({
     // Get the invitation
     const invitation = await ctx.db
       .query('team_invitations')
-      .filter((q) => q.eq(q.field('id'), args.invitationId))
+      .withIndex('by_team_invitations_id', (q) => q.eq('id', args.invitationId))
       .first();
 
     if (!invitation || invitation.status !== 'pending') {

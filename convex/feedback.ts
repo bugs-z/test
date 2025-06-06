@@ -97,7 +97,7 @@ export const deleteOldFeedback = internalMutation({
     // Query for old feedback entries
     const oldFeedback = await ctx.db
       .query('feedback')
-      .filter((q) => q.lt(q.field('updated_at'), thirtyDaysAgo))
+      .withIndex('by_updated_at', (q) => q.lt('updated_at', thirtyDaysAgo))
       .collect();
 
     console.log(`Found ${oldFeedback.length} old feedback entries to delete`);

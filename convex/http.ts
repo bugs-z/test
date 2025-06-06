@@ -5,10 +5,10 @@ import { handleTeamsHttp } from './teamsHttp';
 import { handleSubscriptionsHttp } from './subscriptionsHttp';
 import { handleProfilesHttp } from './profilesHttp';
 import {
-  getImageUrlHttp,
   uploadImageHttp,
-  getFileUrlHttp,
   uploadFileHttp,
+  getStorageUrlHttp,
+  deleteStorageItemHttp,
 } from './fileStorageHttp';
 import { createOptionsHandler } from './httpUtils';
 
@@ -56,13 +56,6 @@ http.route({
   handler: uploadImageHttp,
 });
 
-// Register image URL endpoint
-http.route({
-  path: '/api/get-image-url',
-  method: 'GET',
-  handler: getImageUrlHttp,
-});
-
 // Register file upload endpoint
 http.route({
   path: '/api/upload-file',
@@ -70,11 +63,18 @@ http.route({
   handler: uploadFileHttp,
 });
 
-// Register file URL endpoint
+// Register unified storage URL endpoint (replaces both image and file URL endpoints)
 http.route({
-  path: '/api/get-file-url',
+  path: '/api/get-storage-url',
   method: 'GET',
-  handler: getFileUrlHttp,
+  handler: getStorageUrlHttp,
+});
+
+// Register delete storage item endpoint
+http.route({
+  path: '/api/delete-storage-item',
+  method: 'POST',
+  handler: deleteStorageItemHttp,
 });
 
 // Pre-flight requests using reusable handler
@@ -115,21 +115,21 @@ http.route({
 });
 
 http.route({
-  path: '/api/get-image-url',
-  method: 'OPTIONS',
-  handler: createOptionsHandler(['GET', 'OPTIONS']),
-});
-
-http.route({
   path: '/api/upload-file',
   method: 'OPTIONS',
   handler: createOptionsHandler(['POST', 'OPTIONS']),
 });
 
 http.route({
-  path: '/api/get-file-url',
+  path: '/api/get-storage-url',
   method: 'OPTIONS',
   handler: createOptionsHandler(['GET', 'OPTIONS']),
+});
+
+http.route({
+  path: '/api/delete-storage-item',
+  method: 'OPTIONS',
+  handler: createOptionsHandler(['POST', 'OPTIONS']),
 });
 
 export default http;

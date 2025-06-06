@@ -41,7 +41,7 @@ export const getImageUrl = async (storageId: string): Promise<string> => {
     }
 
     const result = await makeAuthenticatedRequest(
-      `/api/get-image-url?storage_id=${encodeURIComponent(storageId)}`,
+      `/api/get-storage-url?storage_id=${encodeURIComponent(storageId)}`,
       'GET',
     );
 
@@ -99,4 +99,26 @@ export const processMessageImages = async (
   );
 
   return await Promise.all(imagePromises.flat());
+};
+
+export const deleteImage = async (storageId: string): Promise<boolean> => {
+  try {
+    const result = await makeAuthenticatedRequest(
+      '/api/delete-storage-item',
+      'POST',
+      {
+        storageId,
+        type: 'image',
+      },
+    );
+
+    if (!result?.success) {
+      throw new Error(result?.message || 'Failed to delete image');
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error deleting image:', error);
+    throw error;
+  }
 };

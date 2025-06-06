@@ -171,6 +171,11 @@ export async function saveUserMessage({
             error: updateResult.error,
             messageId: savedUserMessageId,
             chatId: chatId,
+            fileIds,
+            fileAttachments: fileAttachments.map((att) => ({
+              file_id: att.file_id,
+              name: att.name,
+            })),
           });
         }
       }

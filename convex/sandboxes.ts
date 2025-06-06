@@ -30,9 +30,7 @@ export const getSandbox = query({
 
     const sandbox = await ctx.db
       .query('sandboxes')
-      .withIndex('by_user_and_template', (q) =>
-        q.eq('user_id', args.userId).eq('template', args.template),
-      )
+      .withIndex('by_user_id', (q) => q.eq('user_id', args.userId))
       .filter((q) => q.gt(q.field('updated_at'), thirtyDaysAgo))
       .first();
 
@@ -68,9 +66,7 @@ export const upsertSandbox = mutation({
 
     const existingSandbox = await ctx.db
       .query('sandboxes')
-      .withIndex('by_user_and_template', (q) =>
-        q.eq('user_id', args.userId).eq('template', args.template),
-      )
+      .withIndex('by_user_id', (q) => q.eq('user_id', args.userId))
       .first();
 
     if (existingSandbox) {

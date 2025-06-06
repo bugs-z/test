@@ -1,4 +1,3 @@
-import { createSupabaseAdminClient } from '@/lib/server/server-utils';
 import type { TablesInsert } from '@/supabase/types';
 import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@/convex/_generated/api';
@@ -14,15 +13,7 @@ if (
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL);
 
-const uploadAdminFile = async (
-  file: File,
-  payload: {
-    name: string;
-    user_id: string;
-    file_id: string;
-    supabaseAdmin: any;
-  },
-) => {
+const uploadAdminFile = async (file: File) => {
   // 20MB limit for files
   const sizeLimitMB = 20;
   const MB_TO_BYTES = (mb: number) => mb * 1024 * 1024;
@@ -32,19 +23,28 @@ const uploadAdminFile = async (
     throw new Error(`File must be less than ${sizeLimitMB}MB`);
   }
 
-  const filePath = `${payload.user_id}/${Buffer.from(payload.file_id).toString('base64')}`;
+  // Generate upload URL using Convex
+  const uploadUrl = await convex.mutation(api.fileStorage.generateUploadUrl, {
+    serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
+  });
 
-  const { error } = await payload.supabaseAdmin.storage
-    .from('files')
-    .upload(filePath, file, {
-      upsert: true,
-    });
-
-  if (error) {
-    throw new Error(`Error uploading file: ${error.message}`);
+  if (!uploadUrl) {
+    throw new Error('Failed to generate upload URL');
   }
 
-  return filePath;
+  // Upload file to Convex storage
+  const result = await fetch(uploadUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': file.type },
+    body: file,
+  });
+
+  if (!result.ok) {
+    throw new Error('Failed to upload file');
+  }
+
+  const { storageId } = await result.json();
+  return storageId;
 };
 
 // Helper function to convert Supabase file record to Convex format
@@ -64,8 +64,6 @@ export const createAdminFile = async (
   fileRecord: TablesInsert<'files'>,
   append?: boolean,
 ) => {
-  const supabaseAdmin = createSupabaseAdminClient();
-
   let validFilename = fileRecord.name
     .replace(/[^a-z0-9.]/gi, '_')
     .toLowerCase();
@@ -109,19 +107,15 @@ export const createAdminFile = async (
     });
   }
 
-  // Upload file to storage using admin client
-  const filePath = await uploadAdminFile(file, {
-    name: createdFile.name,
-    user_id: createdFile.user_id,
-    file_id: createdFile._id,
-    supabaseAdmin,
-  });
+  // Upload file to Convex storage
+  const storageId = await uploadAdminFile(file);
 
+  // Update file record with storage ID
   const finalFile = await convex.mutation(api.files.updateFile, {
     serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
     fileId: createdFile._id,
     fileData: {
-      file_path: filePath,
+      file_path: storageId,
     },
   });
 
