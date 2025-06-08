@@ -127,7 +127,8 @@ export default defineSchema({
   })
     .index('by_subscription_id', ['subscription_id'])
     .index('by_user_id', ['user_id'])
-    .index('by_team_id', ['team_id']),
+    .index('by_team_id', ['team_id'])
+    .index('by_status', ['status']),
 
   teams: defineTable({
     id: v.string(),

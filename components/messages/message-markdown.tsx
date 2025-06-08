@@ -58,49 +58,30 @@ const NonMemoizedMarkdown: FC<{
     th: ({ children, ...props }) => <Th {...props}>{children}</Th>,
     td: ({ children, ...props }) => <Td {...props}>{children}</Td>,
     code({ className, children, ...props }) {
-      const childArray = React.Children.toArray(children);
-      const firstChild = childArray[0] as React.ReactElement;
-      const firstChildAsString = React.isValidElement(firstChild)
-        ? (firstChild as React.ReactElement<any>).props.children
-        : firstChild;
-
-      if (firstChildAsString === '▍') {
-        return <span className="mt-1 animate-pulse cursor-default">▍</span>;
-      }
-
-      if (typeof firstChildAsString === 'string') {
-        childArray[0] = firstChildAsString.replace('`▍`', '▍');
-      }
-
+      // Extract content as string early for consistent handling
+      const content = String(children);
       const match = /language-(\w+)/.exec(className || '');
+      const language = match?.[1] || '';
 
-      if (
-        typeof firstChildAsString === 'string' &&
-        !firstChildAsString.includes('\n')
-      ) {
+      // Check if it's inline code (single line, no newlines)
+      const isInlineCode = !content.includes('\n');
+
+      if (isInlineCode) {
         return (
           <code className={className} {...props}>
-            {childArray}
+            {children}
           </code>
         );
       }
 
-      if (match && match[1] === 'stdout') {
-        return (
-          <MessageTerminalBlock
-            key={Math.random()}
-            value={String(childArray).replace(/\n$/, '')}
-          />
-        );
+      // Handle terminal/stdout output
+      if (language === 'stdout') {
+        return <MessageTerminalBlock value={content} />;
       }
 
+      // Handle code blocks with syntax highlighting
       return (
-        <MessageCodeBlock
-          key={Math.random()}
-          language={match?.[1] || ''}
-          value={String(childArray).replace(/\n$/, '')}
-          {...props}
-        />
+        <MessageCodeBlock language={language} value={content} {...props} />
       );
     },
   };

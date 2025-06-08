@@ -87,6 +87,20 @@ export async function POST(request: Request) {
         // The payment failed or the customer does not have a valid payment method.
         // The subscription becomes past_due. Notify your customer and send them to the
         // customer portal to update their payment information.
+        // Also update the subscription status in our database
+        const failedInvoice = receivedEvent.data.object as Stripe.Invoice;
+        if (
+          failedInvoice.subscription &&
+          typeof failedInvoice.subscription === 'string'
+        ) {
+          const subscription = await getStripe().subscriptions.retrieve(
+            failedInvoice.subscription,
+          );
+          await upsertSubscription(
+            subscription.id,
+            subscription.customer as string,
+          );
+        }
         break;
       default:
       // Unhandled event type

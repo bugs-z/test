@@ -30,6 +30,7 @@ import type * as profileDeletion from "../profileDeletion.js";
 import type * as profiles from "../profiles.js";
 import type * as profilesHttp from "../profilesHttp.js";
 import type * as sandboxes from "../sandboxes.js";
+import type * as subscriptionAnalysis from "../subscriptionAnalysis.js";
 import type * as subscriptions from "../subscriptions.js";
 import type * as subscriptionsHttp from "../subscriptionsHttp.js";
 import type * as teams from "../teams.js";
@@ -61,6 +62,7 @@ declare const fullApi: ApiFromModules<{
   profiles: typeof profiles;
   profilesHttp: typeof profilesHttp;
   sandboxes: typeof sandboxes;
+  subscriptionAnalysis: typeof subscriptionAnalysis;
   subscriptions: typeof subscriptions;
   subscriptionsHttp: typeof subscriptionsHttp;
   teams: typeof teams;

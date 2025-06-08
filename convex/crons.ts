@@ -10,4 +10,12 @@ crons.cron(
   internal.feedback.deleteOldFeedback,
 );
 
+// Run subscription discrepancy check and fix every day at 2 AM UTC
+crons.cron(
+  'check-and-fix-subscription-discrepancies',
+  '0 2 * * *', // Every day at 2 AM UTC
+  internal.subscriptionAnalysis.checkAndFixDiscrepancies,
+  {},
+);
+
 export default crons;

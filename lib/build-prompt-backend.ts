@@ -36,6 +36,8 @@ async function getFileContentFromStorage(
     if (
       !fileMetadata ||
       fileMetadata.user_id !== userId ||
+      !fileMetadata.file_path ||
+      fileMetadata.file_path === '' ||
       fileMetadata.file_path.includes('/')
     ) {
       return null;
