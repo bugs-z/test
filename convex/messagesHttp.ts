@@ -1,80 +1,51 @@
 import { httpAction } from './_generated/server';
 import { internal } from './_generated/api';
-import { createClient } from '@supabase/supabase-js';
+import {
+  createResponse,
+  createErrorResponse,
+  validateAuthWithUser,
+  getUrlParams,
+} from './httpUtils';
 
-// Initialize Supabase client
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-);
-
-// Helper function to create response with consistent headers
-const createResponse = (
-  data: unknown,
-  status: number,
-  origin: string | null,
-) => {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      Vary: 'Origin',
-    },
-  });
-};
-
+/**
+ * HTTP action to get messages with files for a chat
+ */
 export const getMessagesWithFilesHttp = httpAction(async (ctx, request) => {
-  const origin = request.headers.get('Origin');
-  const authHeader = request.headers.get('Authorization');
-
-  // Validate auth header
-  if (!authHeader?.startsWith('Bearer ')) {
-    return createResponse({ error: 'Unauthorized' }, 401, origin);
+  // Validate authentication with user verification
+  const authResult = await validateAuthWithUser(request);
+  if (!authResult.success) {
+    return createErrorResponse(
+      authResult.error || 'Authentication failed',
+      401,
+    );
   }
 
   try {
     // Get parameters from URL
-    const url = new URL(request.url);
-    const chatId = url.searchParams.get('chat_id');
-    const limit = url.searchParams.get('limit');
-    const lastSequenceNumber = url.searchParams.get('last_sequence_number');
+    const params = getUrlParams(request, ['chat_id', 'numItems', 'cursor']);
+    const { chat_id: chatId, numItems, cursor } = params;
 
     if (!chatId) {
-      return createResponse(
-        { error: 'Missing chat_id parameter' },
-        400,
-        origin,
-      );
+      return createErrorResponse('Missing chat_id parameter', 400);
     }
 
-    // Verify token and get user
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser(authHeader.split(' ')[1]);
-
-    if (authError || !user) {
-      return createResponse({ error: 'Invalid token' }, 401, origin);
-    }
-
-    // Get messages with files
-    const messages = await ctx.runQuery(
+    // Get messages with files using pagination
+    const result = await ctx.runQuery(
       internal.messages.internalGetMessagesWithFiles,
       {
         chatId,
-        limit: limit ? Number.parseInt(limit) : undefined,
-        lastSequenceNumber: lastSequenceNumber
-          ? Number.parseInt(lastSequenceNumber)
-          : undefined,
+        paginationOpts: {
+          numItems: numItems ? Number.parseInt(numItems) : 20,
+          cursor: cursor || null,
+        },
       },
     );
 
-    return createResponse({ messages }, 200, origin);
+    return createResponse(result, 200);
   } catch (error) {
-    console.error('Error getting messages:', error);
-    return createResponse({ error: 'Internal server error' }, 500, origin);
+    console.error('[GET_MESSAGES_WITH_FILES] Error getting messages:', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return createErrorResponse('Internal server error', 500);
   }
 });

@@ -1,5 +1,6 @@
 import { mutation, query, internalQuery } from './_generated/server';
 import { v } from 'convex/values';
+import { paginationOptsValidator } from 'convex/server';
 import type { Id } from './_generated/dataModel';
 import { api } from './_generated/api';
 import { v4 as uuidv4 } from 'uuid';
@@ -461,81 +462,81 @@ export const internalGetMessageAtSequence = internalQuery({
 export const internalGetMessagesWithFiles = internalQuery({
   args: {
     chatId: v.string(),
-    limit: v.optional(v.number()),
-    lastSequenceNumber: v.optional(v.number()),
+    paginationOpts: paginationOptsValidator,
   },
-  returns: v.array(
-    v.object({
-      _id: v.id('messages'),
-      _creationTime: v.number(),
-      id: v.string(),
-      chat_id: v.string(),
-      user_id: v.string(),
-      content: v.string(),
-      model: v.string(),
-      plugin: v.optional(v.string()),
-      role: v.string(),
-      sequence_number: v.number(),
-      thinking_content: v.optional(v.string()),
-      thinking_elapsed_secs: v.optional(v.number()),
-      image_paths: v.array(v.string()),
-      citations: v.array(v.string()),
-      attachments: v.array(v.any()),
-      updated_at: v.optional(v.number()),
-      created_at: v.number(),
-      feedback: v.array(
-        v.object({
-          message_id: v.string(),
-          user_id: v.string(),
-          chat_id: v.string(),
-          feedback: v.union(v.literal('good'), v.literal('bad')),
-          reason: v.optional(v.string()),
-          detailed_feedback: v.optional(v.string()),
-          model: v.string(),
-          updated_at: v.number(),
-          sequence_number: v.number(),
-          allow_email: v.optional(v.boolean()),
-          allow_sharing: v.optional(v.boolean()),
-          has_files: v.boolean(),
-          plugin: v.string(),
-        }),
-      ),
-      file_items: v.array(
-        v.object({
-          _id: v.id('file_items'),
-          _creationTime: v.number(),
-          file_id: v.string(),
-          user_id: v.string(),
-          content: v.string(),
-          tokens: v.number(),
-          name: v.optional(v.string()),
-          sequence_number: v.number(),
-          updated_at: v.optional(v.number()),
-          message_id: v.optional(v.string()),
-          chat_id: v.optional(v.string()),
-        }),
-      ),
-    }),
-  ),
+  returns: v.object({
+    page: v.array(
+      v.object({
+        _id: v.id('messages'),
+        _creationTime: v.number(),
+        id: v.string(),
+        chat_id: v.string(),
+        user_id: v.string(),
+        content: v.string(),
+        model: v.string(),
+        plugin: v.optional(v.string()),
+        role: v.string(),
+        sequence_number: v.number(),
+        thinking_content: v.optional(v.string()),
+        thinking_elapsed_secs: v.optional(v.number()),
+        image_paths: v.array(v.string()),
+        citations: v.array(v.string()),
+        attachments: v.array(v.any()),
+        updated_at: v.optional(v.number()),
+        created_at: v.number(),
+        feedback: v.array(
+          v.object({
+            message_id: v.string(),
+            user_id: v.string(),
+            chat_id: v.string(),
+            feedback: v.union(v.literal('good'), v.literal('bad')),
+            reason: v.optional(v.string()),
+            detailed_feedback: v.optional(v.string()),
+            model: v.string(),
+            updated_at: v.number(),
+            sequence_number: v.number(),
+            allow_email: v.optional(v.boolean()),
+            allow_sharing: v.optional(v.boolean()),
+            has_files: v.boolean(),
+            plugin: v.string(),
+          }),
+        ),
+        file_items: v.array(
+          v.object({
+            _id: v.id('file_items'),
+            _creationTime: v.number(),
+            file_id: v.string(),
+            user_id: v.string(),
+            content: v.string(),
+            tokens: v.number(),
+            name: v.optional(v.string()),
+            sequence_number: v.number(),
+            updated_at: v.optional(v.number()),
+            message_id: v.optional(v.string()),
+            chat_id: v.optional(v.string()),
+          }),
+        ),
+      }),
+    ),
+    isDone: v.boolean(),
+    continueCursor: v.union(v.string(), v.null()),
+  }),
   handler: async (ctx, args) => {
-    const limit = args.limit ?? 20;
-
-    // Get messages with a single query using proper indexing
-    let messagesQuery = ctx.db
+    // Get messages using pagination
+    const paginationResult = await ctx.db
       .query('messages')
       .withIndex('by_chat_and_sequence', (q) => q.eq('chat_id', args.chatId))
-      .order('desc');
+      .order('desc')
+      .paginate(args.paginationOpts);
 
-    if (args.lastSequenceNumber !== undefined) {
-      messagesQuery = messagesQuery.filter((q) =>
-        q.lt(q.field('sequence_number'), args.lastSequenceNumber!),
-      );
-    }
-
-    const messages = await messagesQuery.take(limit);
+    const messages = paginationResult.page;
 
     if (messages.length === 0) {
-      return [];
+      return {
+        page: [],
+        isDone: paginationResult.isDone,
+        continueCursor: paginationResult.continueCursor,
+      };
     }
 
     // Extract message IDs for batch operations
@@ -607,7 +608,7 @@ export const internalGetMessagesWithFiles = internalQuery({
     }
 
     // Single pass to combine all data
-    const result = messages.map((msg) => ({
+    const processedMessages = messages.map((msg) => ({
       _id: msg._id,
       _creationTime: msg._creationTime,
       id: msg.id,
@@ -629,6 +630,10 @@ export const internalGetMessagesWithFiles = internalQuery({
       file_items: fileItemsMap.get(msg.id) || [],
     }));
 
-    return result.reverse();
+    return {
+      page: processedMessages.reverse(),
+      isDone: paginationResult.isDone,
+      continueCursor: paginationResult.continueCursor,
+    };
   },
 });

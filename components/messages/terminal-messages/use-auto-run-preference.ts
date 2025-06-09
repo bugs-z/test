@@ -4,7 +4,7 @@ import type { AgentMode } from '@/types/llms';
 const agentModeKey = 'agentMode';
 
 export const useAgentModePreference = () => {
-  const [agentMode, setAgentMode] = useState<AgentMode>('ask-every-time');
+  const [agentMode, setAgentMode] = useState<AgentMode>('auto-run');
 
   useEffect(() => {
     // Only run on client side

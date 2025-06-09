@@ -7,11 +7,17 @@ type MessageWithExtras = Doc<'messages'> & {
   feedback?: Doc<'feedback'>[];
 };
 
+type PaginatedMessagesResponse = {
+  page: MessageWithExtras[];
+  isDone: boolean;
+  continueCursor: string | null;
+};
+
 export const getMessagesByChatId = async (
   chatId: string,
-  limit = 20,
-  lastSequenceNumber?: number,
-): Promise<MessageWithExtras[]> => {
+  numItems = 20,
+  cursor?: string | null,
+): Promise<PaginatedMessagesResponse> => {
   try {
     // Build URL with query parameters
     const url = new URL(
@@ -19,20 +25,28 @@ export const getMessagesByChatId = async (
       process.env.NEXT_PUBLIC_CONVEX_HTTP_ACTIONS_URL,
     );
     url.searchParams.append('chat_id', chatId);
-    if (limit) url.searchParams.append('limit', limit.toString());
-    if (lastSequenceNumber)
-      url.searchParams.append(
-        'last_sequence_number',
-        lastSequenceNumber.toString(),
-      );
+    url.searchParams.append('numItems', numItems.toString());
+    if (cursor) {
+      url.searchParams.append('cursor', cursor);
+    }
 
     const data = await makeAuthenticatedRequest(
       url.pathname + url.search,
       'GET',
     );
-    if (!data) return [];
+    if (!data) {
+      return {
+        page: [],
+        isDone: true,
+        continueCursor: null,
+      };
+    }
 
-    return (data.messages || []) as MessageWithExtras[];
+    return {
+      page: (data.page || []) as MessageWithExtras[],
+      isDone: data.isDone ?? true,
+      continueCursor: data.continueCursor ?? null,
+    };
   } catch (error) {
     console.error('Error fetching messages:', error);
     throw error;

@@ -47,6 +47,12 @@ interface PentestGPTContextType {
   chatsIsDone: boolean;
   setChatsIsDone: Dispatch<SetStateAction<boolean>>;
 
+  // MESSAGES PAGINATION STORE
+  messagesCursor: string | null;
+  setMessagesCursor: Dispatch<SetStateAction<string | null>>;
+  messagesIsDone: boolean;
+  setMessagesIsDone: Dispatch<SetStateAction<boolean>>;
+
   // PASSIVE CHAT STORE
   userInput: string;
   setUserInput: Dispatch<SetStateAction<string>>;
@@ -91,7 +97,6 @@ interface PentestGPTContextType {
 
   // Loading Messages States
   isLoadingMore: boolean;
-  allMessagesLoaded: boolean;
 
   // User Email
   userEmail: string;
@@ -129,6 +134,12 @@ export const PentestGPTContext = createContext<PentestGPTContextType>({
   setChatsCursor: () => {},
   chatsIsDone: false,
   setChatsIsDone: () => {},
+
+  // MESSAGES PAGINATION STORE
+  messagesCursor: null,
+  setMessagesCursor: () => {},
+  messagesIsDone: false,
+  setMessagesIsDone: () => {},
 
   // PASSIVE CHAT STORE
   userInput: '',
@@ -169,7 +180,6 @@ export const PentestGPTContext = createContext<PentestGPTContextType>({
 
   // Loading Messages States
   isLoadingMore: false,
-  allMessagesLoaded: false,
 
   // Fetch Chat and Messages
   fetchChat: async (chatId: string) => {},

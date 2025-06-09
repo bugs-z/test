@@ -226,30 +226,10 @@ export const useChatHandler = () => {
     );
   };
 
-  const handleSendConfirmTerminalCommand = async (editedCommand?: string) => {
+  const handleSendConfirmTerminalCommand = async () => {
     const updatedMessages = [...chatMessages];
     const lastMessage = updatedMessages[updatedMessages.length - 1];
     if (!lastMessage) return;
-
-    // Only process command editing if editedCommand is provided
-    if (editedCommand?.trim()) {
-      // Find all terminal-command tags and get the last one
-      const terminalCommandRegex =
-        /<terminal-command[^>]*>([^<]*)<\/terminal-command>/g;
-      const matches = [
-        ...lastMessage.message.content.matchAll(terminalCommandRegex),
-      ];
-      if (!matches.length) return;
-
-      const lastMatch = matches[matches.length - 1];
-      const fullMatch = lastMatch[0];
-      const execDir = fullMatch.match(/exec-dir="([^"]*)"/)?.[1] || '/';
-
-      // Replace only the last occurrence
-      const parts = lastMessage.message.content.split(fullMatch);
-      parts[parts.length - 1] = parts[parts.length - 1] || '';
-      lastMessage.message.content = `${parts.slice(0, -1).join(fullMatch)}<terminal-command exec-dir="${execDir}">${editedCommand}</terminal-command>${parts[parts.length - 1]}`;
-    }
 
     await handleSendMessage(
       null,

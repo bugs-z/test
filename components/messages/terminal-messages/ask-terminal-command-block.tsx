@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -12,7 +12,6 @@ import { useUIContext } from '@/context/ui-context';
 import { useAgentModePreference } from './use-auto-run-preference';
 import { useChatHandler } from '@/components/chat/chat-hooks/use-chat-handler';
 import { TextareaAutosize } from '@/components/ui/textarea-autosize';
-import { PentestGPTContext } from '@/context/context';
 
 interface AskTerminalCommandBlockProps {
   command: string;
@@ -23,7 +22,6 @@ export const AskTerminalCommandBlock: React.FC<
   AskTerminalCommandBlockProps
 > = ({ command, execDir }) => {
   const { isMobile } = useUIContext();
-  const { isPremiumSubscription } = useContext(PentestGPTContext);
   const { agentMode, setAgentMode } = useAgentModePreference();
   const { handleSendConfirmTerminalCommand } = useChatHandler();
 
@@ -35,14 +33,8 @@ export const AskTerminalCommandBlock: React.FC<
     ];
     return matches.length ? matches[matches.length - 1][1].trim() : content;
   };
-  const [editedCommand, setEditedCommand] = useState(extractCommand(command));
 
-  useEffect(() => {
-    setEditedCommand(extractCommand(command));
-  }, [command]);
-
-  const handleConfirm = () =>
-    editedCommand.trim() && handleSendConfirmTerminalCommand(editedCommand);
+  const handleConfirm = () => handleSendConfirmTerminalCommand();
   const handleKeyDown = (e: React.KeyboardEvent) =>
     e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleConfirm());
 
@@ -53,17 +45,15 @@ export const AskTerminalCommandBlock: React.FC<
           <SquareTerminal size={16} className="mr-2" />
           <span>{execDir}</span>
         </div>
-        <div className="text-sm hover:bg-primary/10">
+        <div className="text-sm">
           <TextareaAutosize
-            value={editedCommand}
-            onValueChange={(value) =>
-              isPremiumSubscription && setEditedCommand(value)
-            }
+            value={extractCommand(command)}
+            onValueChange={() => {}}
             onKeyDown={handleKeyDown}
-            className="font-mono text-foreground/80 break-all whitespace-pre-wrap bg-transparent border-0 p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+            className="font-mono text-foreground/80 break-all whitespace-pre-wrap bg-transparent border-0 p-0 ring-0 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 outline-none"
             minRows={1}
             maxRows={10}
-            disabled={!isPremiumSubscription}
+            disabled={true}
           />
         </div>
       </div>

@@ -60,10 +60,29 @@ export async function POST(request: Request) {
     switch (receivedEvent.type) {
       // Payment is successful and the subscription is created.
       // You should provision the subscription and save the customer ID to your database.
-      case 'checkout.session.completed':
+      case 'checkout.session.completed': {
+        const session = receivedEvent.data.object as Stripe.Checkout.Session;
+        const subscriptionId = session.subscription;
+        const customerId = session.customer;
+        if (
+          typeof subscriptionId === 'string' &&
+          typeof customerId === 'string'
+        ) {
+          await upsertSubscription(subscriptionId, customerId);
+        }
+        break;
+      }
       case 'invoice.paid': {
-        const subscriptionId = receivedEvent.data.object.subscription;
-        const customerId = receivedEvent.data.object.customer;
+        // Continue to provision the subscription as payments continue to be made.
+        // Store the status in your database and check when a user accesses your service.
+        // This approach helps you avoid hitting rate limits.
+        const invoice = receivedEvent.data.object as Stripe.Invoice;
+        // Use the new parent field structure for subscription access
+        const subscriptionId =
+          invoice.parent?.type === 'subscription_details'
+            ? invoice.parent.subscription_details?.subscription
+            : null;
+        const customerId = invoice.customer;
         if (
           typeof subscriptionId === 'string' &&
           typeof customerId === 'string'
@@ -83,25 +102,27 @@ export async function POST(request: Request) {
           receivedEvent.data.object as Stripe.Subscription,
         );
         break;
-      case 'invoice.payment_failed':
+      case 'invoice.payment_failed': {
         // The payment failed or the customer does not have a valid payment method.
         // The subscription becomes past_due. Notify your customer and send them to the
         // customer portal to update their payment information.
         // Also update the subscription status in our database
         const failedInvoice = receivedEvent.data.object as Stripe.Invoice;
-        if (
-          failedInvoice.subscription &&
-          typeof failedInvoice.subscription === 'string'
-        ) {
-          const subscription = await getStripe().subscriptions.retrieve(
-            failedInvoice.subscription,
-          );
+        // Use the new parent field structure for subscription access
+        const subscriptionId =
+          failedInvoice.parent?.type === 'subscription_details'
+            ? failedInvoice.parent.subscription_details?.subscription
+            : null;
+        if (subscriptionId && typeof subscriptionId === 'string') {
+          const subscription =
+            await getStripe().subscriptions.retrieve(subscriptionId);
           await upsertSubscription(
             subscription.id,
             subscription.customer as string,
           );
         }
         break;
+      }
       default:
       // Unhandled event type
     }
@@ -174,7 +195,7 @@ async function upsertSubscription(
         endedAt: unixToDateString(subscription.ended_at),
         planType,
         teamName: teamName || undefined,
-        quantity: subscription.items.data[0].quantity || 1,
+        quantity: subscription.items?.data?.[0]?.quantity || 1,
         userEmail: userEmail || undefined, // Required for team subscriptions
       });
       return;

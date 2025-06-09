@@ -4,10 +4,15 @@ import type { Doc } from '@/convex/_generated/dataModel';
 import { type FC, useContext, useState } from 'react';
 import { Message } from '../messages/message';
 import type { ChatMessage } from '@/types';
+import { IconLoader2 } from '@tabler/icons-react';
 
 export const ChatMessages: FC = () => {
-  const { chatMessages, temporaryChatMessages, isTemporaryChat } =
-    useContext(PentestGPTContext);
+  const {
+    chatMessages,
+    temporaryChatMessages,
+    isTemporaryChat,
+    isLoadingMore,
+  } = useContext(PentestGPTContext);
 
   const { handleSendEdit, handleSendFeedback } = useChatHandler();
 
@@ -37,6 +42,13 @@ export const ChatMessages: FC = () => {
 
   return (
     <>
+      {isLoadingMore && !isTemporaryChat && (
+        <div className="flex justify-center py-6">
+          <div className="flex items-center justify-center rounded-lg p-4">
+            <IconLoader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        </div>
+      )}
       {messagesToDisplay.map((chatMessage, index) => {
         const previousMessage =
           index > 0 ? messagesToDisplay[index - 1].message : undefined;

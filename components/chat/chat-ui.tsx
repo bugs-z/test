@@ -54,7 +54,7 @@ export const ChatUI: FC = () => {
     fetchChat,
     loadMoreMessages,
     isLoadingMore,
-    allMessagesLoaded,
+    messagesIsDone,
   } = useContext(PentestGPTContext);
 
   const { isMobile, isGenerating, setIsReadyToChat } = useUIContext();
@@ -103,7 +103,7 @@ export const ChatUI: FC = () => {
   const loadMoreMessagesInner = useCallback(async () => {
     if (
       isTemporaryChat ||
-      allMessagesLoaded ||
+      messagesIsDone ||
       isLoadingMore ||
       !chatMessages.length
     )
@@ -124,7 +124,7 @@ export const ChatUI: FC = () => {
     loadMoreMessages(chatId);
   }, [
     isTemporaryChat,
-    allMessagesLoaded,
+    messagesIsDone,
     isLoadingMore,
     chatMessages,
     loadMoreMessages,

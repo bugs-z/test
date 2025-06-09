@@ -16,7 +16,7 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
   const TOOLTIP_DELAY = 500;
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState<
-    'deep research' | 'pentest agent'
+    'deep research' | 'pentest agent' | 'file upload'
   >('deep research');
 
   const { isPremiumSubscription, newMessageImages, isTemporaryChat } =
@@ -27,6 +27,13 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
   const hasImageAttached = newMessageImages.length > 0;
 
   const handleFileClick = () => {
+    // Show upgrade prompt for non-premium users
+    if (!isPremiumSubscription) {
+      setUpgradeFeature('file upload');
+      setShowUpgradePrompt(true);
+      return;
+    }
+
     // Deselect all plugins when uploading files
     if (
       selectedPlugin &&

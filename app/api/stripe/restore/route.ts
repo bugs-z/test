@@ -99,8 +99,8 @@ async function restoreToDatabase(
     const planType = subscription.metadata.teamName ? 'team' : 'pro';
     const teamName = subscription.metadata.teamName || null;
 
-    // Get the quantity (number of seats) for team plans
-    const quantity = subscription.items.data[0].quantity || 1;
+    // Get the quantity (number of seats) for team plans - safely access items array
+    const quantity = subscription.items?.data?.[0]?.quantity || 1;
 
     // Use Convex to upsert the subscription
     await convex.mutation(api.subscriptions.upsertSubscription, {
@@ -109,7 +109,10 @@ async function restoreToDatabase(
       userId: user.id,
       customerId: subscription.customer,
       status: subscription.status,
-      startDate: unixToDateString(subscription.current_period_start),
+      startDate: unixToDateString(
+        subscription.items?.data?.[0]?.current_period_start ||
+          subscription.start_date,
+      ),
       cancelAt: subscription.cancel_at
         ? unixToDateString(subscription.cancel_at)
         : null,

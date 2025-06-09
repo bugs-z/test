@@ -63,7 +63,7 @@ const UpgradePrompt = ({
 interface UpgradeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  feature: 'deep research' | 'pentest agent';
+  feature: 'deep research' | 'pentest agent' | 'file upload';
 }
 
 export const UpgradeModal = ({

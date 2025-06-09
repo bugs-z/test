@@ -62,6 +62,10 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
   const [chatsCursor, setChatsCursor] = useState<string | null>(null);
   const [chatsIsDone, setChatsIsDone] = useState<boolean>(false);
 
+  // MESSAGES PAGINATION STORE
+  const [messagesCursor, setMessagesCursor] = useState<string | null>(null);
+  const [messagesIsDone, setMessagesIsDone] = useState<boolean>(false);
+
   // PASSIVE CHAT STORE
   const [userInput, setUserInput] = useState<string>('');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -94,7 +98,6 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
 
   // Loading Messages States
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [allMessagesLoaded, setAllMessagesLoaded] = useState(false);
 
   const [userEmail, setUserEmail] = useState('');
 
@@ -211,26 +214,36 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
 
   const fetchMessagesAndProcess = async (
     chatId: string,
-    oldestSequenceNumber?: number,
+    cursor?: string | null,
   ) => {
     if (isTemporaryChat) {
-      return temporaryChatMessages;
+      return {
+        messages: temporaryChatMessages,
+        isDone: true,
+        continueCursor: null,
+      };
     }
 
-    const fetchedMessages = await getMessagesByChatId(
+    const result = await getMessagesByChatId(
       chatId,
       MESSAGES_PER_FETCH,
-      oldestSequenceNumber,
+      cursor,
     );
 
-    const images = await processMessageImages(fetchedMessages);
+    const images = await processMessageImages(result.page);
     setChatImages((prevImages) => [...prevImages, ...images]);
 
-    return fetchedMessages.map((fetchMessage) => ({
+    const processedMessages = result.page.map((fetchMessage) => ({
       message: fetchMessage,
       fileItems: fetchMessage.file_items || [],
       feedback: fetchMessage.feedback?.[0] || undefined,
     }));
+
+    return {
+      messages: processedMessages,
+      isDone: result.isDone,
+      continueCursor: result.continueCursor,
+    };
   };
 
   const handleChatNotFound = (chatId: string) => {
@@ -249,7 +262,7 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
       return;
     }
 
-    const reformatedMessages = await fetchMessagesAndProcess(chatId);
+    const result = await fetchMessagesAndProcess(chatId);
 
     const chatFiles = await getChatFilesByChatId(chatId);
 
@@ -261,22 +274,16 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
 
     setChatFiles(chatFiles);
 
-    setAllMessagesLoaded(false);
+    // Reset pagination state for new chat
+    setMessagesCursor(result.continueCursor);
+    setMessagesIsDone(result.isDone);
     setIsLoadingMore(false);
 
-    setChatMessages(reformatedMessages);
+    setChatMessages(result.messages);
   };
 
   const loadMoreMessages = async (chatId: string) => {
-    if (
-      isTemporaryChat ||
-      allMessagesLoaded ||
-      isLoadingMore ||
-      !chatMessages.length
-    )
-      return;
-
-    const oldestSequenceNumber = chatMessages[0].message.sequence_number;
+    if (isTemporaryChat || messagesIsDone || isLoadingMore) return;
 
     if (!chatId) {
       console.error('Chat ID is undefined');
@@ -286,25 +293,24 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
     setIsLoadingMore(true);
 
     try {
-      const olderMessages = await fetchMessagesAndProcess(
-        chatId,
-        oldestSequenceNumber,
-      );
+      const result = await fetchMessagesAndProcess(chatId, messagesCursor);
 
-      if (olderMessages.length > 0) {
-        setChatMessages((prevMessages) => [...olderMessages, ...prevMessages]);
+      if (result.messages.length > 0) {
+        setChatMessages((prevMessages) => [
+          ...result.messages,
+          ...prevMessages,
+        ]);
       }
 
-      setAllMessagesLoaded(
-        olderMessages.length < MESSAGES_PER_FETCH ||
-          olderMessages[0].message.sequence_number <= 1,
-      );
+      setMessagesCursor(result.continueCursor);
+      setMessagesIsDone(result.isDone);
     } catch (error) {
       console.error('Error loading more messages:', error);
     } finally {
+      // Use a small delay to ensure smooth UI transition
       setTimeout(() => {
         setIsLoadingMore(false);
-      }, 200);
+      }, 300);
     }
   };
 
@@ -381,6 +387,12 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
         chatsIsDone,
         setChatsIsDone,
 
+        // MESSAGES PAGINATION STORE
+        messagesCursor,
+        setMessagesCursor,
+        messagesIsDone,
+        setMessagesIsDone,
+
         // PASSIVE CHAT STORE
         userInput,
         setUserInput,
@@ -425,7 +437,6 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
 
         // Loading Messages States
         isLoadingMore,
-        allMessagesLoaded,
 
         // User Email
         userEmail,

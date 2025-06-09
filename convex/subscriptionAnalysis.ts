@@ -1,6 +1,4 @@
 import {
-  query,
-  mutation,
   internalAction,
   internalMutation,
   internalQuery,
