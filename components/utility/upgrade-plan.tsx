@@ -112,13 +112,13 @@ export const UpgradePlan: FC = () => {
   }
 
   const planPrices = {
-    pro: { monthly: '$25', yearly: '$20' },
+    pro: { monthly: '$20', yearly: '$16' },
     team: { monthly: '$40', yearly: '$32' },
   };
 
   const getYearlySavingsNote = (plan: 'pro' | 'team') => {
     if (selectedPlan === 'yearly') {
-      return plan === 'pro' ? 'Save $60' : 'Save $96';
+      return plan === 'pro' ? 'Save $48' : 'Save $96';
     }
     return '';
   };
@@ -186,9 +186,7 @@ export const UpgradePlan: FC = () => {
             savingsNote={getYearlySavingsNote('pro')}
           >
             <PlanStatement>Access to smarter models</PlanStatement>
-            <PlanStatement>
-              Extended limits on messaging and reasoning
-            </PlanStatement>
+            <PlanStatement>Extended limits on messaging</PlanStatement>
             <PlanStatement>
               Access to file uploads, vision, web search, and browsing
             </PlanStatement>
