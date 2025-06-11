@@ -171,10 +171,8 @@ export function addAuthMessage(messages: any[]) {
  * @param messages - Array of messages to check
  * @returns boolean indicating if any messages contain images
  */
-export function messagesIncludeImages(messages: BuiltChatMessage[]): boolean {
-  const recentMessages = messages.slice(-6);
-
-  return recentMessages.some(
+function messagesIncludeImages(messages: BuiltChatMessage[]): boolean {
+  return messages.some(
     (message) =>
       Array.isArray(message.content) &&
       message.content.some(
@@ -184,6 +182,33 @@ export function messagesIncludeImages(messages: BuiltChatMessage[]): boolean {
           item.type === 'image_url',
       ),
   );
+}
+
+/**
+ * Checks if any messages in the conversation include file attachments
+ * @param messages - Array of messages to check
+ * @returns boolean indicating if any messages contain file attachments
+ */
+function messagesIncludeFiles(messages: BuiltChatMessage[]): boolean {
+  return messages.some(
+    (message) =>
+      message.role === 'user' &&
+      message.attachments &&
+      Array.isArray(message.attachments) &&
+      message.attachments.length > 0 &&
+      message.attachments.some((attachment) => attachment.file_id),
+  );
+}
+
+/**
+ * Checks if any messages in the conversation include images or file attachments
+ * @param messages - Array of messages to check
+ * @returns boolean indicating if any messages contain images or file attachments
+ */
+export function messagesIncludeImagesOrFiles(
+  messages: BuiltChatMessage[],
+): boolean {
+  return messagesIncludeImages(messages) || messagesIncludeFiles(messages);
 }
 
 /**

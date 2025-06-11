@@ -36,12 +36,25 @@ export const checkSubscription = query({
       .first();
 
     if (teamMember) {
-      return {
-        planType: 'team' as const,
-      };
+      // Check if the team has an active subscription
+      const teamSubscription = await ctx.db
+        .query('subscriptions')
+        .withIndex('by_team_and_plan', (q) =>
+          q.eq('team_id', teamMember.team_id).eq('plan_type', 'team'),
+        )
+        .filter((q) => q.eq(q.field('status'), 'active'))
+        .first();
+
+      if (teamSubscription) {
+        return {
+          planType: 'team' as const,
+        };
+      }
+      // If user is a team member but team has no active subscription,
+      // continue to check for individual subscription
     }
 
-    // If no team membership, check for active subscription
+    // If no team membership with active subscription, check for individual active subscription
     const subscription = await ctx.db
       .query('subscriptions')
       .withIndex('by_user_id', (q) => q.eq('user_id', args.userId))

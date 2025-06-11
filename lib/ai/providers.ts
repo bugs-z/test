@@ -6,14 +6,13 @@ import {
 import { openai } from '@ai-sdk/openai';
 import { openrouter } from '@openrouter/ai-sdk-provider';
 import { perplexity } from '@ai-sdk/perplexity';
+import { deepseek } from '@ai-sdk/deepseek';
 
 export const myProvider = customProvider({
   languageModels: {
     'chat-model-small': openai('gpt-4.1-mini-2025-04-14'),
     'chat-model-large': openai('gpt-4.1-2025-04-14'),
-    'chat-model-small-with-tools': openai('gpt-4.1-mini-2025-04-14', {
-      parallelToolCalls: false,
-    }),
+    'chat-model-small-with-tools': deepseek('deepseek-chat'),
     'chat-model-large-with-tools': openai('gpt-4.1-2025-04-14', {
       parallelToolCalls: false,
     }),
@@ -22,11 +21,7 @@ export const myProvider = customProvider({
     }),
     'browser-model': openai('gpt-4.1-mini-2025-04-14'),
     'chat-model-reasoning': wrapLanguageModel({
-      model: openrouter('x-ai/grok-3-mini-beta', {
-        extraBody: {
-          reasoning: { effort: 'high' },
-        },
-      }),
+      model: deepseek('deepseek-reasoner'),
       middleware: extractReasoningMiddleware({ tagName: 'think' }),
     }),
     'deep-research-model': wrapLanguageModel({

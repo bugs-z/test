@@ -146,6 +146,11 @@ beneficial for the user's needs.`,
             type: 'reasoning',
             content: '\n\n',
           });
+
+          dataStream.writeData({
+            type: 'text-delta',
+            content: '\n\n',
+          });
         } else if (chunk.chunk.type === 'reasoning') {
           if (!isThinking) {
             isThinking = true;

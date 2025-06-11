@@ -9,6 +9,7 @@ import { createToolSchemas } from '@/lib/ai/tools/toolSchemas';
 import {
   processChatMessages,
   toVercelChatMessages,
+  messagesIncludeImagesOrFiles,
 } from '@/lib/ai/message-utils';
 import { type LLMID, PluginID } from '@/types';
 import {
@@ -44,6 +45,7 @@ export async function POST(request: Request) {
       model,
       profile,
       modelParams.selectedPlugin,
+      messages,
     );
 
     if (!config.isRateLimitAllowed) {
@@ -234,6 +236,7 @@ async function getProviderConfig(
   model: LLMID,
   profile: any,
   selectedPlugin: PluginID,
+  messages: any[],
 ) {
   // Moving away from gpt-4-turbo-preview to chat-model-large
   const modelMap: Record<string, string> = {
@@ -249,10 +252,20 @@ async function getProviderConfig(
     'gpt-4-turbo-preview': 'pentestgpt-pro',
   };
 
-  const selectedModel = modelMap[model];
+  let selectedModel = modelMap[model];
   if (!selectedModel) {
     throw new Error('Selected model is undefined');
   }
+
+  // If the selected model is chat-model-small-with-tools and messages contain images or files,
+  // switch to chat-model-small for better image/file handling
+  if (
+    selectedModel === 'chat-model-small-with-tools' &&
+    messagesIncludeImagesOrFiles(messages)
+  ) {
+    selectedModel = 'chat-model-small';
+  }
+
   const isLargeModel = selectedModel.includes('large');
 
   const rateLimitModel =

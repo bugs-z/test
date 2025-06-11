@@ -112,8 +112,7 @@ export async function getRemaining(
 }
 
 function getTimeWindow(): number {
-  const key = 'RATELIMITER_TIME_WINDOW_MINUTES';
-  return Number(process.env[key]) * 60 * 1000;
+  return 180 * 60 * 1000; // 180 minutes in milliseconds
 }
 
 function _getLimit(
@@ -233,7 +232,6 @@ function getModelName(model: string): string {
     'pentestgpt-pro': 'Large Model',
     terminal: 'Pentest Agent',
     'stt-1': 'speech-to-text',
-    reasoning: 'reasoning model',
     'reasoning-model': 'reasoning model',
   };
   return modelNames[model] || model;

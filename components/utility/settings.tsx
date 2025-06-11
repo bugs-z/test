@@ -33,7 +33,7 @@ import { GeneralTab } from './profile-tabs/general-tab';
 import { SecurityTab } from './profile-tabs/security-tab';
 import { SubscriptionTab } from './profile-tabs/subscription-tab';
 import { TeamTab } from './profile-tabs/team-tab';
-import { TeamRole } from '@/lib/team-utils';
+import { TeamRole, isTeamOwner } from '@/lib/team-utils';
 import { cancelSubscription, getStripe } from '@/lib/server/stripe';
 import { ProfileButton } from '../ui/profile-button';
 import { useUIContext } from '@/context/ui-context';
@@ -171,7 +171,11 @@ export const Settings: FC<{ showEmail?: boolean }> = ({
     }
 
     if (tab.value === 'team') {
-      return membershipData && membershipData?.invitation_status === 'accepted';
+      return (
+        membershipData &&
+        isTeamOwner(membershipData) &&
+        subscription?.plan_type === 'team'
+      );
     }
 
     return true;
@@ -262,7 +266,8 @@ export const Settings: FC<{ showEmail?: boolean }> = ({
                   <SecurityTab />
                 </TabPanel>
                 {membershipData &&
-                  membershipData?.invitation_status === 'accepted' && (
+                  isTeamOwner(membershipData) &&
+                  subscription?.plan_type === 'team' && (
                     <TabPanel>
                       <TeamTab />
                     </TabPanel>
