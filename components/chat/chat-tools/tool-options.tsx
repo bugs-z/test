@@ -105,7 +105,7 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
       )}
 
       {/* Terminal Tool - Only show if not in temporary chat */}
-      {!isTemporaryChat && (
+      {!isTemporaryChat && isPremiumSubscription && (
         <WithTooltip
           delayDuration={TOOLTIP_DELAY}
           side="top"
