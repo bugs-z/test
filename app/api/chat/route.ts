@@ -257,15 +257,15 @@ async function getProviderConfig(
     throw new Error('Selected model is undefined');
   }
 
-  // // If the selected model is chat-model-small-with-tools and messages contain images or files,
-  // // switch to chat-model-small for better image/file handling
-  // if (messagesIncludeImagesOrFiles(messages)) {
-  //   if (selectedModel === 'chat-model-small-with-tools') {
-  //     selectedModel = 'chat-model-small';
-  //   } else if (selectedModel === 'chat-model-large-with-tools') {
-  //     selectedModel = 'chat-model-large';
-  //   }
-  // }
+  // If the selected model is chat-model-small-with-tools and messages contain images or files,
+  // switch to chat-model-small for better image/file handling
+  if (messagesIncludeImagesOrFiles(messages)) {
+    if (selectedModel === 'chat-model-small-with-tools') {
+      selectedModel = 'chat-model-small';
+    } else if (selectedModel === 'chat-model-large-with-tools') {
+      selectedModel = 'chat-model-large';
+    }
+  }
 
   const isLargeModel = selectedModel.includes('large');
 
