@@ -30,17 +30,16 @@ interface WebSearchConfig {
   assistantMessageId: string;
 }
 
-interface PerplexityResponse {
+interface GrokResponse {
   id: string;
   model: string;
   created: number;
-  usage: {
+  usage?: {
     prompt_tokens: number;
     completion_tokens: number;
     total_tokens: number;
-    search_context_size: string;
   };
-  citations: string[];
+  citations?: string[];
   object: string;
   choices: Array<{
     index: number;
@@ -63,10 +62,8 @@ interface StreamDelta {
 }
 
 async function getProviderConfig(isLargeModel: boolean, profile: any) {
-  const defaultModel = 'sonar';
-  const proModel = 'sonar-pro';
-
-  const selectedModel = isLargeModel ? proModel : defaultModel;
+  // Grok models - using grok-3-latest as the primary model
+  const selectedModel = 'grok-3-latest';
 
   const systemPrompt = buildSystemPrompt(
     llmConfig.systemPrompts.pentestGPTWebSearch,
@@ -79,7 +76,7 @@ async function getProviderConfig(isLargeModel: boolean, profile: any) {
   };
 }
 
-async function* streamPerplexityResponse(
+async function* streamGrokResponse(
   response: Response,
 ): AsyncGenerator<StreamDelta> {
   const reader = response.body?.getReader();
@@ -104,10 +101,14 @@ async function* streamPerplexityResponse(
           if (data === '[DONE]') return;
 
           try {
-            const parsed: PerplexityResponse = JSON.parse(data);
+            const parsed: GrokResponse = JSON.parse(data);
 
-            // Handle citations from the first message
-            if (!citationsSent && parsed.citations?.length > 0) {
+            // Handle citations from the last chunk (Grok returns citations in the final chunk)
+            if (
+              !citationsSent &&
+              parsed.citations &&
+              parsed.citations.length > 0
+            ) {
               yield { type: 'citations', citations: parsed.citations };
               citationsSent = true;
             }
@@ -138,11 +139,11 @@ async function getResponseBody(response: Response): Promise<string> {
   }
 }
 
-async function makePerplexityRequest(payload: any, abortSignal: AbortSignal) {
-  const response = await fetch('https://api.perplexity.ai/chat/completions', {
+async function makeGrokRequest(payload: any, abortSignal: AbortSignal) {
+  const response = await fetch('https://api.x.ai/v1/chat/completions', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+      Authorization: `Bearer ${process.env.XAI_API_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(payload),
@@ -169,8 +170,8 @@ export async function executeWebSearchTool({
 }: {
   config: WebSearchConfig;
 }) {
-  if (!process.env.PERPLEXITY_API_KEY) {
-    throw new Error('Perplexity API key is not set for web search');
+  if (!process.env.XAI_API_KEY) {
+    throw new Error('XAI API key is not set for web search');
   }
 
   const {
@@ -229,35 +230,44 @@ export async function executeWebSearchTool({
       })();
     }
 
+    console.log('validatedMessages', validatedMessages);
+
     const requestPayload = {
       model: selectedModel,
-      system: systemPrompt,
-      messages: toVercelChatMessages(validatedMessages, true, true),
+      messages: [
+        {
+          role: 'system',
+          content: systemPrompt,
+        },
+        ...toVercelChatMessages(validatedMessages, true, true),
+      ],
       stream: true,
       max_tokens: 2048,
-      web_search_options: {
-        search_context_size: 'medium',
-        ...(userCountryCode && {
-          user_location: { country: userCountryCode },
-        }),
+      search_parameters: {
+        mode: 'on',
+        return_citations: true,
+        sources: [{ type: 'web', country: userCountryCode }, { type: 'x' }],
       },
     };
 
-    let { response, error } = await makePerplexityRequest(
+    let { response, error } = await makeGrokRequest(
       requestPayload,
       abortSignal,
     );
 
-    // If we get a country code error, retry without user location
-    if (error?.error?.type === 'invalid_country_code') {
+    // If we get a country code error, retry without country specification
+    if (
+      error?.error?.type === 'invalid_country_code' ||
+      (error?.error?.message && error.error.message.includes('country'))
+    ) {
       const retryPayload = {
         ...requestPayload,
-        web_search_options: { search_context_size: 'medium' },
+        search_parameters: {
+          mode: 'on',
+          return_citations: true,
+        },
       };
-      ({ response, error } = await makePerplexityRequest(
-        retryPayload,
-        abortSignal,
-      ));
+      ({ response, error } = await makeGrokRequest(retryPayload, abortSignal));
     }
 
     if (error) {
@@ -277,17 +287,25 @@ export async function executeWebSearchTool({
     }
 
     let hasFirstTextDelta = false;
+    let citationsSent = false;
 
-    for await (const delta of streamPerplexityResponse(response)) {
+    for await (const delta of streamGrokResponse(response)) {
       if (delta.type === 'citations' && delta.citations) {
         citations.push(...delta.citations);
+        // Send citations immediately when we receive them
+        if (!citationsSent) {
+          dataStream.writeData({ citations });
+          citationsSent = true;
+        }
       }
 
       if (delta.type === 'text-delta' && delta.textDelta) {
-        if (!hasFirstTextDelta) {
+        // Send citations before first text if not already sent
+        if (!hasFirstTextDelta && !citationsSent && citations.length > 0) {
           dataStream.writeData({ citations });
-          hasFirstTextDelta = true;
+          citationsSent = true;
         }
+        hasFirstTextDelta = true;
 
         assistantMessage += delta.textDelta;
         dataStream.writeData({
