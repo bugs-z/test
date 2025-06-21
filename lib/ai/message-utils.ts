@@ -167,51 +167,6 @@ export function addAuthMessage(messages: any[]) {
 }
 
 /**
- * Checks if any messages in the conversation include images
- * @param messages - Array of messages to check
- * @returns boolean indicating if any messages contain images
- */
-function messagesIncludeImages(messages: BuiltChatMessage[]): boolean {
-  return messages.some(
-    (message) =>
-      Array.isArray(message.content) &&
-      message.content.some(
-        (item) =>
-          typeof item === 'object' &&
-          'type' in item &&
-          item.type === 'image_url',
-      ),
-  );
-}
-
-/**
- * Checks if any messages in the conversation include file attachments
- * @param messages - Array of messages to check
- * @returns boolean indicating if any messages contain file attachments
- */
-function messagesIncludeFiles(messages: BuiltChatMessage[]): boolean {
-  return messages.some(
-    (message) =>
-      message.role === 'user' &&
-      message.attachments &&
-      Array.isArray(message.attachments) &&
-      message.attachments.length > 0 &&
-      message.attachments.some((attachment) => attachment.file_id),
-  );
-}
-
-/**
- * Checks if any messages in the conversation include images or file attachments
- * @param messages - Array of messages to check
- * @returns boolean indicating if any messages contain images or file attachments
- */
-export function messagesIncludeImagesOrFiles(
-  messages: BuiltChatMessage[],
-): boolean {
-  return messagesIncludeImages(messages) || messagesIncludeFiles(messages);
-}
-
-/**
  * Validates and filters chat messages to ensure they are properly structured and non-empty
  * @param messages - Array of messages to validate
  * @returns Filtered array with valid messages only
@@ -315,6 +270,8 @@ export async function processChatMessages(
   processedMessages: BuiltChatMessage[];
   systemPrompt: string;
   pentestFiles?: Array<{ path: string; data: Buffer }>;
+  hasPdfAttachments?: boolean;
+  hasImageAttachments?: boolean;
 }> {
   let shouldUncensor = false;
   const apiKey = llmConfig.openai.apiKey;
@@ -326,9 +283,16 @@ export async function processChatMessages(
   const messagesCopy = structuredClone(messages);
 
   // Process images if supabase client is provided
-  const processedMessages = supabase
-    ? await processMessagesWithImages(messagesCopy, selectedModel)
-    : messagesCopy;
+  let processedMessages: BuiltChatMessage[];
+  let hasImageAttachments = false;
+
+  if (supabase) {
+    const result = await processMessagesWithImages(messagesCopy, selectedModel);
+    processedMessages = result.processedMessages;
+    hasImageAttachments = result.hasImageAttachments;
+  } else {
+    processedMessages = messagesCopy;
+  }
 
   // Check if we should uncensor the response
   if (
@@ -357,13 +321,16 @@ export async function processChatMessages(
   const validatedMessages = validateMessages(processedMessages);
 
   // Process attachments and file content for the last message
-  const { processedMessages: messagesWithAttachments, pentestFiles } =
-    await processMessageContentWithAttachments(
-      validatedMessages,
-      profile.user_id,
-      isReasoningModel,
-      isPentestAgent,
-    );
+  const {
+    processedMessages: messagesWithAttachments,
+    pentestFiles,
+    hasPdfAttachments,
+  } = await processMessageContentWithAttachments(
+    validatedMessages,
+    profile.user_id,
+    isReasoningModel,
+    isPentestAgent,
+  );
 
   const systemPrompt = getSystemPrompt({
     selectedChatModel: selectedModel,
@@ -374,6 +341,8 @@ export async function processChatMessages(
     processedMessages: messagesWithAttachments,
     systemPrompt,
     pentestFiles,
+    hasPdfAttachments,
+    hasImageAttachments,
   };
 }
 

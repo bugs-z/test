@@ -205,12 +205,14 @@ export async function processMessageContentWithAttachments(
 ): Promise<{
   processedMessages: BuiltChatMessage[];
   pentestFiles?: Array<{ path: string; data: Buffer }>;
+  hasPdfAttachments?: boolean;
 }> {
   if (!messages.length) return { processedMessages: messages };
 
   // Create a copy to avoid mutating the original
   let processedMessages = [...messages];
   let pentestFiles: Array<{ path: string; data: Buffer }> | undefined;
+  let hasPdfAttachments = false;
   const localPath = '/mnt/data';
 
   try {
@@ -255,7 +257,6 @@ export async function processMessageContentWithAttachments(
         if (fileItems.length > 0) {
           // Process files in the order they appear in attachments
           const processedContent: MessageContent[] = [];
-          let hasPdfAttachments = false;
 
           // First add the original content if it's a string
           if (typeof message.content === 'string') {
@@ -320,7 +321,7 @@ export async function processMessageContentWithAttachments(
         messageWithoutAttachments,
     );
 
-    return { processedMessages, pentestFiles };
+    return { processedMessages, pentestFiles, hasPdfAttachments };
   } catch (error) {
     console.error('Error processing message attachments:', error);
   }

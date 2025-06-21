@@ -9,7 +9,6 @@ import { createToolSchemas } from '@/lib/ai/tools/toolSchemas';
 import {
   processChatMessages,
   toVercelChatMessages,
-  messagesIncludeImagesOrFiles,
 } from '@/lib/ai/message-utils';
 import { type LLMID, PluginID } from '@/types';
 import {
@@ -73,7 +72,12 @@ export async function POST(request: Request) {
     let hasGeneratedTitle = false;
     let titleGenerationPromise: Promise<void> | null = null;
 
-    const { processedMessages, systemPrompt } = await processChatMessages(
+    const {
+      processedMessages,
+      systemPrompt,
+      hasPdfAttachments,
+      hasImageAttachments,
+    } = await processChatMessages(
       messages,
       config.selectedModel,
       modelParams,
@@ -82,6 +86,16 @@ export async function POST(request: Request) {
       supabase,
       config.isPremiumUser,
     );
+
+    // Check for PDF or image attachments after processing and switch model if needed
+    let finalSelectedModel = config.selectedModel;
+    if (hasPdfAttachments || hasImageAttachments) {
+      if (config.selectedModel === 'chat-model-small-with-tools') {
+        finalSelectedModel = 'chat-model-small';
+      } else if (config.selectedModel === 'chat-model-large-with-tools') {
+        finalSelectedModel = 'chat-model-large';
+      }
+    }
 
     // Handle initial chat creation and user message in parallel with other operations
     const initialChatPromise = handleInitialChatAndUserMessage({
@@ -129,7 +143,7 @@ export async function POST(request: Request) {
           });
 
           const result = streamText({
-            model: myProvider.languageModel(config.selectedModel),
+            model: myProvider.languageModel(finalSelectedModel),
             system: systemPrompt,
             messages: toVercelChatMessages(processedMessages, true),
             maxTokens: 2048,
@@ -255,16 +269,6 @@ async function getProviderConfig(
   let selectedModel = modelMap[model];
   if (!selectedModel) {
     throw new Error('Selected model is undefined');
-  }
-
-  // If the selected model is chat-model-small-with-tools and messages contain images or files,
-  // switch to chat-model-small for better image/file handling
-  if (messagesIncludeImagesOrFiles(messages)) {
-    if (selectedModel === 'chat-model-small-with-tools') {
-      selectedModel = 'chat-model-small';
-    } else if (selectedModel === 'chat-model-large-with-tools') {
-      selectedModel = 'chat-model-large';
-    }
   }
 
   const isLargeModel = selectedModel.includes('large');

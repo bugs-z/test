@@ -10,14 +10,18 @@ import {
 } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 
-export function PasswordInput() {
+export function PasswordInput({ className }: { className?: string }) {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
     <div className="relative">
       <Input
-        className="rounded-md border bg-inherit px-4 py-2 pr-10"
+        className={cn(
+          'rounded-md border bg-inherit px-4 py-2 pr-10',
+          className,
+        )}
         type={showPassword ? 'text' : 'password'}
         name="password"
         placeholder="••••••••"

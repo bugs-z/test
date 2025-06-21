@@ -16,6 +16,24 @@ if (
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL);
 
 /**
+ * Checks if messages contain image content
+ * @param messages - Array of chat messages to check
+ * @returns boolean indicating if images are present
+ */
+function checkForImagesInMessages(messages: BuiltChatMessage[]): boolean {
+  return messages.some(
+    (message) =>
+      Array.isArray(message.content) &&
+      message.content.some(
+        (item) =>
+          typeof item === 'object' &&
+          'type' in item &&
+          item.type === 'image_url',
+      ),
+  );
+}
+
+/**
  * Gets URLs for multiple images from Convex storage
  * @param storageIds - Array of storage IDs
  * @returns Promise resolving to map of storage ID to URL
@@ -60,18 +78,23 @@ async function getImageUrls(
  * Processes messages and converts image paths to URLs
  * @param messages - Array of chat messages to process
  * @param selectedModel - The selected model to check if it supports images
- * @returns Promise resolving to processed messages with image URLs or images removed
+ * @returns Promise resolving to processed messages with image URLs or images removed, and whether images were found
  */
 export async function processMessagesWithImages(
   messages: BuiltChatMessage[],
   selectedModel?: string,
-): Promise<BuiltChatMessage[]> {
+): Promise<{
+  processedMessages: BuiltChatMessage[];
+  hasImageAttachments: boolean;
+}> {
   // If model doesn't support images, remove them
   if (
     selectedModel === 'deep-research-model' ||
     selectedModel === 'reasoning-model'
   ) {
-    return removeImagesFromMessages(messages);
+    const processedMessages = removeImagesFromMessages(messages);
+    const hasImageAttachments = checkForImagesInMessages(messages);
+    return { processedMessages, hasImageAttachments };
   }
 
   // Collect all unique storage IDs that need processing
@@ -92,14 +115,15 @@ export async function processMessagesWithImages(
 
   // If no storage IDs to process, return original messages
   if (storageIdsToProcess.size === 0) {
-    return messages;
+    const hasImageAttachments = checkForImagesInMessages(messages);
+    return { processedMessages: messages, hasImageAttachments };
   }
 
   // Get URLs for all images from Convex storage
   const imageUrls = await getImageUrls(Array.from(storageIdsToProcess));
 
   // Process messages using the image URLs directly
-  return messages.map((message) => {
+  const processedMessages = messages.map((message) => {
     if (Array.isArray(message.content)) {
       const processedContent = message.content.map((item) => {
         if (
@@ -123,6 +147,9 @@ export async function processMessagesWithImages(
     }
     return message;
   });
+
+  const hasImageAttachments = checkForImagesInMessages(processedMessages);
+  return { processedMessages, hasImageAttachments };
 }
 
 /**
