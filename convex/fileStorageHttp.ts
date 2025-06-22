@@ -1,5 +1,6 @@
 import { httpAction } from './_generated/server';
 import { internal } from './_generated/api';
+import { api } from './_generated/api';
 import {
   createResponse,
   createErrorResponse,
@@ -23,7 +24,7 @@ interface FileMetadata {
 export const uploadImageHttp = httpAction(async (ctx, request) => {
   // Validate authentication with user verification
   const authResult = await validateAuthWithUser(request);
-  if (!authResult.success) {
+  if (!authResult.success || !authResult.user) {
     return createErrorResponse(
       authResult.error || 'Authentication failed',
       401,
@@ -31,6 +32,22 @@ export const uploadImageHttp = httpAction(async (ctx, request) => {
   }
 
   try {
+    // Check user subscription before allowing upload
+    const subscriptionInfo = await ctx.runQuery(
+      api.subscriptions.checkSubscription,
+      {
+        serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
+        userId: authResult.user.id,
+      },
+    );
+
+    if (subscriptionInfo.planType === 'free') {
+      return createErrorResponse(
+        'File uploads are only available for Pro and Team users. Please upgrade your subscription to upload images.',
+        403,
+      );
+    }
+
     // Store the image file
     const blob = await request.blob();
 
@@ -112,6 +129,22 @@ export const uploadFileHttp = httpAction(async (ctx, request) => {
   }
 
   try {
+    // Check user subscription before allowing upload
+    const subscriptionInfo = await ctx.runQuery(
+      api.subscriptions.checkSubscription,
+      {
+        serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
+        userId: authResult.user.id,
+      },
+    );
+
+    if (subscriptionInfo.planType === 'free') {
+      return createErrorResponse(
+        'File uploads are only available for Pro and Team users. Please upgrade your subscription to upload files.',
+        403,
+      );
+    }
+
     // Parse form data to get file and metadata
     const formData = await request.formData();
     const file = formData.get('file') as File;

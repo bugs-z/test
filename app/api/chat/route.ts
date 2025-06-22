@@ -1,6 +1,5 @@
 import { getAIProfile } from '@/lib/server/server-chat-helpers';
 import { handleErrorResponse } from '@/lib/models/api-error';
-import { checkRatelimitOnApi } from '@/lib/server/ratelimiter';
 import { createDataStreamResponse, smoothStream, streamText } from 'ai';
 import { myProvider } from '@/lib/ai/providers';
 import PostHogClient from '@/app/posthog';
@@ -10,13 +9,12 @@ import {
   processChatMessages,
   toVercelChatMessages,
 } from '@/lib/ai/message-utils';
-import { type LLMID, PluginID } from '@/types';
 import {
   generateTitleFromUserMessage,
   handleInitialChatAndUserMessage,
   handleFinalChatAndAssistantMessage,
 } from '@/lib/ai/actions';
-import { validateChatAccess } from '@/lib/ai/actions/chat-validation';
+import { validateChatAccessWithLimits } from '@/lib/ai/actions/chat-validation';
 import { createClient } from '@/lib/supabase/server';
 import { postRequestBodySchema, type PostRequestBody } from './schema';
 import { ChatSDKError } from '@/lib/errors';
@@ -40,29 +38,13 @@ export async function POST(request: Request) {
     const userCountryCode = request.headers.get('x-vercel-ip-country');
 
     const { profile } = await getAIProfile();
-    const config = await getProviderConfig(
-      model,
-      profile,
-      modelParams.selectedPlugin,
-      messages,
-    );
 
-    if (!config.isRateLimitAllowed) {
-      return new Response(
-        JSON.stringify({
-          error: {
-            type: 'ratelimit_hit',
-            message: config.rateLimitInfo.message,
-            isPremiumUser: config.isPremiumUser,
-          },
-        }),
-        { status: 429 },
-      );
-    }
-
-    const chat = await validateChatAccess({
+    const { chat, config } = await validateChatAccessWithLimits({
       chatMetadata,
       userId: profile.user_id,
+      messages,
+      model,
+      selectedPlugin: modelParams.selectedPlugin,
     });
 
     const supabase = await createClient();
@@ -197,11 +179,7 @@ export async function POST(request: Request) {
               userCountryCode,
               initialChatPromise,
               assistantMessageId,
-            }).getSelectedSchemas(
-              config.isPremiumUser && !modelParams.isTemporaryChat
-                ? ['browser', 'webSearch', 'terminal']
-                : ['browser', 'webSearch'],
-            ),
+            }).getSelectedSchemas(['browser', 'webSearch']),
             onFinish: async ({ finishReason, text }) => {
               if (!toolUsed) {
                 // Wait for title generation if it's in progress
@@ -237,6 +215,11 @@ export async function POST(request: Request) {
       return handleErrorResponse(error);
     }
   } catch (error: any) {
+    // Handle ChatSDKError specifically
+    if (error instanceof ChatSDKError) {
+      return error.toResponse();
+    }
+
     const errorMessage = error.message || 'An unexpected error occurred';
     const errorCode = error.status || 500;
 
@@ -244,50 +227,4 @@ export async function POST(request: Request) {
       status: errorCode,
     });
   }
-}
-
-async function getProviderConfig(
-  model: LLMID,
-  profile: any,
-  selectedPlugin: PluginID,
-  messages: any[],
-) {
-  // Moving away from gpt-4-turbo-preview to chat-model-large
-  const modelMap: Record<string, string> = {
-    'mistral-medium': 'chat-model-small-with-tools',
-    'mistral-large': 'chat-model-large-with-tools',
-    'gpt-4-turbo-preview': 'chat-model-large-with-tools',
-    'reasoning-model': 'reasoning-model',
-  };
-  // Moving away from gpt-4-turbo-preview to pentestgpt-pro
-  const rateLimitModelMap: Record<string, string> = {
-    'mistral-medium': 'pentestgpt',
-    'mistral-large': 'pentestgpt-pro',
-    'gpt-4-turbo-preview': 'pentestgpt-pro',
-  };
-
-  let selectedModel = modelMap[model];
-  if (!selectedModel) {
-    throw new Error('Selected model is undefined');
-  }
-
-  const isLargeModel = selectedModel.includes('large');
-
-  const rateLimitModel =
-    selectedPlugin !== PluginID.NONE
-      ? selectedPlugin
-      : rateLimitModelMap[model] || model;
-
-  const rateLimitStatus = await checkRatelimitOnApi(
-    profile.user_id,
-    rateLimitModel,
-  );
-
-  return {
-    selectedModel,
-    isRateLimitAllowed: rateLimitStatus.allowed,
-    isLargeModel,
-    rateLimitInfo: rateLimitStatus.info,
-    isPremiumUser: rateLimitStatus.info.isPremiumUser,
-  };
 }

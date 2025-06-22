@@ -118,21 +118,21 @@ version of a software library or not knowing the date of the next game for a spo
         });
       },
     },
-    terminal: {
-      description: `Run terminal commands. Select this tool IMMEDIATELY when any terminal operations are needed, don't say or plan anything before selecting this tool.
+    //     terminal: {
+    //       description: `Run terminal commands. Select this tool IMMEDIATELY when any terminal operations are needed, don't say or plan anything before selecting this tool.
 
-This tool executes terminal commands in a Debian GNU/Linux 12 environment with root privileges. Use this tool when:
-1. The user requests to run any command or script
-2. The user needs to perform network scanning, enumeration, or other security testing
-3. Any task that will benefit from the use of a terminal`,
-      parameters: z.object({
-        terminal: z
-          .boolean()
-          .describe(
-            'Set to true to use the terminal for executing terminal commands. Select immediately when terminal operations are needed.',
-          ),
-      }),
-    },
+    // This tool executes terminal commands in a Debian GNU/Linux 12 environment with root privileges. Use this tool when:
+    // 1. The user requests to run any command or script
+    // 2. The user needs to perform network scanning, enumeration, or other security testing
+    // 3. Any task that will benefit from the use of a terminal`,
+    //       parameters: z.object({
+    //         terminal: z
+    //           .boolean()
+    //           .describe(
+    //             'Set to true to use the terminal for executing terminal commands. Select immediately when terminal operations are needed.',
+    //           ),
+    //       }),
+    //     },
   };
 
   type SchemaKey = keyof typeof allSchemas;

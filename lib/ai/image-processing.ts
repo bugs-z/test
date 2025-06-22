@@ -20,7 +20,9 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL);
  * @param messages - Array of chat messages to check
  * @returns boolean indicating if images are present
  */
-function checkForImagesInMessages(messages: BuiltChatMessage[]): boolean {
+export function checkForImagesInMessages(
+  messages: BuiltChatMessage[],
+): boolean {
   return messages.some(
     (message) =>
       Array.isArray(message.content) &&

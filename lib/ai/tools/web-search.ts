@@ -230,8 +230,6 @@ export async function executeWebSearchTool({
       })();
     }
 
-    console.log('validatedMessages', validatedMessages);
-
     const requestPayload = {
       model: selectedModel,
       messages: [

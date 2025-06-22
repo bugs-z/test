@@ -29,6 +29,26 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL);
 export async function POST(req: Request) {
   try {
     const user = await getServerUser();
+
+    // Check user subscription before allowing file processing
+    const subscriptionInfo = await convex.query(
+      api.subscriptions.checkSubscription,
+      {
+        serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
+        userId: user.id,
+      },
+    );
+
+    if (subscriptionInfo.planType === 'free') {
+      return new Response(
+        JSON.stringify({
+          message:
+            'File processing is only available for Pro and Team users. Please upgrade your subscription to process files.',
+        }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } },
+      );
+    }
+
     const formData = await req.formData();
     const file_id = formData.get('file_id') as Id<'files'>;
 

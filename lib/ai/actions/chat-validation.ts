@@ -2,6 +2,10 @@ import { ChatSDKError } from '@/lib/errors';
 import { api } from '@/convex/_generated/api';
 import { ConvexHttpClient } from 'convex/browser';
 import type { ChatMetadata } from '@/types';
+import type { BuiltChatMessage } from '@/types/chat-message';
+import { checkRatelimitOnApi } from '@/lib/server/ratelimiter';
+import { PluginID } from '@/types';
+import { checkForImagesInMessages } from '../image-processing';
 
 if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
   throw new Error(
@@ -10,6 +14,54 @@ if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
 }
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL);
+
+/**
+ * Validates chat access, rate limits, and premium features
+ */
+export async function validateChatAccessWithLimits({
+  chatMetadata,
+  userId,
+  messages,
+  model,
+  selectedPlugin,
+}: {
+  chatMetadata: ChatMetadata;
+  userId: string;
+  messages: BuiltChatMessage[];
+  model: string;
+  selectedPlugin: PluginID;
+}) {
+  // First validate rate limits and premium features
+  const config = await getProviderConfig(
+    model,
+    { user_id: userId },
+    selectedPlugin,
+    messages,
+  );
+
+  if (!config.isRateLimitAllowed) {
+    throw new ChatSDKError('rate_limit:chat');
+  }
+
+  // Check if non-premium user is trying to send attachments or images
+  if (!config.isPremiumUser) {
+    const hasAttachments = messages.some(
+      (message) => message.attachments && message.attachments.length > 0,
+    );
+
+    if (hasAttachments || checkForImagesInMessages(messages)) {
+      throw new ChatSDKError('forbidden:auth');
+    }
+  }
+
+  // Then validate chat access if chat exists
+  const chat = await validateChatAccess({ chatMetadata, userId });
+
+  return {
+    chat,
+    config,
+  };
+}
 
 export async function validateChatAccess({
   chatMetadata,
@@ -36,4 +88,50 @@ export async function validateChatAccess({
     console.error('Error validating chat access:', error);
     throw new ChatSDKError('bad_request:database');
   }
+}
+
+async function getProviderConfig(
+  model: string,
+  profile: any,
+  selectedPlugin: PluginID,
+  messages: any[],
+) {
+  // Moving away from gpt-4-turbo-preview to chat-model-large
+  const modelMap: Record<string, string> = {
+    'mistral-medium': 'chat-model-small-with-tools',
+    'mistral-large': 'chat-model-large-with-tools',
+    'gpt-4-turbo-preview': 'chat-model-large-with-tools',
+    'reasoning-model': 'reasoning-model',
+  };
+  // Moving away from gpt-4-turbo-preview to pentestgpt-pro
+  const rateLimitModelMap: Record<string, string> = {
+    'mistral-medium': 'pentestgpt',
+    'mistral-large': 'pentestgpt-pro',
+    'gpt-4-turbo-preview': 'pentestgpt-pro',
+  };
+
+  let selectedModel = modelMap[model];
+  if (!selectedModel) {
+    throw new Error('Selected model is undefined');
+  }
+
+  const isLargeModel = selectedModel.includes('large');
+
+  const rateLimitModel =
+    selectedPlugin !== PluginID.NONE
+      ? selectedPlugin
+      : rateLimitModelMap[model] || model;
+
+  const rateLimitStatus = await checkRatelimitOnApi(
+    profile.user_id,
+    rateLimitModel,
+  );
+
+  return {
+    selectedModel,
+    isRateLimitAllowed: rateLimitStatus.allowed,
+    isLargeModel,
+    rateLimitInfo: rateLimitStatus.info,
+    isPremiumUser: rateLimitStatus.info.isPremiumUser,
+  };
 }
