@@ -27,8 +27,7 @@ import { getMessageFileItemsByMessageId } from '@/db/message-file-items';
 import { useRetrievalLogic } from './retrieval-logic';
 import { toast } from 'sonner';
 import { useAgentSidebar } from '@/components/chat/chat-hooks/use-agent-sidebar';
-import { useMutation } from 'convex/react';
-import { api } from '@/convex/_generated/api';
+import { saveFeedback } from '@/db/feedback';
 import type { Id, Doc } from '@/convex/_generated/dataModel';
 
 export const useChatHandler = () => {
@@ -76,8 +75,6 @@ export const useChatHandler = () => {
   const isGeneratingRef = useRef(isGenerating);
 
   const { retrievalLogic } = useRetrievalLogic();
-
-  const saveFeedback = useMutation(api.feedback.saveFeedback);
 
   useEffect(() => {
     isGeneratingRef.current = isGenerating;
@@ -199,15 +196,20 @@ export const useChatHandler = () => {
       ...feedbackData,
     };
 
-    await saveFeedback(feedbackData);
+    try {
+      await saveFeedback(feedbackData);
 
-    setChatMessages((prevMessages: ChatMessage[]) =>
-      prevMessages.map((message: ChatMessage) =>
-        message.message.id === chatMessage.message.id
-          ? { ...message, feedback: feedbackDataForState }
-          : message,
-      ),
-    );
+      setChatMessages((prevMessages: ChatMessage[]) =>
+        prevMessages.map((message: ChatMessage) =>
+          message.message.id === chatMessage.message.id
+            ? { ...message, feedback: feedbackDataForState }
+            : message,
+        ),
+      );
+    } catch (error) {
+      console.error('Error saving feedback:', error);
+      toast.error('Failed to save feedback. Please try again.');
+    }
   };
 
   const handleSendContinuation = async () => {

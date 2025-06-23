@@ -4,6 +4,7 @@ import { getMessagesWithFilesHttp } from './messagesHttp';
 import { handleTeamsHttp } from './teamsHttp';
 import { handleSubscriptionsHttp } from './subscriptionsHttp';
 import { handleProfilesHttp } from './profilesHttp';
+import { handleFeedbackHttp } from './feedbackHttp';
 import {
   uploadImageHttp,
   uploadFileHttp,
@@ -40,6 +41,13 @@ http.route({
   path: '/api/subscriptions',
   method: 'POST',
   handler: handleSubscriptionsHttp,
+});
+
+// Register feedback endpoint
+http.route({
+  path: '/api/feedback',
+  method: 'POST',
+  handler: handleFeedbackHttp,
 });
 
 // Register messages endpoint
@@ -104,6 +112,12 @@ http.route({
 
 http.route({
   path: '/api/subscriptions',
+  method: 'OPTIONS',
+  handler: createOptionsHandler(['POST', 'OPTIONS']),
+});
+
+http.route({
+  path: '/api/feedback',
   method: 'OPTIONS',
   handler: createOptionsHandler(['POST', 'OPTIONS']),
 });

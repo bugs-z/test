@@ -13,6 +13,7 @@ import {
 import { removePdfContentFromMessages } from '@/lib/build-prompt-backend';
 import { ChatSDKError } from '@/lib/errors';
 import type { Doc } from '@/convex/_generated/dataModel';
+import { checkForImagesInMessages } from '@/lib/ai/image-processing';
 
 interface WebSearchConfig {
   chat: Doc<'chats'> | null;
@@ -61,9 +62,16 @@ interface StreamDelta {
   citations?: string[];
 }
 
-async function getProviderConfig(isLargeModel: boolean, profile: any) {
-  // Grok models - using grok-3-latest as the primary model
-  const selectedModel = 'grok-3-latest';
+async function getProviderConfig(
+  isLargeModel: boolean,
+  profile: any,
+  messages: any[],
+) {
+  // Check if messages contain images
+  const hasImages = checkForImagesInMessages(messages);
+
+  // Use vision model if images are present, otherwise use the latest model
+  const selectedModel = hasImages ? 'grok-2-vision-latest' : 'grok-3-latest';
 
   const systemPrompt = buildSystemPrompt(
     llmConfig.systemPrompts.pentestGPTWebSearch,
@@ -198,6 +206,7 @@ export async function executeWebSearchTool({
   const { systemPrompt, selectedModel } = await getProviderConfig(
     isLargeModel,
     profile,
+    filteredMessages,
   );
 
   const posthog = PostHogClient();

@@ -131,3 +131,13 @@ export const getUrlParams = (
 
   return params;
 };
+
+// Helper function to validate user ID
+export const validateUserId = (
+  providedUserId: string,
+  authenticatedUserId: string,
+) => {
+  if (providedUserId !== authenticatedUserId) {
+    throw new Error('Unauthorized: User ID mismatch');
+  }
+};

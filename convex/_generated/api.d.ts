@@ -17,6 +17,7 @@ import type * as chats from "../chats.js";
 import type * as chatsHttp from "../chatsHttp.js";
 import type * as crons from "../crons.js";
 import type * as feedback from "../feedback.js";
+import type * as feedbackHttp from "../feedbackHttp.js";
 import type * as fileStorage from "../fileStorage.js";
 import type * as fileStorageHttp from "../fileStorageHttp.js";
 import type * as file_items from "../file_items.js";
@@ -49,6 +50,7 @@ declare const fullApi: ApiFromModules<{
   chatsHttp: typeof chatsHttp;
   crons: typeof crons;
   feedback: typeof feedback;
+  feedbackHttp: typeof feedbackHttp;
   fileStorage: typeof fileStorage;
   fileStorageHttp: typeof fileStorageHttp;
   file_items: typeof file_items;

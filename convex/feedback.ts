@@ -50,7 +50,7 @@ export const internalGetFeedbackByChatId = internalQuery({
   },
 });
 
-export const saveFeedback = mutation({
+export const internalSaveFeedback = internalMutation({
   args: {
     message_id: v.string(),
     user_id: v.string(),
@@ -80,10 +80,9 @@ export const saveFeedback = mutation({
     if (existingFeedback) {
       // Update existing feedback
       await ctx.db.patch(existingFeedback._id, feedbackData);
-      return existingFeedback._id;
     } else {
       // Create new feedback
-      return await ctx.db.insert('feedback', feedbackData);
+      await ctx.db.insert('feedback', feedbackData);
     }
   },
 });

@@ -4,17 +4,8 @@ import {
   createResponse,
   createErrorResponse,
   validateAuthWithUser,
+  validateUserId,
 } from './httpUtils';
-
-// Helper function to validate user ID
-const validateUserId = (
-  providedUserId: string,
-  authenticatedUserId: string,
-) => {
-  if (providedUserId !== authenticatedUserId) {
-    throw new Error('Unauthorized: User ID mismatch');
-  }
-};
 
 // Main HTTP action handler for all chat operations
 export const handleChatsHttp = httpAction(async (ctx, request) => {

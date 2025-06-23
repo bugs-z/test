@@ -71,12 +71,14 @@ export async function POST(request: Request) {
 
     // Check for PDF or image attachments after processing and switch model if needed
     let finalSelectedModel = config.selectedModel;
-    if (hasPdfAttachments || hasImageAttachments) {
+    if (hasPdfAttachments) {
       if (config.selectedModel === 'chat-model-small-with-tools') {
         finalSelectedModel = 'chat-model-small';
       } else if (config.selectedModel === 'chat-model-large-with-tools') {
         finalSelectedModel = 'chat-model-large';
       }
+    } else if (hasImageAttachments) {
+      finalSelectedModel = 'chat-model-vision';
     }
 
     // Handle initial chat creation and user message in parallel with other operations
