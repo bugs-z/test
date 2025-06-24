@@ -19,7 +19,8 @@ export async function buildFinalMessages(
   isPremiumSubscription = false,
 ): Promise<BuiltChatMessage[]> {
   const { chatMessages, retrievedFileItems, imagePaths } = payload;
-  const CONTEXT_WINDOW = isPremiumSubscription ? 32000 : 8000;
+  // 2000 additional tokens for system prompt and other overhead
+  const CONTEXT_WINDOW = isPremiumSubscription ? 30000 : 8000;
 
   let remainingTokens = CONTEXT_WINDOW;
 

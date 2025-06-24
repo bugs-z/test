@@ -225,7 +225,7 @@ export async function executeBrowserTool({
         ...toVercelChatMessages(messages.slice(0, -1)),
         { role: 'user', content: browserPrompt },
       ],
-      maxTokens: 2048,
+      maxTokens: 4096,
       abortSignal,
       onError: async (error) => {
         console.error('[BrowserTool] Stream Error:', error);

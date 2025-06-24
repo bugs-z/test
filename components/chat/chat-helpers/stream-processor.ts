@@ -270,7 +270,7 @@ export const processResponse = async (
           const { toolName } = value;
           const toolMap = {
             browser: PluginID.BROWSER,
-            terminal: PluginID.PENTEST_AGENT,
+            hackerAIMCP: PluginID.PENTEST_AGENT,
             webSearch: PluginID.WEB_SEARCH,
           } as const;
 

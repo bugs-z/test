@@ -1,7 +1,7 @@
 import { PentestGPTContext } from '@/context/context';
 import { cn } from '@/lib/utils';
 import { PluginID } from '@/types/plugins';
-import { Plus, Telescope } from 'lucide-react';
+import { SquareTerminal, Plus, Telescope } from 'lucide-react';
 import { useContext, useState } from 'react';
 import { WithTooltip } from '../../ui/with-tooltip';
 import { useUIContext } from '@/context/ui-context';
@@ -16,7 +16,7 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
   const TOOLTIP_DELAY = 500;
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState<
-    'deep research' | 'file upload'
+    'deep research' | 'pentest agent' | 'file upload'
   >('deep research');
 
   const { isPremiumSubscription, newMessageImages, isTemporaryChat } =
@@ -42,6 +42,20 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
       setSelectedPlugin(PluginID.NONE);
     }
     fileInputRef.current?.click();
+  };
+
+  const handlePentestAgentToggle = () => {
+    if (!isPremiumSubscription) {
+      setUpgradeFeature('pentest agent');
+      setShowUpgradePrompt(true);
+      return;
+    }
+
+    setSelectedPlugin(
+      selectedPlugin === PluginID.PENTEST_AGENT
+        ? PluginID.NONE
+        : PluginID.PENTEST_AGENT,
+    );
   };
 
   const handleResearchToggle = () => {
@@ -85,6 +99,56 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
                 )}
                 size={32}
               />
+            </div>
+          }
+        />
+      )}
+
+      {/* Terminal Tool - Only show if not in temporary chat */}
+      {!isTemporaryChat && isPremiumSubscription && (
+        <WithTooltip
+          delayDuration={TOOLTIP_DELAY}
+          side="top"
+          display={
+            <div className="flex flex-col">
+              {!isPremiumSubscription ? (
+                <UpgradePrompt feature="pentest agent" />
+              ) : (
+                <p className="font-medium">Use pentest agent</p>
+              )}
+            </div>
+          }
+          trigger={
+            <div
+              className={cn(
+                'flex items-center rounded-lg transition-colors duration-300',
+                selectedPlugin === PluginID.PENTEST_AGENT
+                  ? 'bg-primary/10'
+                  : 'hover:bg-black/10 dark:hover:bg-white/10',
+                !isPremiumSubscription && 'opacity-50',
+              )}
+              onClick={handlePentestAgentToggle}
+            >
+              <SquareTerminal
+                className={cn(
+                  'cursor-pointer rounded-lg p-1 focus-visible:outline-black dark:focus-visible:outline-white',
+                  selectedPlugin === PluginID.PENTEST_AGENT
+                    ? 'text-primary'
+                    : 'opacity-50',
+                )}
+                size={32}
+              />
+              <div
+                className={cn(
+                  'whitespace-nowrap text-xs font-medium transition-all duration-300',
+                  'max-w-[100px] pr-2',
+                  isMobile && selectedPlugin !== PluginID.PENTEST_AGENT
+                    ? 'hidden'
+                    : 'opacity-100',
+                )}
+              >
+                {isMobile ? 'HackerAI' : 'HackerAI MCP'}
+              </div>
             </div>
           }
         />

@@ -118,21 +118,30 @@ version of a software library or not knowing the date of the next game for a spo
         });
       },
     },
-    //     terminal: {
-    //       description: `Run terminal commands. Select this tool IMMEDIATELY when any terminal operations are needed, don't say or plan anything before selecting this tool.
+    hackerAIMCP: {
+      description: `Activate the HackerAI MCP agent for comprehensive penetration testing and cybersecurity operations. \
+Select this tool IMMEDIATELY when any security testing, terminal operations, or technical tasks are needed.
 
-    // This tool executes terminal commands in a Debian GNU/Linux 12 environment with root privileges. Use this tool when:
-    // 1. The user requests to run any command or script
-    // 2. The user needs to perform network scanning, enumeration, or other security testing
-    // 3. Any task that will benefit from the use of a terminal`,
-    //       parameters: z.object({
-    //         terminal: z
-    //           .boolean()
-    //           .describe(
-    //             'Set to true to use the terminal for executing terminal commands. Select immediately when terminal operations are needed.',
-    //           ),
-    //       }),
-    //     },
+This tool uses HackerAI MCP (https://www.hackerai.co/) which provides a specialized penetration testing environment. \
+For users who want to use different models, they can access the pentest agent directly through HackerAI MCP with any model of their choice.
+
+Use the pentestAgent when:
+1. Performing network reconnaissance, scanning, or enumeration
+2. Conducting vulnerability assessments or penetration testing
+3. Running security tools or custom scripts
+4. Analyzing web applications for security issues
+5. Installing and configuring security tools
+6. Writing and executing penetration testing scripts
+7. Any terminal operations or command-line tasks
+8. File operations, system analysis, or technical research`,
+      parameters: z.object({
+        activate: z
+          .boolean()
+          .describe(
+            'Set to true to activate the HackerAI MCP agent for security testing and terminal operations. Select immediately when any technical or security tasks are needed.',
+          ),
+      }),
+    },
   };
 
   type SchemaKey = keyof typeof allSchemas;

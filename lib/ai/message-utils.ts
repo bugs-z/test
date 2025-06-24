@@ -137,12 +137,12 @@ export const toVercelChatMessages = (
 };
 
 /**
- * Handles empty or missing assistant messages by adding "Sure, " as content.
+ * Handles empty or missing assistant messages by adding "Sure." as content.
  * Ensures there's always an assistant message ready for response generation.
  * @param messages - Array of messages to process
  * @param onlyLast - Whether to only process the last assistant message
  *
- * Adds an assistant message with "Sure, " content in two cases:
+ * Adds an assistant message with "Sure." content in two cases:
  * 1. No assistant message found in the conversation at all
  * 2. Conversation ends with a user message (needs assistant response priming)
  */
@@ -173,7 +173,7 @@ export function handleAssistantMessages(
       }
 
       if (isEmpty) {
-        messages[i].content = 'Sure, ';
+        messages[i].content = 'Sure.';
       }
 
       if (onlyLast) {
@@ -186,7 +186,7 @@ export function handleAssistantMessages(
   // 1. No assistant message found at all, OR
   // 2. Conversation ends with a user message (needs assistant response)
   if (!foundAssistant || endsWithUserMessage) {
-    messages.push({ role: 'assistant', content: 'Sure, ' });
+    messages.push({ role: 'assistant', content: 'Sure.' });
   }
 }
 
@@ -361,7 +361,9 @@ export async function processChatMessages(
 
   if (shouldUncensor) {
     addAuthMessage(processedMessages);
-    handleAssistantMessages(processedMessages);
+    if (selectedModel !== 'deep-research-model') {
+      handleAssistantMessages(processedMessages);
+    }
   }
 
   // Validate total token count

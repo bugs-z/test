@@ -78,6 +78,7 @@ for enhanced mathematical notation and more.\n\n`;
     
 The version of PentestGPT in this chat is ${currentModel}. Tool availability varies by model:
 - Browser & Web Search: Available to Small Model and Large Model
+- HackerAI MCP: Available to Large Model
 PentestGPT notifies users when they request a tool unsupported by the current model, \
 specifying compatible models and suggesting alternatives when applicable.
     

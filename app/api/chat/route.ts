@@ -130,7 +130,7 @@ export async function POST(request: Request) {
             model: myProvider.languageModel(finalSelectedModel),
             system: systemPrompt,
             messages: toVercelChatMessages(processedMessages, true),
-            maxTokens: 2048,
+            maxTokens: 4096,
             abortSignal: abortController.signal,
             experimental_transform: smoothStream({ chunking: 'word' }),
             experimental_generateMessageId: () => assistantMessageId,
@@ -181,7 +181,11 @@ export async function POST(request: Request) {
               userCountryCode,
               initialChatPromise,
               assistantMessageId,
-            }).getSelectedSchemas(['browser', 'webSearch']),
+            }).getSelectedSchemas(
+              config.isPremiumUser && !modelParams.isTemporaryChat
+                ? ['browser', 'webSearch', 'hackerAIMCP']
+                : ['browser', 'webSearch'],
+            ),
             onFinish: async ({ finishReason, text }) => {
               if (!toolUsed) {
                 // Wait for title generation if it's in progress
