@@ -49,8 +49,6 @@ export async function POST(request: Request) {
       userId: profile.user_id,
     });
 
-    const supabase = await createClient();
-
     const { processedMessages, systemPrompt, pentestFiles } =
       await processChatMessages(
         messages,
@@ -58,7 +56,6 @@ export async function POST(request: Request) {
         modelParams,
         profile,
         false,
-        supabase,
         true,
         true,
       );

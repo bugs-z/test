@@ -12,7 +12,6 @@ import { getSystemPrompt } from './prompts';
 import { processMessageContentWithAttachments } from '../build-prompt-backend';
 import llmConfig from '../models/llm-config';
 import { countTokens } from 'gpt-tokenizer';
-import type { SupabaseClient } from '@supabase/supabase-js';
 import { processMessagesWithImages } from './image-processing';
 
 /**
@@ -263,7 +262,6 @@ export async function processChatMessages(
   },
   profile: { user_id: string; profile_context: string | undefined },
   isReasoningModel: boolean,
-  supabase: SupabaseClient,
   isPremiumSubscription: boolean,
   isPentestAgent?: boolean,
 ): Promise<{
@@ -286,13 +284,9 @@ export async function processChatMessages(
   let processedMessages: BuiltChatMessage[];
   let hasImageAttachments = false;
 
-  if (supabase) {
-    const result = await processMessagesWithImages(messagesCopy, selectedModel);
-    processedMessages = result.processedMessages;
-    hasImageAttachments = result.hasImageAttachments;
-  } else {
-    processedMessages = messagesCopy;
-  }
+  const result = await processMessagesWithImages(messagesCopy, selectedModel);
+  processedMessages = result.processedMessages;
+  hasImageAttachments = result.hasImageAttachments;
 
   // Check if we should uncensor the response
   if (

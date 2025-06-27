@@ -13,6 +13,7 @@ import { streamText } from 'ai';
 import { myProvider } from '@/lib/ai/providers';
 import { v4 as uuidv4 } from 'uuid';
 import type { Doc } from '@/convex/_generated/dataModel';
+import { openai } from '@ai-sdk/openai';
 
 interface DeepResearchConfig {
   chat: Doc<'chats'> | null;
@@ -23,10 +24,11 @@ interface DeepResearchConfig {
   abortSignal: AbortSignal;
   chatMetadata: ChatMetadata;
   model: LLMID;
-  userCountryCode: string | null;
   originalMessages: any[];
   systemPrompt: string;
   initialChatPromise: Promise<void>;
+  userCity: string | undefined;
+  userCountry: string | undefined;
 }
 
 // Keepalive interval in milliseconds
@@ -37,8 +39,8 @@ export async function executeDeepResearchTool({
 }: {
   config: DeepResearchConfig;
 }) {
-  if (!process.env.PERPLEXITY_API_KEY) {
-    throw new Error('Perplexity API key is not set for deep research');
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OpenAI API key is not set for deep research');
   }
 
   const {
@@ -48,7 +50,8 @@ export async function executeDeepResearchTool({
     dataStream,
     modelParams,
     chatMetadata,
-    userCountryCode,
+    userCity,
+    userCountry,
     abortSignal,
     model,
     originalMessages,
@@ -106,20 +109,25 @@ export async function executeDeepResearchTool({
 
     const result = streamText({
       model: myProvider.languageModel('deep-research-model'),
+      providerOptions: {
+        openai: {
+          reasoningSummary: 'detailed',
+        },
+      },
       system: systemPrompt,
       messages: toVercelChatMessages(validatedMessages),
       maxTokens: 8192,
-      experimental_generateMessageId: () => assistantMessageId,
-      providerOptions: {
-        perplexity: {
-          web_search_options: {
-            search_context_size: 'medium',
-            ...(userCountryCode && {
-              user_location: { country: userCountryCode },
-            }),
+      tools: {
+        web_search_preview: openai.tools.webSearchPreview({
+          searchContextSize: 'medium',
+          userLocation: {
+            type: 'approximate',
+            country: userCountry,
+            city: userCity,
           },
-        },
+        }),
       },
+      experimental_generateMessageId: () => assistantMessageId,
       onChunk: async (chunk) => {
         if (chunk.chunk.type === 'reasoning') {
           if (!isThinking) {
@@ -163,13 +171,6 @@ export async function executeDeepResearchTool({
         });
       },
     });
-
-    for await (const part of result.fullStream) {
-      if (part.type === 'source' && part.source.sourceType === 'url') {
-        citations.push(part.source.url);
-        dataStream.writeData({ citations });
-      }
-    }
 
     result.mergeIntoDataStream(dataStream, { sendReasoning: true });
 

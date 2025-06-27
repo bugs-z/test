@@ -47,7 +47,6 @@ export async function POST(request: Request) {
       selectedPlugin: modelParams.selectedPlugin,
     });
 
-    const supabase = await createClient();
     const isReasoningModel = model === 'reasoning-model';
     let generatedTitle: string | undefined;
     let toolUsed = '';
@@ -57,29 +56,28 @@ export async function POST(request: Request) {
     const {
       processedMessages,
       systemPrompt,
-      hasPdfAttachments,
-      hasImageAttachments,
+      // hasPdfAttachments,
+      // hasImageAttachments,
     } = await processChatMessages(
       messages,
       config.selectedModel,
       modelParams,
       profile,
       isReasoningModel,
-      supabase,
       config.isPremiumUser,
     );
 
     // Check for PDF or image attachments after processing and switch model if needed
-    let finalSelectedModel = config.selectedModel;
-    if (hasPdfAttachments) {
-      if (config.selectedModel === 'chat-model-small-with-tools') {
-        finalSelectedModel = 'chat-model-small';
-      } else if (config.selectedModel === 'chat-model-large-with-tools') {
-        finalSelectedModel = 'chat-model-large';
-      }
-    } else if (hasImageAttachments) {
-      finalSelectedModel = 'chat-model-vision';
-    }
+    // let finalSelectedModel = config.selectedModel;
+    // if (hasPdfAttachments) {
+    //   if (config.selectedModel === 'chat-model-small-with-tools') {
+    //     finalSelectedModel = 'chat-model-small';
+    //   } else if (config.selectedModel === 'chat-model-large-with-tools') {
+    //     finalSelectedModel = 'chat-model-large';
+    //   }
+    // } else if (hasImageAttachments) {
+    //   finalSelectedModel = 'chat-model-vision';
+    // }
 
     // Handle initial chat creation and user message in parallel with other operations
     const initialChatPromise = handleInitialChatAndUserMessage({
@@ -127,7 +125,7 @@ export async function POST(request: Request) {
           });
 
           const result = streamText({
-            model: myProvider.languageModel(finalSelectedModel),
+            model: myProvider.languageModel(config.selectedModel),
             system: systemPrompt,
             messages: toVercelChatMessages(processedMessages, true),
             maxTokens: 4096,

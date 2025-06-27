@@ -9,6 +9,7 @@ import { ChatSDKError } from '@/lib/errors';
 import { handleInitialChatAndUserMessage } from '@/lib/ai/actions';
 import { executeDeepResearchTool } from '@/lib/ai/tools/deep-research';
 import { validateChatAccess } from '@/lib/ai/actions/chat-validation';
+import { geolocation } from '@vercel/functions';
 
 export const maxDuration = 800;
 
@@ -24,7 +25,6 @@ export async function POST(request: Request) {
   }
 
   try {
-    const userCountryCode = request.headers.get('x-vercel-ip-country');
     const { messages, model, modelParams, chatMetadata } = requestBody;
 
     const { profile } = await getAIProfile();
@@ -48,15 +48,12 @@ export async function POST(request: Request) {
       userId: profile.user_id,
     });
 
-    const supabase = await createClient();
-
     const { processedMessages, systemPrompt } = await processChatMessages(
       messages,
       'deep-research-model',
       modelParams,
       profile,
       false,
-      supabase,
       true,
     );
 
@@ -69,6 +66,8 @@ export async function POST(request: Request) {
       chat,
       messages,
     });
+
+    const { city, country } = geolocation(request);
 
     return createDataStreamResponse({
       execute: async (dataStream) => {
@@ -87,10 +86,11 @@ export async function POST(request: Request) {
             abortSignal: abortController.signal,
             chatMetadata,
             model,
-            userCountryCode,
             originalMessages: messages,
             systemPrompt,
             initialChatPromise,
+            userCity: city,
+            userCountry: country,
           },
         });
       },
