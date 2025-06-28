@@ -98,9 +98,9 @@ async function getProviderConfig(
 ) {
   // Moving away from gpt-4-turbo-preview to chat-model-large
   const modelMap: Record<string, string> = {
-    'mistral-medium': 'chat-model-small-with-tools',
-    'mistral-large': 'chat-model-large-with-tools',
-    'gpt-4-turbo-preview': 'chat-model-large-with-tools',
+    'mistral-medium': 'chat-model-small',
+    'mistral-large': 'chat-model-large',
+    'gpt-4-turbo-preview': 'chat-model-large',
     'reasoning-model': 'reasoning-model',
   };
   // Moving away from gpt-4-turbo-preview to pentestgpt-pro

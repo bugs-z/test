@@ -1,351 +1,351 @@
-import { buildSystemPrompt } from '@/lib/ai/prompts';
-import {
-  toVercelChatMessages,
-  validatePerplexityMessages,
-} from '@/lib/ai/message-utils';
-import llmConfig from '@/lib/models/llm-config';
-import PostHogClient from '@/app/posthog';
-import type { ChatMetadata, LLMID, ModelParams } from '@/types';
-import {
-  generateTitleFromUserMessage,
-  handleFinalChatAndAssistantMessage,
-} from '@/lib/ai/actions';
-import { removePdfContentFromMessages } from '@/lib/build-prompt-backend';
-import { ChatSDKError } from '@/lib/errors';
-import type { Doc } from '@/convex/_generated/dataModel';
-import { checkForImagesInMessages } from '@/lib/ai/image-processing';
+// import { buildSystemPrompt } from '@/lib/ai/prompts';
+// import {
+//   toVercelChatMessages,
+//   validatePerplexityMessages,
+// } from '@/lib/ai/message-utils';
+// import llmConfig from '@/lib/models/llm-config';
+// import PostHogClient from '@/app/posthog';
+// import type { ChatMetadata, LLMID, ModelParams } from '@/types';
+// import {
+//   generateTitleFromUserMessage,
+//   handleFinalChatAndAssistantMessage,
+// } from '@/lib/ai/actions';
+// import { removePdfContentFromMessages } from '@/lib/build-prompt-backend';
+// import { ChatSDKError } from '@/lib/errors';
+// import type { Doc } from '@/convex/_generated/dataModel';
+// import { checkForImagesInMessages } from '@/lib/ai/image-processing';
 
-interface WebSearchConfig {
-  chat: Doc<'chats'> | null;
-  messages: any[];
-  modelParams: ModelParams;
-  profile: any;
-  dataStream: any;
-  isLargeModel: boolean;
-  directToolCall?: boolean;
-  abortSignal: AbortSignal;
-  chatMetadata: ChatMetadata;
-  model: LLMID;
-  userCountryCode: string | null;
-  initialChatPromise: Promise<void>;
-  assistantMessageId: string;
-}
+// interface WebSearchConfig {
+//   chat: Doc<'chats'> | null;
+//   messages: any[];
+//   modelParams: ModelParams;
+//   profile: any;
+//   dataStream: any;
+//   isLargeModel: boolean;
+//   directToolCall?: boolean;
+//   abortSignal: AbortSignal;
+//   chatMetadata: ChatMetadata;
+//   model: LLMID;
+//   userCountryCode: string | null;
+//   initialChatPromise: Promise<void>;
+//   assistantMessageId: string;
+// }
 
-interface GrokResponse {
-  id: string;
-  model: string;
-  created: number;
-  usage?: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
-  citations?: string[];
-  object: string;
-  choices: Array<{
-    index: number;
-    finish_reason: string | null;
-    message?: {
-      role: string;
-      content: string;
-    };
-    delta?: {
-      role?: string;
-      content?: string;
-    };
-  }>;
-}
+// interface GrokResponse {
+//   id: string;
+//   model: string;
+//   created: number;
+//   usage?: {
+//     prompt_tokens: number;
+//     completion_tokens: number;
+//     total_tokens: number;
+//   };
+//   citations?: string[];
+//   object: string;
+//   choices: Array<{
+//     index: number;
+//     finish_reason: string | null;
+//     message?: {
+//       role: string;
+//       content: string;
+//     };
+//     delta?: {
+//       role?: string;
+//       content?: string;
+//     };
+//   }>;
+// }
 
-interface StreamDelta {
-  type: 'text-delta' | 'citations';
-  textDelta?: string;
-  citations?: string[];
-}
+// interface StreamDelta {
+//   type: 'text-delta' | 'citations';
+//   textDelta?: string;
+//   citations?: string[];
+// }
 
-async function getProviderConfig(
-  isLargeModel: boolean,
-  profile: any,
-  messages: any[],
-) {
-  // Check if messages contain images
-  const hasImages = checkForImagesInMessages(messages);
+// async function getProviderConfig(
+//   isLargeModel: boolean,
+//   profile: any,
+//   messages: any[],
+// ) {
+//   // Check if messages contain images
+//   const hasImages = checkForImagesInMessages(messages);
 
-  // Use vision model if images are present, otherwise use the latest model
-  const selectedModel = hasImages ? 'grok-2-vision-latest' : 'grok-3-latest';
+//   // Use vision model if images are present, otherwise use the latest model
+//   const selectedModel = hasImages ? 'grok-2-vision-latest' : 'grok-3-latest';
 
-  const systemPrompt = buildSystemPrompt(
-    llmConfig.systemPrompts.pentestGPTWebSearch,
-    profile.profile_context,
-  );
+//   const systemPrompt = buildSystemPrompt(
+//     llmConfig.systemPrompts.pentestGPTWebSearch,
+//     profile.profile_context,
+//   );
 
-  return {
-    systemPrompt,
-    selectedModel,
-  };
-}
+//   return {
+//     systemPrompt,
+//     selectedModel,
+//   };
+// }
 
-async function* streamGrokResponse(
-  response: Response,
-): AsyncGenerator<StreamDelta> {
-  const reader = response.body?.getReader();
-  if (!reader) throw new Error('No response body');
+// async function* streamGrokResponse(
+//   response: Response,
+// ): AsyncGenerator<StreamDelta> {
+//   const reader = response.body?.getReader();
+//   if (!reader) throw new Error('No response body');
 
-  const decoder = new TextDecoder();
-  let buffer = '';
-  let citationsSent = false;
+//   const decoder = new TextDecoder();
+//   let buffer = '';
+//   let citationsSent = false;
 
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+//   try {
+//     while (true) {
+//       const { done, value } = await reader.read();
+//       if (done) break;
 
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
+//       buffer += decoder.decode(value, { stream: true });
+//       const lines = buffer.split('\n');
+//       buffer = lines.pop() || '';
 
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const data = line.slice(6);
-          if (data === '[DONE]') return;
+//       for (const line of lines) {
+//         if (line.startsWith('data: ')) {
+//           const data = line.slice(6);
+//           if (data === '[DONE]') return;
 
-          try {
-            const parsed: GrokResponse = JSON.parse(data);
+//           try {
+//             const parsed: GrokResponse = JSON.parse(data);
 
-            // Handle citations from the last chunk (Grok returns citations in the final chunk)
-            if (
-              !citationsSent &&
-              parsed.citations &&
-              parsed.citations.length > 0
-            ) {
-              yield { type: 'citations', citations: parsed.citations };
-              citationsSent = true;
-            }
+//             // Handle citations from the last chunk (Grok returns citations in the final chunk)
+//             if (
+//               !citationsSent &&
+//               parsed.citations &&
+//               parsed.citations.length > 0
+//             ) {
+//               yield { type: 'citations', citations: parsed.citations };
+//               citationsSent = true;
+//             }
 
-            // Handle content from delta
-            const delta = parsed.choices[0]?.delta;
-            if (delta?.content) {
-              yield { type: 'text-delta', textDelta: delta.content };
-            }
-          } catch (e) {
-            console.error('Error parsing SSE data:', e);
-          }
-        }
-      }
-    }
-  } finally {
-    reader.releaseLock();
-  }
-}
+//             // Handle content from delta
+//             const delta = parsed.choices[0]?.delta;
+//             if (delta?.content) {
+//               yield { type: 'text-delta', textDelta: delta.content };
+//             }
+//           } catch (e) {
+//             console.error('Error parsing SSE data:', e);
+//           }
+//         }
+//       }
+//     }
+//   } finally {
+//     reader.releaseLock();
+//   }
+// }
 
-async function getResponseBody(response: Response): Promise<string> {
-  try {
-    const clone = response.clone();
-    const text = await clone.text();
-    return text;
-  } catch (e) {
-    return 'Unable to read response body';
-  }
-}
+// async function getResponseBody(response: Response): Promise<string> {
+//   try {
+//     const clone = response.clone();
+//     const text = await clone.text();
+//     return text;
+//   } catch (e) {
+//     return 'Unable to read response body';
+//   }
+// }
 
-async function makeGrokRequest(payload: any, abortSignal: AbortSignal) {
-  const response = await fetch('https://api.x.ai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${process.env.XAI_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
-    signal: abortSignal,
-  });
+// async function makeGrokRequest(payload: any, abortSignal: AbortSignal) {
+//   const response = await fetch('https://api.x.ai/v1/chat/completions', {
+//     method: 'POST',
+//     headers: {
+//       Authorization: `Bearer ${process.env.XAI_API_KEY}`,
+//       'Content-Type': 'application/json',
+//     },
+//     body: JSON.stringify(payload),
+//     signal: abortSignal,
+//   });
 
-  if (!response.ok) {
-    const responseBody = await getResponseBody(response);
-    let errorData;
-    try {
-      errorData = JSON.parse(responseBody);
-    } catch (e) {
-      // If parsing fails, create a ChatSDKError with the raw response body
-      throw new ChatSDKError('bad_request:api', responseBody);
-    }
-    return { error: errorData, response };
-  }
+//   if (!response.ok) {
+//     const responseBody = await getResponseBody(response);
+//     let errorData;
+//     try {
+//       errorData = JSON.parse(responseBody);
+//     } catch (e) {
+//       // If parsing fails, create a ChatSDKError with the raw response body
+//       throw new ChatSDKError('bad_request:api', responseBody);
+//     }
+//     return { error: errorData, response };
+//   }
 
-  return { response };
-}
+//   return { response };
+// }
 
-export async function executeWebSearchTool({
-  config,
-}: {
-  config: WebSearchConfig;
-}) {
-  if (!process.env.XAI_API_KEY) {
-    throw new Error('XAI API key is not set for web search');
-  }
+// export async function executeWebSearchTool({
+//   config,
+// }: {
+//   config: WebSearchConfig;
+// }) {
+//   if (!process.env.XAI_API_KEY) {
+//     throw new Error('XAI API key is not set for web search');
+//   }
 
-  const {
-    chat,
-    messages,
-    modelParams,
-    profile,
-    dataStream,
-    isLargeModel,
-    abortSignal,
-    chatMetadata,
-    model,
-    userCountryCode,
-    initialChatPromise,
-    assistantMessageId,
-  } = config;
+//   const {
+//     chat,
+//     messages,
+//     modelParams,
+//     profile,
+//     dataStream,
+//     isLargeModel,
+//     abortSignal,
+//     chatMetadata,
+//     model,
+//     userCountryCode,
+//     initialChatPromise,
+//     assistantMessageId,
+//   } = config;
 
-  // Filter out PDF content from messages
-  const filteredMessages = removePdfContentFromMessages(messages);
+//   // Filter out PDF content from messages
+//   const filteredMessages = removePdfContentFromMessages(messages);
 
-  // Validate messages for proper alternating roles
-  const validatedMessages = validatePerplexityMessages(filteredMessages);
+//   // Validate messages for proper alternating roles
+//   const validatedMessages = validatePerplexityMessages(filteredMessages);
 
-  const { systemPrompt, selectedModel } = await getProviderConfig(
-    isLargeModel,
-    profile,
-    filteredMessages,
-  );
+//   const { systemPrompt, selectedModel } = await getProviderConfig(
+//     isLargeModel,
+//     profile,
+//     filteredMessages,
+//   );
 
-  const posthog = PostHogClient();
-  if (posthog) {
-    posthog.capture({
-      distinctId: profile.user_id,
-      event: 'web_search_executed',
-    });
-  }
+//   const posthog = PostHogClient();
+//   if (posthog) {
+//     posthog.capture({
+//       distinctId: profile.user_id,
+//       event: 'web_search_executed',
+//     });
+//   }
 
-  dataStream.writeData({
-    type: 'tool-call',
-    content: 'websearch',
-  });
+//   dataStream.writeData({
+//     type: 'tool-call',
+//     content: 'websearch',
+//   });
 
-  let generatedTitle: string | undefined;
-  let assistantMessage = '';
-  const citations: string[] = [];
-  let titleGenerationPromise: Promise<void> | null = null;
+//   let generatedTitle: string | undefined;
+//   let assistantMessage = '';
+//   const citations: string[] = [];
+//   let titleGenerationPromise: Promise<void> | null = null;
 
-  try {
-    // Start title generation if needed
-    if (chatMetadata.id && !chat) {
-      titleGenerationPromise = (async () => {
-        generatedTitle = await generateTitleFromUserMessage({
-          messages,
-          abortSignal: config.abortSignal,
-        });
-        dataStream.writeData({ chatTitle: generatedTitle });
-      })();
-    }
+//   try {
+//     // Start title generation if needed
+//     if (chatMetadata.id && !chat) {
+//       titleGenerationPromise = (async () => {
+//         generatedTitle = await generateTitleFromUserMessage({
+//           messages,
+//           abortSignal: config.abortSignal,
+//         });
+//         dataStream.writeData({ chatTitle: generatedTitle });
+//       })();
+//     }
 
-    const requestPayload = {
-      model: selectedModel,
-      messages: [
-        {
-          role: 'system',
-          content: systemPrompt,
-        },
-        ...toVercelChatMessages(validatedMessages, true, true),
-      ],
-      stream: true,
-      max_tokens: 2048,
-      search_parameters: {
-        mode: 'on',
-        return_citations: true,
-        sources: [{ type: 'web', country: userCountryCode }, { type: 'x' }],
-      },
-    };
+//     const requestPayload = {
+//       model: selectedModel,
+//       messages: [
+//         {
+//           role: 'system',
+//           content: systemPrompt,
+//         },
+//         ...toVercelChatMessages(validatedMessages, true, true),
+//       ],
+//       stream: true,
+//       max_tokens: 2048,
+//       search_parameters: {
+//         mode: 'on',
+//         return_citations: true,
+//         sources: [{ type: 'web', country: userCountryCode }, { type: 'x' }],
+//       },
+//     };
 
-    let { response, error } = await makeGrokRequest(
-      requestPayload,
-      abortSignal,
-    );
+//     let { response, error } = await makeGrokRequest(
+//       requestPayload,
+//       abortSignal,
+//     );
 
-    // If we get a country code error, retry without country specification
-    if (
-      error?.error?.type === 'invalid_country_code' ||
-      (error?.error?.message && error.error.message.includes('country'))
-    ) {
-      const retryPayload = {
-        ...requestPayload,
-        search_parameters: {
-          mode: 'on',
-          return_citations: true,
-        },
-      };
-      ({ response, error } = await makeGrokRequest(retryPayload, abortSignal));
-    }
+//     // If we get a country code error, retry without country specification
+//     if (
+//       error?.error?.type === 'invalid_country_code' ||
+//       (error?.error?.message && error.error.message.includes('country'))
+//     ) {
+//       const retryPayload = {
+//         ...requestPayload,
+//         search_parameters: {
+//           mode: 'on',
+//           return_citations: true,
+//         },
+//       };
+//       ({ response, error } = await makeGrokRequest(retryPayload, abortSignal));
+//     }
 
-    if (error) {
-      console.error('[WebSearch] Error Details:', {
-        status: response.status,
-        statusText: response.statusText,
-        requestPayload: {
-          model: requestPayload.model,
-          messageCount: requestPayload.messages.length,
-        },
-        responseBody: error,
-        headers: Object.fromEntries(response.headers.entries()),
-      });
-      throw new Error(
-        `Web search failed: ${response.status} ${response.statusText}`,
-      );
-    }
+//     if (error) {
+//       console.error('[WebSearch] Error Details:', {
+//         status: response.status,
+//         statusText: response.statusText,
+//         requestPayload: {
+//           model: requestPayload.model,
+//           messageCount: requestPayload.messages.length,
+//         },
+//         responseBody: error,
+//         headers: Object.fromEntries(response.headers.entries()),
+//       });
+//       throw new Error(
+//         `Web search failed: ${response.status} ${response.statusText}`,
+//       );
+//     }
 
-    let hasFirstTextDelta = false;
-    let citationsSent = false;
+//     let hasFirstTextDelta = false;
+//     let citationsSent = false;
 
-    for await (const delta of streamGrokResponse(response)) {
-      if (delta.type === 'citations' && delta.citations) {
-        citations.push(...delta.citations);
-        // Send citations immediately when we receive them
-        if (!citationsSent) {
-          dataStream.writeData({ citations });
-          citationsSent = true;
-        }
-      }
+//     for await (const delta of streamGrokResponse(response)) {
+//       if (delta.type === 'citations' && delta.citations) {
+//         citations.push(...delta.citations);
+//         // Send citations immediately when we receive them
+//         if (!citationsSent) {
+//           dataStream.writeData({ citations });
+//           citationsSent = true;
+//         }
+//       }
 
-      if (delta.type === 'text-delta' && delta.textDelta) {
-        // Send citations before first text if not already sent
-        if (!hasFirstTextDelta && !citationsSent && citations.length > 0) {
-          dataStream.writeData({ citations });
-          citationsSent = true;
-        }
-        hasFirstTextDelta = true;
+//       if (delta.type === 'text-delta' && delta.textDelta) {
+//         // Send citations before first text if not already sent
+//         if (!hasFirstTextDelta && !citationsSent && citations.length > 0) {
+//           dataStream.writeData({ citations });
+//           citationsSent = true;
+//         }
+//         hasFirstTextDelta = true;
 
-        assistantMessage += delta.textDelta;
-        dataStream.writeData({
-          type: 'text-delta',
-          content: delta.textDelta,
-        });
-      }
-    }
+//         assistantMessage += delta.textDelta;
+//         dataStream.writeData({
+//           type: 'text-delta',
+//           content: delta.textDelta,
+//         });
+//       }
+//     }
 
-    // Wait for both title generation and initial chat handling to complete
-    await Promise.all([titleGenerationPromise, initialChatPromise]);
+//     // Wait for both title generation and initial chat handling to complete
+//     await Promise.all([titleGenerationPromise, initialChatPromise]);
 
-    await handleFinalChatAndAssistantMessage({
-      modelParams,
-      chatMetadata,
-      profile,
-      model,
-      chat,
-      finishReason: 'stop',
-      title: generatedTitle,
-      assistantMessage,
-      citations,
-      assistantMessageId,
-    });
+//     await handleFinalChatAndAssistantMessage({
+//       modelParams,
+//       chatMetadata,
+//       profile,
+//       model,
+//       chat,
+//       finishReason: 'stop',
+//       title: generatedTitle,
+//       assistantMessage,
+//       citations,
+//       assistantMessageId,
+//     });
 
-    return 'Web search completed';
-  } catch (error) {
-    if (!(error instanceof Error && error.message === 'terminated')) {
-      console.error('[WebSearch] Error:', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        model: selectedModel,
-      });
-    }
-    throw error;
-  }
-}
+//     return 'Web search completed';
+//   } catch (error) {
+//     if (!(error instanceof Error && error.message === 'terminated')) {
+//       console.error('[WebSearch] Error:', {
+//         error: error instanceof Error ? error.message : 'Unknown error',
+//         model: selectedModel,
+//       });
+//     }
+//     throw error;
+//   }
+// }

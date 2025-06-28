@@ -120,11 +120,12 @@ export async function executeDeepResearchTool({
       tools: {
         web_search_preview: openai.tools.webSearchPreview({
           searchContextSize: 'medium',
-          userLocation: {
-            type: 'approximate',
-            country: userCountry,
-            city: userCity,
-          },
+          // Deep research does not support user location for now
+          // userLocation: {
+          //   type: 'approximate',
+          //   country: userCountry,
+          //   city: userCity,
+          // },
         }),
       },
       experimental_generateMessageId: () => assistantMessageId,

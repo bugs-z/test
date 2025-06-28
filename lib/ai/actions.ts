@@ -127,6 +127,11 @@ export async function generateTitleFromUserMessage({
       object: { title },
     } = await generateObject({
       model: myProvider.languageModel('chat-model-small'),
+      providerOptions: {
+        openai: {
+          store: false,
+        },
+      },
       schema: z.object({
         title: z.string().describe('The generated title (3-5 words)'),
       }),

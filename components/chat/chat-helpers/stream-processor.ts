@@ -240,9 +240,18 @@ export const processResponse = async (
               }
             }
 
-            // Handle citations
+            // Handle citations - accumulate them one by one
             if (firstValue?.citations) {
-              citations = firstValue.citations;
+              // Add new citations to existing ones (avoiding duplicates)
+              const newCitations = Array.isArray(firstValue.citations)
+                ? firstValue.citations
+                : [firstValue.citations];
+
+              newCitations.forEach((citation) => {
+                if (!citations.includes(citation)) {
+                  citations.push(citation);
+                }
+              });
             }
 
             // Handle chatTitle

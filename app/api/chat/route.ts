@@ -15,10 +15,11 @@ import {
   handleFinalChatAndAssistantMessage,
 } from '@/lib/ai/actions';
 import { validateChatAccessWithLimits } from '@/lib/ai/actions/chat-validation';
-import { createClient } from '@/lib/supabase/server';
+// import { createClient } from '@/lib/supabase/server';
 import { postRequestBodySchema, type PostRequestBody } from './schema';
 import { ChatSDKError } from '@/lib/errors';
 import { v4 as uuidv4 } from 'uuid';
+import { geolocation } from '@vercel/functions';
 
 export const maxDuration = 180;
 
@@ -35,7 +36,7 @@ export async function POST(request: Request) {
 
   try {
     const { messages, model, modelParams, chatMetadata } = requestBody;
-    const userCountryCode = request.headers.get('x-vercel-ip-country');
+    const { city, country } = geolocation(request);
 
     const { profile } = await getAIProfile();
 
@@ -52,6 +53,7 @@ export async function POST(request: Request) {
     let toolUsed = '';
     let hasGeneratedTitle = false;
     let titleGenerationPromise: Promise<void> | null = null;
+    const citations: string[] = [];
 
     const {
       processedMessages,
@@ -127,20 +129,55 @@ export async function POST(request: Request) {
           const result = streamText({
             model: myProvider.languageModel(config.selectedModel),
             system: systemPrompt,
+            providerOptions: {
+              openai: {
+                parallelToolCalls: false,
+                store: false,
+              },
+            },
             messages: toVercelChatMessages(processedMessages, true),
             maxTokens: 4096,
             abortSignal: abortController.signal,
+            tools: createToolSchemas({
+              // chat,
+              // messages: processedMessages,
+              // modelParams,
+              // profile,
+              // dataStream,
+              // abortSignal: abortController.signal,
+              // chatMetadata,
+              // model,
+              userCity: city,
+              userCountry: country,
+              // initialChatPromise,
+              // assistantMessageId,
+            }).getSelectedSchemas(
+              config.selectedModel === 'chat-model-large' &&
+                !modelParams.isTemporaryChat
+                ? ['web_search_preview', 'hackerAIMCP']
+                : ['web_search_preview'],
+            ),
             experimental_transform: smoothStream({ chunking: 'word' }),
             experimental_generateMessageId: () => assistantMessageId,
-            onChunk: async (chunk: any) => {
-              if (chunk.chunk.type === 'tool-call') {
-                toolUsed = chunk.chunk.toolName;
+            onChunk: async (event: any) => {
+              if (event.chunk.type === 'tool-call') {
+                toolUsed = event.chunk.toolName;
+              } else if (event.chunk.type === 'source') {
+                // Handle source chunks and send as citations
+                const source = event.chunk.source;
+                if (source && source.url) {
+                  // Add URL to citations array for final handling
+                  citations.push(source.url);
+
+                  // Send individual citation immediately during streaming
+                  dataStream.writeData({ citations: [source.url] });
+                }
               } else if (
                 !hasGeneratedTitle &&
                 chatMetadata.id &&
                 !chat &&
                 !toolUsed &&
-                chunk.chunk.type === 'text-delta'
+                event.chunk.type === 'text-delta'
               ) {
                 hasGeneratedTitle = true;
                 titleGenerationPromise = (async () => {
@@ -167,23 +204,6 @@ export async function POST(request: Request) {
                 console.error('[Chat] Stream Error:', error);
               }
             },
-            tools: createToolSchemas({
-              chat,
-              messages: processedMessages,
-              modelParams,
-              profile,
-              dataStream,
-              abortSignal: abortController.signal,
-              chatMetadata,
-              model,
-              userCountryCode,
-              initialChatPromise,
-              assistantMessageId,
-            }).getSelectedSchemas(
-              config.isPremiumUser && !modelParams.isTemporaryChat
-                ? ['browser', 'webSearch', 'hackerAIMCP']
-                : ['browser', 'webSearch'],
-            ),
             onFinish: async ({ finishReason, text }) => {
               if (!toolUsed) {
                 // Wait for title generation if it's in progress
@@ -201,6 +221,7 @@ export async function POST(request: Request) {
                   finishReason,
                   title: generatedTitle,
                   assistantMessage: text,
+                  citations: citations.length > 0 ? citations : undefined,
                   assistantMessageId,
                 });
               }

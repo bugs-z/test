@@ -220,6 +220,11 @@ export async function executeBrowserTool({
 
     const { fullStream } = streamText({
       model: myProvider.languageModel('browser-model'),
+      providerOptions: {
+        openai: {
+          store: false,
+        },
+      },
       system: systemPrompt,
       messages: [
         ...toVercelChatMessages(messages.slice(0, -1)),
