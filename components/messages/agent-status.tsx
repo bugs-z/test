@@ -94,7 +94,10 @@ const isValidAgentStatus = (
 export const AgentStatus = ({
   isLastMessage,
   isAssistant,
-}: { isLastMessage: boolean; isAssistant: boolean }) => {
+}: {
+  isLastMessage: boolean;
+  isAssistant: boolean;
+}) => {
   const { isGenerating, agentStatus } = useUIContext();
 
   if (

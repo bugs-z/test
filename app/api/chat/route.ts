@@ -19,7 +19,7 @@ import { validateChatAccessWithLimits } from '@/lib/ai/actions/chat-validation';
 import { postRequestBodySchema, type PostRequestBody } from './schema';
 import { ChatSDKError } from '@/lib/errors';
 import { v4 as uuidv4 } from 'uuid';
-import { geolocation } from '@vercel/functions';
+// import { geolocation } from '@vercel/functions';
 
 export const maxDuration = 180;
 
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
 
   try {
     const { messages, model, modelParams, chatMetadata } = requestBody;
-    const { city, country } = geolocation(request);
+    // const { city, country } = geolocation(request);
 
     const { profile } = await getAIProfile();
 
@@ -137,31 +137,51 @@ export async function POST(request: Request) {
             },
             messages: toVercelChatMessages(processedMessages, true),
             maxTokens: 4096,
-            abortSignal: abortController.signal,
+            maxSteps: 2,
             tools: createToolSchemas({
               // chat,
               // messages: processedMessages,
               // modelParams,
-              // profile,
-              // dataStream,
+              profile,
+              dataStream,
               // abortSignal: abortController.signal,
               // chatMetadata,
               // model,
-              userCity: city,
-              userCountry: country,
+              // userCity: city,
+              // userCountry: country,
               // initialChatPromise,
               // assistantMessageId,
             }).getSelectedSchemas(
               config.selectedModel === 'chat-model-large' &&
                 !modelParams.isTemporaryChat
-                ? ['web_search_preview', 'hackerAIMCP']
-                : ['web_search_preview'],
+                ? ['webSearch', 'browser', 'hackerAIMCP']
+                : ['webSearch', 'browser'],
             ),
+            abortSignal: abortController.signal,
             experimental_transform: smoothStream({ chunking: 'word' }),
             experimental_generateMessageId: () => assistantMessageId,
             onChunk: async (event: any) => {
               if (event.chunk.type === 'tool-call') {
                 toolUsed = event.chunk.toolName;
+              } else if (event.chunk.type === 'tool-result') {
+                // Handle tool results and extract citations
+                const { toolName, result } = event.chunk;
+
+                if (toolName === 'browser' && result?.url) {
+                  // For browser tool, add the URL as citation
+                  citations.push(result.url);
+                  dataStream.writeData({ citations: [result.url] });
+                } else if (toolName === 'webSearch' && Array.isArray(result)) {
+                  // For web search tool, extract URLs from results
+                  const searchCitations = result
+                    .map((item: any) => item.url)
+                    .filter((url: string) => url);
+
+                  citations.push(...searchCitations);
+                  if (searchCitations.length > 0) {
+                    dataStream.writeData({ citations: searchCitations });
+                  }
+                }
               } else if (event.chunk.type === 'source') {
                 // Handle source chunks and send as citations
                 const source = event.chunk.source;
@@ -176,7 +196,7 @@ export async function POST(request: Request) {
                 !hasGeneratedTitle &&
                 chatMetadata.id &&
                 !chat &&
-                !toolUsed &&
+                toolUsed !== 'hackerAIMCP' &&
                 event.chunk.type === 'text-delta'
               ) {
                 hasGeneratedTitle = true;
@@ -205,13 +225,19 @@ export async function POST(request: Request) {
               }
             },
             onFinish: async ({ finishReason, text }) => {
-              if (!toolUsed) {
+              // Save results and generate title for all tools except hackerAIMCP
+              if (toolUsed !== 'hackerAIMCP') {
                 // Wait for title generation if it's in progress
                 if (titleGenerationPromise) {
                   await titleGenerationPromise;
                 }
                 // Wait for initial chat handling to complete before final handling
                 await initialChatPromise;
+
+                // Deduplicate citations
+                const uniqueCitations =
+                  citations.length > 0 ? [...new Set(citations)] : undefined;
+
                 await handleFinalChatAndAssistantMessage({
                   modelParams,
                   chatMetadata,
@@ -221,7 +247,7 @@ export async function POST(request: Request) {
                   finishReason,
                   title: generatedTitle,
                   assistantMessage: text,
-                  citations: citations.length > 0 ? citations : undefined,
+                  citations: uniqueCitations,
                   assistantMessageId,
                 });
               }

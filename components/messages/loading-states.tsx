@@ -45,7 +45,10 @@ export const loadingStates = {
 export const LoadingState = ({
   isLastMessage,
   isAssistant,
-}: { isLastMessage: boolean; isAssistant: boolean }) => {
+}: {
+  isLastMessage: boolean;
+  isAssistant: boolean;
+}) => {
   const { firstTokenReceived, isGenerating, toolInUse } = useUIContext();
 
   if (!isLastMessage || !isAssistant || firstTokenReceived || !isGenerating)
