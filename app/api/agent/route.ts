@@ -3,7 +3,6 @@ import { handleErrorResponse } from '@/lib/models/api-error';
 import { checkRatelimitOnApi } from '@/lib/server/ratelimiter';
 import { createDataStreamResponse } from 'ai';
 import { executePentestAgent } from '@/lib/ai/tools/pentest-agent';
-import { createClient } from '@/lib/supabase/server';
 import { processChatMessages } from '@/lib/ai/message-utils';
 import { postRequestBodySchema, type PostRequestBody } from '../chat/schema';
 import { ChatSDKError } from '@/lib/errors';

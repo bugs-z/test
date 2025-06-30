@@ -2,14 +2,13 @@ import { getAIProfile } from '@/lib/server/server-chat-helpers';
 import { handleErrorResponse } from '@/lib/models/api-error';
 import { checkRatelimitOnApi } from '@/lib/server/ratelimiter';
 import { createDataStreamResponse } from 'ai';
-import { createClient } from '@/lib/supabase/server';
 import { processChatMessages } from '@/lib/ai/message-utils';
 import { postRequestBodySchema, type PostRequestBody } from '../chat/schema';
 import { ChatSDKError } from '@/lib/errors';
 import { handleInitialChatAndUserMessage } from '@/lib/ai/actions';
-import { executeDeepResearchTool } from '@/lib/ai/tools/deep-research';
+import { handleResearchKickoff } from '@/lib/ai/tools/research-kickoff';
 import { validateChatAccess } from '@/lib/ai/actions/chat-validation';
-import { geolocation } from '@vercel/functions';
+// import { geolocation } from '@vercel/functions';
 
 export const maxDuration = 800;
 
@@ -67,7 +66,7 @@ export async function POST(request: Request) {
       messages,
     });
 
-    const { city, country } = geolocation(request);
+    // const { city, country } = geolocation(request);
 
     return createDataStreamResponse({
       execute: async (dataStream) => {
@@ -76,7 +75,7 @@ export async function POST(request: Request) {
           content: config.rateLimitInfo,
         });
 
-        await executeDeepResearchTool({
+        await handleResearchKickoff({
           config: {
             chat,
             messages: processedMessages,
@@ -89,8 +88,8 @@ export async function POST(request: Request) {
             originalMessages: messages,
             systemPrompt,
             initialChatPromise,
-            userCity: city,
-            userCountry: country,
+            // userCity: city,
+            // userCountry: country,
           },
         });
       },

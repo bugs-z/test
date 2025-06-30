@@ -165,7 +165,7 @@ export async function POST(request: Request) {
               } else if (event.chunk.type === 'source') {
                 // Handle source chunks and send as citations
                 const source = event.chunk.source;
-                if (source && source.url) {
+                if (source?.url) {
                   // Add URL to citations array for final handling
                   citations.push(source.url);
 

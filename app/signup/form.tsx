@@ -44,7 +44,7 @@ export function SignUpForm({
   const handleEmailContinue = (e: React.FormEvent) => {
     e.preventDefault();
     const emailInput = document.getElementById('email') as HTMLInputElement;
-    if (emailInput && emailInput.value) {
+    if (emailInput?.value) {
       setEmail(emailInput.value);
       setShowPasswordStep(true);
     }

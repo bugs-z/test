@@ -18,6 +18,5 @@ export const myProvider = customProvider({
       model: xai('grok-3-mini-latest'),
       middleware: extractReasoningMiddleware({ tagName: 'think' }),
     }),
-    'deep-research-model': openai.responses('o4-mini-deep-research-2025-06-26'),
   },
 });

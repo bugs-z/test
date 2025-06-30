@@ -1,4 +1,4 @@
-import { mutation, internalMutation, internalQuery } from './_generated/server';
+import { internalMutation, internalQuery } from './_generated/server';
 import { v } from 'convex/values';
 
 export const internalGetFeedbackByChatId = internalQuery({

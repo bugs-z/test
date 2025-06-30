@@ -1,21 +1,11 @@
-import {
-  toVercelChatMessages,
-  validatePerplexityMessages,
-} from '@/lib/ai/message-utils';
 import PostHogClient from '@/app/posthog';
 import type { ChatMetadata, LLMID, ModelParams } from '@/types';
-import {
-  generateTitleFromUserMessage,
-  handleFinalChatAndAssistantMessage,
-} from '@/lib/ai/actions';
-import { removePdfContentFromMessages } from '@/lib/build-prompt-backend';
-import { streamText } from 'ai';
-import { myProvider } from '@/lib/ai/providers';
+import { handleFinalChatAndAssistantMessage } from '@/lib/ai/actions';
 import { v4 as uuidv4 } from 'uuid';
 import type { Doc } from '@/convex/_generated/dataModel';
-import { openai } from '@ai-sdk/openai';
+import OpenAI from 'openai';
 
-interface DeepResearchConfig {
+export interface DeepResearchConfig {
   chat: Doc<'chats'> | null;
   messages: any[];
   profile: any;
@@ -27,12 +17,12 @@ interface DeepResearchConfig {
   originalMessages: any[];
   systemPrompt: string;
   initialChatPromise: Promise<void>;
-  userCity: string | undefined;
-  userCountry: string | undefined;
+  // userCity: string | undefined;
+  // userCountry: string | undefined;
+  generatedTitle?: string;
+  titleGenerationPromise?: Promise<void> | null;
+  assistantMessageId?: string;
 }
-
-// Keepalive interval in milliseconds
-const KEEPALIVE_INTERVAL = 30000; // 30 seconds
 
 export async function executeDeepResearchTool({
   config,
@@ -50,20 +40,17 @@ export async function executeDeepResearchTool({
     dataStream,
     modelParams,
     chatMetadata,
-    userCity,
-    userCountry,
+    // userCity,
+    // userCountry,
     abortSignal,
     model,
-    originalMessages,
+    // originalMessages,
     systemPrompt,
     initialChatPromise,
+    generatedTitle,
+    titleGenerationPromise,
+    assistantMessageId: passedAssistantMessageId,
   } = config;
-
-  // Filter out PDF content from messages
-  const filteredMessages = removePdfContentFromMessages(messages);
-
-  // Validate messages for proper alternating roles
-  const validatedMessages = validatePerplexityMessages(filteredMessages);
 
   const posthog = PostHogClient();
   if (posthog) {
@@ -78,102 +65,82 @@ export async function executeDeepResearchTool({
     content: 'deep-research',
   });
 
-  let generatedTitle: string | undefined;
   const citations: string[] = [];
   let isThinking = false;
   let thinkingStartTime: number | null = null;
-  const assistantMessageId = uuidv4();
-  let titleGenerationPromise: Promise<void> | null = null;
-
-  // Set up keepalive interval
-  const keepaliveInterval = setInterval(() => {
-    if (!abortSignal.aborted) {
-      dataStream.writeData({
-        type: 'keepalive',
-        content: '',
-      });
-    }
-  }, KEEPALIVE_INTERVAL);
+  const assistantMessageId = passedAssistantMessageId || uuidv4();
 
   try {
-    // Start title generation if needed
-    if (chatMetadata.id && !chat) {
-      titleGenerationPromise = (async () => {
-        generatedTitle = await generateTitleFromUserMessage({
-          messages: originalMessages,
-          abortSignal,
-        });
-        dataStream.writeData({ chatTitle: generatedTitle });
-      })();
-    }
+    const openai = new OpenAI({ timeout: 800 * 1000 }); // 800 seconds (13 min 20 sec)
 
-    const result = streamText({
-      model: myProvider.languageModel('deep-research-model'),
-      providerOptions: {
-        openai: {
-          reasoningSummary: 'detailed',
-        },
+    const stream = await openai.responses.create({
+      model: 'o4-mini-deep-research',
+      reasoning: {
+        summary: 'auto',
       },
-      system: systemPrompt,
-      messages: toVercelChatMessages(validatedMessages),
-      maxTokens: 8192,
-      tools: {
-        web_search_preview: openai.tools.webSearchPreview({
-          searchContextSize: 'medium',
-          // Deep research does not support user location for now
-          // userLocation: {
-          //   type: 'approximate',
-          //   country: userCountry,
-          //   city: userCity,
-          // },
-        }),
-      },
-      experimental_generateMessageId: () => assistantMessageId,
-      onChunk: async (chunk) => {
-        if (chunk.chunk.type === 'reasoning') {
-          if (!isThinking) {
-            isThinking = true;
-            thinkingStartTime = Date.now();
-          }
-        }
-      },
-      onError: async (error) => {
-        console.error('[DeepResearch] Stream Error:', error);
-      },
-      onFinish: async ({ text, reasoning }) => {
-        let thinkingElapsedSecs = null;
-        if (isThinking && thinkingStartTime) {
-          isThinking = false;
-          thinkingElapsedSecs = Math.round(
-            (Date.now() - thinkingStartTime) / 1000,
-          );
-          dataStream.writeData({
-            type: 'thinking-time',
-            elapsed_secs: thinkingElapsedSecs,
-          });
-        }
-
-        // Wait for both title generation and initial chat handling to complete
-        await Promise.all([titleGenerationPromise, initialChatPromise]);
-
-        await handleFinalChatAndAssistantMessage({
-          modelParams,
-          chatMetadata,
-          profile,
-          model,
-          chat,
-          finishReason: 'stop',
-          title: generatedTitle,
-          assistantMessage: text,
-          citations,
-          thinkingText: reasoning || undefined,
-          thinkingElapsedSecs,
-          assistantMessageId,
-        });
-      },
+      stream: true,
+      input: messages,
+      instructions: systemPrompt,
+      tools: [{ type: 'web_search_preview' }],
     });
 
-    result.mergeIntoDataStream(dataStream, { sendReasoning: true });
+    let assistantMessage = '';
+    let reasoning = '';
+
+    for await (const event of stream) {
+      if (event.type === 'response.reasoning_summary_text.delta') {
+        if (!isThinking) {
+          isThinking = true;
+          thinkingStartTime = Date.now();
+        }
+        reasoning += event.delta;
+        dataStream.writeData({
+          type: 'reasoning',
+          content: event.delta,
+        });
+      } else if (event.type === 'response.output_text.delta') {
+        assistantMessage += event.delta;
+        dataStream.writeData({
+          type: 'text-delta',
+          content: event.delta,
+        });
+      } else if (event.type === 'response.reasoning_summary_part.added') {
+        assistantMessage += '\n\n';
+        dataStream.writeData({
+          type: 'reasoning',
+          content: '\n\n',
+        });
+      }
+    }
+
+    // Calculate thinking elapsed time
+    let thinkingElapsedSecs = null;
+    if (isThinking && thinkingStartTime) {
+      isThinking = false;
+      thinkingElapsedSecs = Math.round((Date.now() - thinkingStartTime) / 1000);
+      dataStream.writeData({
+        type: 'thinking-time',
+        elapsed_secs: thinkingElapsedSecs,
+      });
+    }
+
+    // Wait for both title generation and initial chat handling to complete
+    await Promise.all([titleGenerationPromise, initialChatPromise]);
+
+    await handleFinalChatAndAssistantMessage({
+      modelParams,
+      chatMetadata,
+      profile,
+      model,
+      chat,
+      finishReason: 'stop',
+      title: generatedTitle,
+      assistantMessage,
+      citations,
+      thinkingText: reasoning || undefined,
+      thinkingElapsedSecs,
+      assistantMessageId,
+    });
 
     return 'Deep research completed';
   } catch (error) {
@@ -183,8 +150,5 @@ export async function executeDeepResearchTool({
       });
     }
     throw error;
-  } finally {
-    // Clear keepalive interval
-    clearInterval(keepaliveInterval);
   }
 }

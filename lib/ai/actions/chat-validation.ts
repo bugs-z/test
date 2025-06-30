@@ -110,7 +110,7 @@ async function getProviderConfig(
     'gpt-4-turbo-preview': 'pentestgpt-pro',
   };
 
-  let selectedModel = modelMap[model];
+  const selectedModel = modelMap[model];
   if (!selectedModel) {
     throw new Error('Selected model is undefined');
   }
