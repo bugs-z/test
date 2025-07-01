@@ -95,7 +95,7 @@ const NewTeamPage: FC = () => {
 
       // Redirect to the checkout page
       router.push(result.value);
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to create team. Please try again.');
     } finally {
       setIsLoading(false);

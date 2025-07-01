@@ -19,7 +19,8 @@ import { validateChatAccessWithLimits } from '@/lib/ai/actions/chat-validation';
 import { postRequestBodySchema, type PostRequestBody } from './schema';
 import { ChatSDKError } from '@/lib/errors';
 import { v4 as uuidv4 } from 'uuid';
-// import { geolocation } from '@vercel/functions';
+import { PluginID } from '@/types/plugins';
+import { geolocation } from '@vercel/functions';
 
 export const maxDuration = 180;
 
@@ -36,17 +37,23 @@ export async function POST(request: Request) {
 
   try {
     const { messages, model, modelParams, chatMetadata } = requestBody;
-    // const { city, country } = geolocation(request);
+    const userLocation = geolocation(request);
 
     const { profile } = await getAIProfile();
 
-    const { chat, config } = await validateChatAccessWithLimits({
+    const validationResult = await validateChatAccessWithLimits({
       chatMetadata,
       userId: profile.user_id,
       messages,
       model,
       selectedPlugin: modelParams.selectedPlugin,
     });
+
+    if (!validationResult.success) {
+      return validationResult.response;
+    }
+
+    const { chat, config } = validationResult;
 
     const isReasoningModel = model === 'reasoning-model';
     let generatedTitle: string | undefined;
@@ -67,6 +74,8 @@ export async function POST(request: Request) {
       profile,
       isReasoningModel,
       config.isPremiumUser,
+      undefined, // isPentestAgent
+      userLocation,
     );
 
     // Check for PDF or image attachments after processing and switch model if needed
@@ -143,7 +152,7 @@ export async function POST(request: Request) {
               // messages: processedMessages,
               // modelParams,
               profile,
-              dataStream,
+              // dataStream,
               // abortSignal: abortController.signal,
               // chatMetadata,
               // model,
@@ -152,8 +161,9 @@ export async function POST(request: Request) {
               // initialChatPromise,
               // assistantMessageId,
             }).getSelectedSchemas(
-              config.selectedModel === 'chat-model-large' &&
-                !modelParams.isTemporaryChat
+              config.isPremiumUser &&
+                !modelParams.isTemporaryChat &&
+                modelParams.selectedPlugin !== PluginID.WEB_SEARCH
                 ? ['webSearch', 'browser', 'hackerAIMCP']
                 : ['webSearch', 'browser'],
             ),

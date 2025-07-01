@@ -17,7 +17,7 @@ import { Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 export const SecurityTab: FC = () => {
-  const router = useRouter();
+  const _router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showMFAModal, setShowMFAModal] = useState(false);
   const [showSecret, setShowSecret] = useState(false);

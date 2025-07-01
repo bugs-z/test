@@ -333,7 +333,7 @@ export const FilesModal: React.FC<FilesModalProps> = ({
                 className="ml-auto"
               >
                 {isBatchDownloading ? (
-                  <>Creating ZIP...</>
+                  'Creating ZIP...'
                 ) : (
                   <>
                     <Download className="mr-2 size-4" />

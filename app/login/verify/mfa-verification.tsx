@@ -104,7 +104,7 @@ export function MFAVerification({ onVerify }: MFAVerificationProps) {
         setError(result.error || 'Verification failed');
         setVerifyCode('');
       }
-    } catch (error) {
+    } catch (_error) {
       setError('Please try again');
       setVerifyCode('');
     } finally {

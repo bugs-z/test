@@ -1,12 +1,14 @@
 import { PentestGPTContext } from '@/context/context';
 import { cn } from '@/lib/utils';
 import { PluginID } from '@/types/plugins';
-import { SquareTerminal, Plus, Telescope } from 'lucide-react';
+import { Plus, SquareTerminal, Telescope, Globe, X } from 'lucide-react';
 import { useContext, useState } from 'react';
 import { WithTooltip } from '../../ui/with-tooltip';
 import { useUIContext } from '@/context/ui-context';
 import { UpgradePrompt, UpgradeModal } from './upgrade-modal';
 import { PLUGINS_WITHOUT_IMAGE_SUPPORT } from '@/types/plugins';
+import { ToolsDropdown } from './tools-dropdown';
+import { LucideIcon } from 'lucide-react';
 
 interface ToolOptionsProps {
   fileInputRef: React.RefObject<HTMLInputElement>;
@@ -16,15 +18,13 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
   const TOOLTIP_DELAY = 500;
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState<
-    'deep research' | 'pentest agent' | 'file upload'
+    'deep research' | 'pentest agent' | 'file upload' | 'websearch'
   >('deep research');
 
-  const { isPremiumSubscription, newMessageImages, isTemporaryChat } =
+  const { isPremiumSubscription, isTemporaryChat } =
     useContext(PentestGPTContext);
 
   const { selectedPlugin, setSelectedPlugin, isMobile } = useUIContext();
-
-  const hasImageAttached = newMessageImages.length > 0;
 
   const handleFileClick = () => {
     // Show upgrade prompt for non-premium users
@@ -44,34 +44,70 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
     fileInputRef.current?.click();
   };
 
-  const handlePentestAgentToggle = () => {
-    if (!isPremiumSubscription) {
-      setUpgradeFeature('pentest agent');
-      setShowUpgradePrompt(true);
-      return;
-    }
-
-    setSelectedPlugin(
-      selectedPlugin === PluginID.PENTEST_AGENT
-        ? PluginID.NONE
-        : PluginID.PENTEST_AGENT,
-    );
+  const handleUpgradePrompt = (
+    feature: 'deep research' | 'pentest agent' | 'websearch',
+  ) => {
+    setUpgradeFeature(feature);
+    setShowUpgradePrompt(true);
   };
 
-  const handleResearchToggle = () => {
-    if (hasImageAttached) return;
+  const handleClosePlugin = () => {
+    setSelectedPlugin(PluginID.NONE);
+  };
 
-    if (!isPremiumSubscription) {
-      setUpgradeFeature('deep research');
-      setShowUpgradePrompt(true);
-      return;
+  const isAnyToolSelected =
+    selectedPlugin === PluginID.DEEP_RESEARCH ||
+    selectedPlugin === PluginID.WEB_SEARCH ||
+    selectedPlugin === PluginID.PENTEST_AGENT;
+
+  const SelectedPluginDisplay = ({
+    icon: Icon,
+    label,
+  }: {
+    icon: LucideIcon;
+    label: string;
+  }) => (
+    <div
+      className={cn(
+        'flex items-center space-x-1 cursor-pointer hover:opacity-80 rounded-lg transition-colors duration-300 px-2 py-1',
+        isMobile && 'border',
+      )}
+      style={
+        isMobile
+          ? { borderColor: 'var(--interactive-label-accent-selected)' }
+          : {}
+      }
+      onClick={handleClosePlugin}
+    >
+      <Icon
+        size={20}
+        style={{ color: 'var(--interactive-label-accent-selected)' }}
+      />
+      <span
+        className={cn('text-sm', isMobile ? 'hidden' : 'block')}
+        style={{ color: 'var(--interactive-label-accent-selected)' }}
+      >
+        {label}
+      </span>
+      <X
+        size={16}
+        className="ml-1"
+        style={{ color: 'var(--interactive-label-accent-selected)' }}
+      />
+    </div>
+  );
+
+  const getSelectedPluginIcon = () => {
+    switch (selectedPlugin) {
+      case PluginID.DEEP_RESEARCH:
+        return <SelectedPluginDisplay icon={Telescope} label="Research" />;
+      case PluginID.WEB_SEARCH:
+        return <SelectedPluginDisplay icon={Globe} label="Search" />;
+      case PluginID.PENTEST_AGENT:
+        return <SelectedPluginDisplay icon={SquareTerminal} label="Agent" />;
+      default:
+        return null;
     }
-
-    setSelectedPlugin(
-      selectedPlugin === PluginID.DEEP_RESEARCH
-        ? PluginID.NONE
-        : PluginID.DEEP_RESEARCH,
-    );
   };
 
   return (
@@ -104,108 +140,16 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
         />
       )}
 
-      {/* Terminal Tool - Only show if not in temporary chat */}
-      {!isTemporaryChat && isPremiumSubscription && (
-        <WithTooltip
-          delayDuration={TOOLTIP_DELAY}
-          side="top"
-          display={
-            <div className="flex flex-col">
-              {!isPremiumSubscription ? (
-                <UpgradePrompt feature="pentest agent" />
-              ) : (
-                <p className="font-medium">Use pentest agent</p>
-              )}
-            </div>
-          }
-          trigger={
-            <div
-              className={cn(
-                'flex items-center rounded-lg transition-colors duration-300',
-                selectedPlugin === PluginID.PENTEST_AGENT
-                  ? 'bg-primary/10'
-                  : 'hover:bg-black/10 dark:hover:bg-white/10',
-                !isPremiumSubscription && 'opacity-50',
-              )}
-              onClick={handlePentestAgentToggle}
-            >
-              <SquareTerminal
-                className={cn(
-                  'cursor-pointer rounded-lg p-1 focus-visible:outline-black dark:focus-visible:outline-white',
-                  selectedPlugin === PluginID.PENTEST_AGENT
-                    ? 'text-primary'
-                    : 'opacity-50',
-                )}
-                size={32}
-              />
-              <div
-                className={cn(
-                  'whitespace-nowrap text-xs font-medium transition-all duration-300',
-                  'max-w-[100px] pr-2',
-                  isMobile && selectedPlugin !== PluginID.PENTEST_AGENT
-                    ? 'hidden'
-                    : 'opacity-100',
-                )}
-              >
-                {isMobile ? 'HackerAI' : 'HackerAI MCP'}
-              </div>
-            </div>
-          }
-        />
-      )}
+      {/* Tools Dropdown */}
+      <ToolsDropdown onUpgradePrompt={handleUpgradePrompt} />
 
-      {/* Research Tool */}
-      <WithTooltip
-        delayDuration={TOOLTIP_DELAY}
-        side="top"
-        display={
-          <div className="flex flex-col">
-            {!isPremiumSubscription ? (
-              <UpgradePrompt feature="deep research" />
-            ) : hasImageAttached ? (
-              <p className="font-medium">
-                Deep Research doesn&apos;t support images
-              </p>
-            ) : (
-              <p className="font-medium">Run deep research</p>
-            )}
-          </div>
-        }
-        trigger={
-          <div
-            className={cn(
-              'flex items-center rounded-lg transition-colors duration-300',
-              selectedPlugin === PluginID.DEEP_RESEARCH
-                ? 'bg-primary/10'
-                : 'hover:bg-black/10 dark:hover:bg-white/10',
-              !isPremiumSubscription && 'opacity-50',
-              hasImageAttached && 'opacity-50',
-            )}
-            onClick={handleResearchToggle}
-          >
-            <Telescope
-              className={cn(
-                'cursor-pointer rounded-lg p-1 focus-visible:outline-black dark:focus-visible:outline-white',
-                selectedPlugin === PluginID.DEEP_RESEARCH
-                  ? 'text-primary'
-                  : 'opacity-50',
-              )}
-              size={32}
-            />
-            <div
-              className={cn(
-                'whitespace-nowrap text-xs font-medium transition-all duration-300',
-                'max-w-[100px] pr-2',
-                isMobile && selectedPlugin !== PluginID.DEEP_RESEARCH
-                  ? 'hidden'
-                  : 'opacity-100',
-              )}
-            >
-              Research
-            </div>
-          </div>
-        }
-      />
+      {/* Selected Plugin Display */}
+      {isAnyToolSelected && (
+        <div className="flex items-center">
+          <div className="mx-2 text-sm text-muted-foreground">|</div>
+          {getSelectedPluginIcon()}
+        </div>
+      )}
 
       {/* Upgrade Modal */}
       <UpgradeModal

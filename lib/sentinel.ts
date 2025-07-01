@@ -30,7 +30,7 @@ export const sendAnonymousSentinelReport = async (error: any) => {
     });
 
     return response;
-  } catch (error) {
+  } catch (_error) {
     // Do nothing
   }
 };

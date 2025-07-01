@@ -577,7 +577,7 @@ export const useChatHandler = () => {
       setIsGenerating(false);
       setFirstTokenReceived(false);
       setAgentStatus(null);
-    } catch (error) {
+    } catch (_error) {
       setToolInUse('none');
       setIsGenerating(false);
       setFirstTokenReceived(false);

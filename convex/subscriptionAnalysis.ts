@@ -178,7 +178,7 @@ export const compareWithStripe = internalAction({
       }),
     ),
   }),
-  handler: async (ctx, args) => {
+  handler: async (ctx, _args) => {
     const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
     // Get subscriptions to check
@@ -334,7 +334,7 @@ export const fixAllDiscrepanciesAction = internalAction({
       }),
     ),
   }),
-  handler: async (ctx, args) => {
+  handler: async (ctx, _args) => {
     const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
     // Get subscriptions to check
@@ -508,7 +508,7 @@ export const getSubscriptionsToCheck = internalQuery({
       ended_at: v.union(v.string(), v.null()),
     }),
   ),
-  handler: async (ctx, args) => {
+  handler: async (ctx, _args) => {
     // Return ALL active subscriptions using index
     const activeSubscriptions = await ctx.db
       .query('subscriptions')
@@ -568,7 +568,7 @@ export const checkAndFixDiscrepancies = internalAction({
       ),
     }),
   }),
-  handler: async (ctx, args) => {
+  handler: async (ctx, _args) => {
     console.log(
       '🔍 Starting subscription discrepancy check and fix process...',
     );

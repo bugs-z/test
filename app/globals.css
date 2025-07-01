@@ -89,6 +89,12 @@
     --error: 0.93, 94.17%, 59.61%;
     --sidebar-mask: linear-gradient(90deg,#000 0%,#000 95%,transparent 100%,transparent 100%);
     --sidebar-mask-active: linear-gradient(90deg,#000 0%,#000 88%,transparent 93%,transparent 100%);
+
+    --interactive-label-accent-default: #0285ff;
+    --interactive-label-accent-hover: #0285ff;
+    --interactive-label-accent-press: #0285ff;
+    --interactive-label-accent-inactive: #0285ff;
+    --interactive-label-accent-selected: #0285ff;
   }
 
   .dark {
@@ -138,6 +144,12 @@
     --error: 0.93, 94.17%, 59.61%;
     --sidebar-mask: linear-gradient(90deg,#000 0%,#000 95%,transparent 100%,transparent 100%);
     --sidebar-mask-active: linear-gradient(90deg,#000 0%,#000 88%,transparent 93%,transparent 100%);
+
+    --interactive-label-accent-default: #99ceff;
+    --interactive-label-accent-hover: #99ceff;
+    --interactive-label-accent-press: #99ceff;
+    --interactive-label-accent-inactive: #99ceff;
+    --interactive-label-accent-selected: #99ceff;
   }
 }
 

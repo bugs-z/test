@@ -182,9 +182,9 @@ export const PentestGPTContext = createContext<PentestGPTContextType>({
   isLoadingMore: false,
 
   // Fetch Chat and Messages
-  fetchChat: async (chatId: string) => {},
-  fetchMessages: async (chatId: string) => {},
-  loadMoreMessages: async (chatId: string) => {},
+  fetchChat: async (_chatId: string) => {},
+  fetchMessages: async (_chatId: string) => {},
+  loadMoreMessages: async (_chatId: string) => {},
 
   // User Email
   userEmail: '',

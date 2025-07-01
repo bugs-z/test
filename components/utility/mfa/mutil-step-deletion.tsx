@@ -57,7 +57,7 @@ export const MultiStepDeleteAccountDialog: FC<
           await verifyBeforeUnenroll(mfaCode);
           setStep(3);
           setMfaCode(''); // Clear MFA code after verification
-        } catch (error) {
+        } catch (_error) {
           return;
         }
       } else if (confirmEmail.toLowerCase() === userEmail.toLowerCase()) {
@@ -74,7 +74,7 @@ export const MultiStepDeleteAccountDialog: FC<
     try {
       // Verify MFA again before final deletion if enabled
       await onConfirm();
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to verify MFA');
       return;
     }

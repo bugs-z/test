@@ -161,7 +161,7 @@ export const uploadFileHttp = httpAction(async (ctx, request) => {
     let parsedMetadata: FileMetadata;
     try {
       parsedMetadata = JSON.parse(fileMetadata) as FileMetadata;
-    } catch (error) {
+    } catch (_error) {
       return createErrorResponse('Invalid metadata format', 400);
     }
 

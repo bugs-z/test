@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { getServerUser } from '@/lib/server/server-chat-helpers';
 import { checkRatelimitOnApi } from '@/lib/server/ratelimiter';
-import llmConfig from '@/lib/models/llm-config';
 import { getSubscriptionInfo } from '@/lib/server/subscription-utils';
 
 const SUPPORTED_MIME_TYPES = [
@@ -97,7 +96,7 @@ export async function POST(req: NextRequest) {
     const response = await fetch(OPENAI_API_URL, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${llmConfig.openai.apiKey}`,
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: openaiFormData,
     });

@@ -45,7 +45,7 @@ export const createErrorResponse = (
 export const createOptionsHandler = (
   allowedMethods: string[] = ['GET', 'POST', 'OPTIONS'],
 ) => {
-  return httpAction(async (_, request) => {
+  return httpAction(async (_, _request) => {
     return new Response(null, {
       status: 204, // No content for OPTIONS
       headers: {
@@ -100,7 +100,7 @@ export const validateAuthWithUser = async (request: Request) => {
       user,
       token,
     };
-  } catch (error) {
+  } catch (_error) {
     return {
       success: false,
       error: 'Authentication service error',

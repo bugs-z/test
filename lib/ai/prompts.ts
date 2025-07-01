@@ -4,6 +4,7 @@ import {
   systemPromptEnding,
 } from '@/lib/models/llm-prompting';
 import { PENTESTGPT_AGENT_SYSTEM_PROMPT } from '../models/agent-prompts';
+import { Geo } from '@vercel/functions';
 
 export function buildSystemPrompt(
   basePrompt: string,
@@ -23,21 +24,30 @@ export function buildSystemPrompt(
 }
 
 const modelPromptMap: Record<string, string> = {
-  'chat-model-small': `${getPentestGPTInfo(true, 'June 2024', 'Small Model')}\n${systemPromptEnding}`,
-  'chat-model-large': `${getPentestGPTInfo(true, 'June 2024', 'Large Model')}\n${systemPromptEnding}`,
-  'chat-model-reasoning': `${getPentestGPTInfo(true, 'June 2024', 'reasoningModel')}\n${systemPromptEnding}`,
+  'chat-model-small': `${getPentestGPTInfo('Small Model', 'June 2024', false)}${systemPromptEnding}`,
+  'chat-model-large': `${getPentestGPTInfo('Large Model', 'June 2024', false)}${systemPromptEnding}`,
+  'chat-model-reasoning': `${getPentestGPTInfo('Reasoning Model', 'Octrober 2024', false)}${systemPromptEnding}`,
   'chat-model-agent': `${PENTESTGPT_AGENT_SYSTEM_PROMPT}`,
-  'deep-research-model': `${getPentestGPTInfo(false)}\n${systemPromptEnding}`,
+  'deep-research-model': `${getPentestGPTInfo('Deep Research', 'June 2024', false)}${systemPromptEnding}`,
+  'web-search-model': `${getPentestGPTInfo('Web Search Model', 'June 2024', true)}${systemPromptEnding}`,
 };
 
 export const getSystemPrompt = ({
   selectedChatModel,
   profileContext,
+  userLocation,
 }: {
   selectedChatModel: string;
   profileContext?: string;
+  userLocation?: Geo;
 }): string => {
-  const basePrompt = modelPromptMap[selectedChatModel];
+  let basePrompt = modelPromptMap[selectedChatModel];
+
+  // For web-search-model, update the prompt with location info
+  if (selectedChatModel === 'web-search-model') {
+    basePrompt = `${getPentestGPTInfo('Web Search Model', 'June 2024', true, userLocation)}${systemPromptEnding}`;
+  }
+
   return buildSystemPrompt(basePrompt, profileContext);
 };
 

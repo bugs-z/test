@@ -27,7 +27,7 @@ export async function middleware(request: NextRequest) {
       }
 
       // Check if the URL matches either /[workspaceid]/c(hat) or /[workspaceid]/c(hat)/[chatid]
-      const workspacePattern = /^\/[^\/]+\/(c|chat)(\/[^\/]+)?$/;
+      const workspacePattern = /^\/[^/]+\/(c|chat)(\/[^/]+)?$/;
       if (workspacePattern.test(request.nextUrl.pathname)) {
         const pathParts = request.nextUrl.pathname.split('/');
         // If chat ID exists, preserve it in the redirect
@@ -39,7 +39,7 @@ export async function middleware(request: NextRequest) {
     }
 
     return response;
-  } catch (e) {
+  } catch (_e) {
     return NextResponse.next({
       request: {
         headers: request.headers,

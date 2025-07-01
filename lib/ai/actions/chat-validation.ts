@@ -30,7 +30,17 @@ export async function validateChatAccessWithLimits({
   messages: BuiltChatMessage[];
   model: string;
   selectedPlugin: PluginID;
-}) {
+}): Promise<
+  | {
+      success: true;
+      chat: any;
+      config: any;
+    }
+  | {
+      success: false;
+      response: Response;
+    }
+> {
   // First validate rate limits and premium features
   const config = await getProviderConfig(
     model,
@@ -40,7 +50,19 @@ export async function validateChatAccessWithLimits({
   );
 
   if (!config.isRateLimitAllowed) {
-    throw new ChatSDKError('rate_limit:chat');
+    return {
+      success: false,
+      response: new Response(
+        JSON.stringify({
+          error: {
+            type: 'ratelimit_hit',
+            message: config.rateLimitInfo.message,
+            isPremiumUser: config.isPremiumUser,
+          },
+        }),
+        { status: 429 },
+      ),
+    };
   }
 
   // Check if non-premium user is trying to send attachments or images
@@ -58,6 +80,7 @@ export async function validateChatAccessWithLimits({
   const chat = await validateChatAccess({ chatMetadata, userId });
 
   return {
+    success: true,
     chat,
     config,
   };
@@ -94,7 +117,7 @@ async function getProviderConfig(
   model: string,
   profile: any,
   selectedPlugin: PluginID,
-  messages: any[],
+  _messages: any[],
 ) {
   // Moving away from gpt-4-turbo-preview to chat-model-large
   const modelMap: Record<string, string> = {
@@ -118,7 +141,7 @@ async function getProviderConfig(
   const isLargeModel = selectedModel.includes('large');
 
   const rateLimitModel =
-    selectedPlugin !== PluginID.NONE
+    selectedPlugin !== PluginID.NONE && selectedPlugin !== PluginID.WEB_SEARCH
       ? selectedPlugin
       : rateLimitModelMap[model] || model;
 

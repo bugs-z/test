@@ -10,9 +10,10 @@ import type { BuiltChatMessage } from '@/types/chat-message';
 import { getModerationResult } from '@/lib/server/moderation';
 import { getSystemPrompt } from './prompts';
 import { processMessageContentWithAttachments } from '../build-prompt-backend';
-import llmConfig from '../models/llm-config';
 import { countTokens } from 'gpt-tokenizer';
 import { processMessagesWithImages } from './image-processing';
+import { PluginID } from '@/types/plugins';
+import { Geo } from '@vercel/functions';
 
 /**
  * Removes the last assistant message if it's empty.
@@ -264,6 +265,7 @@ export async function processChatMessages(
   isReasoningModel: boolean,
   isPremiumSubscription: boolean,
   isPentestAgent?: boolean,
+  userLocation?: Geo,
 ): Promise<{
   processedMessages: BuiltChatMessage[];
   systemPrompt: string;
@@ -272,7 +274,7 @@ export async function processChatMessages(
   hasImageAttachments?: boolean;
 }> {
   let shouldUncensor = false;
-  const apiKey = llmConfig.openai.apiKey;
+  const apiKey = process.env.OPENAI_API_KEY;
 
   // Filter empty assistant messages first
   filterEmptyAssistantMessages(messages);
@@ -325,9 +327,16 @@ export async function processChatMessages(
     isPentestAgent,
   );
 
+  // Use 'searchgpt' model for web search plugin, otherwise use the selected model
+  const modelForSystemPrompt =
+    modelParams.selectedPlugin === PluginID.WEB_SEARCH
+      ? 'web-search-model'
+      : selectedModel;
+
   const systemPrompt = getSystemPrompt({
-    selectedChatModel: selectedModel,
+    selectedChatModel: modelForSystemPrompt,
     profileContext: profile?.profile_context,
+    userLocation,
   });
 
   return {

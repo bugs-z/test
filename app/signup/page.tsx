@@ -114,7 +114,7 @@ export default async function SignUp({
       { test: /[A-Z]/.test(password) && /[a-z]/.test(password), message: '7' },
       { test: /[0-9]/.test(password), message: '8' },
       {
-        test: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/.test(password),
+        test: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~]/.test(password),
         message: '9',
       },
     ];

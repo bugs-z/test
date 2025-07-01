@@ -174,7 +174,13 @@ export const ChatInput: FC = () => {
                     'py-3',
                     'px-3',
                   )}
-                  placeholder="Ask anything"
+                  placeholder={
+                    selectedPlugin === PluginID.DEEP_RESEARCH
+                      ? 'Get a detailed report'
+                      : selectedPlugin === PluginID.WEB_SEARCH
+                        ? 'Search the web'
+                        : 'Ask anything'
+                  }
                   onValueChange={handleInputChange} // This function updates the userInput state
                   value={userInput} // This state should display the transcribed text
                   minRows={1}
