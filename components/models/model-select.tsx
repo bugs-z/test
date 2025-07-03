@@ -3,7 +3,6 @@ import type { LLMID } from '@/types';
 import { Circle, CircleCheck } from 'lucide-react';
 import { type FC, useContext, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ModelIcon } from './model-icon';
 import { Button } from '../ui/button';
 import { LLM_LIST } from '@/lib/models/llm-list';
 import {
@@ -89,7 +88,6 @@ export const ModelSelect: FC<ModelSelectProps> = ({
                 }
               >
                 <div className="flex items-center space-x-2">
-                  <ModelIcon modelId={model.modelId} size={28} />
                   <div>
                     <div className="text-sm font-medium">{model.modelName}</div>
                     <div className="text-muted-foreground text-xs">

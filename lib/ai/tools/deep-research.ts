@@ -4,6 +4,7 @@ import { handleFinalChatAndAssistantMessage } from '@/lib/ai/actions';
 import { v4 as uuidv4 } from 'uuid';
 import type { Doc } from '@/convex/_generated/dataModel';
 import OpenAI from 'openai';
+import { checkRatelimitOnApi } from '@/lib/server/ratelimiter';
 
 export interface DeepResearchConfig {
   chat: Doc<'chats'> | null;
@@ -51,6 +52,27 @@ export async function executeDeepResearchTool({
     titleGenerationPromise,
     assistantMessageId: passedAssistantMessageId,
   } = config;
+
+  // Check deep-research rate limit before starting actual deep research
+  const deepResearchRateLimit = await checkRatelimitOnApi(
+    profile.user_id,
+    'deep-research',
+  );
+
+  if (!deepResearchRateLimit.allowed) {
+    // Send rate limit error to the data stream
+    dataStream.writeData({
+      type: 'error',
+      content: {
+        type: 'ratelimit_hit',
+        message: deepResearchRateLimit.info.message,
+        isPremiumUser: deepResearchRateLimit.info.isPremiumUser,
+      },
+    });
+    throw new Error(
+      `Deep research rate limit exceeded: ${deepResearchRateLimit.info.message}`,
+    );
+  }
 
   const posthog = PostHogClient();
   if (posthog) {

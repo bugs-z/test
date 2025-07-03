@@ -1,11 +1,4 @@
-import React, {
-  type FC,
-  useMemo,
-  useState,
-  Fragment,
-  useEffect,
-  useRef,
-} from 'react';
+import React, { type FC, useMemo, useState, useEffect, useRef } from 'react';
 import { ChevronDown, Repeat } from 'lucide-react';
 import { WithTooltip } from './with-tooltip';
 import {
@@ -13,203 +6,187 @@ import {
   LargeModel,
   ReasoningModel,
 } from '@/lib/models/hackerai-llm-list';
-import type { LLMID } from '@/types';
-import {
-  Menu,
-  Transition,
-  MenuItems,
-  MenuButton,
-  MenuItem,
-} from '@headlessui/react';
-import { ModelIcon } from '../models/model-icon';
+import { PluginID } from '@/types/plugins';
+import { Menu, MenuItems, MenuButton, MenuItem } from '@headlessui/react';
 
 interface SwitchModelProps {
   currentModel: string;
   onChangeModel: (model: string) => void;
   isMobile: boolean;
+  messagePlugin?: string | null;
 }
 
-const getModelDisplayName = (modelId: string): string => {
+interface ModelConfig {
+  id: string;
+  name: string;
+  description: string;
+}
+
+const MODELS: ModelConfig[] = [
+  {
+    id: LargeModel.modelId,
+    name: LargeModel.modelName,
+    description: LargeModel.description || 'Great for most questions',
+  },
+  {
+    id: SmallModel.modelId,
+    name: SmallModel.modelName,
+    description: SmallModel.description || 'Faster for most questions',
+  },
+  {
+    id: ReasoningModel.modelId,
+    name: ReasoningModel.modelName,
+    description: ReasoningModel.description || 'Uses advanced reasoning',
+  },
+];
+
+const getModelDisplayName = (
+  modelId: string,
+  plugin?: string | null,
+): string => {
+  if (plugin === PluginID.DEEP_RESEARCH) return 'research';
+
   switch (modelId) {
     case SmallModel.modelId:
-      return 'small';
+      return SmallModel.shortModelName?.toLowerCase() || 'small';
     case LargeModel.modelId:
-      return 'large';
+      return LargeModel.shortModelName?.toLowerCase() || 'large';
     case ReasoningModel.modelId:
-      return 'reason';
+      return ReasoningModel.shortModelName?.toLowerCase() || 'reason';
     default:
-      return modelId;
+      return modelId.toLowerCase();
   }
 };
+
+const ModelItem: FC<{
+  model: ModelConfig;
+  isActive: boolean;
+  onClick: () => void;
+}> = ({ model, isActive, onClick }) => (
+  <MenuItem>
+    {({ focus }) => (
+      <button
+        onClick={onClick}
+        className={`
+          group flex w-full rounded-sm px-3 py-2.5 text-left transition-colors
+          ${focus ? 'bg-accent text-accent-foreground' : 'text-secondary-foreground'}
+          ${isActive ? 'items-center justify-between' : 'flex-col items-start'}
+        `}
+      >
+        <div className="flex flex-col items-start text-left min-w-0 flex-1">
+          <div className="text-sm font-medium truncate w-full">
+            {model.name}
+          </div>
+          <div className="mt-0.5 text-xs text-muted-foreground line-clamp-2">
+            {model.description}
+          </div>
+        </div>
+        {isActive && (
+          <Repeat
+            size={18}
+            className="ml-2 flex-shrink-0 text-muted-foreground"
+          />
+        )}
+      </button>
+    )}
+  </MenuItem>
+);
 
 export const SwitchModel: FC<SwitchModelProps> = ({
   currentModel,
   onChangeModel,
   isMobile,
+  messagePlugin,
 }) => {
-  const ICON_SIZE = isMobile ? 22 : 20;
-  const [isHovered, setIsHovered] = useState(false);
   const [shouldOpenUpward, setShouldOpenUpward] = useState(false);
   const [shouldCenter, setShouldCenter] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const calculatePosition = () => {
-      if (buttonRef.current) {
-        const buttonRect = buttonRef.current.getBoundingClientRect();
-        const spaceBelow = window.innerHeight - buttonRect.bottom;
-        const spaceAbove = buttonRect.top;
-        const spaceRight = window.innerWidth - buttonRect.left;
+      if (!buttonRef.current) return;
 
-        setShouldOpenUpward(spaceBelow < 300 && spaceAbove > spaceBelow);
-        setShouldCenter(spaceRight < 180);
-      }
+      const rect = buttonRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+
+      setShouldOpenUpward(spaceBelow < 300 && spaceAbove > spaceBelow);
+      setShouldCenter(isMobile);
     };
 
     calculatePosition();
     window.addEventListener('resize', calculatePosition);
     return () => window.removeEventListener('resize', calculatePosition);
-  }, []);
+  }, [isMobile]);
 
   const displayName = useMemo(
-    () => getModelDisplayName(currentModel),
-    [currentModel],
+    () => getModelDisplayName(currentModel, messagePlugin),
+    [currentModel, messagePlugin],
   );
 
-  const shouldShowDetails = isHovered && !isMobile;
+  const iconSize = isMobile ? 22 : 20;
+  const availableModels = MODELS.filter((model) => model.id !== currentModel);
+  const currentModelData = MODELS.find((model) => model.id === currentModel);
+
+  // Responsive width and positioning
+  const dropdownWidth = isMobile ? 'w-[240px]' : 'w-[280px]';
+  const maxWidth = isMobile ? 'max-w-[calc(100vw-32px)]' : 'max-w-[280px]';
+
+  const getPositionClasses = () => {
+    const baseClasses = `absolute bg-secondary rounded-md shadow-lg ring-1 ring-black/5 focus:outline-none ${dropdownWidth} ${maxWidth}`;
+    const verticalClasses = shouldOpenUpward
+      ? 'bottom-full mb-2 origin-bottom'
+      : 'top-full mt-2 origin-top';
+    const horizontalClasses = shouldCenter
+      ? 'left-1/2 -translate-x-1/2'
+      : 'left-0';
+
+    return `${baseClasses} ${verticalClasses} ${horizontalClasses}`;
+  };
 
   return (
-    <div
-      className="relative flex items-center"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <Menu as="div" className="relative inline-block text-left">
-        <WithTooltip
-          delayDuration={0}
-          side="bottom"
-          display={<div>Switch model</div>}
-          trigger={
-            <MenuButton
-              ref={buttonRef}
-              className="relative flex cursor-pointer items-center hover:opacity-50"
-            >
-              <Repeat
-                size={ICON_SIZE}
-                className="cursor-pointer hover:opacity-50"
-              />
-              <div className="relative flex items-center">
-                <span
-                  className={`absolute left-full ml-1 text-sm transition-all duration-500 ${
-                    shouldShowDetails
-                      ? 'translate-x-0 opacity-100'
-                      : '-translate-x-4 opacity-0'
-                  }`}
-                  style={{ whiteSpace: 'nowrap' }}
-                >
-                  {displayName}
-                </span>
-                <ChevronDown
-                  className={`absolute left-full transition-all duration-500 ${
-                    shouldShowDetails ? 'opacity-100' : 'opacity-50'
-                  }`}
-                  size={16}
-                  style={{
-                    transform: `translateX(${
-                      shouldShowDetails ? displayName.length * 0.4 + 0.5 : 0
-                    }rem)`,
-                  }}
-                />
-              </div>
-            </MenuButton>
-          }
-        />
-
-        <Transition
-          as={Fragment}
-          enter="transition ease-out duration-100"
-          enterFrom="transform opacity-0 scale-95"
-          enterTo="transform opacity-100 scale-100"
-          leave="transition ease-in duration-75"
-          leaveFrom="transform opacity-100 scale-100"
-          leaveTo="transform opacity-0 scale-95"
-        >
-          <MenuItems
-            className={`absolute ${
-              shouldOpenUpward ? 'bottom-full mb-2' : 'top-full mt-2'
-            } ${
-              shouldCenter ? 'left-1/2 -translate-x-1/2' : 'left-0'
-            } origin- min-w-[220px] whitespace-nowrap${shouldOpenUpward ? 'bottom' : 'top'} bg-secondary ring/5 rounded-md shadow-lg ring-1 ring-black focus:outline-hidden`}
+    <Menu as="div" className="relative inline-block text-left">
+      <WithTooltip
+        delayDuration={0}
+        side="bottom"
+        display={<div>Switch model ({displayName})</div>}
+        trigger={
+          <MenuButton
+            ref={buttonRef}
+            className="relative flex cursor-pointer items-center hover:opacity-50"
           >
-            <div className="p-1">
-              <div className="text-muted-foreground p-2 text-sm">
-                Switch model
-              </div>
+            <Repeat size={iconSize} />
+            <ChevronDown className="ml-1 opacity-50" size={16} />
+          </MenuButton>
+        }
+      />
 
-              {[
-                { id: LargeModel.modelId, name: 'Large Model' },
-                { id: SmallModel.modelId, name: 'Small Model' },
-                { id: ReasoningModel.modelId, name: 'Reasoning Model' },
-              ]
-                .filter((model) => model.id !== currentModel)
-                .map(({ id, name }) => (
-                  <MenuItem key={id}>
-                    {({ focus }) => (
-                      <button
-                        onClick={() => onChangeModel(id)}
-                        className={`${
-                          focus
-                            ? 'bg-accent text-accent-foregrounds'
-                            : 'text-secondary-foreground'
-                        } group flex w-full items-center whitespace-nowrap rounded-sm px-3 py-2.5 text-base transition-colors`}
-                      >
-                        <ModelIcon
-                          modelId={id as LLMID}
-                          size={18}
-                          className="mr-3"
-                        />
-                        {name}
-                      </button>
-                    )}
-                  </MenuItem>
-                ))}
+      <MenuItems className={getPositionClasses()}>
+        <div className="p-1">
+          <div className="px-3 py-2.5 text-sm text-muted-foreground">
+            Switch model
+          </div>
 
-              <div className="bg-muted-foreground/50 mx-2 my-1 h-px" />
+          {availableModels.map((model) => (
+            <ModelItem
+              key={model.id}
+              model={model}
+              isActive={false}
+              onClick={() => onChangeModel(model.id)}
+            />
+          ))}
 
-              {[
-                { id: LargeModel.modelId, name: 'Large Model' },
-                { id: SmallModel.modelId, name: 'Small Model' },
-                { id: ReasoningModel.modelId, name: 'Reasoning Model' },
-              ]
-                .filter((model) => model.id === currentModel)
-                .map(({ id, name }) => (
-                  <MenuItem key={id}>
-                    {({ focus }) => (
-                      <button
-                        onClick={() => onChangeModel(id)}
-                        className={`${
-                          focus
-                            ? 'bg-accent text-accent-foregrounds'
-                            : 'text-secondary-foreground'
-                        } group flex w-full items-center justify-between whitespace-nowrap rounded-sm px-3 py-2.5 text-base transition-colors`}
-                      >
-                        <div className="flex items-center">
-                          <ModelIcon
-                            modelId={id as LLMID}
-                            size={18}
-                            className="mr-3"
-                          />
-                          {name}
-                        </div>
-                        <Repeat size={18} className="text-muted-foreground" />
-                      </button>
-                    )}
-                  </MenuItem>
-                ))}
-            </div>
-          </MenuItems>
-        </Transition>
-      </Menu>
-    </div>
+          <div className="mx-2 my-1 h-px bg-muted-foreground/50" />
+
+          {currentModelData && (
+            <ModelItem
+              model={currentModelData}
+              isActive={true}
+              onClick={() => onChangeModel(currentModelData.id)}
+            />
+          )}
+        </div>
+      </MenuItems>
+    </Menu>
   );
 };

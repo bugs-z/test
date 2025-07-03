@@ -29,6 +29,7 @@ interface MessageActionsProps {
   messageHasImage: boolean;
   messageContent: string;
   messageModel: string;
+  messagePlugin?: string | null;
 }
 
 export const MessageActions: FC<MessageActionsProps> = ({
@@ -47,6 +48,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
   messageHasImage,
   messageContent,
   messageModel,
+  messagePlugin,
 }) => {
   const { isPremiumSubscription, isTemporaryChat } =
     useContext(PentestGPTContext);
@@ -185,6 +187,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
             currentModel={messageModel}
             onChangeModel={onRegenerateSpecificModel}
             isMobile={isMobile}
+            messagePlugin={messagePlugin}
           />
         )}
     </div>

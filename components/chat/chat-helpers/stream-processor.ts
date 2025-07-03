@@ -219,10 +219,28 @@ export const processResponse = async (
 
               // Handle tools errors
               if (firstValue.type === 'error') {
-                const errorMessage =
-                  firstValue.content || 'An unknown error occurred';
+                let errorMessage = 'An unknown error occurred';
 
-                if (errorMessage.includes('reached the limit')) {
+                // Handle both string and object error content
+                if (typeof firstValue.content === 'string') {
+                  errorMessage = firstValue.content;
+                } else if (
+                  typeof firstValue.content === 'object' &&
+                  firstValue.content !== null
+                ) {
+                  const errorContent = firstValue.content as any;
+                  if (errorContent.message) {
+                    errorMessage = errorContent.message;
+                  } else {
+                    // Fallback for other object structures
+                    errorMessage = JSON.stringify(firstValue.content);
+                  }
+                }
+
+                if (
+                  errorMessage.includes('reached the limit') ||
+                  errorMessage.includes('rate limit')
+                ) {
                   alertDispatch({
                     type: 'SHOW',
                     payload: {

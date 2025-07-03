@@ -46,8 +46,6 @@ export const ToolsDropdown = ({ onUpgradePrompt }: ToolsDropdownProps) => {
   };
 
   const handleResearchToggle = () => {
-    if (hasImageAttached) return;
-
     if (!isPremiumSubscription) {
       onUpgradePrompt('deep research');
       return;
@@ -61,8 +59,6 @@ export const ToolsDropdown = ({ onUpgradePrompt }: ToolsDropdownProps) => {
   };
 
   const handleWebSearchToggle = () => {
-    if (hasImageAttached) return;
-
     if (!isPremiumSubscription) {
       onUpgradePrompt('websearch');
       return;
@@ -83,7 +79,6 @@ export const ToolsDropdown = ({ onUpgradePrompt }: ToolsDropdownProps) => {
             'flex items-center rounded-lg transition-colors duration-300 cursor-pointer',
             'hover:bg-black/10 dark:hover:bg-white/10',
             !isPremiumSubscription && 'opacity-50',
-            hasImageAttached && 'opacity-50',
           )}
         >
           {/* Settings Icon */}
@@ -116,10 +111,9 @@ export const ToolsDropdown = ({ onUpgradePrompt }: ToolsDropdownProps) => {
         </div>
         <DropdownMenuItem
           onClick={handleResearchToggle}
-          disabled={hasImageAttached || !isPremiumSubscription}
           className={cn(
             'flex items-center justify-between cursor-pointer py-3',
-            (hasImageAttached || !isPremiumSubscription) && 'opacity-50',
+            !isPremiumSubscription && 'opacity-50',
           )}
         >
           <div className="flex items-center space-x-3">
@@ -150,10 +144,9 @@ export const ToolsDropdown = ({ onUpgradePrompt }: ToolsDropdownProps) => {
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={handleWebSearchToggle}
-          disabled={hasImageAttached || !isPremiumSubscription}
           className={cn(
             'flex items-center justify-between cursor-pointer py-3',
-            (hasImageAttached || !isPremiumSubscription) && 'opacity-50',
+            !isPremiumSubscription && 'opacity-50',
           )}
         >
           <div className="flex items-center space-x-3">
@@ -185,7 +178,6 @@ export const ToolsDropdown = ({ onUpgradePrompt }: ToolsDropdownProps) => {
         {!isTemporaryChat && (
           <DropdownMenuItem
             onClick={handlePentestAgentToggle}
-            disabled={!isPremiumSubscription}
             className={cn(
               'flex items-center justify-between cursor-pointer py-3',
               !isPremiumSubscription && 'opacity-50',

@@ -47,7 +47,7 @@ export const pluginUrls: PluginUrls = {
 };
 
 export const PLUGINS_WITHOUT_IMAGE_SUPPORT: PluginID[] = [
-  PluginID.DEEP_RESEARCH,
+  // Deep research and web search now support images
 ];
 
 export const isPluginWithoutImageSupport = (pluginId: PluginID): boolean => {

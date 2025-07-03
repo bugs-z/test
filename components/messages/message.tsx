@@ -350,6 +350,7 @@ export const Message: FC<MessageProps> = ({
               onBadResponse={handleBadResponse}
               messageContent={message.content || ''}
               messageModel={message.model}
+              messagePlugin={message.plugin}
             />
           </div>
         )}

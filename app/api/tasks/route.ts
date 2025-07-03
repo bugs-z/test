@@ -100,7 +100,8 @@ export async function POST(request: Request) {
 }
 
 async function getProviderConfig(user_id: string) {
-  const rateLimitStatus = await checkRatelimitOnApi(user_id, 'deep-research');
+  // First check pentestgpt-pro rate limit
+  const rateLimitStatus = await checkRatelimitOnApi(user_id, 'pentestgpt-pro');
 
   return {
     isRateLimitAllowed: rateLimitStatus.allowed,
