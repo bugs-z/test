@@ -51,6 +51,7 @@ export const handleHostedChat = async (
   const formattedMessages = await buildFinalMessages(
     payload,
     isPremiumSubscription,
+    modelParams.selectedPlugin,
   );
 
   const requestBody = {
