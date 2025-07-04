@@ -15,7 +15,6 @@ import {
   handleFinalChatAndAssistantMessage,
 } from '@/lib/ai/actions';
 import { validateChatAccessWithLimits } from '@/lib/ai/actions/chat-validation';
-// import { createClient } from '@/lib/supabase/server';
 import { postRequestBodySchema, type PostRequestBody } from './schema';
 import { ChatSDKError } from '@/lib/errors';
 import { v4 as uuidv4 } from 'uuid';
@@ -62,12 +61,7 @@ export async function POST(request: Request) {
     let titleGenerationPromise: Promise<void> | null = null;
     const citations: string[] = [];
 
-    const {
-      processedMessages,
-      systemPrompt,
-      // hasPdfAttachments,
-      // hasImageAttachments,
-    } = await processChatMessages(
+    const { processedMessages, systemPrompt } = await processChatMessages(
       messages,
       config.selectedModel,
       modelParams,
@@ -77,18 +71,6 @@ export async function POST(request: Request) {
       undefined, // isPentestAgent
       userLocation,
     );
-
-    // Check for PDF or image attachments after processing and switch model if needed
-    // let finalSelectedModel = config.selectedModel;
-    // if (hasPdfAttachments) {
-    //   if (config.selectedModel === 'chat-model-small-with-tools') {
-    //     finalSelectedModel = 'chat-model-small';
-    //   } else if (config.selectedModel === 'chat-model-large-with-tools') {
-    //     finalSelectedModel = 'chat-model-large';
-    //   }
-    // } else if (hasImageAttachments) {
-    //   finalSelectedModel = 'chat-model-vision';
-    // }
 
     // Handle initial chat creation and user message in parallel with other operations
     const initialChatPromise = handleInitialChatAndUserMessage({
@@ -148,18 +130,7 @@ export async function POST(request: Request) {
             maxTokens: 4096,
             maxSteps: 3,
             tools: createToolSchemas({
-              // chat,
-              // messages: processedMessages,
-              // modelParams,
               profile,
-              // dataStream,
-              // abortSignal: abortController.signal,
-              // chatMetadata,
-              // model,
-              // userCity: city,
-              // userCountry: country,
-              // initialChatPromise,
-              // assistantMessageId,
             }).getSelectedSchemas(
               config.isPremiumUser &&
                 !modelParams.isTemporaryChat &&

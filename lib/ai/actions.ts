@@ -147,7 +147,7 @@ export async function generateTitleFromUserMessage({
 
     return title;
   } catch (error) {
-    console.error('[Title Generation] Error:', error);
+    // console.error('[Title Generation] Error:', error);
     // Return a fallback title based on the first message content
     const message =
       messages.find((m: { role: string }) => m.role === 'user') ||
