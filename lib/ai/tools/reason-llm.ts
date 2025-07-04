@@ -102,7 +102,7 @@ export async function executeReasonLLMTool({
       messages: toVercelChatMessages(messages),
       maxTokens: 8192,
       abortSignal,
-      maxSteps: 2,
+      maxSteps: 3,
       tools: createToolSchemas({
         profile,
       }).getSelectedSchemas(['webSearch', 'browser']),

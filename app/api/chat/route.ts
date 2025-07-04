@@ -146,7 +146,7 @@ export async function POST(request: Request) {
             },
             messages: toVercelChatMessages(processedMessages, true),
             maxTokens: 4096,
-            maxSteps: 2,
+            maxSteps: 3,
             tools: createToolSchemas({
               // chat,
               // messages: processedMessages,
