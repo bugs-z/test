@@ -91,12 +91,12 @@ export const getStorageUrlHttp = httpAction(async (ctx, request) => {
   }
 
   try {
-    // Get parameters from URL
-    const params = getUrlParams(request, ['storage_id']);
-    const { storage_id: storageId } = params;
+    // Parse request body to get storageId
+    const body = await request.json();
+    const { storageId } = body;
 
     if (!storageId) {
-      return createErrorResponse('Missing storage_id parameter', 400);
+      return createErrorResponse('Missing storageId parameter', 400);
     }
 
     // Get URL from storage using the internal function

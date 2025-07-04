@@ -53,6 +53,11 @@ async function getImageUrls(
   // Process all storage IDs in parallel
   const urlPromises = storageIds.map(async (storageId) => {
     try {
+      // Validate storageId before making API call
+      if (!storageId || storageId.trim() === '') {
+        return;
+      }
+
       // Check if storageId contains "/" which indicates it's a Supabase path with UUIDs
       // Skip calling getImageUrlPublic for these cases
       if (storageId.includes('/')) {
@@ -90,10 +95,7 @@ export async function processMessagesWithImages(
   hasImageAttachments: boolean;
 }> {
   // If model doesn't support images, remove them
-  if (
-    selectedModel === 'deep-research-model' ||
-    selectedModel === 'reasoning-model'
-  ) {
+  if (selectedModel === 'reasoning-model') {
     const processedMessages = removeImagesFromMessages(messages);
     const hasImageAttachments = checkForImagesInMessages(messages);
     return { processedMessages, hasImageAttachments };

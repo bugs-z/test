@@ -69,10 +69,16 @@ export const getFileFromStorage = async (
   storageId: string,
 ): Promise<string> => {
   try {
+    // Validate storageId before making API call
+    if (!storageId || storageId.trim() === '') {
+      return '';
+    }
+
     // Handle Convex storage files
     const result = await makeAuthenticatedRequest(
-      `/api/get-storage-url?storage_id=${encodeURIComponent(storageId)}`,
-      'GET',
+      `/api/get-storage-url`,
+      'POST',
+      { storageId },
     );
 
     return result?.url || '';

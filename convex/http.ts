@@ -74,7 +74,7 @@ http.route({
 // Register unified storage URL endpoint (replaces both image and file URL endpoints)
 http.route({
   path: '/api/get-storage-url',
-  method: 'GET',
+  method: 'POST',
   handler: getStorageUrlHttp,
 });
 
@@ -137,7 +137,7 @@ http.route({
 http.route({
   path: '/api/get-storage-url',
   method: 'OPTIONS',
-  handler: createOptionsHandler(['GET', 'OPTIONS']),
+  handler: createOptionsHandler(['POST', 'OPTIONS']),
 });
 
 http.route({

@@ -35,14 +35,20 @@ export const uploadImage = async (image: File): Promise<string> => {
 
 export const getImageUrl = async (storageId: string): Promise<string> => {
   try {
+    // Validate storageId before making API call
+    if (!storageId || storageId.trim() === '') {
+      return '';
+    }
+
     // Check if storageId contains "/" which indicates it's a Supabase path with UUIDs
     if (storageId.includes('/')) {
       return '';
     }
 
     const result = await makeAuthenticatedRequest(
-      `/api/get-storage-url?storage_id=${encodeURIComponent(storageId)}`,
-      'GET',
+      `/api/get-storage-url`,
+      'POST',
+      { storageId },
     );
 
     return result?.url || '';
