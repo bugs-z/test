@@ -220,6 +220,7 @@ export async function saveAssistantMessage({
   thinkingText,
   thinkingElapsedSecs,
   fileAttachments,
+  imagePaths,
   assistantMessageId,
 }: {
   chatId: string;
@@ -232,6 +233,7 @@ export async function saveAssistantMessage({
   thinkingText?: string;
   thinkingElapsedSecs?: number | null;
   fileAttachments?: any[];
+  imagePaths?: string[];
   assistantMessageId?: string;
 }): Promise<void> {
   // When editing messages, we need to increment the sequence number by 1
@@ -252,6 +254,7 @@ export async function saveAssistantMessage({
     thinkingEnabled: model === 'reasoning-model',
     citations: citations || [],
     attachments: fileAttachments || [],
+    imagePaths: imagePaths || [],
     isContinuation: modelParams.isContinuation,
     isTerminalContinuation: modelParams.isTerminalContinuation,
     editSequenceNumber: adjustedSequenceNumber,

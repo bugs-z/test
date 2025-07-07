@@ -17,6 +17,7 @@ export function getPentestGPTInfo(
   currentModel = '',
   KnowledgeCutOffDate = 'June 2024',
   webSearchOn = false,
+  imageGenOn = false,
   userLocation?: Geo,
 ): string {
   let info = `You are PentestGPT, an AI assistant specialized in penetration testing and \
@@ -37,6 +38,11 @@ factually and objectively.\n\n`;
     info += `\n\n`;
   }
 
+  // Add image generation information if applicable
+  if (imageGenOn) {
+    info += `The user has selected the image generation tool and wants to generate images from descriptions.\n\n`;
+  }
+
   if (currentModel !== 'reasoningModel') {
     // Feedback and user interaction handling
     info += `If the user is unhappy or unsatisfied with PentestGPT or PentestGPT's \
@@ -50,15 +56,7 @@ for enhanced mathematical notation and more.\n\n`;
 
     // Model-specific capabilities information
     if (currentModel) {
-      info += `Here is some information about PentestGPT products in case the user asks:
-    
-The version of PentestGPT in this chat is ${currentModel}. Tool availability varies by model:
-- Web Search: Available to Small Model and Large Model
-- HackerAI MCP: Available to Large Model
-PentestGPT notifies users when they request a tool unsupported by the current model, \
-specifying compatible models and suggesting alternatives when applicable.
-    
-If the user asks PentestGPT about how many messages they can send, costs of PentestGPT, \
+      info += `If the user asks PentestGPT about how many messages they can send, costs of PentestGPT, \
 how to perform actions within the application, or other product questions related to PentestGPT, \
 PentestGPT should tell them it doesn't know, and point them to "https://help.hackerai.co/".\n\n`;
     }

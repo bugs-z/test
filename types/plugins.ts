@@ -32,6 +32,7 @@ export enum PluginID {
   TERMINAL = 'terminal',
   PENTEST_AGENT = 'pentest-agent',
   DEEP_RESEARCH = 'deep-research',
+  IMAGE_GEN = 'image-gen',
 }
 
 export const Plugins: Record<PluginID, Plugin> = Object.fromEntries(

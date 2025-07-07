@@ -140,8 +140,11 @@ async function getProviderConfig(
 
   const isLargeModel = selectedModel.includes('large');
 
+  // Exclude IMAGE_GEN from rate limiting at API level - it will be handled inside the tool
   const rateLimitModel =
-    selectedPlugin !== PluginID.NONE && selectedPlugin !== PluginID.WEB_SEARCH
+    selectedPlugin !== PluginID.NONE &&
+    selectedPlugin !== PluginID.WEB_SEARCH &&
+    selectedPlugin !== PluginID.IMAGE_GEN
       ? selectedPlugin
       : rateLimitModelMap[model] || model;
 

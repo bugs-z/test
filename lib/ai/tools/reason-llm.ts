@@ -105,6 +105,8 @@ export async function executeReasonLLMTool({
       maxSteps: 3,
       tools: createToolSchemas({
         profile,
+        dataStream,
+        abortSignal,
       }).getSelectedSchemas(['webSearch', 'browser']),
       experimental_generateMessageId: () => assistantMessageId,
       onChunk: async (chunk) => {

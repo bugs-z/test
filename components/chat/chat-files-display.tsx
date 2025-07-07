@@ -101,7 +101,7 @@ export const ChatFilesDisplay: FC = () => {
                         maxHeight: '56px',
                         maxWidth: '56px',
                       }}
-                      src={image.base64} // Preview images will always be base64
+                      src={image.base64 || ''} // Use base64 first, url only for display
                       alt="File image"
                       width={56}
                       height={56}

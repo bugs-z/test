@@ -17,8 +17,6 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL);
 
 /**
  * Checks if messages contain image content
- * @param messages - Array of chat messages to check
- * @returns boolean indicating if images are present
  */
 export function checkForImagesInMessages(
   messages: BuiltChatMessage[],
@@ -26,52 +24,30 @@ export function checkForImagesInMessages(
   return messages.some(
     (message) =>
       Array.isArray(message.content) &&
-      message.content.some(
-        (item) =>
-          typeof item === 'object' &&
-          'type' in item &&
-          item.type === 'image_url',
-      ),
+      message.content.some((item) => item.type === 'image_url'),
   );
 }
 
 /**
  * Gets URLs for multiple images from Convex storage
- * @param storageIds - Array of storage IDs
- * @returns Promise resolving to map of storage ID to URL
  */
 async function getImageUrls(
   storageIds: string[],
 ): Promise<Map<string, string>> {
-  // Return empty map if no storage IDs to process
-  if (!storageIds.length) {
-    return new Map();
-  }
+  if (!storageIds.length) return new Map();
 
   const urlMap = new Map<string, string>();
 
-  // Process all storage IDs in parallel
   const urlPromises = storageIds.map(async (storageId) => {
     try {
-      // Validate storageId before making API call
-      if (!storageId || storageId.trim() === '') {
-        return;
-      }
-
-      // Check if storageId contains "/" which indicates it's a Supabase path with UUIDs
-      // Skip calling getImageUrlPublic for these cases
-      if (storageId.includes('/')) {
-        // Don't add to urlMap, effectively filtering out these storage IDs
-        return;
-      }
+      if (!storageId?.trim() || storageId.includes('/')) return;
 
       const url = await convex.query(api.fileStorage.getFileStorageUrlPublic, {
         serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
         storageId: storageId as Id<'_storage'>,
       });
-      if (url) {
-        urlMap.set(storageId, url);
-      }
+
+      if (url) urlMap.set(storageId, url);
     } catch (error) {
       console.error(`Error getting URL for storage ID ${storageId}:`, error);
     }
@@ -82,10 +58,97 @@ async function getImageUrls(
 }
 
 /**
- * Processes messages and converts image paths to URLs
+ * Processes assistant images by moving them to the next user messages.
+ *
+ * This function:
+ * 1. Extracts images from assistant messages
+ * 2. Removes images from assistant messages
+ * 3. Adds extracted images to the next user message
+ *
  * @param messages - Array of chat messages to process
- * @param selectedModel - The selected model to check if it supports images
- * @returns Promise resolving to processed messages with image URLs or images removed, and whether images were found
+ * @returns Processed messages with assistant images moved to next user messages
+ */
+export function processAssistantImages(
+  messages: BuiltChatMessage[],
+): BuiltChatMessage[] {
+  const processedMessages: BuiltChatMessage[] = [];
+  let pendingAssistantImages: ImageContent[] = [];
+
+  for (const message of messages) {
+    if (message.role === 'assistant') {
+      const assistantImages: ImageContent[] = [];
+
+      // Extract images from content array
+      if (Array.isArray(message.content)) {
+        assistantImages.push(
+          ...message.content.filter(
+            (item): item is ImageContent => item.type === 'image_url',
+          ),
+        );
+      }
+
+      // Extract images from image_paths property (compatibility)
+      if (
+        'image_paths' in message &&
+        Array.isArray((message as any).image_paths)
+      ) {
+        const imagePaths = (message as any).image_paths as string[];
+        assistantImages.push(
+          ...imagePaths.map((path) => ({
+            type: 'image_url' as const,
+            image_url: { url: path, isPath: true },
+          })),
+        );
+      }
+
+      pendingAssistantImages.push(...assistantImages);
+
+      // Remove images from assistant message
+      const content = Array.isArray(message.content)
+        ? message.content.filter((item) => item.type !== 'image_url')
+        : message.content;
+
+      processedMessages.push({
+        ...message,
+        content:
+          Array.isArray(message.content) && content.length === 0
+            ? message.content
+            : content,
+      });
+    } else if (message.role === 'user' && pendingAssistantImages.length > 0) {
+      // Add pending images to user message
+      const currentContent = Array.isArray(message.content)
+        ? message.content
+        : [{ type: 'text' as const, text: message.content as string }];
+
+      processedMessages.push({
+        ...message,
+        content: [...currentContent, ...pendingAssistantImages],
+      });
+
+      pendingAssistantImages = [];
+    } else {
+      processedMessages.push(message);
+    }
+  }
+
+  // Handle any remaining assistant images that weren't attached to a user message
+  if (pendingAssistantImages.length > 0) {
+    console.error(
+      `Found ${pendingAssistantImages.length} assistant images that couldn't be moved to a user message. These images will be dropped.`,
+    );
+  }
+
+  return processedMessages;
+}
+
+/**
+ * Processes messages and converts image paths to URLs.
+ *
+ * Steps:
+ * 1. Moves assistant images to next user messages
+ * 2. Converts image storage IDs to URLs
+ * 3. Removes images if model doesn't support them
  */
 export async function processMessagesWithImages(
   messages: BuiltChatMessage[],
@@ -94,41 +157,52 @@ export async function processMessagesWithImages(
   processedMessages: BuiltChatMessage[];
   hasImageAttachments: boolean;
 }> {
-  // If model doesn't support images, remove them
+  const hasImageAttachments = checkForImagesInMessages(messages);
+
+  // Process assistant images first
+  const messagesWithProcessedAssistantImages = processAssistantImages(messages);
+
+  // Remove images for models that don't support them
   if (selectedModel === 'reasoning-model') {
-    const processedMessages = removeImagesFromMessages(messages);
-    const hasImageAttachments = checkForImagesInMessages(messages);
-    return { processedMessages, hasImageAttachments };
+    return {
+      processedMessages: removeImagesFromMessages(
+        messagesWithProcessedAssistantImages,
+      ),
+      hasImageAttachments,
+    };
   }
 
-  // Collect all unique storage IDs that need processing
-  const storageIdsToProcess = new Set<string>();
-  messages.forEach((message) => {
-    if (Array.isArray(message.content)) {
-      message.content.forEach((item) => {
-        if (
-          item.type === 'image_url' &&
-          'isPath' in item.image_url &&
-          item.image_url.isPath
-        ) {
-          storageIdsToProcess.add(item.image_url.url);
-        }
-      });
-    }
+  // Collect storage IDs that need URL conversion
+  const storageIds = new Set<string>();
+  messagesWithProcessedAssistantImages.forEach((message) => {
+    if (!Array.isArray(message.content)) return;
+
+    message.content.forEach((item) => {
+      if (
+        item.type === 'image_url' &&
+        'isPath' in item.image_url &&
+        item.image_url.isPath
+      ) {
+        storageIds.add(item.image_url.url);
+      }
+    });
   });
 
-  // If no storage IDs to process, return original messages
-  if (storageIdsToProcess.size === 0) {
-    const hasImageAttachments = checkForImagesInMessages(messages);
-    return { processedMessages: messages, hasImageAttachments };
+  // If no storage IDs, return as-is
+  if (storageIds.size === 0) {
+    return {
+      processedMessages: messagesWithProcessedAssistantImages,
+      hasImageAttachments,
+    };
   }
 
-  // Get URLs for all images from Convex storage
-  const imageUrls = await getImageUrls(Array.from(storageIdsToProcess));
+  // Convert storage IDs to URLs
+  const imageUrls = await getImageUrls(Array.from(storageIds));
 
-  // Process messages using the image URLs directly
-  const processedMessages = messages.map((message) => {
-    if (Array.isArray(message.content)) {
+  const processedMessages = messagesWithProcessedAssistantImages.map(
+    (message) => {
+      if (!Array.isArray(message.content)) return message;
+
       const processedContent = message.content.map((item) => {
         if (
           item.type === 'image_url' &&
@@ -136,42 +210,32 @@ export async function processMessagesWithImages(
           item.image_url.isPath
         ) {
           const url = imageUrls.get(item.image_url.url);
-          if (url) {
-            return {
-              type: 'image_url' as const,
-              image_url: {
-                url: url,
-              },
-            } as ImageContent;
-          }
+          return url
+            ? { type: 'image_url' as const, image_url: { url } }
+            : item;
         }
         return item;
       });
-      return { ...message, content: processedContent };
-    }
-    return message;
-  });
 
-  const hasImageAttachments = checkForImagesInMessages(processedMessages);
+      return { ...message, content: processedContent };
+    },
+  );
+
   return { processedMessages, hasImageAttachments };
 }
 
 /**
  * Removes images from messages when the model doesn't support them
- * @param messages - Array of chat messages to process
- * @returns Processed messages with images removed
  */
 export function removeImagesFromMessages(
   messages: BuiltChatMessage[],
 ): BuiltChatMessage[] {
   return messages.map((message) => {
-    if (Array.isArray(message.content)) {
-      // Filter out image content and keep only text content
-      const processedContent = message.content.filter(
-        (item) => item.type !== 'image_url',
-      );
-      return { ...message, content: processedContent };
-    }
-    return message;
+    if (!Array.isArray(message.content)) return message;
+
+    return {
+      ...message,
+      content: message.content.filter((item) => item.type !== 'image_url'),
+    };
   });
 }

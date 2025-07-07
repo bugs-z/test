@@ -8,6 +8,7 @@ import {
   SquareTerminal,
   Search,
   Circle,
+  ImageIcon,
 } from 'lucide-react';
 
 export const loadingStates = {
@@ -35,10 +36,13 @@ export const loadingStates = {
     icon: <Search size={20} />,
     text: 'Researching... (takes 1-5 minutes)',
   },
-
   [PluginID.PENTEST_AGENT]: {
     icon: <SquareTerminal size={20} />,
     text: 'Using pentest agent...',
+  },
+  [PluginID.IMAGE_GEN]: {
+    icon: <ImageIcon size={20} />,
+    text: 'Generating image...',
   },
 };
 

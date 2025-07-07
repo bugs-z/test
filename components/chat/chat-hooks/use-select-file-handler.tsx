@@ -1,6 +1,6 @@
 import { PentestGPTContext } from '@/context/context';
 import { createFileBasedOnExtension } from '@/db/files';
-import { uploadImage } from '@/db/storage/message-images';
+import { uploadImage, getImageUrl } from '@/db/storage/message-images';
 import mammoth from 'mammoth';
 import { useContext } from 'react';
 import { toast } from 'sonner';
@@ -131,8 +131,6 @@ export const useSelectFileHandler = () => {
         file.type.startsWith('image/') &&
         SUPPORTED_IMAGE_EXTENSIONS.includes(fileExtension)
       ) {
-        const imageUrl = URL.createObjectURL(file);
-
         // Add loading state for image
         const tempImageId = crypto.randomUUID();
 
@@ -143,7 +141,7 @@ export const useSelectFileHandler = () => {
             messageId: tempImageId,
             path: '',
             base64: content as string, // Show base64 immediately for preview
-            url: imageUrl,
+            url: '',
             file, // Keep file reference
             isLoading: true, // Add loading state
           },
@@ -153,13 +151,17 @@ export const useSelectFileHandler = () => {
         try {
           const path = await uploadImage(file);
 
-          // Update image with path and remove loading state
+          // Get the URL for the uploaded image
+          const url = await getImageUrl(path);
+
+          // Update image with path and URL, remove loading state and clear base64 to save memory
           setNewMessageImages((prev) =>
             prev.map((img) =>
               img.messageId === tempImageId
                 ? {
                     ...img,
                     path, // Store the path for later use in API requests
+                    url, // Store the URL for display
                     isLoading: false, // Remove loading state
                   }
                 : img,

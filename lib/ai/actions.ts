@@ -69,6 +69,7 @@ export async function handleFinalChatAndAssistantMessage({
   thinkingText,
   thinkingElapsedSecs,
   fileAttachments,
+  imagePaths,
   assistantMessageId,
 }: {
   modelParams: ModelParams;
@@ -83,6 +84,7 @@ export async function handleFinalChatAndAssistantMessage({
   thinkingText?: string;
   thinkingElapsedSecs?: number | null;
   fileAttachments?: any[];
+  imagePaths?: string[];
   assistantMessageId?: string;
 }) {
   if (!chatMetadata.id) return;
@@ -106,6 +108,7 @@ export async function handleFinalChatAndAssistantMessage({
     thinkingText,
     thinkingElapsedSecs,
     fileAttachments,
+    imagePaths,
     assistantMessageId,
   });
 }

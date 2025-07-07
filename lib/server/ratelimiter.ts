@@ -233,6 +233,7 @@ function getModelName(model: string): string {
     terminal: 'Pentest Agent',
     'stt-1': 'speech-to-text',
     'reasoning-model': 'reasoning model',
+    'image-gen': 'image generation',
   };
   return modelNames[model] || model;
 }

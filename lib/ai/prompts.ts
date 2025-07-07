@@ -24,12 +24,13 @@ export function buildSystemPrompt(
 }
 
 const modelPromptMap: Record<string, string> = {
-  'chat-model-small': `${getPentestGPTInfo('Small Model', 'June 2024', false)}${systemPromptEnding}`,
-  'chat-model-large': `${getPentestGPTInfo('Large Model', 'June 2024', false)}${systemPromptEnding}`,
-  'chat-model-reasoning': `${getPentestGPTInfo('Reasoning Model', 'Octrober 2024', false)}${systemPromptEnding}`,
+  'chat-model-small': `${getPentestGPTInfo('Small Model', 'June 2024', false, false)}${systemPromptEnding}`,
+  'chat-model-large': `${getPentestGPTInfo('Large Model', 'June 2024', false, false)}${systemPromptEnding}`,
+  'chat-model-reasoning': `${getPentestGPTInfo('Reasoning Model', 'Octrober 2024', false, false)}${systemPromptEnding}`,
   'chat-model-agent': `${PENTESTGPT_AGENT_SYSTEM_PROMPT}`,
-  'deep-research-model': `${getPentestGPTInfo('Deep Research', 'June 2024', false)}${systemPromptEnding}`,
-  'web-search-model': `${getPentestGPTInfo('Web Search Model', 'June 2024', true)}${systemPromptEnding}`,
+  'deep-research-model': `${getPentestGPTInfo('Deep Research', 'June 2024', false, false)}${systemPromptEnding}`,
+  'web-search-model': `${getPentestGPTInfo('Web Search Model', 'June 2024', true, false)}${systemPromptEnding}`,
+  'image-gen-model': `${getPentestGPTInfo('Image Generation Model', 'June 2024', false, true)}${systemPromptEnding}`,
 };
 
 export const getSystemPrompt = ({
@@ -45,7 +46,12 @@ export const getSystemPrompt = ({
 
   // For web-search-model, update the prompt with location info
   if (selectedChatModel === 'web-search-model') {
-    basePrompt = `${getPentestGPTInfo('Web Search Model', 'June 2024', true, userLocation)}${systemPromptEnding}`;
+    basePrompt = `${getPentestGPTInfo('Web Search Model', 'June 2024', true, false, userLocation)}${systemPromptEnding}`;
+  }
+
+  // For image-gen-model, update the prompt with image generation info
+  if (selectedChatModel === 'image-gen-model') {
+    basePrompt = `${getPentestGPTInfo('Image Generation Model', 'June 2024', false, true, userLocation)}${systemPromptEnding}`;
   }
 
   return buildSystemPrompt(basePrompt, profileContext);

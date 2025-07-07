@@ -1,11 +1,10 @@
-// import { executeWebSearchTool } from './web-search';
-// import { executeBrowserTool } from './browser';
 import { z } from 'zod';
 // import type { LLMID, ModelParams } from '@/types/llms';
 // import type { ChatMetadata } from '@/types';
 // import type { Doc } from '@/convex/_generated/dataModel';
-import { createExaWebSearchTool } from './web-search-v2';
+import { createWebSearchTool } from './web-search';
 import { createBrowserTool } from './browser';
+import { createImageGenTool } from './image-gen';
 
 export const createToolSchemas = ({
   // chat,
@@ -13,8 +12,8 @@ export const createToolSchemas = ({
   // modelParams,
   // chatMetadata,
   profile,
-  // dataStream,
-  // abortSignal,
+  dataStream,
+  abortSignal,
   // model,
   // userCity,
   // userCountry,
@@ -26,8 +25,8 @@ export const createToolSchemas = ({
   // modelParams: ModelParams;
   // chatMetadata: ChatMetadata;
   profile: any;
-  // dataStream: any;
-  // abortSignal: AbortSignal;
+  dataStream: any;
+  abortSignal: AbortSignal;
   // model: LLMID;
   // userCity: string | undefined;
   // userCountry: string | undefined;
@@ -35,8 +34,9 @@ export const createToolSchemas = ({
   // assistantMessageId: string;
 }) => {
   const allSchemas = {
-    webSearch: createExaWebSearchTool(profile),
-    browser: createBrowserTool(profile),
+    image_gen: createImageGenTool(profile, abortSignal, dataStream),
+    webSearch: createWebSearchTool(profile, dataStream),
+    browser: createBrowserTool(profile, abortSignal, dataStream),
     hackerAIMCP: {
       description: `Activate the HackerAI MCP agent for comprehensive penetration testing and cybersecurity operations. \
 Select this tool IMMEDIATELY when any security testing, terminal operations, or technical tasks are needed.

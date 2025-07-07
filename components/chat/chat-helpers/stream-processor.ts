@@ -68,6 +68,7 @@ export const processResponse = async (
     let chatTitle: string | null = null;
     let fileAttachments: FileAttachment[] = [];
     let assistantMessageId: string | null = null;
+    let assistantImageUrls: string[] = [];
 
     try {
       await processDataStream({
@@ -166,6 +167,13 @@ export const processResponse = async (
                   ? (firstValue.content as FileAttachment[])
                   : [];
                 fileAttachments = [...fileAttachments, ...attachments];
+              }
+
+              if (firstValue.type === 'assistant-images') {
+                const imageUrls = Array.isArray(firstValue.content)
+                  ? (firstValue.content as string[])
+                  : [];
+                assistantImageUrls = [...assistantImageUrls, ...imageUrls];
               }
 
               if (firstValue.type === 'agent-status') {
@@ -299,6 +307,7 @@ export const processResponse = async (
             browser: PluginID.BROWSER,
             hackerAIMCP: PluginID.PENTEST_AGENT,
             webSearch: PluginID.WEB_SEARCH,
+            image_gen: PluginID.IMAGE_GEN,
           } as const;
 
           const plugin = toolMap[toolName as keyof typeof toolMap];
@@ -343,6 +352,10 @@ export const processResponse = async (
               citations = result.citations;
               chatTitle = result.chatTitle;
               fileAttachments = result.fileAttachments;
+              assistantImageUrls = [
+                ...assistantImageUrls,
+                ...(result.assistantImageUrls || []),
+              ];
             }
           }
 
@@ -412,6 +425,7 @@ export const processResponse = async (
       chatTitle,
       fileAttachments,
       assistantMessageId,
+      assistantImageUrls,
     };
   } else {
     throw new Error('Response body is null');

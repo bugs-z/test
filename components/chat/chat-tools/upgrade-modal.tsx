@@ -7,7 +7,12 @@ interface UpgradePromptProps {
   buttonText?: string;
   variant?: 'modal' | 'tooltip';
   onClose?: () => void;
-  feature?: 'deep research' | 'pentest agent' | 'file upload' | 'websearch';
+  feature?:
+    | 'deep research'
+    | 'pentest agent'
+    | 'file upload'
+    | 'websearch'
+    | 'image generation';
 }
 
 const getDescription = (feature: string) => {
@@ -20,6 +25,8 @@ const getDescription = (feature: string) => {
       return 'Get access to file upload and more features with Pro';
     case 'websearch':
       return 'Get access to web search and more features with Pro';
+    case 'image generation':
+      return 'Get access to image generation and more features with Pro';
     default:
       return 'Get access to more features with Pro';
   }
@@ -65,7 +72,12 @@ const UpgradePrompt = ({
 interface UpgradeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  feature: 'deep research' | 'pentest agent' | 'file upload' | 'websearch';
+  feature:
+    | 'deep research'
+    | 'pentest agent'
+    | 'file upload'
+    | 'websearch'
+    | 'image generation';
 }
 
 export const UpgradeModal = ({

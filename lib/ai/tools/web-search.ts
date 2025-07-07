@@ -1,351 +1,130 @@
-// import { buildSystemPrompt } from '@/lib/ai/prompts';
-// import {
-//   toVercelChatMessages,
-//   validatePerplexityMessages,
-// } from '@/lib/ai/message-utils';
-// import llmConfig from '@/lib/models/llm-config';
-// import PostHogClient from '@/app/posthog';
-// import type { ChatMetadata, LLMID, ModelParams } from '@/types';
-// import {
-//   generateTitleFromUserMessage,
-//   handleFinalChatAndAssistantMessage,
-// } from '@/lib/ai/actions';
-// import { removePdfContentFromMessages } from '@/lib/build-prompt-backend';
-// import { ChatSDKError } from '@/lib/errors';
-// import type { Doc } from '@/convex/_generated/dataModel';
-// import { checkForImagesInMessages } from '@/lib/ai/image-processing';
+import { tool } from 'ai';
+import { z } from 'zod';
+import Exa from 'exa-js';
+import { truncateContentByTokens } from '../terminal-utils';
+import PostHogClient from '@/app/posthog';
 
-// interface WebSearchConfig {
-//   chat: Doc<'chats'> | null;
-//   messages: any[];
-//   modelParams: ModelParams;
-//   profile: any;
-//   dataStream: any;
-//   isLargeModel: boolean;
-//   directToolCall?: boolean;
-//   abortSignal: AbortSignal;
-//   chatMetadata: ChatMetadata;
-//   model: LLMID;
-//   userCountryCode: string | null;
-//   initialChatPromise: Promise<void>;
-//   assistantMessageId: string;
-// }
+interface ExaSearchOptions {
+  numResults?: number;
+  contents: {
+    text: boolean;
+  };
+  startPublishedDate?: string;
+  endPublishedDate?: string;
+}
 
-// interface GrokResponse {
-//   id: string;
-//   model: string;
-//   created: number;
-//   usage?: {
-//     prompt_tokens: number;
-//     completion_tokens: number;
-//     total_tokens: number;
-//   };
-//   citations?: string[];
-//   object: string;
-//   choices: Array<{
-//     index: number;
-//     finish_reason: string | null;
-//     message?: {
-//       role: string;
-//       content: string;
-//     };
-//     delta?: {
-//       role?: string;
-//       content?: string;
-//     };
-//   }>;
-// }
+/**
+ * Web search tool using Exa API
+ * Searches the web and returns results with content
+ */
+export const createWebSearchTool = (profile: any, dataStream: any) => {
+  return tool({
+    description: `Use the webSearch tool to access up-to-date information from the web \
+or when responding to the user requires information about their location. \
+Some examples of when to use the webSearch tool include:
 
-// interface StreamDelta {
-//   type: 'text-delta' | 'citations';
-//   textDelta?: string;
-//   citations?: string[];
-// }
+- Local Information: Use the \`webSearch\` tool to respond to questions that require information \
+about the user's location, such as the weather, local businesses, or events.
+- Freshness: If up-to-date information on a topic could potentially change or enhance the answer, \
+call the \`webSearch\` tool any time you would otherwise refuse to answer a question because your \
+knowledge might be out of date.
+- Niche Information: If the answer would benefit from detailed information not widely known or understood \
+(which might be found on the internet), such as details about a small neighborhood, a less well-known \
+company, or arcane regulations, use web sources directly rather than relying on the distilled knowledge \
+from pretraining.
+- Accuracy: If the cost of a small mistake or outdated information is high (e.g., using an outdated \
+version of a software library or not knowing the date of the next game for a sports team), then use the \
+\`webSearch\` tool.`,
+    parameters: z.object({
+      query: z.string().describe('Search query to find relevant web content'),
+      numResults: z
+        .number()
+        .min(1)
+        .max(25)
+        .nullable()
+        .describe('Number of search results to return (Default: 10)'),
+      startPublishedDate: z
+        .string()
+        .datetime()
+        .nullable()
+        .describe(
+          'Start date for published content (ISO 8601 format: YYYY-MM-DDTHH:mm:ss.sssZ)',
+        ),
+      endPublishedDate: z
+        .string()
+        .datetime()
+        .nullable()
+        .describe(
+          'End date for published content (ISO 8601 format: YYYY-MM-DDTHH:mm:ss.sssZ)',
+        ),
+    }),
+    execute: async ({
+      query,
+      numResults = 10,
+      startPublishedDate,
+      endPublishedDate,
+    }) => {
+      try {
+        if (!process.env.EXA_API_KEY) {
+          throw new Error('EXA_API_KEY environment variable is not set');
+        }
 
-// async function getProviderConfig(
-//   isLargeModel: boolean,
-//   profile: any,
-//   messages: any[],
-// ) {
-//   // Check if messages contain images
-//   const hasImages = checkForImagesInMessages(messages);
+        // Track web search usage with PostHog
+        const posthog = PostHogClient();
+        if (posthog) {
+          posthog.capture({
+            distinctId: profile.user_id,
+            event: 'web_search_executed',
+          });
+        }
 
-//   // Use vision model if images are present, otherwise use the latest model
-//   const selectedModel = hasImages ? 'grok-2-vision-latest' : 'grok-3-latest';
+        // Prepare search options
+        const searchOptions: ExaSearchOptions = {
+          contents: {
+            text: true,
+          },
+        };
 
-//   const systemPrompt = buildSystemPrompt(
-//     llmConfig.systemPrompts.pentestGPTWebSearch,
-//     profile.profile_context,
-//   );
+        // Add numResults if specified
+        if (numResults !== null) {
+          searchOptions.numResults = numResults;
+        }
 
-//   return {
-//     systemPrompt,
-//     selectedModel,
-//   };
-// }
+        // Add date filters if specified
+        if (startPublishedDate) {
+          searchOptions.startPublishedDate = startPublishedDate;
+        }
+        if (endPublishedDate) {
+          searchOptions.endPublishedDate = endPublishedDate;
+        }
 
-// async function* streamGrokResponse(
-//   response: Response,
-// ): AsyncGenerator<StreamDelta> {
-//   const reader = response.body?.getReader();
-//   if (!reader) throw new Error('No response body');
+        // Perform the search
+        const exa = new Exa(process.env.EXA_API_KEY);
+        const result = await exa.searchAndContents(query, searchOptions);
 
-//   const decoder = new TextDecoder();
-//   let buffer = '';
-//   let citationsSent = false;
+        // Truncate text content to max 2048 tokens for each result
+        const truncatedResults = result.results.map((item: any) => ({
+          ...item,
+          text: item.text
+            ? truncateContentByTokens(item.text, 2048)
+            : item.text,
+        }));
 
-//   try {
-//     while (true) {
-//       const { done, value } = await reader.read();
-//       if (done) break;
+        const searchCitations = truncatedResults
+          .map((item: any) => item.url)
+          .filter((url: string) => url);
 
-//       buffer += decoder.decode(value, { stream: true });
-//       const lines = buffer.split('\n');
-//       buffer = lines.pop() || '';
+        if (searchCitations.length > 0) {
+          dataStream.writeData({ citations: searchCitations });
+        }
 
-//       for (const line of lines) {
-//         if (line.startsWith('data: ')) {
-//           const data = line.slice(6);
-//           if (data === '[DONE]') return;
-
-//           try {
-//             const parsed: GrokResponse = JSON.parse(data);
-
-//             // Handle citations from the last chunk (Grok returns citations in the final chunk)
-//             if (
-//               !citationsSent &&
-//               parsed.citations &&
-//               parsed.citations.length > 0
-//             ) {
-//               yield { type: 'citations', citations: parsed.citations };
-//               citationsSent = true;
-//             }
-
-//             // Handle content from delta
-//             const delta = parsed.choices[0]?.delta;
-//             if (delta?.content) {
-//               yield { type: 'text-delta', textDelta: delta.content };
-//             }
-//           } catch (e) {
-//             console.error('Error parsing SSE data:', e);
-//           }
-//         }
-//       }
-//     }
-//   } finally {
-//     reader.releaseLock();
-//   }
-// }
-
-// async function getResponseBody(response: Response): Promise<string> {
-//   try {
-//     const clone = response.clone();
-//     const text = await clone.text();
-//     return text;
-//   } catch (e) {
-//     return 'Unable to read response body';
-//   }
-// }
-
-// async function makeGrokRequest(payload: any, abortSignal: AbortSignal) {
-//   const response = await fetch('https://api.x.ai/v1/chat/completions', {
-//     method: 'POST',
-//     headers: {
-//       Authorization: `Bearer ${process.env.XAI_API_KEY}`,
-//       'Content-Type': 'application/json',
-//     },
-//     body: JSON.stringify(payload),
-//     signal: abortSignal,
-//   });
-
-//   if (!response.ok) {
-//     const responseBody = await getResponseBody(response);
-//     let errorData;
-//     try {
-//       errorData = JSON.parse(responseBody);
-//     } catch (e) {
-//       // If parsing fails, create a ChatSDKError with the raw response body
-//       throw new ChatSDKError('bad_request:api', responseBody);
-//     }
-//     return { error: errorData, response };
-//   }
-
-//   return { response };
-// }
-
-// export async function executeWebSearchTool({
-//   config,
-// }: {
-//   config: WebSearchConfig;
-// }) {
-//   if (!process.env.XAI_API_KEY) {
-//     throw new Error('XAI API key is not set for web search');
-//   }
-
-//   const {
-//     chat,
-//     messages,
-//     modelParams,
-//     profile,
-//     dataStream,
-//     isLargeModel,
-//     abortSignal,
-//     chatMetadata,
-//     model,
-//     userCountryCode,
-//     initialChatPromise,
-//     assistantMessageId,
-//   } = config;
-
-//   // Filter out PDF content from messages
-//   const filteredMessages = removePdfContentFromMessages(messages);
-
-//   // Validate messages for proper alternating roles
-//   const validatedMessages = validatePerplexityMessages(filteredMessages);
-
-//   const { systemPrompt, selectedModel } = await getProviderConfig(
-//     isLargeModel,
-//     profile,
-//     filteredMessages,
-//   );
-
-//   const posthog = PostHogClient();
-//   if (posthog) {
-//     posthog.capture({
-//       distinctId: profile.user_id,
-//       event: 'web_search_executed',
-//     });
-//   }
-
-//   dataStream.writeData({
-//     type: 'tool-call',
-//     content: 'websearch',
-//   });
-
-//   let generatedTitle: string | undefined;
-//   let assistantMessage = '';
-//   const citations: string[] = [];
-//   let titleGenerationPromise: Promise<void> | null = null;
-
-//   try {
-//     // Start title generation if needed
-//     if (chatMetadata.id && !chat) {
-//       titleGenerationPromise = (async () => {
-//         generatedTitle = await generateTitleFromUserMessage({
-//           messages,
-//           abortSignal: config.abortSignal,
-//         });
-//         dataStream.writeData({ chatTitle: generatedTitle });
-//       })();
-//     }
-
-//     const requestPayload = {
-//       model: selectedModel,
-//       messages: [
-//         {
-//           role: 'system',
-//           content: systemPrompt,
-//         },
-//         ...toVercelChatMessages(validatedMessages, true, true),
-//       ],
-//       stream: true,
-//       max_tokens: 2048,
-//       search_parameters: {
-//         mode: 'on',
-//         return_citations: true,
-//         sources: [{ type: 'web', country: userCountryCode }, { type: 'x' }],
-//       },
-//     };
-
-//     let { response, error } = await makeGrokRequest(
-//       requestPayload,
-//       abortSignal,
-//     );
-
-//     // If we get a country code error, retry without country specification
-//     if (
-//       error?.error?.type === 'invalid_country_code' ||
-//       (error?.error?.message && error.error.message.includes('country'))
-//     ) {
-//       const retryPayload = {
-//         ...requestPayload,
-//         search_parameters: {
-//           mode: 'on',
-//           return_citations: true,
-//         },
-//       };
-//       ({ response, error } = await makeGrokRequest(retryPayload, abortSignal));
-//     }
-
-//     if (error) {
-//       console.error('[WebSearch] Error Details:', {
-//         status: response.status,
-//         statusText: response.statusText,
-//         requestPayload: {
-//           model: requestPayload.model,
-//           messageCount: requestPayload.messages.length,
-//         },
-//         responseBody: error,
-//         headers: Object.fromEntries(response.headers.entries()),
-//       });
-//       throw new Error(
-//         `Web search failed: ${response.status} ${response.statusText}`,
-//       );
-//     }
-
-//     let hasFirstTextDelta = false;
-//     let citationsSent = false;
-
-//     for await (const delta of streamGrokResponse(response)) {
-//       if (delta.type === 'citations' && delta.citations) {
-//         citations.push(...delta.citations);
-//         // Send citations immediately when we receive them
-//         if (!citationsSent) {
-//           dataStream.writeData({ citations });
-//           citationsSent = true;
-//         }
-//       }
-
-//       if (delta.type === 'text-delta' && delta.textDelta) {
-//         // Send citations before first text if not already sent
-//         if (!hasFirstTextDelta && !citationsSent && citations.length > 0) {
-//           dataStream.writeData({ citations });
-//           citationsSent = true;
-//         }
-//         hasFirstTextDelta = true;
-
-//         assistantMessage += delta.textDelta;
-//         dataStream.writeData({
-//           type: 'text-delta',
-//           content: delta.textDelta,
-//         });
-//       }
-//     }
-
-//     // Wait for both title generation and initial chat handling to complete
-//     await Promise.all([titleGenerationPromise, initialChatPromise]);
-
-//     await handleFinalChatAndAssistantMessage({
-//       modelParams,
-//       chatMetadata,
-//       profile,
-//       model,
-//       chat,
-//       finishReason: 'stop',
-//       title: generatedTitle,
-//       assistantMessage,
-//       citations,
-//       assistantMessageId,
-//     });
-
-//     return 'Web search completed';
-//   } catch (error) {
-//     if (!(error instanceof Error && error.message === 'terminated')) {
-//       console.error('[WebSearch] Error:', {
-//         error: error instanceof Error ? error.message : 'Unknown error',
-//         model: selectedModel,
-//       });
-//     }
-//     throw error;
-//   }
-// }
+        return truncatedResults;
+      } catch (error) {
+        console.error('Exa web search error:', error);
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error occurred';
+        return `Error performing web search: ${errorMessage}`;
+      }
+    },
+  });
+};

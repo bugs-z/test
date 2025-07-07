@@ -27,6 +27,7 @@ import { ChatFileItem } from '../chat/chat-file-item';
 import { AgentStatus } from './agent-status';
 import { MessageStatus } from './message-status';
 import { MessageAttachments } from './message-attachments';
+import { MessageImages } from './message-images';
 
 const DynamicFilePreview = dynamic(() => import('../ui/file-preview'), {
   ssr: false,
@@ -260,36 +261,16 @@ export const Message: FC<MessageProps> = ({
                   ))}
                 </div>
 
-                <div className="flex flex-wrap justify-end gap-2">
-                  {message.image_paths.map((path, index) => {
-                    const item = chatImages.find(
-                      (image) => image.path === path,
-                    );
-                    const src = path.startsWith('data') ? path : item?.base64;
-                    if (!src) return null;
-                    return (
-                      <Image
-                        key={index}
-                        className="mb-2 cursor-pointer rounded hover:opacity-50"
-                        src={src}
-                        alt="message image"
-                        width={400}
-                        height={400}
-                        onClick={() => {
-                          setSelectedImage({
-                            messageId: message.id,
-                            path,
-                            base64: src,
-                            url: path.startsWith('data') ? '' : item?.url || '',
-                            file: null,
-                          });
-                          setShowImagePreview(true);
-                        }}
-                        loading="lazy"
-                      />
-                    );
-                  })}
-                </div>
+                <MessageImages
+                  imagePaths={message.image_paths}
+                  chatImages={chatImages}
+                  messageId={message.id}
+                  isAssistant={message.role === 'assistant'}
+                  onImageClick={(image) => {
+                    setSelectedImage(image);
+                    setShowImagePreview(true);
+                  }}
+                />
 
                 <MessageTypeResolver
                   message={message}

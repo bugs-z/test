@@ -46,29 +46,13 @@ export function filterEmptyAssistantMessages(messages: BuiltChatMessage[]) {
  * Converts chat messages to Vercel AI SDK format
  * @param messages - Array of chat messages to convert
  * @param supportsImages - Whether the model supports image input
- * @param isPerplexity - Whether to use Perplexity's image format
- * @param systemPrompt - Optional system prompt to add with caching
  */
 export const toVercelChatMessages = (
   messages: BuiltChatMessage[],
   supportsImages = false,
-  isPerplexity = false,
-  // systemPrompt?: string,
 ): CoreMessage[] => {
   const result: CoreMessage[] = [];
 
-  // // Add system prompt with caching if provided
-  // if (systemPrompt) {
-  //   result.push({
-  //     role: 'system',
-  //     content: systemPrompt,
-  //     providerOptions: {
-  //       anthropic: { cacheControl: { type: 'ephemeral', ttl: '1h' } },
-  //     },
-  //   });
-  // }
-
-  // Add the rest of the messages
   messages.forEach((message) => {
     let formattedMessage: CoreMessage | null = null;
 
@@ -100,15 +84,10 @@ export const toVercelChatMessages = (
                     content.type === 'image_url'
                   ) {
                     if (!supportsImages) return null;
-                    return isPerplexity
-                      ? {
-                          type: 'image_url',
-                          image_url: { url: content.image_url.url },
-                        }
-                      : {
-                          type: 'image',
-                          image: new URL(content.image_url.url),
-                        };
+                    return {
+                      type: 'image',
+                      image: new URL(content.image_url.url),
+                    };
                   }
 
                   // Handle all other content types
@@ -282,7 +261,7 @@ export async function processChatMessages(
   // Create a deep copy of messages using structuredClone
   const messagesCopy = structuredClone(messages);
 
-  // Process images if supabase client is provided
+  // Process images - this includes processing assistant images by moving them to next user messages
   let processedMessages: BuiltChatMessage[];
   let hasImageAttachments = false;
 
@@ -327,11 +306,13 @@ export async function processChatMessages(
     isPentestAgent,
   );
 
-  // Use 'searchgpt' model for web search plugin, otherwise use the selected model
-  const modelForSystemPrompt =
-    modelParams.selectedPlugin === PluginID.WEB_SEARCH
-      ? 'web-search-model'
-      : selectedModel;
+  // Use specific models for plugins, otherwise use the selected model
+  let modelForSystemPrompt = selectedModel;
+  if (modelParams.selectedPlugin === PluginID.WEB_SEARCH) {
+    modelForSystemPrompt = 'web-search-model';
+  } else if (modelParams.selectedPlugin === PluginID.IMAGE_GEN) {
+    modelForSystemPrompt = 'image-gen-model';
+  }
 
   const systemPrompt = getSystemPrompt({
     selectedChatModel: modelForSystemPrompt,
@@ -366,37 +347,4 @@ export function extractTextContent(
   }
 
   return '';
-}
-
-/**
- * Validates and filters chat messages specifically for web search to ensure proper alternating roles
- * This is an additional validation layer on top of validateMessages
- * @param messages - Array of messages to validate
- * @returns Filtered array with valid messages only
- */
-export function validatePerplexityMessages(
-  messages: BuiltChatMessage[],
-): BuiltChatMessage[] {
-  // First run the regular validation
-  const validatedMessages = validateMessages(messages);
-  const validMessages: BuiltChatMessage[] = [];
-  let lastRole: string | null = null;
-
-  // Then enforce alternating roles
-  for (const message of validatedMessages) {
-    // First message
-    if (lastRole === null) {
-      validMessages.push(message);
-      lastRole = message.role;
-      continue;
-    }
-
-    // Only add if role alternates
-    if (message.role !== lastRole) {
-      validMessages.push(message);
-      lastRole = message.role;
-    }
-  }
-
-  return validMessages;
 }

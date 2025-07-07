@@ -1,5 +1,4 @@
 import { makeAuthenticatedRequest } from '@/lib/api/convex';
-import { convertBlobToBase64 } from '@/lib/blob-to-b64';
 import type { MessageImage } from '@/types';
 import type { Doc } from '@/convex/_generated/dataModel';
 
@@ -66,40 +65,14 @@ export const processMessageImages = async (
       ? message.image_paths.map(async (imagePath) => {
           const url = await getImageUrl(imagePath);
 
-          if (url) {
-            try {
-              const response = await fetch(url);
-              const blob = await response.blob();
-              const base64 = await convertBlobToBase64(blob);
-
-              const messageImage: MessageImage = {
-                messageId: message.id,
-                path: imagePath,
-                base64,
-                url,
-                file: null,
-              };
-
-              return messageImage;
-            } catch (error) {
-              console.error('Error fetching image:', error);
-              return {
-                messageId: message.id,
-                path: imagePath,
-                base64: '',
-                url: url || '',
-                file: null,
-              } as MessageImage;
-            }
-          }
-
-          return {
+          const messageImage: MessageImage = {
             messageId: message.id,
             path: imagePath,
-            base64: '',
             url: url || '',
             file: null,
-          } as MessageImage;
+          };
+
+          return messageImage;
         })
       : [],
   );

@@ -301,13 +301,12 @@ export const useChatHandler = () => {
 
       let currentChat = selectedChat ? { ...selectedChat } : null;
 
-      const b64Images = newMessageImages.map((image) => image.base64);
-
       const { tempUserChatMessage, tempAssistantChatMessage } =
         createTempMessages({
           messageContent,
           chatMessages,
-          b64Images,
+          newMessageImages,
+          setChatImages,
           isContinuation,
           selectedPlugin,
           model: baseModel,
@@ -487,6 +486,7 @@ export const useChatHandler = () => {
         chatTitle,
         fileAttachments,
         assistantMessageId,
+        assistantImageUrls,
       } = await handleHostedChat(
         payload,
         tempAssistantChatMessage,
@@ -521,6 +521,7 @@ export const useChatHandler = () => {
                   thinking_content: thinkingText,
                   thinking_elapsed_secs: thinkingElapsedSecs || undefined,
                   citations: citations || [],
+                  image_paths: assistantImageUrls || [],
                 },
               }
             : msg,
@@ -570,6 +571,7 @@ export const useChatHandler = () => {
           setChatFiles,
           fileAttachments,
           assistantMessageId,
+          assistantImageUrls,
         );
       }
 

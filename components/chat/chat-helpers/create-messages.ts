@@ -11,6 +11,21 @@ import { v4 as uuidv4 } from 'uuid';
 import { convertToJsonAttachments } from '@/lib/utils/type-converters';
 import type { Doc, Id } from '@/convex/_generated/dataModel';
 
+const addAssistantImages = (
+  assistantImageUrls: string[],
+  messageId: string,
+  setChatImages: React.Dispatch<React.SetStateAction<MessageImage[]>>,
+) => {
+  const assistantImages: MessageImage[] = assistantImageUrls.map((url) => ({
+    messageId,
+    path: url,
+    url: url,
+    file: null,
+  }));
+
+  setChatImages((prevImages) => [...prevImages, ...assistantImages]);
+};
+
 export const handleCreateMessages = async (
   chatMessages: ChatMessage[],
   currentChat: Doc<'chats'> | null,
@@ -34,6 +49,7 @@ export const handleCreateMessages = async (
   setChatFiles?: React.Dispatch<React.SetStateAction<Doc<'files'>[]>>,
   fileAttachments?: FileAttachment[],
   assistantMessageId?: string | null,
+  assistantImageUrls?: string[],
 ) => {
   try {
     const isEdit = editSequenceNumber !== undefined;
@@ -83,7 +99,7 @@ export const handleCreateMessages = async (
         updated_at: Date.now(),
         sequence_number: lastSequenceNumber(chatMessages) + 2,
         user_id: profile.user_id,
-        image_paths: [],
+        image_paths: assistantImageUrls || [],
         citations: citations || [],
         attachments: fileAttachments
           ? convertToJsonAttachments(fileAttachments)
@@ -101,6 +117,15 @@ export const handleCreateMessages = async (
     let finalChatMessages: ChatMessage[] = [];
 
     if (isRegeneration) {
+      // Add assistant images for regeneration
+      if (assistantImageUrls && assistantImageUrls.length > 0) {
+        addAssistantImages(
+          assistantImageUrls,
+          assistantMessage.message.id,
+          setChatImages,
+        );
+      }
+
       finalChatMessages = [...chatMessages.slice(0, -1), assistantMessage];
     } else if (isContinuation) {
       // For continuation, update the last message
@@ -110,6 +135,10 @@ export const handleCreateMessages = async (
         message: {
           ...lastMessage.message,
           content: lastMessage.message.content + generatedText,
+          image_paths: [
+            ...(lastMessage.message.image_paths || []),
+            ...(assistantImageUrls || []),
+          ],
           attachments: [
             ...(lastMessage.message.attachments || []),
             ...(fileAttachments
@@ -118,6 +147,16 @@ export const handleCreateMessages = async (
           ],
         },
       };
+
+      // Add new assistant images for continuation
+      if (assistantImageUrls && assistantImageUrls.length > 0) {
+        addAssistantImages(
+          assistantImageUrls,
+          lastMessage.message.id,
+          setChatImages,
+        );
+      }
+
       finalChatMessages = [...chatMessages.slice(0, -1), updatedMessage];
     } else {
       const fileIds = newChatFiles
@@ -136,13 +175,26 @@ export const handleCreateMessages = async (
         }
       }
 
-      const newImages = newMessageImages.map((obj) => ({
-        ...obj,
-        messageId: userMessage.message.id,
-        path: obj.path,
-      }));
+      // Update existing images with the correct message ID instead of adding duplicates
+      // (images were already added in createTempMessages with temp ID)
+      if (newMessageImages.length > 0) {
+        setChatImages((prevImages) =>
+          prevImages.map((image) =>
+            newMessageImages.some((newImg) => newImg.path === image.path)
+              ? { ...image, messageId: userMessage.message.id }
+              : image,
+          ),
+        );
+      }
 
-      setChatImages((prevImages) => [...prevImages, ...newImages]);
+      // Add assistant-generated images to the chat images state
+      if (assistantImageUrls && assistantImageUrls.length > 0) {
+        addAssistantImages(
+          assistantImageUrls,
+          assistantMessage.message.id,
+          setChatImages,
+        );
+      }
 
       finalChatMessages = [
         ...(isEdit

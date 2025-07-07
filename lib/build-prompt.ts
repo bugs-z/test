@@ -125,13 +125,10 @@ export async function buildFinalMessages(
   const finalMessages: BuiltChatMessage[] = truncatedMessages.map((message) => {
     let content;
 
-    if (
-      message.image_paths &&
-      message.image_paths.length > 0 &&
-      message.role !== 'assistant'
-    ) {
+    if (message.image_paths && message.image_paths.length > 0) {
       // Check if this message matches the last user message (where temp images are)
       const isLastUserMessageWithTempImages =
+        message.role === 'user' &&
         message.id === lastUserMessage.message.id &&
         imagePaths &&
         imagePaths.length > 0;

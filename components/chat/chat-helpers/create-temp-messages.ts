@@ -1,21 +1,23 @@
 import type { Id } from '@/convex/_generated/dataModel';
 import { CONTINUE_PROMPT } from '@/lib/models/llm-prompting';
 import { lastSequenceNumber } from '@/lib/utils';
-import type { ChatMessage, LLMID } from '@/types';
+import type { ChatMessage, LLMID, MessageImage } from '@/types';
 import type { PluginID } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
 export const createTempMessages = ({
   messageContent,
   chatMessages,
-  b64Images,
+  newMessageImages,
+  setChatImages,
   isContinuation,
   selectedPlugin,
   model,
 }: {
   messageContent: string | null;
   chatMessages: ChatMessage[];
-  b64Images: string[];
+  newMessageImages: MessageImage[];
+  setChatImages: React.Dispatch<React.SetStateAction<MessageImage[]>>;
   isContinuation: boolean;
   selectedPlugin: PluginID | null;
   model: LLMID;
@@ -23,6 +25,23 @@ export const createTempMessages = ({
   const messageContentInternal = isContinuation
     ? CONTINUE_PROMPT
     : messageContent || CONTINUE_PROMPT;
+
+  const tempUserMessageId = uuidv4();
+
+  // Add images to chat state immediately with the temp message ID
+  // Remove base64 data since we no longer need it (use URLs for display)
+  if (newMessageImages.length > 0) {
+    const imagesWithMessageId = newMessageImages.map((image) => ({
+      ...image,
+      messageId: tempUserMessageId,
+      base64: undefined, // Clear base64 to free memory
+    }));
+
+    setChatImages((prevImages) => [...prevImages, ...imagesWithMessageId]);
+  }
+
+  // Use image paths instead of base64 data for better performance
+  const imagePaths = newMessageImages.map((image) => image.path);
 
   const tempUserChatMessage: ChatMessage = {
     message: {
@@ -37,8 +56,8 @@ export const createTempMessages = ({
       role: 'user',
       sequence_number: lastSequenceNumber(chatMessages) + 1,
       updated_at: Date.now(),
-      id: uuidv4(),
-      image_paths: b64Images,
+      id: tempUserMessageId,
+      image_paths: imagePaths,
       user_id: '',
       citations: [],
       attachments: [],

@@ -7,7 +7,7 @@ import {
   Settings2,
   Globe,
   Check,
-  X,
+  Image,
 } from 'lucide-react';
 import { useContext } from 'react';
 import { useUIContext } from '@/context/ui-context';
@@ -20,7 +20,11 @@ import {
 
 interface ToolsDropdownProps {
   onUpgradePrompt: (
-    feature: 'deep research' | 'pentest agent' | 'websearch',
+    feature:
+      | 'deep research'
+      | 'pentest agent'
+      | 'websearch'
+      | 'image generation',
   ) => void;
 }
 
@@ -71,6 +75,19 @@ export const ToolsDropdown = ({ onUpgradePrompt }: ToolsDropdownProps) => {
     );
   };
 
+  const handleImageGenToggle = () => {
+    if (!isPremiumSubscription) {
+      onUpgradePrompt('image generation');
+      return;
+    }
+
+    setSelectedPlugin(
+      selectedPlugin === PluginID.IMAGE_GEN
+        ? PluginID.NONE
+        : PluginID.IMAGE_GEN,
+    );
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -109,39 +126,41 @@ export const ToolsDropdown = ({ onUpgradePrompt }: ToolsDropdownProps) => {
         <div className="px-3 py-2 text-sm font-medium text-muted-foreground">
           Tools
         </div>
-        <DropdownMenuItem
-          onClick={handleResearchToggle}
-          className={cn(
-            'flex items-center justify-between cursor-pointer py-3',
-            !isPremiumSubscription && 'opacity-50',
-          )}
-        >
-          <div className="flex items-center space-x-3">
-            <Telescope
-              size={20}
-              style={
-                selectedPlugin === PluginID.DEEP_RESEARCH
-                  ? { color: 'var(--interactive-label-accent-selected)' }
-                  : {}
-              }
-            />
-            <span
-              style={
-                selectedPlugin === PluginID.DEEP_RESEARCH
-                  ? { color: 'var(--interactive-label-accent-selected)' }
-                  : {}
-              }
-            >
-              Run deep research
-            </span>
-          </div>
-          {selectedPlugin === PluginID.DEEP_RESEARCH && (
-            <Check
-              size={20}
-              style={{ color: 'var(--interactive-label-accent-selected)' }}
-            />
-          )}
-        </DropdownMenuItem>
+        {!isTemporaryChat && (
+          <DropdownMenuItem
+            onClick={handleImageGenToggle}
+            className={cn(
+              'flex items-center justify-between cursor-pointer py-3',
+              !isPremiumSubscription && 'opacity-50',
+            )}
+          >
+            <div className="flex items-center space-x-3">
+              <Image
+                size={20}
+                style={
+                  selectedPlugin === PluginID.IMAGE_GEN
+                    ? { color: 'var(--interactive-label-accent-selected)' }
+                    : {}
+                }
+              />
+              <span
+                style={
+                  selectedPlugin === PluginID.IMAGE_GEN
+                    ? { color: 'var(--interactive-label-accent-selected)' }
+                    : {}
+                }
+              >
+                Create an image
+              </span>
+            </div>
+            {selectedPlugin === PluginID.IMAGE_GEN && (
+              <Check
+                size={20}
+                style={{ color: 'var(--interactive-label-accent-selected)' }}
+              />
+            )}
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem
           onClick={handleWebSearchToggle}
           className={cn(
@@ -210,6 +229,39 @@ export const ToolsDropdown = ({ onUpgradePrompt }: ToolsDropdownProps) => {
             )}
           </DropdownMenuItem>
         )}
+        <DropdownMenuItem
+          onClick={handleResearchToggle}
+          className={cn(
+            'flex items-center justify-between cursor-pointer py-3',
+            !isPremiumSubscription && 'opacity-50',
+          )}
+        >
+          <div className="flex items-center space-x-3">
+            <Telescope
+              size={20}
+              style={
+                selectedPlugin === PluginID.DEEP_RESEARCH
+                  ? { color: 'var(--interactive-label-accent-selected)' }
+                  : {}
+              }
+            />
+            <span
+              style={
+                selectedPlugin === PluginID.DEEP_RESEARCH
+                  ? { color: 'var(--interactive-label-accent-selected)' }
+                  : {}
+              }
+            >
+              Run deep research
+            </span>
+          </div>
+          {selectedPlugin === PluginID.DEEP_RESEARCH && (
+            <Check
+              size={20}
+              style={{ color: 'var(--interactive-label-accent-selected)' }}
+            />
+          )}
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

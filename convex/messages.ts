@@ -83,6 +83,7 @@ export const saveAssistantMessage = mutation({
     thinkingEnabled: v.boolean(),
     citations: v.array(v.string()),
     attachments: v.optional(v.array(v.any())),
+    imagePaths: v.optional(v.array(v.string())),
     isContinuation: v.optional(v.boolean()),
     isTerminalContinuation: v.optional(v.boolean()),
     editSequenceNumber: v.optional(v.number()),
@@ -113,6 +114,7 @@ export const saveAssistantMessage = mutation({
         thinkingElapsedSecs,
         citations,
         attachments,
+        imagePaths,
         isContinuation,
         isTerminalContinuation,
         editSequenceNumber,
@@ -150,6 +152,10 @@ export const saveAssistantMessage = mutation({
             ...(lastAssistantMessage.attachments || []),
             ...(attachments || []),
           ],
+          image_paths: [
+            ...(lastAssistantMessage.image_paths || []),
+            ...(imagePaths || []),
+          ],
           updated_at: Date.now(),
         });
 
@@ -181,7 +187,7 @@ export const saveAssistantMessage = mutation({
         citations,
         attachments: attachments || [],
         updated_at: Date.now(),
-        image_paths: [],
+        image_paths: imagePaths || [],
       });
 
       return {
@@ -231,6 +237,17 @@ export const deleteLastMessage = mutation({
           success: false,
           error: 'No message found to delete',
         };
+      }
+
+      // Delete images from storage using image_paths
+      if (lastMessage.image_paths && lastMessage.image_paths.length > 0) {
+        for (const imagePath of lastMessage.image_paths) {
+          await deleteFileAndAssociatedData(
+            ctx,
+            undefined,
+            imagePath as Id<'_storage'>,
+          );
+        }
       }
 
       // Delete files from storage using attachments

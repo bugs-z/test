@@ -1,7 +1,7 @@
 import { PentestGPTContext } from '@/context/context';
 import { cn } from '@/lib/utils';
 import { PluginID } from '@/types/plugins';
-import { Plus, SquareTerminal, Telescope, Globe, X } from 'lucide-react';
+import { Plus, SquareTerminal, Telescope, Globe, X, Image } from 'lucide-react';
 import { useContext, useState } from 'react';
 import { WithTooltip } from '../../ui/with-tooltip';
 import { useUIContext } from '@/context/ui-context';
@@ -18,7 +18,11 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
   const TOOLTIP_DELAY = 500;
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState<
-    'deep research' | 'pentest agent' | 'file upload' | 'websearch'
+    | 'deep research'
+    | 'pentest agent'
+    | 'file upload'
+    | 'websearch'
+    | 'image generation'
   >('deep research');
 
   const { isPremiumSubscription, isTemporaryChat } =
@@ -45,7 +49,11 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
   };
 
   const handleUpgradePrompt = (
-    feature: 'deep research' | 'pentest agent' | 'websearch',
+    feature:
+      | 'deep research'
+      | 'pentest agent'
+      | 'websearch'
+      | 'image generation',
   ) => {
     setUpgradeFeature(feature);
     setShowUpgradePrompt(true);
@@ -58,7 +66,8 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
   const isAnyToolSelected =
     selectedPlugin === PluginID.DEEP_RESEARCH ||
     selectedPlugin === PluginID.WEB_SEARCH ||
-    selectedPlugin === PluginID.PENTEST_AGENT;
+    selectedPlugin === PluginID.PENTEST_AGENT ||
+    selectedPlugin === PluginID.IMAGE_GEN;
 
   const SelectedPluginDisplay = ({
     icon: Icon,
@@ -105,6 +114,8 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
         return <SelectedPluginDisplay icon={Globe} label="Search" />;
       case PluginID.PENTEST_AGENT:
         return <SelectedPluginDisplay icon={SquareTerminal} label="Agent" />;
+      case PluginID.IMAGE_GEN:
+        return <SelectedPluginDisplay icon={Image} label="Image" />;
       default:
         return null;
     }
