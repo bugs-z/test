@@ -244,7 +244,7 @@ export async function processChatMessages(
   isReasoningModel: boolean,
   isPremiumSubscription: boolean,
   isPentestAgent?: boolean,
-  userLocation?: Geo,
+  userLocation?: Geo & { timezone?: string },
 ): Promise<{
   processedMessages: BuiltChatMessage[];
   systemPrompt: string;

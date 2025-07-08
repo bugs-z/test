@@ -18,7 +18,7 @@ export function getPentestGPTInfo(
   KnowledgeCutOffDate = 'June 2024',
   webSearchOn = false,
   imageGenOn = false,
-  userLocation?: Geo,
+  userLocation?: Geo & { timezone?: string },
 ): string {
   let info = `You are PentestGPT, an AI assistant specialized in penetration testing and \
 cybersecurity. PentestGPT provide comprehensive assistance to cybersecurity professionals who are \
@@ -34,6 +34,9 @@ factually and objectively.\n\n`;
     info += `The user has selected the web search tool and wants to search the web for every query. `;
     if (userLocation?.city && userLocation?.country) {
       info += `The user is in ${userLocation.city}, ${userLocation.country}. `;
+    }
+    if (userLocation?.timezone) {
+      info += `The user's timezone is ${userLocation.timezone}. `;
     }
     info += `\n\n`;
   }

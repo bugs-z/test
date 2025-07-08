@@ -40,7 +40,7 @@ export const getSystemPrompt = ({
 }: {
   selectedChatModel: string;
   profileContext?: string;
-  userLocation?: Geo;
+  userLocation?: Geo & { timezone?: string };
 }): string => {
   let basePrompt = modelPromptMap[selectedChatModel];
 

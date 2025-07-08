@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { processResponse } from './stream-processor';
 import type { AgentStatusState } from '@/components/messages/agent-status';
 import type { Doc, Id } from '@/convex/_generated/dataModel';
+import { getUserTimezone } from '@/lib/utils';
 
 export * from './create-messages';
 export * from './create-temp-messages';
@@ -54,11 +55,15 @@ export const handleHostedChat = async (
     modelParams.selectedPlugin,
   );
 
+  const timezone = getUserTimezone();
   const requestBody = {
     messages: formattedMessages,
     model,
     modelParams,
     chatMetadata,
+    userInfo: {
+      ...(timezone && { timezone }),
+    },
   };
 
   const chatResponse = await fetchChatResponse(

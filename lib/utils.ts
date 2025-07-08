@@ -6,6 +6,18 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/**
+ * Get the user's timezone using the Intl API
+ */
+export const getUserTimezone = (): string | null => {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone;
+  } catch (error) {
+    console.warn('Failed to get user timezone:', error);
+    return null; // Return null if timezone detection fails
+  }
+};
+
 export function formatDate(input: string | number | Date): string {
   const date = new Date(input);
   return date.toLocaleDateString('en-US', {

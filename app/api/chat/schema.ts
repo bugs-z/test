@@ -41,11 +41,16 @@ const chatMetadataSchema = z.object({
   retrievedFileItems: z.array(z.any()).default([]),
 });
 
+const userInfoSchema = z.object({
+  timezone: z.string().optional(),
+});
+
 export const postRequestBodySchema = z.object({
   messages: z.array(messageSchema),
   model: z.enum(VALID_MODEL_IDS),
   modelParams: modelParamsSchema,
   chatMetadata: chatMetadataSchema,
+  userInfo: userInfoSchema.optional(),
 });
 
 export type PostRequestBody = z.infer<typeof postRequestBodySchema>;

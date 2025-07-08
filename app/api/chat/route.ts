@@ -35,8 +35,12 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { messages, model, modelParams, chatMetadata } = requestBody;
-    const userLocation = geolocation(request);
+    const { messages, model, modelParams, chatMetadata, userInfo } =
+      requestBody;
+    const userLocation = {
+      ...geolocation(request),
+      timezone: userInfo?.timezone,
+    };
 
     const { profile } = await getAIProfile();
 
