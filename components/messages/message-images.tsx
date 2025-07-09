@@ -63,8 +63,11 @@ export const MessageImages: React.FC<MessageImagesProps> = ({
               )}
               src={src}
               alt="message image"
-              width={0}
-              height={0}
+              // Enable optimization for message images with proper sizing
+              width={isAssistant ? 480 : 256}
+              height={isAssistant ? 480 : 256}
+              // Enable optimization for message images by not setting unoptimized
+              // unoptimized={false} // This is the default, so we don't need to set it
               onClick={() => {
                 onImageClick({
                   messageId,
@@ -74,6 +77,12 @@ export const MessageImages: React.FC<MessageImagesProps> = ({
                 });
               }}
               loading="lazy"
+              // Add sizes prop for responsive optimization
+              sizes={
+                isAssistant
+                  ? '(max-width: 768px) 100vw, 480px'
+                  : '(max-width: 768px) 100vw, 256px'
+              }
             />
             {isAssistant && hoveredIndex === index && (
               <Button

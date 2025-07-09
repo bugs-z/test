@@ -30,6 +30,8 @@ export const ProfileButton: FC<ProfileButtonProps> = ({
           height={iconSize}
           width={iconSize}
           alt="Profile"
+          // Disable optimization for small profile images
+          unoptimized={true}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.style.display = 'none';

@@ -114,6 +114,8 @@ export default function DownloadPage() {
               priority
               className="object-cover object-bottom"
               quality={100}
+              // Disable optimization for the main image
+              unoptimized={true}
             />
           </div>
         </div>

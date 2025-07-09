@@ -142,6 +142,8 @@ export default function FilePreview({
                     maxHeight: '80vh',
                     maxWidth: '80vw',
                   }}
+                  // Enable optimization for full-size image previews
+                  sizes="(max-width: 768px) 95vw, 80vw"
                 />
               );
             } else if (type === 'file_item') {

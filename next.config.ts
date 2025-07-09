@@ -17,12 +17,23 @@ const config: NextConfig = require('@ducanh2912/next-pwa').default({
         protocol: 'http',
         hostname: '127.0.0.1',
       },
+      // Convex storage domains (more specific patterns for better performance)
+      {
+        protocol: 'https',
+        hostname: '*.convex.cloud',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.convex.dev',
+      },
+      // Fallback for other external images
       {
         protocol: 'https',
         hostname: '**',
       },
     ],
-    unoptimized: true,
+    // Remove global unoptimized flag to enable optimization for specific images
+    // unoptimized: true,
   },
   serverExternalPackages: ['sharp', 'onnxruntime-node'],
   async rewrites() {

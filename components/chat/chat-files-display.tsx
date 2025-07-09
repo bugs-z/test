@@ -105,6 +105,8 @@ export const ChatFilesDisplay: FC = () => {
                       alt="File image"
                       width={56}
                       height={56}
+                      // Disable optimization for small thumbnails (56x56px)
+                      unoptimized={true}
                       onClick={() => {
                         if (!image.isLoading) {
                           setSelectedImage(image);
