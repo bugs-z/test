@@ -305,7 +305,7 @@ export const processResponse = async (
           const { toolName } = value;
           const toolMap = {
             browser: PluginID.BROWSER,
-            hackerAIMCP: PluginID.PENTEST_AGENT,
+            run_terminal_cmd: PluginID.TERMINAL,
             webSearch: PluginID.WEB_SEARCH,
             image_gen: PluginID.IMAGE_GEN,
           } as const;
@@ -314,49 +314,6 @@ export const processResponse = async (
           if (plugin) {
             setToolInUse(plugin);
             updatedPlugin = plugin;
-          }
-
-          if (plugin === PluginID.PENTEST_AGENT) {
-            const apiEndpoint = '/api/agent';
-
-            const agentResponse = await fetchChatResponse(
-              apiEndpoint,
-              requestBody,
-              controller,
-              setIsGenerating,
-              setChatMessages,
-              alertDispatch,
-              false,
-            );
-
-            const result = await processResponse(
-              agentResponse,
-              lastChatMessage,
-              controller,
-              setFirstTokenReceived,
-              setChatMessages,
-              setToolInUse,
-              setIsGenerating,
-              alertDispatch,
-              PluginID.PENTEST_AGENT,
-              false,
-              setAgentStatus,
-              requestBody,
-            );
-
-            if (result) {
-              fullText = result.fullText;
-              thinkingText = result.thinkingText;
-              thinkingElapsedSecs = result.thinkingElapsedSecs;
-              finishReason = result.finishReason;
-              citations = result.citations;
-              chatTitle = result.chatTitle;
-              fileAttachments = result.fileAttachments;
-              assistantImageUrls = [
-                ...assistantImageUrls,
-                ...(result.assistantImageUrls || []),
-              ];
-            }
           }
 
           toolExecuted = true;
@@ -393,7 +350,8 @@ export const processResponse = async (
             // Only set finishReason if it hasn't been set before
             if (
               value.finishReason === 'tool-calls' &&
-              updatedPlugin === PluginID.PENTEST_AGENT
+              (updatedPlugin === PluginID.PENTEST_AGENT ||
+                updatedPlugin === PluginID.TERMINAL)
             ) {
               // To use continue generating for terminal
               finishReason = 'terminal-calls';

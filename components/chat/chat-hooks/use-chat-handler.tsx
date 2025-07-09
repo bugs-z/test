@@ -142,7 +142,11 @@ export const useChatHandler = () => {
         new DOMException('Generation stopped by user', 'AbortError'),
       );
 
-      if (selectedChat && toolInUse === PluginID.PENTEST_AGENT) {
+      if (
+        selectedChat &&
+        (toolInUse === PluginID.PENTEST_AGENT ||
+          toolInUse === PluginID.TERMINAL)
+      ) {
         const updatedChat = {
           ...selectedChat,
           updated_at: Date.now(),

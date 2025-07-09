@@ -19,7 +19,7 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState<
     | 'deep research'
-    | 'pentest agent'
+    | 'terminal'
     | 'file upload'
     | 'websearch'
     | 'image generation'
@@ -49,11 +49,7 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
   };
 
   const handleUpgradePrompt = (
-    feature:
-      | 'deep research'
-      | 'pentest agent'
-      | 'websearch'
-      | 'image generation',
+    feature: 'deep research' | 'terminal' | 'websearch' | 'image generation',
   ) => {
     setUpgradeFeature(feature);
     setShowUpgradePrompt(true);
@@ -66,7 +62,7 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
   const isAnyToolSelected =
     selectedPlugin === PluginID.DEEP_RESEARCH ||
     selectedPlugin === PluginID.WEB_SEARCH ||
-    selectedPlugin === PluginID.PENTEST_AGENT ||
+    selectedPlugin === PluginID.TERMINAL ||
     selectedPlugin === PluginID.IMAGE_GEN;
 
   const SelectedPluginDisplay = ({
@@ -112,8 +108,8 @@ export const ToolOptions = ({ fileInputRef }: ToolOptionsProps) => {
         return <SelectedPluginDisplay icon={Telescope} label="Research" />;
       case PluginID.WEB_SEARCH:
         return <SelectedPluginDisplay icon={Globe} label="Search" />;
-      case PluginID.PENTEST_AGENT:
-        return <SelectedPluginDisplay icon={SquareTerminal} label="Agent" />;
+      case PluginID.TERMINAL:
+        return <SelectedPluginDisplay icon={SquareTerminal} label="Terminal" />;
       case PluginID.IMAGE_GEN:
         return <SelectedPluginDisplay icon={Image} label="Image" />;
       default:

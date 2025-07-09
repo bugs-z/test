@@ -16,7 +16,10 @@ export interface ToolContext {
   setSandbox: (sandbox: Sandbox) => void;
   agentMode: AgentMode;
   sandboxManager?: SandboxManager;
-  userCountryCode: string | null;
+  userCountryCode?: string | null;
+  pentestFiles?: Array<{ path: string; data: Buffer }>;
+  messages?: any[];
+  isTerminalContinuation?: boolean;
 }
 
 // Constants for sandbox creation

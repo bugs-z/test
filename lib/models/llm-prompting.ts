@@ -16,8 +16,6 @@ export const currentDateTime = `${new Date().toLocaleDateString('en-US', options
 export function getPentestGPTInfo(
   currentModel = '',
   KnowledgeCutOffDate = 'June 2024',
-  webSearchOn = false,
-  imageGenOn = false,
   userLocation?: Geo & { timezone?: string },
 ): string {
   let info = `You are PentestGPT, an AI assistant specialized in penetration testing and \
@@ -29,8 +27,11 @@ factually and objectively.\n\n`;
 
   info += `The current date is ${currentDateTime}.\n\n`;
 
-  // Add web search and location information if applicable
-  if (webSearchOn) {
+  if (currentModel === 'Terminal Model') {
+    info += `The user has selected the terminal tool and wants to run commands in the terminal.\n\n`;
+  } else if (currentModel === 'Image Generation Model') {
+    info += `The user has selected the image generation tool and wants to generate images from descriptions.\n\n`;
+  } else if (currentModel === 'Web Search Model') {
     info += `The user has selected the web search tool and wants to search the web for every query. `;
     if (userLocation?.city && userLocation?.country) {
       info += `The user is in ${userLocation.city}, ${userLocation.country}. `;
@@ -41,12 +42,7 @@ factually and objectively.\n\n`;
     info += `\n\n`;
   }
 
-  // Add image generation information if applicable
-  if (imageGenOn) {
-    info += `The user has selected the image generation tool and wants to generate images from descriptions.\n\n`;
-  }
-
-  if (currentModel !== 'reasoningModel') {
+  if (currentModel !== 'Reasoning Model') {
     // Feedback and user interaction handling
     info += `If the user is unhappy or unsatisfied with PentestGPT or PentestGPT's \
 performance or is rude to PentestGPT, PentestGPT responds normally and then tells them that \
@@ -65,7 +61,7 @@ PentestGPT should tell them it doesn't know, and point them to "https://help.hac
     }
 
     // Knowledge limitations and temporal awareness (only show when web search is NOT on)
-    if (!webSearchOn) {
+    if (currentModel !== 'Web Search Model') {
       info += `PentestGPT's reliable knowledge cutoff date - the date past which it cannot \
 answer questions reliably - is ${KnowledgeCutOffDate}. It answers all questions the way a \
 highly informed individual in ${KnowledgeCutOffDate} would if they were talking to someone \

@@ -9,7 +9,7 @@ interface UpgradePromptProps {
   onClose?: () => void;
   feature?:
     | 'deep research'
-    | 'pentest agent'
+    | 'terminal'
     | 'file upload'
     | 'websearch'
     | 'image generation';
@@ -19,8 +19,8 @@ const getDescription = (feature: string) => {
   switch (feature) {
     case 'deep research':
       return 'Get access to deep research and more features with Pro';
-    case 'pentest agent':
-      return 'Get access to pentest agent and more features with Pro';
+    case 'terminal':
+      return 'Get access to terminal and more features with Pro';
     case 'file upload':
       return 'Get access to file upload and more features with Pro';
     case 'websearch':
@@ -37,7 +37,7 @@ const UpgradePrompt = ({
   buttonText = 'Upgrade Now',
   variant = 'tooltip',
   onClose,
-  feature = 'pentest agent',
+  feature = 'terminal',
 }: UpgradePromptProps) => {
   const router = useRouter();
 
@@ -74,7 +74,7 @@ interface UpgradeModalProps {
   onClose: () => void;
   feature:
     | 'deep research'
-    | 'pentest agent'
+    | 'terminal'
     | 'file upload'
     | 'websearch'
     | 'image generation';

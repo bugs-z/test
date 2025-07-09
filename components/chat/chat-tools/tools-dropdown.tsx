@@ -20,11 +20,7 @@ import {
 
 interface ToolsDropdownProps {
   onUpgradePrompt: (
-    feature:
-      | 'deep research'
-      | 'pentest agent'
-      | 'websearch'
-      | 'image generation',
+    feature: 'deep research' | 'terminal' | 'websearch' | 'image generation',
   ) => void;
 }
 
@@ -38,14 +34,12 @@ export const ToolsDropdown = ({ onUpgradePrompt }: ToolsDropdownProps) => {
 
   const handlePentestAgentToggle = () => {
     if (!isPremiumSubscription) {
-      onUpgradePrompt('pentest agent');
+      onUpgradePrompt('terminal');
       return;
     }
 
     setSelectedPlugin(
-      selectedPlugin === PluginID.PENTEST_AGENT
-        ? PluginID.NONE
-        : PluginID.PENTEST_AGENT,
+      selectedPlugin === PluginID.TERMINAL ? PluginID.NONE : PluginID.TERMINAL,
     );
   };
 
@@ -206,22 +200,22 @@ export const ToolsDropdown = ({ onUpgradePrompt }: ToolsDropdownProps) => {
               <SquareTerminal
                 size={20}
                 style={
-                  selectedPlugin === PluginID.PENTEST_AGENT
+                  selectedPlugin === PluginID.TERMINAL
                     ? { color: 'var(--interactive-label-accent-selected)' }
                     : {}
                 }
               />
               <span
                 style={
-                  selectedPlugin === PluginID.PENTEST_AGENT
+                  selectedPlugin === PluginID.TERMINAL
                     ? { color: 'var(--interactive-label-accent-selected)' }
                     : {}
                 }
               >
-                Use pentest agent
+                Use terminal
               </span>
             </div>
-            {selectedPlugin === PluginID.PENTEST_AGENT && (
+            {selectedPlugin === PluginID.TERMINAL && (
               <Check
                 size={20}
                 style={{ color: 'var(--interactive-label-accent-selected)' }}

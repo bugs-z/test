@@ -39,13 +39,7 @@ export const handleHostedChat = async (
 ) => {
   let apiEndpoint = '/api/chat';
 
-  if (
-    modelParams.confirmTerminalCommand ||
-    modelParams.isTerminalContinuation ||
-    modelParams.selectedPlugin === PluginID.PENTEST_AGENT
-  ) {
-    apiEndpoint = '/api/agent';
-  } else if (modelParams.selectedPlugin === PluginID.DEEP_RESEARCH) {
+  if (modelParams.selectedPlugin === PluginID.DEEP_RESEARCH) {
     apiEndpoint = '/api/tasks';
   }
 

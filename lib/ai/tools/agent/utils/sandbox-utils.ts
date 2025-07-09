@@ -75,6 +75,11 @@ export const writePentestFilesToSandbox = async (
     const { sandbox } = await sandboxManager.getSandbox();
 
     await sandbox.files.write(pentestFiles);
+
+    dataStream.writeData({
+      type: 'agent-status',
+      content: 'none',
+    });
     return true;
   } catch (error) {
     console.error('[PentestAgent] Error writing files to sandbox:', error);

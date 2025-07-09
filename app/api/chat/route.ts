@@ -18,10 +18,12 @@ import { validateChatAccessWithLimits } from '@/lib/ai/actions/chat-validation';
 import { postRequestBodySchema, type PostRequestBody } from './schema';
 import { ChatSDKError } from '@/lib/errors';
 import { v4 as uuidv4 } from 'uuid';
-import { PluginID } from '@/types/plugins';
+import { PluginID, type FileAttachment } from '@/types';
 import { geolocation } from '@vercel/functions';
+import { pauseSandbox } from '@/lib/ai/tools/agent/utils/sandbox';
+import { getToolsForPlugin } from '@/lib/ai/tool-selection';
 
-export const maxDuration = 180;
+export const maxDuration = 240;
 
 export async function POST(request: Request) {
   const abortController = new AbortController();
@@ -49,7 +51,6 @@ export async function POST(request: Request) {
       userId: profile.user_id,
       messages,
       model,
-      selectedPlugin: modelParams.selectedPlugin,
     });
 
     if (!validationResult.success) {
@@ -66,16 +67,17 @@ export async function POST(request: Request) {
     const citations: string[] = [];
     const imagePaths: string[] = [];
 
-    const { processedMessages, systemPrompt } = await processChatMessages(
-      messages,
-      config.selectedModel,
-      modelParams,
-      profile,
-      isReasoningModel,
-      config.isPremiumUser,
-      undefined, // isPentestAgent
-      userLocation,
-    );
+    const { processedMessages, systemPrompt, pentestFiles } =
+      await processChatMessages(
+        messages,
+        config.selectedModel,
+        modelParams,
+        profile,
+        isReasoningModel,
+        config.isPremiumUser,
+        modelParams.selectedPlugin === PluginID.TERMINAL, // Generate pentestFiles when terminal plugin is selected
+        userLocation,
+      );
 
     // Handle initial chat creation and user message in parallel with other operations
     const initialChatPromise = handleInitialChatAndUserMessage({
@@ -112,6 +114,9 @@ export async function POST(request: Request) {
       });
     }
 
+    let assistantMessage = '';
+    let terminalUsed = false;
+    const fileAttachments: FileAttachment[] = [];
     const assistantMessageId = uuidv4();
 
     try {
@@ -120,6 +125,29 @@ export async function POST(request: Request) {
           dataStream.writeData({
             type: 'ratelimit',
             content: config.rateLimitInfo,
+          });
+
+          const originalWriteData = dataStream.writeData;
+          dataStream.writeData = (data: any) => {
+            if (data.type === 'text-delta' && data.content) {
+              assistantMessage += data.content;
+            } else if (
+              data.type === 'file-attachment' &&
+              Array.isArray(data.content)
+            ) {
+              fileAttachments.push(...data.content);
+            }
+            originalWriteData(data);
+          };
+
+          const toolSchemas = createToolSchemas({
+            profile,
+            dataStream,
+            abortSignal: abortController.signal,
+            agentMode: modelParams.agentMode,
+            pentestFiles,
+            messages,
+            isTerminalContinuation: modelParams.isTerminalContinuation,
           });
 
           const result = streamText({
@@ -134,18 +162,12 @@ export async function POST(request: Request) {
             messages: toVercelChatMessages(processedMessages, true),
             maxTokens: 4096,
             maxSteps: 3,
-            tools: createToolSchemas({
-              profile,
-              dataStream,
-              abortSignal: abortController.signal,
-            }).getSelectedSchemas(
-              modelParams.selectedPlugin === PluginID.IMAGE_GEN
-                ? ['image_gen']
-                : config.isPremiumUser &&
-                    !modelParams.isTemporaryChat &&
-                    modelParams.selectedPlugin !== PluginID.WEB_SEARCH
-                  ? ['webSearch', 'browser', 'hackerAIMCP']
-                  : ['webSearch', 'browser'],
+            tools: toolSchemas.getSelectedSchemas(
+              getToolsForPlugin(
+                modelParams.selectedPlugin,
+                config,
+                modelParams,
+              ),
             ),
             abortSignal: abortController.signal,
             experimental_transform: smoothStream({ chunking: 'word' }),
@@ -153,6 +175,9 @@ export async function POST(request: Request) {
             onChunk: async (event: any) => {
               if (event.chunk.type === 'tool-call') {
                 toolUsed = event.chunk.toolName;
+                if (toolUsed === 'run_terminal_cmd') {
+                  terminalUsed = true;
+                }
               } else if (event.chunk.type === 'tool-result') {
                 // Handle tool results and extract citations
                 const { toolName, result } = event.chunk;
@@ -176,7 +201,6 @@ export async function POST(request: Request) {
                 !hasGeneratedTitle &&
                 chatMetadata.id &&
                 !chat &&
-                toolUsed !== 'hackerAIMCP' &&
                 event.chunk.type === 'text-delta'
               ) {
                 hasGeneratedTitle = true;
@@ -187,6 +211,9 @@ export async function POST(request: Request) {
                   });
                   dataStream.writeData({ chatTitle: generatedTitle });
                 })();
+              } else if (event.chunk.type === 'text-delta') {
+                // Note: writeData wrapper only captures dataStream, not AI text chunks from onChunk
+                assistantMessage += event.chunk.textDelta;
               }
             },
             onError: async (error) => {
@@ -205,32 +232,44 @@ export async function POST(request: Request) {
               }
             },
             onFinish: async ({ finishReason, text }) => {
-              // Save results and generate title for all tools except hackerAIMCP
-              if (toolUsed !== 'hackerAIMCP') {
-                // Wait for title generation if it's in progress
-                if (titleGenerationPromise) {
-                  await titleGenerationPromise;
-                }
-                // Wait for initial chat handling to complete before final handling
-                await initialChatPromise;
+              // Wait for title generation if it's in progress
+              if (titleGenerationPromise) {
+                await titleGenerationPromise;
+              }
+              // Wait for initial chat handling to complete before final handling
+              await initialChatPromise;
 
-                // Deduplicate citations
-                const uniqueCitations =
-                  citations.length > 0 ? [...new Set(citations)] : undefined;
+              // Deduplicate citations
+              const uniqueCitations =
+                citations.length > 0 ? [...new Set(citations)] : undefined;
 
-                await handleFinalChatAndAssistantMessage({
-                  modelParams,
-                  chatMetadata,
-                  profile,
-                  model,
-                  chat,
-                  finishReason,
-                  title: generatedTitle,
-                  assistantMessage: text,
-                  citations: uniqueCitations,
-                  imagePaths: imagePaths.length > 0 ? imagePaths : undefined,
-                  assistantMessageId,
-                });
+              await handleFinalChatAndAssistantMessage({
+                modelParams: {
+                  ...modelParams,
+                  selectedPlugin: terminalUsed
+                    ? PluginID.TERMINAL
+                    : modelParams.selectedPlugin,
+                },
+                chatMetadata,
+                profile,
+                model,
+                chat,
+                finishReason:
+                  finishReason === 'tool-calls' && terminalUsed
+                    ? 'terminal-calls'
+                    : finishReason,
+                title: generatedTitle,
+                assistantMessage: terminalUsed ? assistantMessage : text,
+                citations: uniqueCitations,
+                imagePaths: imagePaths.length > 0 ? imagePaths : undefined,
+                fileAttachments,
+                assistantMessageId,
+              });
+
+              // Pause sandbox if it was used
+              const sandbox = toolSchemas.getSandbox();
+              if (sandbox) {
+                await pauseSandbox(sandbox);
               }
             },
           });

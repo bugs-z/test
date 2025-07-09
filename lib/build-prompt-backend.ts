@@ -94,6 +94,18 @@ export function buildDocumentsText(fileItems: Doc<'file_items'>[]) {
 
   const documents = Object.values(fileGroups)
     .map((file: any) => {
+      // Check if content is empty or contains only whitespace
+      const hasContent = file.content.some(
+        (content: string) => content.trim().length > 0,
+      );
+
+      if (!hasContent) {
+        return `<document id="${file.id}">
+<source>${file.name}</source>
+<document_content>File content is empty because it's a binary file or could not be processed into readable format. Use terminal commands to access the file content.</document_content>
+</document>`;
+      }
+
       return `<document id="${file.id}">
 <source>${file.name}</source>
 <document_content>${file.content.join('\n\n')}</document_content>
@@ -201,7 +213,7 @@ export async function processMessageContentWithAttachments(
   messages: BuiltChatMessage[],
   userId: string,
   isReasoning: boolean,
-  isPentestAgent = false,
+  isTerminal = false,
 ): Promise<{
   processedMessages: BuiltChatMessage[];
   pentestFiles?: Array<{ path: string; data: Buffer }>;
@@ -213,9 +225,19 @@ export async function processMessageContentWithAttachments(
   let processedMessages = [...messages];
   let pentestFiles: Array<{ path: string; data: Buffer }> | undefined;
   let hasPdfAttachments = false;
-  const localPath = '/mnt/data';
+  const localPath = '/home/user';
 
   try {
+    // Find the last user message to determine if we should generate pentestFiles
+    const lastUserMessage = messages
+      .slice()
+      .reverse()
+      .find((m) => m.role === 'user');
+    const shouldGeneratePentestFiles =
+      isTerminal &&
+      lastUserMessage?.attachments &&
+      lastUserMessage.attachments.length > 0;
+
     // Collect all file IDs from user messages only
     const allFileIds = processedMessages
       .filter((m) => m.role === 'user') // Only process user messages
@@ -231,13 +253,22 @@ export async function processMessageContentWithAttachments(
       },
     );
 
-    // If this is a pentest agent, create the file array
-    if (isPentestAgent && allFileItems) {
-      pentestFiles = await createPentestFileArray(
-        localPath,
-        allFileItems,
-        userId,
+    // Only generate pentestFiles if we're dealing with the last user message that has attachments
+    if (shouldGeneratePentestFiles && allFileItems && lastUserMessage) {
+      // Filter file items for the last user message only
+      const lastUserFileItems = allFileItems.filter((fi) =>
+        (lastUserMessage.attachments ?? []).some(
+          (a) => a.file_id === fi.file_id,
+        ),
       );
+
+      if (lastUserFileItems.length > 0) {
+        pentestFiles = await createPentestFileArray(
+          localPath,
+          lastUserFileItems,
+          userId,
+        );
+      }
     }
 
     // Process each message
@@ -284,7 +315,7 @@ export async function processMessageContentWithAttachments(
                 type: 'text',
                 text: documentsText,
               } as TextPart);
-            } else if (isPentestAgent) {
+            } else if (isTerminal) {
               // For pentest agent, add XML-like attachment reference (skip PDF processing)
               const attachmentRef = `<attachment filename="${fileItem.name}" local_path="${localPath}/${fileItem.name}" />`;
               processedContent.push({

@@ -36,9 +36,9 @@ export const loadingStates = {
     icon: <Search size={20} />,
     text: 'Researching... (takes 1-5 minutes)',
   },
-  [PluginID.PENTEST_AGENT]: {
+  [PluginID.TERMINAL]: {
     icon: <SquareTerminal size={20} />,
-    text: 'Using pentest agent...',
+    text: 'Using terminal...',
   },
   [PluginID.IMAGE_GEN]: {
     icon: <ImageIcon size={20} />,

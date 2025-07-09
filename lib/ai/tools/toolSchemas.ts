@@ -1,68 +1,59 @@
-import { z } from 'zod';
-// import type { LLMID, ModelParams } from '@/types/llms';
-// import type { ChatMetadata } from '@/types';
-// import type { Doc } from '@/convex/_generated/dataModel';
 import { createWebSearchTool } from './web-search';
 import { createBrowserTool } from './browser';
 import { createImageGenTool } from './image-gen';
+import { createShellExecTool } from './run_terminal_cmd-tool';
+import { createGetTerminalFilesTool } from './get_terminal_files-tool';
+import { DefaultSandboxManager } from './agent/utils/sandbox-manager';
+import { Sandbox } from '@e2b/code-interpreter';
+import { ToolContext } from './agent/types';
+import type { AgentMode } from '@/types/llms';
 
 export const createToolSchemas = ({
-  // chat,
-  // messages,
-  // modelParams,
-  // chatMetadata,
   profile,
   dataStream,
   abortSignal,
-  // model,
-  // userCity,
-  // userCountry,
-  // initialChatPromise,
-  // assistantMessageId,
+  agentMode,
+  pentestFiles,
+  messages,
+  isTerminalContinuation,
 }: {
-  // chat: Doc<'chats'> | null;
-  // messages: any;
-  // modelParams: ModelParams;
-  // chatMetadata: ChatMetadata;
   profile: any;
   dataStream: any;
   abortSignal: AbortSignal;
-  // model: LLMID;
-  // userCity: string | undefined;
-  // userCountry: string | undefined;
-  // initialChatPromise: Promise<void>;
-  // assistantMessageId: string;
+  agentMode?: AgentMode;
+  pentestFiles?: Array<{ path: string; data: Buffer }>;
+  messages?: any[];
+  isTerminalContinuation?: boolean;
 }) => {
+  let sandbox: Sandbox | null = null;
+
+  const sandboxManager = new DefaultSandboxManager(
+    profile.user_id,
+    dataStream,
+    (newSandbox) => {
+      sandbox = newSandbox;
+    },
+    sandbox,
+  );
+
+  const context = {
+    dataStream,
+    sandbox,
+    userID: profile.user_id,
+    setSandbox: sandboxManager.setSandbox.bind(sandboxManager),
+    agentMode,
+    sandboxManager,
+    pentestFiles,
+    messages,
+    isTerminalContinuation,
+  } as ToolContext;
+
   const allSchemas = {
     image_gen: createImageGenTool(profile, abortSignal, dataStream),
     webSearch: createWebSearchTool(profile, dataStream),
     browser: createBrowserTool(profile, abortSignal, dataStream),
-    hackerAIMCP: {
-      description: `Activate the HackerAI MCP agent for comprehensive penetration testing and cybersecurity operations. \
-Select this tool IMMEDIATELY when any security testing, terminal operations, or technical tasks are needed.
-
-This tool uses HackerAI MCP (https://www.hackerai.co/) which provides a specialized penetration testing environment. \
-For users who want to use different models, they can access the pentest agent directly through HackerAI MCP with any model of their choice.
-
-Use the pentestAgent when:
-1. Performing network reconnaissance, scanning, or enumeration
-2. Conducting vulnerability assessments or penetration testing
-3. Running security tools or custom scripts
-4. Analyzing web applications for security issues
-5. Installing and configuring security tools
-6. Writing and executing penetration testing scripts
-7. Any terminal operations or command-line tasks
-8. File operations, system analysis, or technical research
-9. Executing code or running programs for security analysis
-10. Analyzing binary files, executables, or compiled programs`,
-      parameters: z.object({
-        activate: z
-          .boolean()
-          .describe(
-            'Set to true to activate the HackerAI MCP agent for security testing and terminal operations. Select immediately when any technical or security tasks are needed.',
-          ),
-      }),
-    },
+    run_terminal_cmd: createShellExecTool(context),
+    get_terminal_files: createGetTerminalFilesTool(context),
   };
 
   type SchemaKey = keyof typeof allSchemas;
@@ -91,5 +82,7 @@ Use the pentestAgent when:
         ),
       );
     },
+    getSandbox: () => sandbox,
+    getSandboxManager: () => sandboxManager,
   };
 };

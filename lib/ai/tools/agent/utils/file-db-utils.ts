@@ -1,6 +1,20 @@
 import type { FileAttachment } from '@/types';
 import { createAdminFile } from '@/db/storage/admin-files';
 import type { SandboxManager } from '../types';
+import { ConvexHttpClient } from 'convex/browser';
+import { api } from '@/convex/_generated/api';
+import type { Id } from '@/convex/_generated/dataModel';
+
+if (
+  !process.env.NEXT_PUBLIC_CONVEX_URL ||
+  !process.env.CONVEX_SERVICE_ROLE_KEY
+) {
+  throw new Error(
+    'NEXT_PUBLIC_CONVEX_URL or CONVEX_SERVICE_ROLE_KEY environment variable is not defined',
+  );
+}
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL);
 
 export const saveFileToDatabase = async (
   filePath: string,
@@ -87,8 +101,8 @@ export const handleMessageAttachments = async ({
   userID: string;
   dataStream: any;
   sandboxManager: SandboxManager;
-}): Promise<string | null> => {
-  if (!attachments) return null;
+}): Promise<{ errors: string[] | null; files: string[] }> => {
+  if (!attachments) return { errors: null, files: [] };
 
   try {
     // Get sandbox from manager
@@ -96,6 +110,7 @@ export const handleMessageAttachments = async ({
 
     const filePaths = Array.isArray(attachments) ? attachments : [attachments];
     const errors: string[] = [];
+    const files: string[] = [];
 
     for (const filePath of filePaths) {
       try {
@@ -109,6 +124,22 @@ export const handleMessageAttachments = async ({
 
         if (typeof result === 'string') {
           errors.push(`Error processing ${filePath}: ${result}`);
+        } else {
+          // result is FileAttachment, result.url is actually the storage ID
+          // Get the actual URL from Convex storage
+          const actualUrl = await convex.query(
+            api.fileStorage.getFileStorageUrlPublic,
+            {
+              serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
+              storageId: result.url as Id<'_storage'>,
+            },
+          );
+
+          if (actualUrl) {
+            files.push(actualUrl);
+          } else {
+            errors.push(`Failed to get URL for ${filePath}`);
+          }
         }
       } catch (error) {
         errors.push(
@@ -117,12 +148,16 @@ export const handleMessageAttachments = async ({
       }
     }
 
-    if (errors.length > 0) {
-      return errors.join('\n');
-    }
-
-    return null;
+    return {
+      errors: errors.length > 0 ? errors : null,
+      files,
+    };
   } catch (error) {
-    return `Error handling attachments: ${error instanceof Error ? error.message : 'Unknown error'}`;
+    return {
+      errors: [
+        `Error handling attachments: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      ],
+      files: [],
+    };
   }
 };

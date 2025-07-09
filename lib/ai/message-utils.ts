@@ -243,7 +243,7 @@ export async function processChatMessages(
   profile: { user_id: string; profile_context: string | undefined },
   isReasoningModel: boolean,
   isPremiumSubscription: boolean,
-  isPentestAgent?: boolean,
+  isTerminal?: boolean,
   userLocation?: Geo & { timezone?: string },
 ): Promise<{
   processedMessages: BuiltChatMessage[];
@@ -303,20 +303,13 @@ export async function processChatMessages(
     validatedMessages,
     profile.user_id,
     isReasoningModel,
-    isPentestAgent,
+    isTerminal,
   );
 
-  // Use specific models for plugins, otherwise use the selected model
-  let modelForSystemPrompt = selectedModel;
-  if (modelParams.selectedPlugin === PluginID.WEB_SEARCH) {
-    modelForSystemPrompt = 'web-search-model';
-  } else if (modelParams.selectedPlugin === PluginID.IMAGE_GEN) {
-    modelForSystemPrompt = 'image-gen-model';
-  }
-
   const systemPrompt = getSystemPrompt({
-    selectedChatModel: modelForSystemPrompt,
+    selectedChatModel: selectedModel,
     profileContext: profile?.profile_context,
+    selectedPlugin: modelParams.selectedPlugin as PluginID,
     userLocation,
   });
 

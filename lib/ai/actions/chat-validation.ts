@@ -23,13 +23,11 @@ export async function validateChatAccessWithLimits({
   userId,
   messages,
   model,
-  selectedPlugin,
 }: {
   chatMetadata: ChatMetadata;
   userId: string;
   messages: BuiltChatMessage[];
   model: string;
-  selectedPlugin: PluginID;
 }): Promise<
   | {
       success: true;
@@ -42,12 +40,7 @@ export async function validateChatAccessWithLimits({
     }
 > {
   // First validate rate limits and premium features
-  const config = await getProviderConfig(
-    model,
-    { user_id: userId },
-    selectedPlugin,
-    messages,
-  );
+  const config = await getProviderConfig(model, { user_id: userId }, messages);
 
   if (!config.isRateLimitAllowed) {
     return {
@@ -116,7 +109,6 @@ export async function validateChatAccess({
 async function getProviderConfig(
   model: string,
   profile: any,
-  selectedPlugin: PluginID,
   _messages: any[],
 ) {
   // Moving away from gpt-4-turbo-preview to chat-model-large
@@ -140,17 +132,9 @@ async function getProviderConfig(
 
   const isLargeModel = selectedModel.includes('large');
 
-  // Exclude IMAGE_GEN from rate limiting at API level - it will be handled inside the tool
-  const rateLimitModel =
-    selectedPlugin !== PluginID.NONE &&
-    selectedPlugin !== PluginID.WEB_SEARCH &&
-    selectedPlugin !== PluginID.IMAGE_GEN
-      ? selectedPlugin
-      : rateLimitModelMap[model] || model;
-
   const rateLimitStatus = await checkRatelimitOnApi(
     profile.user_id,
-    rateLimitModel,
+    rateLimitModelMap[model] || model,
   );
 
   return {

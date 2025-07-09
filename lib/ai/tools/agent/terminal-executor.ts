@@ -1,8 +1,8 @@
 import type { Sandbox } from '@e2b/code-interpreter';
 
 const MAX_COMMAND_EXECUTION_TIME = 6 * 60 * 1000;
-// 30 seconds
-const STREAM_TIMEOUT = 30 * 1000;
+// 60 seconds
+const STREAM_TIMEOUT = 60 * 1000;
 const ENCODER = new TextEncoder();
 
 interface ExecutionError {
