@@ -21,6 +21,7 @@ export const MessageImages: React.FC<MessageImagesProps> = ({
   onImageClick,
 }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set());
 
   if (imagePaths.length === 0) return null;
 
@@ -33,6 +34,10 @@ export const MessageImages: React.FC<MessageImagesProps> = ({
     document.body.removeChild(link);
   };
 
+  const handleImageLoad = (index: number) => {
+    setLoadedImages((prev) => new Set([...prev, index]));
+  };
+
   return (
     <div
       className={cn(
@@ -42,53 +47,68 @@ export const MessageImages: React.FC<MessageImagesProps> = ({
     >
       {imagePaths.map((path, index) => {
         const item = chatImages.find((image) => image.path === path);
-
-        // Use URL as primary source, fallback to base64 for loading states (data URLs)
         const src = item?.url || (path.startsWith('data:') ? path : '');
-
-        if (!src) return null;
+        const isLoaded = loadedImages.has(index);
+        const dimensions = isAssistant ? 480 : 256;
 
         return (
           <div
             key={index}
-            className="relative"
+            className={cn(
+              'relative bg-muted rounded mb-2 overflow-hidden',
+              isAssistant ? 'max-w-[480px]' : 'max-w-64',
+            )}
+            style={{
+              width: `${dimensions}px`,
+              minHeight: !isLoaded ? `${dimensions}px` : 'auto',
+            }}
             onMouseEnter={() => setHoveredIndex(index)}
             onMouseLeave={() => setHoveredIndex(null)}
           >
-            <Image
-              className={cn(
-                'mb-2 cursor-pointer rounded hover:opacity-80 transition-opacity',
-                'w-full h-auto object-contain',
-                isAssistant ? 'max-w-[480px]' : 'max-w-64 max-h-64',
-              )}
-              src={src}
-              alt="message image"
-              // Enable optimization for message images with proper sizing
-              width={isAssistant ? 480 : 256}
-              height={isAssistant ? 480 : 256}
-              // Enable optimization for message images by not setting unoptimized
-              // unoptimized={false} // This is the default, so we don't need to set it
-              onClick={() => {
-                onImageClick({
-                  messageId,
-                  path,
-                  url: item?.url || '',
-                  file: null,
-                });
-              }}
-              loading="lazy"
-              // Add sizes prop for responsive optimization
-              sizes={
-                isAssistant
-                  ? '(max-width: 768px) 100vw, 480px'
-                  : '(max-width: 768px) 100vw, 256px'
-              }
-            />
-            {isAssistant && hoveredIndex === index && (
+            {/* Skeleton/Placeholder */}
+            {!isLoaded && (
+              <div className="absolute inset-0 bg-muted animate-pulse flex items-center justify-center">
+                <div className="text-muted-foreground text-sm">Loading...</div>
+              </div>
+            )}
+
+            {/* Actual Image */}
+            {src && (
+              <Image
+                className={cn(
+                  'cursor-pointer hover:opacity-80 transition-all duration-300 ease-in-out w-full h-auto object-contain',
+                  !isLoaded && 'opacity-0',
+                )}
+                src={src}
+                alt="message image"
+                width={dimensions}
+                height={dimensions}
+                onClick={() => {
+                  if (isLoaded) {
+                    onImageClick({
+                      messageId,
+                      path,
+                      url: item?.url || '',
+                      file: null,
+                    });
+                  }
+                }}
+                loading="lazy"
+                sizes={
+                  isAssistant
+                    ? '(max-width: 768px) 100vw, 480px'
+                    : '(max-width: 768px) 100vw, 256px'
+                }
+                onLoad={() => handleImageLoad(index)}
+              />
+            )}
+
+            {/* Download Button */}
+            {isAssistant && hoveredIndex === index && isLoaded && src && (
               <Button
                 size="sm"
                 variant="secondary"
-                className="absolute top-2 right-2 h-8 w-8 p-0 opacity-90 hover:opacity-100"
+                className="absolute top-2 right-2 h-8 w-8 p-0 opacity-90 hover:opacity-100 z-10"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleDownload(src, index);

@@ -12,6 +12,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from './tooltip';
+import { useState } from 'react';
 
 interface FilePreviewProps {
   type: 'image' | 'file' | 'file_item';
@@ -26,6 +27,8 @@ export default function FilePreview({
   isOpen,
   onOpenChange,
 }: FilePreviewProps) {
+  const [isImageLoading, setIsImageLoading] = useState(true);
+
   const handleDownload = async () => {
     if (type === 'image') {
       const imageItem = item as MessageImage;
@@ -80,9 +83,25 @@ export default function FilePreview({
     onOpenChange(false);
   };
 
+  const handleImageLoad = () => {
+    setIsImageLoading(false);
+  };
+
+  const handleImageError = () => {
+    setIsImageLoading(false);
+  };
+
+  // Reset loading states when dialog opens
+  const handleOpenChange = (open: boolean) => {
+    if (open) {
+      setIsImageLoading(true);
+    }
+    onOpenChange(open);
+  };
+
   return (
     <TooltipProvider>
-      <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <Dialog open={isOpen} onOpenChange={handleOpenChange}>
         <DialogContent
           className={cn(
             'max-w-full max-h-full w-full h-full p-0 border-none',
@@ -90,6 +109,17 @@ export default function FilePreview({
           )}
         >
           <DialogTitle className="sr-only">File Preview</DialogTitle>
+
+          {/* Loading Indicator */}
+          {type === 'image' && isImageLoading && (
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-40">
+              <div className="bg-white/10 backdrop-blur-md rounded-lg p-6 flex items-center space-x-3">
+                <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent"></div>
+                <span className="text-white text-sm">Loading...</span>
+              </div>
+            </div>
+          )}
+
           {/* Close button on the top left */}
           <Tooltip>
             <TooltipTrigger asChild>
@@ -133,7 +163,10 @@ export default function FilePreview({
 
               return (
                 <Image
-                  className="object-contain"
+                  className={cn(
+                    'object-contain transition-opacity duration-300',
+                    isImageLoading ? 'opacity-0' : 'opacity-100',
+                  )}
                   src={src}
                   alt="File image"
                   width={1200}
@@ -144,6 +177,8 @@ export default function FilePreview({
                   }}
                   // Enable optimization for full-size image previews
                   sizes="(max-width: 768px) 95vw, 80vw"
+                  onLoad={handleImageLoad}
+                  onError={handleImageError}
                 />
               );
             } else if (type === 'file_item') {

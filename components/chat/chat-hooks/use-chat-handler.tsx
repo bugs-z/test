@@ -506,6 +506,7 @@ export const useChatHandler = () => {
         modelParams,
         chatMetadata,
         isPremiumSubscription,
+        setChatImages,
       );
       generatedText = fullText;
       thinkingText = thinkingTextFromResponse;

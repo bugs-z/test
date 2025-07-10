@@ -116,6 +116,58 @@ export const getStorageUrlHttp = httpAction(async (ctx, request) => {
 });
 
 /**
+ * HTTP action to get multiple URLs from Convex storage in a single batch request
+ */
+export const getBatchStorageUrlsHttp = httpAction(async (ctx, request) => {
+  // Validate authentication with user verification
+  const authResult = await validateAuthWithUser(request);
+  if (!authResult.success) {
+    return createErrorResponse(
+      authResult.error || 'Authentication failed',
+      401,
+    );
+  }
+
+  try {
+    // Parse request body to get storageIds
+    const body = await request.json();
+    const { storageIds } = body;
+
+    if (!storageIds || !Array.isArray(storageIds)) {
+      return createErrorResponse(
+        'Missing or invalid storageIds parameter',
+        400,
+      );
+    }
+
+    if (storageIds.length === 0) {
+      return createResponse({ urls: [] }, 200);
+    }
+
+    // Validate storageIds array length to prevent abuse
+    if (storageIds.length > 50) {
+      return createErrorResponse(
+        'Maximum 50 storage IDs allowed per batch request',
+        400,
+      );
+    }
+
+    // Get URLs from storage using the internal batch function
+    const results = await ctx.runQuery(
+      internal.fileStorage.getBatchFileStorageUrls,
+      {
+        storageIds: storageIds as Id<'_storage'>[],
+      },
+    );
+
+    return createResponse({ urls: results }, 200);
+  } catch (error) {
+    console.error('Error getting batch storage URLs:', error);
+    return createErrorResponse('Internal server error', 500);
+  }
+});
+
+/**
  * HTTP action to upload files with complete database record creation
  */
 export const uploadFileHttp = httpAction(async (ctx, request) => {

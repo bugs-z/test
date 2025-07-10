@@ -11,21 +11,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { convertToJsonAttachments } from '@/lib/utils/type-converters';
 import type { Doc, Id } from '@/convex/_generated/dataModel';
 
-const addAssistantImages = (
-  assistantImageUrls: string[],
-  messageId: string,
-  setChatImages: React.Dispatch<React.SetStateAction<MessageImage[]>>,
-) => {
-  const assistantImages: MessageImage[] = assistantImageUrls.map((url) => ({
-    messageId,
-    path: url,
-    url: url,
-    file: null,
-  }));
-
-  setChatImages((prevImages) => [...prevImages, ...assistantImages]);
-};
-
 export const handleCreateMessages = async (
   chatMessages: ChatMessage[],
   currentChat: Doc<'chats'> | null,
@@ -117,15 +102,6 @@ export const handleCreateMessages = async (
     let finalChatMessages: ChatMessage[] = [];
 
     if (isRegeneration) {
-      // Add assistant images for regeneration
-      if (assistantImageUrls && assistantImageUrls.length > 0) {
-        addAssistantImages(
-          assistantImageUrls,
-          assistantMessage.message.id,
-          setChatImages,
-        );
-      }
-
       finalChatMessages = [...chatMessages.slice(0, -1), assistantMessage];
     } else if (isContinuation) {
       // For continuation, update the last message
@@ -147,15 +123,6 @@ export const handleCreateMessages = async (
           ],
         },
       };
-
-      // Add new assistant images for continuation
-      if (assistantImageUrls && assistantImageUrls.length > 0) {
-        addAssistantImages(
-          assistantImageUrls,
-          lastMessage.message.id,
-          setChatImages,
-        );
-      }
 
       finalChatMessages = [...chatMessages.slice(0, -1), updatedMessage];
     } else {
@@ -184,15 +151,6 @@ export const handleCreateMessages = async (
               ? { ...image, messageId: userMessage.message.id }
               : image,
           ),
-        );
-      }
-
-      // Add assistant-generated images to the chat images state
-      if (assistantImageUrls && assistantImageUrls.length > 0) {
-        addAssistantImages(
-          assistantImageUrls,
-          assistantMessage.message.id,
-          setChatImages,
         );
       }
 

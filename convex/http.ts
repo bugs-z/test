@@ -9,6 +9,7 @@ import {
   uploadImageHttp,
   uploadFileHttp,
   getStorageUrlHttp,
+  getBatchStorageUrlsHttp,
   deleteStorageItemHttp,
 } from './fileStorageHttp';
 import { createOptionsHandler } from './httpUtils';
@@ -78,6 +79,13 @@ http.route({
   handler: getStorageUrlHttp,
 });
 
+// Register batch storage URLs endpoint
+http.route({
+  path: '/api/get-batch-storage-urls',
+  method: 'POST',
+  handler: getBatchStorageUrlsHttp,
+});
+
 // Register delete storage item endpoint
 http.route({
   path: '/api/delete-storage-item',
@@ -136,6 +144,12 @@ http.route({
 
 http.route({
   path: '/api/get-storage-url',
+  method: 'OPTIONS',
+  handler: createOptionsHandler(['POST', 'OPTIONS']),
+});
+
+http.route({
+  path: '/api/get-batch-storage-urls',
   method: 'OPTIONS',
   handler: createOptionsHandler(['POST', 'OPTIONS']),
 });

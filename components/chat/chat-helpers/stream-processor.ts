@@ -1,4 +1,9 @@
-import type { ChatMessage, DataPartValue, FileAttachment } from '@/types';
+import type {
+  ChatMessage,
+  DataPartValue,
+  FileAttachment,
+  MessageImage,
+} from '@/types';
 import type { AlertAction } from '@/context/alert-context';
 import { processDataStream } from 'ai';
 import { toast } from 'sonner';
@@ -20,6 +25,7 @@ export const processResponse = async (
   isContinuation: boolean,
   setAgentStatus: Dispatch<SetStateAction<AgentStatusState | null>>,
   requestBody: any,
+  setChatImages: Dispatch<SetStateAction<MessageImage[]>>,
 ) => {
   if (!response.ok) {
     const result = await response.json();
@@ -174,6 +180,19 @@ export const processResponse = async (
                   ? (firstValue.content as string[])
                   : [];
                 assistantImageUrls = [...assistantImageUrls, ...imageUrls];
+
+                // Add assistant images to chatImages state
+                const newAssistantImages = imageUrls.map((url) => ({
+                  messageId: lastChatMessage.message.id,
+                  path: url,
+                  url: url,
+                  file: null,
+                }));
+
+                setChatImages((prevImages) => [
+                  ...prevImages,
+                  ...newAssistantImages,
+                ]);
               }
 
               if (firstValue.type === 'agent-status') {

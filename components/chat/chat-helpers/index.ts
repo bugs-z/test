@@ -8,6 +8,7 @@ import type {
   ModelParams,
   LLMID,
   ChatMetadata,
+  MessageImage,
 } from '@/types';
 import { PluginID } from '@/types';
 import type { Dispatch, SetStateAction } from 'react';
@@ -36,6 +37,7 @@ export const handleHostedChat = async (
   modelParams: ModelParams,
   chatMetadata: ChatMetadata,
   isPremiumSubscription: boolean,
+  setChatImages: Dispatch<SetStateAction<MessageImage[]>>,
 ) => {
   let apiEndpoint = '/api/chat';
 
@@ -90,6 +92,7 @@ export const handleHostedChat = async (
     modelParams.isContinuation,
     setAgentStatus,
     requestBody,
+    setChatImages,
   );
 };
 

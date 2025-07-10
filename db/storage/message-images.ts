@@ -57,27 +57,80 @@ export const getImageUrl = async (storageId: string): Promise<string> => {
   }
 };
 
+/**
+ * Get multiple image URLs in a single batch request for better performance
+ */
+export const getBatchImageUrls = async (
+  storageIds: string[],
+): Promise<Record<string, string>> => {
+  try {
+    // Filter out invalid storage IDs
+    const validStorageIds = storageIds.filter(
+      (id) => id && id.trim() !== '' && !id.includes('/'),
+    );
+
+    if (validStorageIds.length === 0) {
+      return {};
+    }
+
+    const result = await makeAuthenticatedRequest(
+      `/api/get-batch-storage-urls`,
+      'POST',
+      { storageIds: validStorageIds },
+    );
+
+    if (!result?.urls || !Array.isArray(result.urls)) {
+      console.error('Invalid response from batch storage URLs endpoint');
+      return {};
+    }
+
+    // Convert array response to object for easy lookup
+    const urlMap: Record<string, string> = {};
+    result.urls.forEach((item: { storageId: string; url: string | null }) => {
+      if (item.url) {
+        urlMap[item.storageId] = item.url;
+      }
+    });
+
+    return urlMap;
+  } catch (error) {
+    console.error('Error getting batch image URLs from Convex:', error);
+    return {};
+  }
+};
+
 export const processMessageImages = async (
   messages: Doc<'messages'>[],
 ): Promise<MessageImage[]> => {
-  const imagePromises: Promise<MessageImage>[] = messages.flatMap((message) =>
-    message.image_paths
-      ? message.image_paths.map(async (imagePath) => {
-          const url = await getImageUrl(imagePath);
+  // Collect all unique image paths from all messages
+  const allImagePaths = new Set<string>();
+  messages.forEach((message) => {
+    if (message.image_paths) {
+      message.image_paths.forEach((path) => allImagePaths.add(path));
+    }
+  });
 
-          const messageImage: MessageImage = {
-            messageId: message.id,
-            path: imagePath,
-            url: url || '',
-            file: null,
-          };
+  // Get all URLs in a single batch request
+  const urlMap = await getBatchImageUrls(Array.from(allImagePaths));
 
-          return messageImage;
-        })
-      : [],
-  );
+  // Process messages with the cached URL map
+  const messageImages: MessageImage[] = [];
 
-  return await Promise.all(imagePromises.flat());
+  messages.forEach((message) => {
+    if (message.image_paths) {
+      message.image_paths.forEach((imagePath) => {
+        const messageImage: MessageImage = {
+          messageId: message.id,
+          path: imagePath,
+          url: urlMap[imagePath] || '',
+          file: null,
+        };
+        messageImages.push(messageImage);
+      });
+    }
+  });
+
+  return messageImages;
 };
 
 export const deleteImage = async (storageId: string): Promise<boolean> => {
