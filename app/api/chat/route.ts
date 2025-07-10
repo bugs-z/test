@@ -70,8 +70,8 @@ export async function POST(request: Request) {
     const {
       processedMessages,
       systemPrompt,
-      hasPdfAttachments,
-      hasImageAttachments,
+      // hasPdfAttachments,
+      // hasImageAttachments,
       pentestFiles,
     } = await processChatMessages(
       messages,
@@ -119,13 +119,13 @@ export async function POST(request: Request) {
       });
     }
 
-    if (
-      !hasImageAttachments &&
-      !hasPdfAttachments &&
-      config.selectedModel === 'chat-model-small'
-    ) {
-      config.selectedModel = 'chat-model-small-text';
-    }
+    // if (
+    //   !hasImageAttachments &&
+    //   !hasPdfAttachments &&
+    //   config.selectedModel === 'chat-model-small'
+    // ) {
+    //   config.selectedModel = 'chat-model-small-text';
+    // }
 
     let assistantMessage = '';
     let terminalUsed = false;
