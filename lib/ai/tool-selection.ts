@@ -31,7 +31,13 @@ export const getToolsForPlugin = (
     !modelParams.isTemporaryChat &&
     selectedPlugin !== PluginID.WEB_SEARCH
   ) {
-    return ['webSearch', 'browser', 'run_terminal_cmd', 'get_terminal_files'];
+    return [
+      'webSearch',
+      'browser',
+      'run_terminal_cmd',
+      'get_terminal_files',
+      'image_gen',
+    ];
   }
 
   // Default tools for other cases

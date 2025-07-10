@@ -42,7 +42,7 @@ export const loadingStates = {
   },
   [PluginID.IMAGE_GEN]: {
     icon: <ImageIcon size={20} />,
-    text: 'Generating image...',
+    text: 'Generating image... (takes 1-2 minutes)',
   },
 };
 
