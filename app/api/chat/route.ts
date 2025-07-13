@@ -59,30 +59,27 @@ export async function POST(request: Request) {
 
     const { chat, config } = validationResult;
 
-    const isReasoningModel = model === 'reasoning-model';
     let generatedTitle: string | undefined;
     let toolUsed = '';
     let hasGeneratedTitle = false;
     let titleGenerationPromise: Promise<void> | null = null;
     const citations: string[] = [];
     const imagePaths: string[] = [];
+    let assistantMessage = '';
+    let terminalUsed = false;
+    const fileAttachments: FileAttachment[] = [];
+    const assistantMessageId = uuidv4();
 
-    const {
-      processedMessages,
-      systemPrompt,
-      // hasPdfAttachments,
-      // hasImageAttachments,
-      pentestFiles,
-    } = await processChatMessages(
-      messages,
-      config.selectedModel,
-      modelParams,
-      profile,
-      isReasoningModel,
-      config.isPremiumUser,
-      modelParams.selectedPlugin === PluginID.TERMINAL, // Generate pentestFiles when terminal plugin is selected
-      userLocation,
-    );
+    const { processedMessages, systemPrompt, pentestFiles } =
+      await processChatMessages(
+        messages,
+        config.selectedModel,
+        modelParams,
+        profile,
+        config.isPremiumUser,
+        modelParams.selectedPlugin === PluginID.TERMINAL, // Generate pentestFiles when terminal plugin is selected
+        userLocation,
+      );
 
     // Handle initial chat creation and user message in parallel with other operations
     const initialChatPromise = handleInitialChatAndUserMessage({
@@ -103,7 +100,6 @@ export async function POST(request: Request) {
       abortSignal: abortController.signal,
       chatMetadata,
       model,
-      isReasoningModel,
       rateLimitInfo: config.rateLimitInfo,
       initialChatPromise,
     });
@@ -118,19 +114,6 @@ export async function POST(request: Request) {
         event: config.selectedModel,
       });
     }
-
-    // if (
-    //   !hasImageAttachments &&
-    //   !hasPdfAttachments &&
-    //   config.selectedModel === 'chat-model-small'
-    // ) {
-    //   config.selectedModel = 'chat-model-small-text';
-    // }
-
-    let assistantMessage = '';
-    let terminalUsed = false;
-    const fileAttachments: FileAttachment[] = [];
-    const assistantMessageId = uuidv4();
 
     try {
       return createDataStreamResponse({
@@ -159,9 +142,16 @@ export async function POST(request: Request) {
             abortSignal: abortController.signal,
             agentMode: modelParams.agentMode,
             pentestFiles,
-            messages,
-            isTerminalContinuation: modelParams.isTerminalContinuation,
+            selectedPlugin: modelParams.selectedPlugin,
           });
+
+          // Upload pentest files immediately when terminal plugin is selected
+          if (
+            modelParams.selectedPlugin === PluginID.TERMINAL &&
+            pentestFiles
+          ) {
+            await toolSchemas.uploadPentestFiles();
+          }
 
           const result = streamText({
             model: myProvider.languageModel(config.selectedModel),
@@ -189,6 +179,12 @@ export async function POST(request: Request) {
               if (event.chunk.type === 'tool-call') {
                 toolUsed = event.chunk.toolName;
                 if (toolUsed === 'run_terminal_cmd') {
+                  const { exec_dir, command } = event.chunk.args;
+                  dataStream.writeData({
+                    type: 'text-delta',
+                    content: `<pgptml:terminal_command exec-dir="${exec_dir}">${command}</pgptml:terminal_command>`,
+                  });
+
                   terminalUsed = true;
                 }
               } else if (event.chunk.type === 'tool-result') {

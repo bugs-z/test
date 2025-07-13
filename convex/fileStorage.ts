@@ -76,6 +76,50 @@ export const getFileStorageUrl = internalQuery({
 });
 
 /**
+ * Get multiple file/image URLs from storage IDs in a single batch request (public function)
+ */
+export const getBatchFileStorageUrlsPublic = query({
+  args: {
+    serviceKey: v.string(),
+    storageIds: v.array(v.id('_storage')),
+  },
+  returns: v.array(
+    v.object({
+      storageId: v.id('_storage'),
+      url: v.union(v.string(), v.null()),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    if (args.serviceKey !== process.env.CONVEX_SERVICE_ROLE_KEY) {
+      return [];
+    }
+
+    const results = [];
+
+    for (const storageId of args.storageIds) {
+      try {
+        const url = await ctx.storage.getUrl(storageId);
+        results.push({
+          storageId,
+          url,
+        });
+      } catch (error) {
+        console.error('[STORAGE] Failed to get file URL in batch', {
+          error: error instanceof Error ? error.message : String(error),
+          storageId,
+        });
+        results.push({
+          storageId,
+          url: null,
+        });
+      }
+    }
+
+    return results;
+  },
+});
+
+/**
  * Get multiple file/image URLs from storage IDs in a single batch request (internal function)
  */
 export const getBatchFileStorageUrls = internalQuery({

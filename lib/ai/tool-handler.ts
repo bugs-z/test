@@ -18,7 +18,6 @@ interface ToolHandlerConfig {
   abortSignal: AbortSignal;
   chatMetadata: ChatMetadata;
   model: LLMID;
-  isReasoningModel: boolean;
   rateLimitInfo: RateLimitInfo;
   initialChatPromise: Promise<void>;
 }
@@ -33,12 +32,11 @@ export async function handleToolExecution(config: ToolHandlerConfig) {
     abortSignal,
     chatMetadata,
     model,
-    isReasoningModel,
     rateLimitInfo,
     initialChatPromise,
   } = config;
 
-  if (isReasoningModel) {
+  if (model === 'reasoning-model') {
     return createDataStreamResponse({
       execute: async (dataStream) => {
         await executeReasonLLMTool({

@@ -1,5 +1,6 @@
 import type { Sandbox } from '@e2b/code-interpreter';
 import type { AgentMode } from '@/types/llms';
+import type { PluginID } from '@/types';
 
 export interface SandboxManager {
   getSandbox: () => Promise<{ sandbox: Sandbox }>;
@@ -17,9 +18,7 @@ export interface ToolContext {
   agentMode: AgentMode;
   sandboxManager?: SandboxManager;
   userCountryCode?: string | null;
-  pentestFiles?: Array<{ path: string; data: Buffer }>;
-  messages?: any[];
-  isTerminalContinuation?: boolean;
+  selectedPlugin?: PluginID;
 }
 
 // Constants for sandbox creation

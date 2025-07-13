@@ -40,22 +40,24 @@ Guidelines:
     parameters: z.object({
       prompt: z
         .string()
-        .describe('The text description of the image to generate'),
+        .describe('A detailed text description of the image to generate'),
       size: z
         .enum(['1024x1024', '1536x1024', '1024x1536'])
         .nullable()
-        .describe('Desired image size'),
+        .describe('The size of the generated image. Default is 1024x1024.'),
       n: z
         .number()
         .min(1)
         .max(4)
         .nullable()
-        .describe('Number of images to generate'),
+        .describe(
+          'The number of images to generate (max usually 1–4). Default is 1.',
+        ),
       transparent_background: z
         .boolean()
         .nullable()
         .describe(
-          'Whether the generated image should have a transparent background',
+          'Whether to generate the image with a transparent background. Default is false.',
         ),
     }),
     execute: async ({
@@ -108,9 +110,7 @@ Guidelines:
           event: 'image_generation_executed',
         });
 
-        const providerOptions: any = {
-          openai: { quality: 'high' },
-        };
+        const providerOptions: any = {};
         if (transparent_background) {
           providerOptions.openai.background = 'transparent';
         }

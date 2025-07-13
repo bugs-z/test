@@ -4,7 +4,12 @@ import type { TextPart, FilePart } from 'ai';
 import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@/convex/_generated/api';
 import type { Doc, Id } from '@/convex/_generated/dataModel';
+import {
+  generatePentestFilesFromMessages,
+  createAttachmentReferences,
+} from './ai/pentest-files';
 
+// Environment validation
 if (
   !process.env.NEXT_PUBLIC_CONVEX_URL ||
   !process.env.CONVEX_SERVICE_ROLE_KEY
@@ -16,23 +21,20 @@ if (
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL);
 
+// Constants
+const LOCAL_PATH = '/home/user';
+
 /**
  * Gets file content from Convex storage
- * @param fileId - The file ID to get content for
- * @param userId - User ID for authorization
- * @returns Buffer with file content or null if failed
  */
 async function getFileContentFromStorage(
   fileId: Id<'files'>,
   userId: string,
 ): Promise<Buffer | null> {
   try {
-    // Get the file metadata from Convex
-    const fileMetadata = await convex.query(api.files.getFile, {
-      fileId,
-    });
+    const fileMetadata = await convex.query(api.files.getFile, { fileId });
 
-    // Combined validation checks - return null if any condition fails
+    // Validate file metadata
     if (
       !fileMetadata ||
       fileMetadata.user_id !== userId ||
@@ -43,7 +45,7 @@ async function getFileContentFromStorage(
       return null;
     }
 
-    // Handle Convex storage files only
+    // Get file URL from storage
     const fileUrl = await convex.query(
       api.fileStorage.getFileStorageUrlPublic,
       {
@@ -52,15 +54,11 @@ async function getFileContentFromStorage(
       },
     );
 
-    if (!fileUrl) {
-      return null;
-    }
+    if (!fileUrl) return null;
 
-    // Fetch the file content from Convex storage URL
+    // Fetch and return file content
     const response = await fetch(fileUrl);
-    if (!response.ok) {
-      return null;
-    }
+    if (!response.ok) return null;
 
     const arrayBuffer = await response.arrayBuffer();
     return Buffer.from(arrayBuffer);
@@ -70,15 +68,27 @@ async function getFileContentFromStorage(
   }
 }
 
-export function buildDocumentsText(fileItems: Doc<'file_items'>[]) {
-  const fileGroups: Record<
-    string,
-    { id: string; name: string; content: string[] }
-  > = fileItems.reduce(
-    (
-      acc: Record<string, { id: string; name: string; content: string[] }>,
-      item: Doc<'file_items'>,
-    ) => {
+/**
+ * Checks if a file is a PDF
+ */
+function isPdfFile(
+  fileItem: Doc<'file_items'>,
+  fileMetadata?: Doc<'files'>,
+): boolean {
+  const nameCheck = fileItem.name?.toLowerCase().endsWith('.pdf') ?? false;
+  const typeCheck = fileMetadata?.type === 'application/pdf';
+  const metadataNameCheck =
+    fileMetadata?.name?.toLowerCase().endsWith('.pdf') ?? false;
+
+  return nameCheck || typeCheck || metadataNameCheck;
+}
+
+/**
+ * Builds documents text from file items
+ */
+export function buildDocumentsText(fileItems: Doc<'file_items'>[]): string {
+  const fileGroups = fileItems.reduce(
+    (acc, item) => {
       if (!acc[item.file_id]) {
         acc[item.file_id] = {
           id: item.file_id,
@@ -89,26 +99,22 @@ export function buildDocumentsText(fileItems: Doc<'file_items'>[]) {
       acc[item.file_id].content.push(item.content);
       return acc;
     },
-    {},
+    {} as Record<string, { id: string; name: string; content: string[] }>,
   );
 
   const documents = Object.values(fileGroups)
-    .map((file: any) => {
-      // Check if content is empty or contains only whitespace
+    .map((file) => {
       const hasContent = file.content.some(
-        (content: string) => content.trim().length > 0,
+        (content) => content.trim().length > 0,
       );
 
-      if (!hasContent) {
-        return `<document id="${file.id}">
-<source>${file.name}</source>
-<document_content>File content is empty because it's a binary file or could not be processed into readable format. Use terminal commands to access the file content.</document_content>
-</document>`;
-      }
+      const documentContent = hasContent
+        ? file.content.join('\n\n')
+        : "File content is empty because it's a binary file or could not be processed into readable format. Use terminal commands to access the file content.";
 
       return `<document id="${file.id}">
 <source>${file.name}</source>
-<document_content>${file.content.join('\n\n')}</document_content>
+<document_content>${documentContent}</document_content>
 </document>`;
     })
     .join('\n\n');
@@ -118,40 +124,25 @@ export function buildDocumentsText(fileItems: Doc<'file_items'>[]) {
 
 /**
  * Processes a PDF file item for chat messages
- * @param fileItem - The file item to process
- * @param userId - User ID for authorization
- * @returns File object for PDF or null if not a PDF
  */
 export async function processPdfFileItem(
   fileItem: Doc<'file_items'>,
   userId: string,
-) {
+): Promise<FilePart | null> {
   try {
-    // Check if file might be a PDF based on name
-    if (!fileItem.name || !fileItem.name.toLowerCase().endsWith('.pdf')) {
-      return null;
-    }
+    // Quick check if file might be a PDF
+    if (!isPdfFile(fileItem)) return null;
 
-    // Get the file metadata from Convex to check if it's a PDF
+    // Get file metadata to confirm PDF type
     const fileMetadata = await convex.query(api.files.getFile, {
       fileId: fileItem.file_id,
     });
 
-    // Check if it's a PDF
-    if (
-      !fileMetadata ||
-      (fileMetadata.type !== 'application/pdf' &&
-        !fileMetadata.name.toLowerCase().endsWith('.pdf'))
-    ) {
-      return null;
-    }
+    if (!fileMetadata || !isPdfFile(fileItem, fileMetadata)) return null;
 
-    // Get file content using the reusable function
+    // Get file content
     const buffer = await getFileContentFromStorage(fileItem.file_id, userId);
-
-    if (!buffer) {
-      return null;
-    }
+    if (!buffer) return null;
 
     return {
       type: 'file' as const,
@@ -166,48 +157,56 @@ export async function processPdfFileItem(
 }
 
 /**
- * Creates an array of file objects with paths and content for pentest agent
- * @param localPath - The local path prefix for files
- * @param fileItems - Array of file items to process
- * @param userId - User ID for authorization
- * @returns Array of file objects with paths and raw buffer data
+ * Processes file attachments based on mode
  */
-export async function createPentestFileArray(
-  localPath: string,
+async function processFileAttachments(
+  attachments: any[],
   fileItems: Doc<'file_items'>[],
   userId: string,
-): Promise<Array<{ path: string; data: Buffer }>> {
-  const pentestFiles: Array<{ path: string; data: Buffer }> = [];
+  isReasoning: boolean,
+  isTerminal: boolean,
+): Promise<{ content: MessageContent[]; hasPdfAttachments: boolean }> {
+  const processedContent: MessageContent[] = [];
+  let hasPdfAttachments = false;
 
-  for (const fileItem of fileItems) {
-    try {
-      // Get file content from storage
-      const buffer = await getFileContentFromStorage(fileItem.file_id, userId);
+  for (const attachment of attachments) {
+    if (!attachment.file_id) continue;
 
-      if (buffer) {
-        // Provide data as raw buffer
-        pentestFiles.push({
-          path: `${localPath}/${fileItem.name}`,
-          data: buffer,
-        });
+    const fileItem = fileItems.find(
+      (item) => item.file_id === attachment.file_id,
+    );
+    if (!fileItem) continue;
+
+    if (isReasoning) {
+      // Use buildDocumentsText for all files including PDFs
+      const documentsText = buildDocumentsText([fileItem]);
+      processedContent.push({ type: 'text', text: documentsText } as TextPart);
+    } else if (isTerminal) {
+      // Add XML-like attachment reference for pentest agent
+      const attachmentRef = createAttachmentReferences([fileItem], LOCAL_PATH);
+      processedContent.push({ type: 'text', text: attachmentRef } as TextPart);
+    } else {
+      // Check if it's a PDF for non-pentest agents
+      const pdfFile = await processPdfFileItem(fileItem, userId);
+      if (pdfFile) {
+        processedContent.push(pdfFile);
+        hasPdfAttachments = true;
+      } else {
+        // Normal case: add document text
+        const documentsText = buildDocumentsText([fileItem]);
+        processedContent.push({
+          type: 'text',
+          text: documentsText,
+        } as TextPart);
       }
-    } catch (error) {
-      console.error(
-        `Error processing file ${fileItem.name} for pentest:`,
-        error,
-      );
-      // Continue with other files even if one fails
     }
   }
 
-  return pentestFiles;
+  return { content: processedContent, hasPdfAttachments };
 }
 
 /**
- * Processes message content and attachments, handling different attachment types appropriately
- * @param messages - The chat messages to process
- * @param userId - The user ID for authorization
- * @returns The processed messages with attachments included and pentest files array if applicable
+ * Processes message content and attachments
  */
 export async function processMessageContentWithAttachments(
   messages: BuiltChatMessage[],
@@ -221,141 +220,83 @@ export async function processMessageContentWithAttachments(
 }> {
   if (!messages.length) return { processedMessages: messages };
 
-  // Create a copy to avoid mutating the original
-  let processedMessages = [...messages];
-  let pentestFiles: Array<{ path: string; data: Buffer }> | undefined;
+  const processedMessages = [...messages];
   let hasPdfAttachments = false;
-  const localPath = '/home/user';
 
   try {
-    // Find the last user message to determine if we should generate pentestFiles
-    const lastUserMessage = messages
-      .slice()
-      .reverse()
-      .find((m) => m.role === 'user');
-    const shouldGeneratePentestFiles =
-      isTerminal &&
-      lastUserMessage?.attachments &&
-      lastUserMessage.attachments.length > 0;
+    // Generate pentest files if this is a terminal request
+    const pentestFiles = isTerminal
+      ? await generatePentestFilesFromMessages(messages, userId, LOCAL_PATH)
+      : undefined;
 
-    // Collect all file IDs from user messages only
+    // Collect all file IDs from user messages
     const allFileIds = processedMessages
-      .filter((m) => m.role === 'user') // Only process user messages
+      .filter((m) => m.role === 'user')
       .flatMap((m) => (m.attachments ?? []).map((a) => a.file_id))
       .filter(Boolean);
 
-    // Make a single batch query for all file items
-    const allFileItems = await convex.query(
-      api.file_items.getAllFileItemsByFileIds,
-      {
-        serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
-        fileIds: allFileIds,
-      },
-    );
+    // Get all file items in one batch
+    const allFileItems =
+      allFileIds.length > 0
+        ? await convex.query(api.file_items.getAllFileItemsByFileIds, {
+            serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
+            fileIds: allFileIds,
+          })
+        : [];
 
-    // Only generate pentestFiles if we're dealing with the last user message that has attachments
-    if (shouldGeneratePentestFiles && allFileItems && lastUserMessage) {
-      // Filter file items for the last user message only
-      const lastUserFileItems = allFileItems.filter((fi) =>
-        (lastUserMessage.attachments ?? []).some(
-          (a) => a.file_id === fi.file_id,
-        ),
-      );
-
-      if (lastUserFileItems.length > 0) {
-        pentestFiles = await createPentestFileArray(
-          localPath,
-          lastUserFileItems,
-          userId,
-        );
-      }
-    }
-
-    // Process each message
+    // Process each user message
     for (const message of processedMessages) {
-      // Only process attachments for user messages
-      if (
-        message.role === 'user' &&
-        message.attachments &&
-        Array.isArray(message.attachments)
-      ) {
-        // Filter file items for this specific message
-        const fileItems =
+      if (message.role !== 'user') continue;
+
+      const processedContent: MessageContent[] = [];
+
+      // Add original content
+      if (typeof message.content === 'string') {
+        processedContent.push({
+          type: 'text',
+          text: message.content,
+        } as TextPart);
+      } else if (Array.isArray(message.content)) {
+        processedContent.push(...message.content);
+      }
+
+      // Process file attachments
+      if (message.attachments?.length) {
+        const messageFileItems =
           allFileItems?.filter((fi) =>
-            (message.attachments ?? []).some((a) => a.file_id === fi.file_id),
+            message.attachments!.some((a) => a.file_id === fi.file_id),
           ) ?? [];
 
-        if (fileItems.length > 0) {
-          // Process files in the order they appear in attachments
-          const processedContent: MessageContent[] = [];
+        const { content, hasPdfAttachments: hasMessagePdfs } =
+          await processFileAttachments(
+            message.attachments,
+            messageFileItems,
+            userId,
+            isReasoning,
+            isTerminal,
+          );
 
-          // First add the original content if it's a string
-          if (typeof message.content === 'string') {
-            processedContent.push({
-              type: 'text',
-              text: message.content,
-            } as TextPart);
-          } else if (Array.isArray(message.content)) {
-            processedContent.push(...message.content);
-          }
-
-          // Process each attachment in order
-          for (const attachment of message.attachments) {
-            if (!attachment.file_id) continue;
-
-            const fileItem = fileItems.find(
-              (item) => item.file_id === attachment.file_id,
-            );
-            if (!fileItem) continue;
-
-            // If isReasoning is true, use buildDocumentsText for all files including PDFs
-            if (isReasoning) {
-              const documentsText = buildDocumentsText([fileItem]);
-              processedContent.push({
-                type: 'text',
-                text: documentsText,
-              } as TextPart);
-            } else if (isTerminal) {
-              // For pentest agent, add XML-like attachment reference (skip PDF processing)
-              const attachmentRef = `<attachment filename="${fileItem.name}" local_path="${localPath}/${fileItem.name}" />`;
-              processedContent.push({
-                type: 'text',
-                text: attachmentRef,
-              } as TextPart);
-            } else {
-              // Check if it's a PDF for non-pentest agents
-              const pdfFile = await processPdfFileItem(fileItem, userId);
-              if (pdfFile) {
-                // Always send PDFs as files
-                processedContent.push(pdfFile as FilePart);
-                hasPdfAttachments = true;
-              } else if (!hasPdfAttachments) {
-                // Normal case: add document text
-                const documentsText = buildDocumentsText([fileItem]);
-                processedContent.push({
-                  type: 'text',
-                  text: documentsText,
-                } as TextPart);
-              }
-            }
-          }
-
-          // Update the message content with the processed content
-          message.content = processedContent;
-        }
+        processedContent.push(...content);
+        if (hasMessagePdfs) hasPdfAttachments = true;
       }
+
+      // Update message content
+      message.content = processedContent;
     }
 
     // Remove attachments from all messages after processing
-    processedMessages = processedMessages.map(
+    const finalMessages = processedMessages.map(
       ({ attachments, ...messageWithoutAttachments }) =>
         messageWithoutAttachments,
     );
 
-    return { processedMessages, pentestFiles, hasPdfAttachments };
+    return {
+      processedMessages: finalMessages,
+      pentestFiles,
+      hasPdfAttachments,
+    };
   } catch (error) {
     console.error('Error processing message attachments:', error);
+    return { processedMessages };
   }
-
-  return { processedMessages };
 }

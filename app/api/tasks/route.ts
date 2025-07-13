@@ -52,8 +52,7 @@ export async function POST(request: Request) {
       'deep-research-model',
       modelParams,
       profile,
-      false,
-      true,
+      true, // isPremiumSubscription
     );
 
     // Handle initial chat creation and user message in parallel with other operations

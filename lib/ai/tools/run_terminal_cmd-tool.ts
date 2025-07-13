@@ -3,8 +3,8 @@ import { z } from 'zod';
 import type { ToolContext } from './agent/types';
 import { executeTerminalCommand } from '@/lib/ai/tools/agent/terminal-executor';
 import { streamTerminalOutput } from '@/lib/ai/terminal-utils';
-import { writePentestFilesToSandbox } from './agent/utils/sandbox-utils';
 import PostHogClient from '@/app/posthog';
+import { PluginID } from '@/types';
 
 /**
  * Creates a terminal tool for executing commands in the sandbox environment
@@ -12,17 +12,19 @@ import PostHogClient from '@/app/posthog';
  * @returns The terminal tool
  */
 export const createShellExecTool = (context: ToolContext) => {
-  const {
-    dataStream,
-    userID,
-    sandboxManager,
-    pentestFiles,
-    messages,
-    isTerminalContinuation,
-  } = context;
+  const { dataStream, userID, sandboxManager, selectedPlugin } = context;
 
-  // Track if pentest files have been written to avoid duplicates
-  let pentestFilesWritten = false;
+  // Conditionally build the file upload note
+  const fileUploadNote =
+    selectedPlugin !== PluginID.TERMINAL
+      ? `
+<file_upload_note>
+For file analysis tasks, ALWAYS tell users: "Please select 'Use terminal' from the tools dropdown \
+to upload your files to the sandbox where I can analyze them directly." \
+Do NOT provide alternatives - files are only available when terminal tool is selected.
+</file_upload_note>
+`
+      : '';
 
   return tool({
     description: `Execute commands in the sandbox environment. Use for executing terminal commands, running code, installing packages, or managing files.
@@ -39,7 +41,7 @@ appropriate output flags (e.g., -oN for nmap) if the tool supports it, otherwise
 - Use non-interactive \`bc\` for simple calculations, Python for complex math; never calculate mentally
 - If user provided binary file or file content is empty, use terminal commands to access it
 </shell_guidelines>
-
+${fileUploadNote}
 <sandbox_environment>
 System Environment:
 - OS: Debian GNU/Linux 12 linux/amd64 (with internet access)
@@ -89,62 +91,6 @@ Pre-installed Tools:
 
       // Get sandbox from manager
       const { sandbox } = await sandboxManager.getSandbox();
-
-      // Handle pentest files - either use existing ones or generate them if messages have attachments
-      // Skip if this is a terminal continuation
-      let filesToWrite = pentestFiles;
-
-      if (
-        !filesToWrite &&
-        messages &&
-        !pentestFilesWritten &&
-        !isTerminalContinuation
-      ) {
-        // Find the last user message and check if it has file attachments
-        const lastUserMessage = messages
-          .slice()
-          .reverse()
-          .find((msg: any) => msg.role === 'user');
-        const hasAttachments =
-          lastUserMessage?.attachments &&
-          lastUserMessage.attachments.length > 0;
-
-        if (hasAttachments) {
-          // Dynamically import to avoid circular dependencies
-          const { processMessageContentWithAttachments } = await import(
-            '@/lib/build-prompt-backend'
-          );
-
-          try {
-            // Only process the last user message with attachments
-            const result = await processMessageContentWithAttachments(
-              [lastUserMessage], // Only pass the last user message
-              userID,
-              false, // isReasoning
-              true, // isTerminal
-            );
-
-            filesToWrite = result.pentestFiles;
-          } catch (error) {
-            console.error('Error generating pentest files:', error);
-          }
-        }
-      }
-
-      // Write pentest files to sandbox if they exist and haven't been written yet
-      if (filesToWrite && filesToWrite.length > 0 && !pentestFilesWritten) {
-        await writePentestFilesToSandbox(
-          sandboxManager,
-          filesToWrite,
-          dataStream,
-        );
-        pentestFilesWritten = true;
-      }
-
-      dataStream.writeData({
-        type: 'text-delta',
-        content: `\n\n<pgptml:terminal_command exec-dir="${exec_dir}">${command}</pgptml:terminal_command>`,
-      });
 
       // Execute command
       const terminalStream = await executeTerminalCommand({

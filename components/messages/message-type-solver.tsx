@@ -2,9 +2,7 @@ import type { Doc } from '@/convex/_generated/dataModel';
 import { PluginID } from '@/types/plugins';
 import type { FC } from 'react';
 import { MessageMarkdown } from './message-markdown';
-import { MessageTerminal } from './terminal-messages/message-terminal';
-import { MessageCitations } from './message-citations';
-import { MessageThinking } from './message-thinking';
+import { MessageContentRenderer } from './message-content-renderer';
 
 interface MessageTypeResolverProps {
   message: Doc<'messages'>;
@@ -24,49 +22,30 @@ export const MessageTypeResolver: FC<MessageTypeResolverProps> = ({
     message.plugin !== PluginID.NONE.toString() &&
     message.role === 'assistant';
 
-  // console.log({
-  //   isPluginOutput,
-  //   plugin: message.plugin,
-  //   role: message.role
-  // })
+  // Check if this message has any special content (terminal, citations, web search, thinking)
+  const hasSpecialContent =
+    message.role === 'assistant' &&
+    // Has thinking content
+    (message.thinking_content ||
+      // Has terminal-related plugins
+      (isPluginOutput &&
+        allTerminalPlugins.includes(message.plugin as PluginID)) ||
+      allTerminalPlugins.includes(toolInUse as PluginID) ||
+      // Has web search or citations
+      message.plugin === PluginID.WEB_SEARCH ||
+      toolInUse === PluginID.WEB_SEARCH ||
+      message.citations?.length > 0);
 
-  if (
-    (isPluginOutput &&
-      allTerminalPlugins.includes(message.plugin as PluginID)) ||
-    allTerminalPlugins.includes(toolInUse as PluginID)
-  ) {
+  // Use unified component for any special content
+  if (hasSpecialContent) {
     return (
-      <MessageTerminal
+      <MessageContentRenderer
         content={message.content}
+        citations={message.citations || []}
         isAssistant={message.role === 'assistant'}
         isLastMessage={isLastMessage}
-      />
-    );
-  }
-
-  if (message.role === 'assistant' && message.thinking_content) {
-    return (
-      <MessageThinking
-        content={message.content}
         thinking_content={message.thinking_content}
         thinking_elapsed_secs={message.thinking_elapsed_secs}
-        isAssistant={message.role === 'assistant'}
-        citations={message.citations || []}
-      />
-    );
-  }
-
-  if (
-    message.role === 'assistant' &&
-    (message.plugin === PluginID.WEB_SEARCH ||
-      toolInUse === PluginID.WEB_SEARCH ||
-      message.citations?.length > 0)
-  ) {
-    return (
-      <MessageCitations
-        content={message.content}
-        isAssistant={message.role === 'assistant'}
-        citations={message.citations || []}
       />
     );
   }

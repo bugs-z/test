@@ -3,6 +3,7 @@ import type { ImageContent } from '@/types/chat-message';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
 import { ConvexHttpClient } from 'convex/browser';
+import { processImagesForPentest } from './pentest-files';
 
 if (
   !process.env.NEXT_PUBLIC_CONVEX_URL ||
@@ -29,32 +30,87 @@ export function checkForImagesInMessages(
 }
 
 /**
- * Gets URLs for multiple images from Convex storage
+ * Gets URLs for multiple images from Convex storage using batch request
  */
-async function getImageUrls(
+export async function getImageUrls(
   storageIds: string[],
 ): Promise<Map<string, string>> {
   if (!storageIds.length) return new Map();
 
   const urlMap = new Map<string, string>();
 
-  const urlPromises = storageIds.map(async (storageId) => {
-    try {
-      if (!storageId?.trim() || storageId.includes('/')) return;
+  // Filter out invalid storage IDs
+  const validStorageIds = storageIds.filter(
+    (storageId) => storageId?.trim() && !storageId.includes('/'),
+  );
 
-      const url = await convex.query(api.fileStorage.getFileStorageUrlPublic, {
+  if (validStorageIds.length === 0) return urlMap;
+
+  try {
+    const results = await convex.query(
+      api.fileStorage.getBatchFileStorageUrlsPublic,
+      {
         serviceKey: process.env.CONVEX_SERVICE_ROLE_KEY!,
-        storageId: storageId as Id<'_storage'>,
-      });
+        storageIds: validStorageIds as Id<'_storage'>[],
+      },
+    );
 
-      if (url) urlMap.set(storageId, url);
-    } catch (error) {
-      console.error(`Error getting URL for storage ID ${storageId}:`, error);
+    for (const result of results) {
+      if (result.url) {
+        urlMap.set(result.storageId, result.url);
+      }
     }
-  });
+  } catch (error) {
+    console.error('Error getting batch image URLs:', error);
+  }
 
-  await Promise.all(urlPromises);
   return urlMap;
+}
+
+/**
+ * Extracts images from assistant messages and returns them with cleaned message
+ */
+function extractAssistantImages(message: BuiltChatMessage): {
+  images: ImageContent[];
+  cleanedMessage: BuiltChatMessage;
+} {
+  const images: ImageContent[] = [];
+
+  // Extract images from content array
+  if (Array.isArray(message.content)) {
+    images.push(
+      ...message.content.filter(
+        (item): item is ImageContent => item.type === 'image_url',
+      ),
+    );
+  }
+
+  // Extract images from image_paths property (legacy compatibility)
+  if ('image_paths' in message && Array.isArray((message as any).image_paths)) {
+    const imagePaths = (message as any).image_paths as string[];
+    images.push(
+      ...imagePaths.map((path) => ({
+        type: 'image_url' as const,
+        image_url: { url: path, isPath: true },
+      })),
+    );
+  }
+
+  // Remove images from message content
+  const cleanedContent = Array.isArray(message.content)
+    ? message.content.filter((item) => item.type !== 'image_url')
+    : message.content;
+
+  return {
+    images,
+    cleanedMessage: {
+      ...message,
+      content:
+        Array.isArray(message.content) && cleanedContent.length === 0
+          ? message.content
+          : cleanedContent,
+    },
+  };
 }
 
 /**
@@ -76,45 +132,9 @@ export function processAssistantImages(
 
   for (const message of messages) {
     if (message.role === 'assistant') {
-      const assistantImages: ImageContent[] = [];
-
-      // Extract images from content array
-      if (Array.isArray(message.content)) {
-        assistantImages.push(
-          ...message.content.filter(
-            (item): item is ImageContent => item.type === 'image_url',
-          ),
-        );
-      }
-
-      // Extract images from image_paths property (compatibility)
-      if (
-        'image_paths' in message &&
-        Array.isArray((message as any).image_paths)
-      ) {
-        const imagePaths = (message as any).image_paths as string[];
-        assistantImages.push(
-          ...imagePaths.map((path) => ({
-            type: 'image_url' as const,
-            image_url: { url: path, isPath: true },
-          })),
-        );
-      }
-
-      pendingAssistantImages.push(...assistantImages);
-
-      // Remove images from assistant message
-      const content = Array.isArray(message.content)
-        ? message.content.filter((item) => item.type !== 'image_url')
-        : message.content;
-
-      processedMessages.push({
-        ...message,
-        content:
-          Array.isArray(message.content) && content.length === 0
-            ? message.content
-            : content,
-      });
+      const { images, cleanedMessage } = extractAssistantImages(message);
+      pendingAssistantImages.push(...images);
+      processedMessages.push(cleanedMessage);
     } else if (message.role === 'user' && pendingAssistantImages.length > 0) {
       // Add pending images to user message
       const currentContent = Array.isArray(message.content)
@@ -134,7 +154,7 @@ export function processAssistantImages(
 
   // Handle any remaining assistant images that weren't attached to a user message
   if (pendingAssistantImages.length > 0) {
-    console.error(
+    console.warn(
       `Found ${pendingAssistantImages.length} assistant images that couldn't be moved to a user message. These images will be dropped.`,
     );
   }
@@ -143,21 +163,118 @@ export function processAssistantImages(
 }
 
 /**
- * Processes messages and converts image paths to URLs.
- *
- * Steps:
- * 1. Moves assistant images to next user messages
- * 2. Converts image storage IDs to URLs
- * 3. Removes images if model doesn't support them
+ * Collects storage IDs from messages that need URL conversion
  */
-export async function processMessagesWithImages(
+function collectStorageIds(messages: BuiltChatMessage[]): {
+  storageIds: Set<string>;
+  storageIdToImageContent: Map<
+    string,
+    { message: BuiltChatMessage; item: any }
+  >;
+} {
+  const storageIds = new Set<string>();
+  const storageIdToImageContent = new Map<
+    string,
+    { message: BuiltChatMessage; item: any }
+  >();
+
+  messages.forEach((message) => {
+    if (!Array.isArray(message.content)) return;
+
+    message.content.forEach((item) => {
+      if (
+        item.type === 'image_url' &&
+        'isPath' in item.image_url &&
+        item.image_url.isPath
+      ) {
+        storageIds.add(item.image_url.url);
+        storageIdToImageContent.set(item.image_url.url, { message, item });
+      }
+    });
+  });
+
+  return { storageIds, storageIdToImageContent };
+}
+
+/**
+ * Processes message content for terminal mode, reorganizing images and text
+ */
+function processTerminalModeContent(
+  message: BuiltChatMessage,
+  imageUrls: Map<string, string>,
+): BuiltChatMessage {
+  if (!Array.isArray(message.content) || message.role !== 'user') {
+    return message;
+  }
+
+  const processedContent: any[] = [];
+  const imageContents: any[] = [];
+
+  // Convert storage IDs to URLs and separate content types
+  message.content.forEach((item) => {
+    if (item.type === 'image_url') {
+      let processedItem = item;
+      if ('isPath' in item.image_url && item.image_url.isPath) {
+        const url = imageUrls.get(item.image_url.url);
+        if (url) {
+          processedItem = { type: 'image_url' as const, image_url: { url } };
+        }
+      }
+      imageContents.push(processedItem);
+    } else {
+      processedContent.push(item);
+    }
+  });
+
+  // Add non-image content first, then images
+  return {
+    ...message,
+    content: [...processedContent, ...imageContents],
+  };
+}
+
+/**
+ * Processes message content for normal mode, converting storage IDs to URLs
+ */
+function processNormalModeContent(
+  message: BuiltChatMessage,
+  imageUrls: Map<string, string>,
+): BuiltChatMessage {
+  if (!Array.isArray(message.content)) return message;
+
+  const processedContent = message.content.map((item) => {
+    if (
+      item.type === 'image_url' &&
+      'isPath' in item.image_url &&
+      item.image_url.isPath
+    ) {
+      const url = imageUrls.get(item.image_url.url);
+      return url ? { type: 'image_url' as const, image_url: { url } } : item;
+    }
+    return item;
+  });
+
+  return { ...message, content: processedContent };
+}
+
+/**
+ * Unified image processing function that handles both URL conversion and pentest file creation
+ * @param messages - The chat messages to process
+ * @param selectedModel - The selected model (for filtering)
+ * @param localPath - Optional local path for pentest files (indicates terminal mode)
+ * @returns Object with processed messages, image attachments flag, and optional pentest files
+ */
+export async function processMessagesWithImagesUnified(
   messages: BuiltChatMessage[],
   selectedModel?: string,
+  localPath?: string,
 ): Promise<{
   processedMessages: BuiltChatMessage[];
   hasImageAttachments: boolean;
+  pentestImageFiles?: Array<{ path: string; data: Buffer }>;
 }> {
   const hasImageAttachments = checkForImagesInMessages(messages);
+  const isTerminalMode = !!localPath;
 
   // Process assistant images first
   const messagesWithProcessedAssistantImages = processAssistantImages(messages);
@@ -173,20 +290,9 @@ export async function processMessagesWithImages(
   }
 
   // Collect storage IDs that need URL conversion
-  const storageIds = new Set<string>();
-  messagesWithProcessedAssistantImages.forEach((message) => {
-    if (!Array.isArray(message.content)) return;
-
-    message.content.forEach((item) => {
-      if (
-        item.type === 'image_url' &&
-        'isPath' in item.image_url &&
-        item.image_url.isPath
-      ) {
-        storageIds.add(item.image_url.url);
-      }
-    });
-  });
+  const { storageIds } = collectStorageIds(
+    messagesWithProcessedAssistantImages,
+  );
 
   // If no storage IDs, return as-is
   if (storageIds.size === 0) {
@@ -196,32 +302,34 @@ export async function processMessagesWithImages(
     };
   }
 
-  // Convert storage IDs to URLs
+  // Convert storage IDs to URLs (single batch call)
   const imageUrls = await getImageUrls(Array.from(storageIds));
 
+  // Process messages with URL conversion
   const processedMessages = messagesWithProcessedAssistantImages.map(
-    (message) => {
-      if (!Array.isArray(message.content)) return message;
-
-      const processedContent = message.content.map((item) => {
-        if (
-          item.type === 'image_url' &&
-          'isPath' in item.image_url &&
-          item.image_url.isPath
-        ) {
-          const url = imageUrls.get(item.image_url.url);
-          return url
-            ? { type: 'image_url' as const, image_url: { url } }
-            : item;
-        }
-        return item;
-      });
-
-      return { ...message, content: processedContent };
-    },
+    (message) =>
+      isTerminalMode
+        ? processTerminalModeContent(message, imageUrls)
+        : processNormalModeContent(message, imageUrls),
   );
 
-  return { processedMessages, hasImageAttachments };
+  // Handle pentest files if localPath is provided
+  let pentestImageFiles: Array<{ path: string; data: Buffer }> | undefined;
+  if (localPath) {
+    try {
+      const result = await processImagesForPentest(
+        messages,
+        processedMessages,
+        imageUrls,
+        localPath,
+      );
+      pentestImageFiles = result.pentestImageFiles;
+    } catch (error) {
+      console.error('Error processing images for pentest:', error);
+    }
+  }
+
+  return { processedMessages, hasImageAttachments, pentestImageFiles };
 }
 
 /**

@@ -11,7 +11,7 @@ import { getModerationResult } from '@/lib/server/moderation';
 import { getSystemPrompt } from './prompts';
 import { processMessageContentWithAttachments } from '../build-prompt-backend';
 import { countTokens } from 'gpt-tokenizer';
-import { processMessagesWithImages } from './image-processing';
+import { processMessagesWithImagesUnified } from './image-processing';
 import { PluginID } from '@/types/plugins';
 import { Geo } from '@vercel/functions';
 
@@ -221,16 +221,6 @@ function validateMessageTokens(
 
 /**
  * Processes chat messages and handles model selection, uncensoring, and validation
- * @param messages - Array of messages to process
- * @param selectedModel - The initially selected model
- * @param selectedPlugin - The selected plugin ID
- * @param isContinuation - Whether this is a continuation request
- * @param isTerminalContinuation - Whether this is a terminal continuation request
- * @param apiKey - The OpenAI API key
- * @param isLargeModel - Whether the model is large
- * @param profile - Object containing user_id and profile_context
- * @param supabase - Optional Supabase client for image processing
- * @returns Object containing the processed messages and model information
  */
 export async function processChatMessages(
   messages: BuiltChatMessage[],
@@ -241,7 +231,6 @@ export async function processChatMessages(
     selectedPlugin: string;
   },
   profile: { user_id: string; profile_context: string | undefined },
-  isReasoningModel: boolean,
   isPremiumSubscription: boolean,
   isTerminal?: boolean,
   userLocation?: Geo & { timezone?: string },
@@ -252,59 +241,57 @@ export async function processChatMessages(
   hasPdfAttachments?: boolean;
   hasImageAttachments?: boolean;
 }> {
-  let shouldUncensor = false;
-  const apiKey = process.env.OPENAI_API_KEY;
+  const isNewConversation =
+    !modelParams.isContinuation && !modelParams.isTerminalContinuation;
 
-  // Filter empty assistant messages first
+  // Filter empty assistant messages and create deep copy
   filterEmptyAssistantMessages(messages);
-
-  // Create a deep copy of messages using structuredClone
   const messagesCopy = structuredClone(messages);
 
-  // Process images - this includes processing assistant images by moving them to next user messages
-  let processedMessages: BuiltChatMessage[];
-  let hasImageAttachments = false;
+  // Process images using unified function
+  const imageResult = await processMessagesWithImagesUnified(
+    messagesCopy,
+    selectedModel,
+    isTerminal ? '/home/user' : undefined,
+  );
 
-  const result = await processMessagesWithImages(messagesCopy, selectedModel);
-  processedMessages = result.processedMessages;
-  hasImageAttachments = result.hasImageAttachments;
+  let processedMessages = imageResult.processedMessages;
+  const hasImageAttachments = imageResult.hasImageAttachments;
+  const pentestImageFiles = imageResult.pentestImageFiles;
 
-  // Check if we should uncensor the response
-  if (
-    apiKey &&
-    !modelParams.isContinuation &&
-    !modelParams.isTerminalContinuation
-  ) {
-    const { shouldUncensorResponse: moderationResult } =
-      await getModerationResult(processedMessages, apiKey, 10);
-    shouldUncensor = moderationResult;
+  // Handle moderation and uncensoring
+  if (isNewConversation) {
+    const { shouldUncensorResponse } =
+      await getModerationResult(processedMessages);
+    if (shouldUncensorResponse) {
+      addAuthMessage(processedMessages);
+    }
   }
 
-  if (shouldUncensor) {
-    addAuthMessage(processedMessages);
-  }
-
-  // Validate total token count
+  // Validate messages
   validateMessageTokens(
     processedMessages,
     profile?.user_id,
     isPremiumSubscription,
   );
+  processedMessages = validateMessages(processedMessages);
 
-  // Remove invalid message exchanges before processing attachments
-  const validatedMessages = validateMessages(processedMessages);
-
-  // Process attachments and file content for the last message
-  const {
-    processedMessages: messagesWithAttachments,
-    pentestFiles,
-    hasPdfAttachments,
-  } = await processMessageContentWithAttachments(
-    validatedMessages,
+  // Process attachments and file content
+  const attachmentResult = await processMessageContentWithAttachments(
+    processedMessages,
     profile.user_id,
-    isReasoningModel,
+    selectedModel === 'reasoning-model',
     isTerminal,
   );
+
+  processedMessages = attachmentResult.processedMessages;
+  const textPentestFiles = attachmentResult.pentestFiles;
+  const hasPdfAttachments = attachmentResult.hasPdfAttachments;
+
+  // Combine pentest files for terminal mode
+  const combinedPentestFiles = isTerminal
+    ? combinePentestFiles(pentestImageFiles, textPentestFiles)
+    : undefined;
 
   const systemPrompt = getSystemPrompt({
     selectedChatModel: selectedModel,
@@ -314,12 +301,27 @@ export async function processChatMessages(
   });
 
   return {
-    processedMessages: messagesWithAttachments,
+    processedMessages,
     systemPrompt,
-    pentestFiles,
+    pentestFiles: combinedPentestFiles,
     hasPdfAttachments,
     hasImageAttachments,
   };
+}
+
+/**
+ * Combines pentest files from images and text files
+ */
+function combinePentestFiles(
+  imageFiles?: Array<{ path: string; data: Buffer }>,
+  textFiles?: Array<{ path: string; data: Buffer }>,
+): Array<{ path: string; data: Buffer }> | undefined {
+  const combined: Array<{ path: string; data: Buffer }> = [];
+
+  if (imageFiles?.length) combined.push(...imageFiles);
+  if (textFiles?.length) combined.push(...textFiles);
+
+  return combined.length > 0 ? combined : undefined;
 }
 
 /**

@@ -10,13 +10,17 @@ interface MessageContentItem {
 
 export async function getModerationResult(
   messages: any[],
-  openaiApiKey: string,
-  messageMinLength: number,
 ): Promise<{ shouldUncensorResponse: boolean }> {
+  const openaiApiKey = process.env.OPENAI_API_KEY;
+
+  if (!openaiApiKey) {
+    return { shouldUncensorResponse: false };
+  }
+
   const openai = new OpenAI({ apiKey: openaiApiKey });
 
   // Find the last user message that exceeds the minimum length
-  const targetMessage = findTargetMessage(messages, messageMinLength);
+  const targetMessage = findTargetMessage(messages, 10);
 
   if (!targetMessage) {
     return { shouldUncensorResponse: false };

@@ -4,9 +4,11 @@ import { createImageGenTool } from './image-gen';
 import { createShellExecTool } from './run_terminal_cmd-tool';
 import { createGetTerminalFilesTool } from './get_terminal_files-tool';
 import { DefaultSandboxManager } from './agent/utils/sandbox-manager';
+import { writePentestFilesToSandbox } from './agent/utils/sandbox-utils';
 import { Sandbox } from '@e2b/code-interpreter';
 import { ToolContext } from './agent/types';
 import type { AgentMode } from '@/types/llms';
+import type { PluginID } from '@/types';
 
 export const createToolSchemas = ({
   profile,
@@ -14,18 +16,17 @@ export const createToolSchemas = ({
   abortSignal,
   agentMode,
   pentestFiles,
-  messages,
-  isTerminalContinuation,
+  selectedPlugin,
 }: {
   profile: any;
   dataStream: any;
   abortSignal: AbortSignal;
   agentMode?: AgentMode;
   pentestFiles?: Array<{ path: string; data: Buffer }>;
-  messages?: any[];
-  isTerminalContinuation?: boolean;
+  selectedPlugin?: PluginID;
 }) => {
   let sandbox: Sandbox | null = null;
+  let pentestFilesUploaded = false;
 
   const sandboxManager = new DefaultSandboxManager(
     profile.user_id,
@@ -43,9 +44,7 @@ export const createToolSchemas = ({
     setSandbox: sandboxManager.setSandbox.bind(sandboxManager),
     agentMode,
     sandboxManager,
-    pentestFiles,
-    messages,
-    isTerminalContinuation,
+    selectedPlugin,
   } as ToolContext;
 
   const allSchemas = {
@@ -57,6 +56,27 @@ export const createToolSchemas = ({
   };
 
   type SchemaKey = keyof typeof allSchemas;
+
+  const uploadPentestFiles = async (): Promise<boolean> => {
+    if (pentestFilesUploaded || !pentestFiles || pentestFiles.length === 0) {
+      return true;
+    }
+
+    try {
+      const success = await writePentestFilesToSandbox(
+        sandboxManager,
+        pentestFiles,
+        dataStream,
+      );
+      if (success) {
+        pentestFilesUploaded = true;
+      }
+      return success;
+    } catch (error) {
+      console.error('Error uploading pentest files:', error);
+      return false;
+    }
+  };
 
   return {
     allSchemas,
@@ -84,5 +104,7 @@ export const createToolSchemas = ({
     },
     getSandbox: () => sandbox,
     getSandboxManager: () => sandboxManager,
+    uploadPentestFiles,
+    isPentestFilesUploaded: () => pentestFilesUploaded,
   };
 };

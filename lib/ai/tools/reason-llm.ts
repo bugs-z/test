@@ -80,6 +80,7 @@ export async function executeReasonLLMTool({
   let isThinking = false;
   const assistantMessageId = uuidv4();
   let titleGenerationPromise: Promise<void> | null = null;
+  const citations: string[] = [];
 
   try {
     // Start title generation if needed
@@ -107,9 +108,6 @@ export async function executeReasonLLMTool({
         profile,
         dataStream,
         abortSignal,
-        pentestFiles: undefined,
-        messages: undefined,
-        isTerminalContinuation: false,
       }).getSelectedSchemas(['webSearch', 'browser']),
       experimental_generateMessageId: () => assistantMessageId,
       onChunk: async (chunk) => {
@@ -128,6 +126,26 @@ export async function executeReasonLLMTool({
             type: 'text-delta',
             content: '\n\n',
           });
+        } else if (chunk.chunk.type === 'tool-result') {
+          // Handle tool results and extract citations
+          const { toolName, result } = chunk.chunk;
+
+          if (
+            toolName === 'browser' &&
+            result &&
+            typeof result === 'object' &&
+            'url' in result
+          ) {
+            // For browser tool, add the URL as citation
+            citations.push(result.url as string);
+          } else if (toolName === 'webSearch' && Array.isArray(result)) {
+            // For web search tool, extract URLs from results
+            const searchCitations = result
+              .map((item: any) => item.url)
+              .filter((url: string) => url);
+
+            citations.push(...searchCitations);
+          }
         } else if (chunk.chunk.type === 'reasoning') {
           if (!isThinking) {
             isThinking = true;
@@ -162,6 +180,10 @@ export async function executeReasonLLMTool({
         // Wait for both title generation and initial chat handling to complete
         await Promise.all([titleGenerationPromise, initialChatPromise]);
 
+        // Deduplicate citations
+        const uniqueCitations =
+          citations.length > 0 ? [...new Set(citations)] : undefined;
+
         await handleFinalChatAndAssistantMessage({
           modelParams,
           chatMetadata,
@@ -171,6 +193,7 @@ export async function executeReasonLLMTool({
           finishReason,
           title: generatedTitle,
           assistantMessage: text,
+          citations: uniqueCitations,
           thinkingText: reasoning || undefined,
           thinkingElapsedSecs,
           assistantMessageId,
