@@ -41,6 +41,37 @@ export async function handleResearchKickoff({
   }
 
   const assistantMessageId = uuidv4();
+  let assistantMessage = '';
+
+  abortSignal.addEventListener('abort', async () => {
+    console.log('research kickoff request aborted');
+
+    // Save the assistant message if we have content and chat context
+    if (assistantMessage.trim() && (chat || chatMetadata.id)) {
+      try {
+        // Wait for initial chat handling to complete if it's in progress
+        await config.initialChatPromise;
+
+        await handleFinalChatAndAssistantMessage({
+          ...config,
+          finishReason: 'stop',
+          title: generatedTitle,
+          assistantMessage,
+          citations: [],
+          thinkingText: undefined,
+          thinkingElapsedSecs: null,
+          assistantMessageId,
+        });
+
+        console.log('Research kickoff assistant message saved on abort');
+      } catch (error) {
+        console.error(
+          'Failed to save research kickoff assistant message on abort:',
+          error,
+        );
+      }
+    }
+  });
 
   try {
     const result = streamText({
@@ -93,6 +124,11 @@ export async function handleResearchKickoff({
       // Force tool choice to research_kickoff_tool
       toolChoice: { type: 'tool', toolName: 'research_kickoff_tool' },
       experimental_generateMessageId: () => assistantMessageId,
+      onChunk: async (event: any) => {
+        if (event.chunk.type === 'text-delta') {
+          assistantMessage += event.chunk.textDelta;
+        }
+      },
       onError: async (error) => {
         console.error('[ResearchKickoff] Stream Error:', error);
       },

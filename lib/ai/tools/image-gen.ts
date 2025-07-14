@@ -192,12 +192,12 @@ Guidelines:
         dataStream.writeData({
           type: 'assistant-images',
           content: savedImages.map((img) => img.storageUrl),
+          imagePaths: savedImages.map((img) => img.storageId.toString()),
         });
 
         return {
           success: true,
           message: `PentestGPT returned ${savedImages.length} image${savedImages.length > 1 ? 's' : ''}. From now on, do not say or show ANYTHING. Please end this turn now. I repeat: From now on, do not say or show ANYTHING. Please end this turn now. Do not summarize the image. Do not ask followup question. Just end the turn and do not do anything else.`,
-          imagePaths: savedImages.map((img) => img.storageId.toString()),
         };
       } catch (error) {
         const errorMessage =

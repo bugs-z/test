@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { Doc } from '@/convex/_generated/dataModel';
 import OpenAI from 'openai';
 import { checkRatelimitOnApi } from '@/lib/server/ratelimiter';
+import { extractTextContent } from '@/lib/ai/message-utils';
 
 export interface DeepResearchConfig {
   chat: Doc<'chats'> | null;
@@ -23,6 +24,41 @@ export interface DeepResearchConfig {
   generatedTitle?: string;
   titleGenerationPromise?: Promise<void> | null;
   assistantMessageId?: string;
+}
+
+/**
+ * Convert messages to the format expected by OpenAI's deep research API
+ */
+function convertMessagesToDeepResearchFormat(messages: any[]): any[] {
+  return messages.map((message) => {
+    // Handle different message formats
+    if (message.role === 'assistant') {
+      return {
+        role: 'assistant',
+        content:
+          typeof message.content === 'string'
+            ? message.content
+            : extractTextContent(message.content),
+      };
+    } else if (message.role === 'user') {
+      return {
+        role: 'user',
+        content:
+          typeof message.content === 'string'
+            ? message.content
+            : extractTextContent(message.content),
+      };
+    }
+
+    // Fallback for other roles
+    return {
+      role: message.role,
+      content:
+        typeof message.content === 'string'
+          ? message.content
+          : extractTextContent(message.content),
+    };
+  });
 }
 
 export async function executeDeepResearchTool({
@@ -91,9 +127,59 @@ export async function executeDeepResearchTool({
   let isThinking = false;
   let thinkingStartTime: number | null = null;
   const assistantMessageId = passedAssistantMessageId || uuidv4();
+  let assistantMessage = '';
+  let reasoning = '';
+
+  abortSignal.addEventListener('abort', async () => {
+    console.log('deep research request aborted');
+
+    // Save the assistant message if we have content and chat context
+    if (
+      (assistantMessage.trim() || reasoning.trim()) &&
+      (chat || chatMetadata.id)
+    ) {
+      try {
+        // Wait for initial chat handling to complete if it's in progress
+        await initialChatPromise;
+
+        // Calculate thinking elapsed time if we were thinking
+        let thinkingElapsedSecs = null;
+        if (isThinking && thinkingStartTime) {
+          thinkingElapsedSecs = Math.round(
+            (Date.now() - thinkingStartTime) / 1000,
+          );
+        }
+
+        await handleFinalChatAndAssistantMessage({
+          modelParams,
+          chatMetadata,
+          profile,
+          model,
+          chat,
+          finishReason: 'stop',
+          title: generatedTitle,
+          assistantMessage,
+          citations,
+          thinkingText: reasoning || undefined,
+          thinkingElapsedSecs,
+          assistantMessageId,
+        });
+
+        console.log('Deep research assistant message saved on abort');
+      } catch (error) {
+        console.error(
+          'Failed to save deep research assistant message on abort:',
+          error,
+        );
+      }
+    }
+  });
 
   try {
     const openai = new OpenAI({ timeout: 800 * 1000 }); // 800 seconds (13 min 20 sec)
+
+    // Convert messages to the format expected by OpenAI's deep research API
+    const convertedMessages = convertMessagesToDeepResearchFormat(messages);
 
     const stream = await openai.responses.create({
       model: 'o4-mini-deep-research',
@@ -101,13 +187,10 @@ export async function executeDeepResearchTool({
         summary: 'auto',
       },
       stream: true,
-      input: messages,
+      input: convertedMessages,
       instructions: systemPrompt,
       tools: [{ type: 'web_search_preview' }],
     });
-
-    let assistantMessage = '';
-    let reasoning = '';
 
     for await (const event of stream) {
       if (event.type === 'response.reasoning_summary_text.delta') {

@@ -26,7 +26,6 @@ import { getToolsForPlugin } from '@/lib/ai/tool-selection';
 export const maxDuration = 240;
 
 export async function POST(request: Request) {
-  const abortController = new AbortController();
   let requestBody: PostRequestBody;
 
   try {
@@ -70,6 +69,43 @@ export async function POST(request: Request) {
     const fileAttachments: FileAttachment[] = [];
     const assistantMessageId = uuidv4();
 
+    request.signal.addEventListener('abort', async () => {
+      console.log('request aborted');
+
+      // Save the assistant message if we have content and chat context
+      if (assistantMessage.trim() && (chat || chatMetadata.id)) {
+        try {
+          // Wait for initial chat handling to complete if it's in progress
+          await initialChatPromise;
+
+          await handleFinalChatAndAssistantMessage({
+            modelParams: {
+              ...modelParams,
+              selectedPlugin: terminalUsed
+                ? PluginID.TERMINAL
+                : modelParams.selectedPlugin,
+            },
+            chatMetadata,
+            profile,
+            model,
+            chat,
+            finishReason: 'stop',
+            title: generatedTitle,
+            assistantMessage,
+            citations:
+              citations.length > 0 ? [...new Set(citations)] : undefined,
+            imagePaths: imagePaths.length > 0 ? imagePaths : undefined,
+            fileAttachments,
+            assistantMessageId,
+          });
+
+          console.log('Assistant message saved on abort');
+        } catch (error) {
+          console.error('Failed to save assistant message on abort:', error);
+        }
+      }
+    });
+
     const { processedMessages, systemPrompt, pentestFiles } =
       await processChatMessages(
         messages,
@@ -97,7 +133,7 @@ export async function POST(request: Request) {
       modelParams,
       profile,
       isLargeModel: config.isLargeModel,
-      abortSignal: abortController.signal,
+      abortSignal: request.signal,
       chatMetadata,
       model,
       rateLimitInfo: config.rateLimitInfo,
@@ -132,6 +168,11 @@ export async function POST(request: Request) {
               Array.isArray(data.content)
             ) {
               fileAttachments.push(...data.content);
+            } else if (
+              data.type === 'assistant-images' &&
+              Array.isArray(data.imagePaths)
+            ) {
+              imagePaths.push(...data.imagePaths);
             }
             originalWriteData(data);
           };
@@ -139,7 +180,7 @@ export async function POST(request: Request) {
           const toolSchemas = createToolSchemas({
             profile,
             dataStream,
-            abortSignal: abortController.signal,
+            abortSignal: request.signal,
             agentMode: modelParams.agentMode,
             pentestFiles,
             selectedPlugin: modelParams.selectedPlugin,
@@ -172,7 +213,7 @@ export async function POST(request: Request) {
                 modelParams,
               ),
             ),
-            abortSignal: abortController.signal,
+            abortSignal: request.signal,
             experimental_transform: smoothStream({ chunking: 'word' }),
             experimental_generateMessageId: () => assistantMessageId,
             onChunk: async (event: any) => {
@@ -191,11 +232,7 @@ export async function POST(request: Request) {
                 // Handle tool results and extract citations
                 const { toolName, result } = event.chunk;
 
-                if (toolName === 'image_gen') {
-                  if (result?.success && result?.imagePaths) {
-                    imagePaths.push(...result.imagePaths);
-                  }
-                } else if (toolName === 'browser' && result?.url) {
+                if (toolName === 'browser' && result?.url) {
                   // For browser tool, add the URL as citation
                   citations.push(result.url);
                 } else if (toolName === 'webSearch' && Array.isArray(result)) {
@@ -216,7 +253,7 @@ export async function POST(request: Request) {
                 titleGenerationPromise = (async () => {
                   generatedTitle = await generateTitleFromUserMessage({
                     messages,
-                    abortSignal: abortController.signal,
+                    abortSignal: request.signal,
                   });
                   dataStream.writeData({ chatTitle: generatedTitle });
                 })();

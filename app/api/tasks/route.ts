@@ -13,7 +13,6 @@ import { validateChatAccess } from '@/lib/ai/actions/chat-validation';
 export const maxDuration = 800;
 
 export async function POST(request: Request) {
-  const abortController = new AbortController();
   let requestBody: PostRequestBody;
 
   try {
@@ -81,7 +80,7 @@ export async function POST(request: Request) {
             modelParams,
             profile,
             dataStream,
-            abortSignal: abortController.signal,
+            abortSignal: request.signal,
             chatMetadata,
             model,
             originalMessages: messages,

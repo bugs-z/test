@@ -81,6 +81,57 @@ export async function executeReasonLLMTool({
   const assistantMessageId = uuidv4();
   let titleGenerationPromise: Promise<void> | null = null;
   const citations: string[] = [];
+  let assistantMessage = '';
+  let reasoningText = '';
+
+  abortSignal.addEventListener('abort', async () => {
+    console.log('reason llm request aborted');
+
+    // Save the assistant message if we have content and chat context
+    if (
+      (assistantMessage.trim() || reasoningText.trim()) &&
+      (chat || chatMetadata.id)
+    ) {
+      try {
+        // Wait for initial chat handling to complete if it's in progress
+        await initialChatPromise;
+
+        // Calculate thinking elapsed time if we were thinking
+        let thinkingElapsedSecs = null;
+        if (isThinking && thinkingStartTime) {
+          thinkingElapsedSecs = Math.round(
+            (Date.now() - thinkingStartTime) / 1000,
+          );
+        }
+
+        // Deduplicate citations
+        const uniqueCitations =
+          citations.length > 0 ? [...new Set(citations)] : undefined;
+
+        await handleFinalChatAndAssistantMessage({
+          modelParams,
+          chatMetadata,
+          profile,
+          model,
+          chat,
+          finishReason: 'stop',
+          title: generatedTitle,
+          assistantMessage,
+          citations: uniqueCitations,
+          thinkingText: reasoningText || undefined,
+          thinkingElapsedSecs,
+          assistantMessageId,
+        });
+
+        console.log('Reason LLM assistant message saved on abort');
+      } catch (error) {
+        console.error(
+          'Failed to save reason LLM assistant message on abort:',
+          error,
+        );
+      }
+    }
+  });
 
   try {
     // Start title generation if needed
@@ -111,7 +162,9 @@ export async function executeReasonLLMTool({
       }).getSelectedSchemas(['webSearch', 'browser']),
       experimental_generateMessageId: () => assistantMessageId,
       onChunk: async (chunk) => {
-        if (chunk.chunk.type === 'tool-call') {
+        if (chunk.chunk.type === 'text-delta') {
+          assistantMessage += chunk.chunk.textDelta;
+        } else if (chunk.chunk.type === 'tool-call') {
           dataStream.writeData({
             type: 'agent-status',
             content: 'none',
@@ -147,6 +200,7 @@ export async function executeReasonLLMTool({
             citations.push(...searchCitations);
           }
         } else if (chunk.chunk.type === 'reasoning') {
+          reasoningText += chunk.chunk.textDelta;
           if (!isThinking) {
             isThinking = true;
             thinkingStartTime = Date.now();
