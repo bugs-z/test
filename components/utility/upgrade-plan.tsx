@@ -91,7 +91,7 @@ export const UpgradePlan: FC = () => {
       }
 
       router.push(url);
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to process upgrade. Please try again.');
     } finally {
       setLoadingPlan(null);

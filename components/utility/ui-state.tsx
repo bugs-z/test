@@ -35,6 +35,12 @@ export const UIState: FC<UIStateProps> = ({ children }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [firstTokenReceived, setFirstTokenReceived] = useState(false);
 
+  // Chat Search
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  // Keyboard Shortcuts
+  const [isKeyboardShortcutsOpen, setIsKeyboardShortcutsOpen] = useState(false);
+
   // Handle mobile detection using matchMedia
   useEffect(() => {
     const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
@@ -75,6 +81,14 @@ export const UIState: FC<UIStateProps> = ({ children }) => {
         setIsGenerating,
         firstTokenReceived,
         setFirstTokenReceived,
+
+        // Chat Search
+        isSearchOpen,
+        setIsSearchOpen,
+
+        // Keyboard Shortcuts
+        isKeyboardShortcutsOpen,
+        setIsKeyboardShortcutsOpen,
       }}
     >
       {children}

@@ -34,6 +34,14 @@ interface UIContextType {
   setIsGenerating: Dispatch<SetStateAction<boolean>>;
   firstTokenReceived: boolean;
   setFirstTokenReceived: Dispatch<SetStateAction<boolean>>;
+
+  // Chat Search
+  isSearchOpen: boolean;
+  setIsSearchOpen: Dispatch<SetStateAction<boolean>>;
+
+  // Keyboard Shortcuts
+  isKeyboardShortcutsOpen: boolean;
+  setIsKeyboardShortcutsOpen: Dispatch<SetStateAction<boolean>>;
 }
 
 export const UIContext = createContext<UIContextType>({
@@ -63,6 +71,14 @@ export const UIContext = createContext<UIContextType>({
   setIsGenerating: () => {},
   firstTokenReceived: false,
   setFirstTokenReceived: () => {},
+
+  // Chat Search
+  isSearchOpen: false,
+  setIsSearchOpen: () => {},
+
+  // Keyboard Shortcuts
+  isKeyboardShortcutsOpen: false,
+  setIsKeyboardShortcutsOpen: () => {},
 });
 
 export const useUIContext = () => useContext(UIContext);

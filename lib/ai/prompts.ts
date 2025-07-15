@@ -3,7 +3,7 @@ import {
   getPentestGPTInfo,
   systemPromptEnding,
 } from '@/lib/models/llm-prompting';
-import { Geo } from '@vercel/functions';
+import type { Geo } from '@vercel/functions';
 import { PluginID } from '@/types';
 
 export function buildSystemPrompt(

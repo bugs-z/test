@@ -51,6 +51,9 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
     showSidebar,
     setShowSidebar,
     selectedPlugin,
+    setIsSearchOpen,
+    isKeyboardShortcutsOpen,
+    setIsKeyboardShortcutsOpen,
   } = useUIContext();
 
   const searchParams = useSearchParams();
@@ -62,12 +65,17 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
 
   const { handleSelectDeviceFile } = useSelectFileHandler();
   const [isDragging, setIsDragging] = useState(false);
-  const [isKeyboardShortcutsOpen, setIsKeyboardShortcutsOpen] = useState(false);
 
   const toggleButtonRef = useRef<HTMLButtonElement>(null);
 
   useHotkey('s', () => setShowSidebar((prev) => !prev));
-  useHotkey('/', () => setIsKeyboardShortcutsOpen(true), { shiftKey: false });
+  useHotkey('/', () => setIsKeyboardShortcutsOpen((prev) => !prev), {
+    shiftKey: false,
+  });
+  useHotkey('k', () => setIsSearchOpen((prev) => !prev), {
+    ctrlKey: true,
+    shiftKey: false,
+  });
 
   const handleOverlayClick = useCallback(() => {
     if (isMobile && showSidebar) {

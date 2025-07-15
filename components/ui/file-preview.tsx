@@ -114,7 +114,7 @@ export default function FilePreview({
           {type === 'image' && isImageLoading && (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-40">
               <div className="bg-white/10 backdrop-blur-md rounded-lg p-6 flex items-center space-x-3">
-                <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent"></div>
+                <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent" />
                 <span className="text-white text-sm">Loading...</span>
               </div>
             </div>

@@ -5,8 +5,8 @@ import { createShellExecTool } from './run_terminal_cmd-tool';
 import { createGetTerminalFilesTool } from './get_terminal_files-tool';
 import { DefaultSandboxManager } from './agent/utils/sandbox-manager';
 import { writePentestFilesToSandbox } from './agent/utils/sandbox-utils';
-import { Sandbox } from '@e2b/code-interpreter';
-import { ToolContext } from './agent/types';
+import type { Sandbox } from '@e2b/code-interpreter';
+import type { ToolContext } from './agent/types';
 import type { AgentMode } from '@/types/llms';
 import type { PluginID } from '@/types';
 

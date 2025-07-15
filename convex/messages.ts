@@ -2,51 +2,8 @@ import { mutation, query, internalQuery } from './_generated/server';
 import { v } from 'convex/values';
 import { paginationOptsValidator } from 'convex/server';
 import type { Id } from './_generated/dataModel';
-import { api } from './_generated/api';
+import { api, internal } from './_generated/api';
 import { v4 as uuidv4 } from 'uuid';
-
-/**
- * Helper function to delete a file and its associated data
- * Handles deletion from storage, file_items cleanup, and file record removal
- */
-const deleteFileAndAssociatedData = async (
-  ctx: {
-    db: any;
-    storage: any;
-  },
-  fileId?: Id<'files'>,
-  storageId?: Id<'_storage'>,
-  identifier?: string,
-): Promise<void> => {
-  try {
-    // Delete file from storage if storage ID is provided
-    if (storageId) {
-      await ctx.storage.delete(storageId);
-    }
-
-    // Delete file record and associated file_items if file ID is provided
-    if (fileId) {
-      // Find and delete all file_items that reference this file
-      const fileItems = await ctx.db
-        .query('file_items')
-        .withIndex('by_file_id', (q: any) => q.eq('file_id', fileId))
-        .collect();
-
-      for (const fileItem of fileItems) {
-        await ctx.db.delete(fileItem._id);
-      }
-
-      // Delete the file record itself
-      await ctx.db.delete(fileId);
-    }
-  } catch (fileError) {
-    console.warn(
-      `Failed to delete file ${identifier || fileId || storageId}:`,
-      fileError,
-    );
-    // Continue with other deletions even if one file fails
-  }
-};
 
 /**
  * Get the next sequence number for a chat
@@ -242,10 +199,11 @@ export const deleteLastMessage = mutation({
       // Delete images from storage using image_paths
       if (lastMessage.image_paths && lastMessage.image_paths.length > 0) {
         for (const imagePath of lastMessage.image_paths) {
-          await deleteFileAndAssociatedData(
-            ctx,
-            undefined,
-            imagePath as Id<'_storage'>,
+          await ctx.runMutation(
+            internal.fileStorage.deleteFileAndAssociatedData,
+            {
+              storageId: imagePath as Id<'_storage'>,
+            },
           );
         }
       }
@@ -253,10 +211,12 @@ export const deleteLastMessage = mutation({
       // Delete files from storage using attachments
       if (lastMessage.attachments && lastMessage.attachments.length > 0) {
         for (const attachment of lastMessage.attachments) {
-          await deleteFileAndAssociatedData(
-            ctx,
-            attachment.id,
-            attachment.url as Id<'_storage'>,
+          await ctx.runMutation(
+            internal.fileStorage.deleteFileAndAssociatedData,
+            {
+              fileId: attachment.id,
+              storageId: attachment.url as Id<'_storage'>,
+            },
           );
         }
       }
@@ -308,10 +268,11 @@ export const deleteMessagesIncludingAndAfter = mutation({
         // Delete images from storage using image_paths
         if (message.image_paths && message.image_paths.length > 0) {
           for (const imagePath of message.image_paths) {
-            await deleteFileAndAssociatedData(
-              ctx,
-              undefined,
-              imagePath as Id<'_storage'>,
+            await ctx.runMutation(
+              internal.fileStorage.deleteFileAndAssociatedData,
+              {
+                storageId: imagePath as Id<'_storage'>,
+              },
             );
           }
         }
@@ -323,22 +284,26 @@ export const deleteMessagesIncludingAndAfter = mutation({
           .collect();
 
         for (const file of filesWithMessageId) {
-          await deleteFileAndAssociatedData(
-            ctx,
-            file._id,
-            file.file_path as Id<'_storage'>,
-            file.file_path,
+          await ctx.runMutation(
+            internal.fileStorage.deleteFileAndAssociatedData,
+            {
+              fileId: file._id,
+              storageId: file.file_path as Id<'_storage'>,
+              identifier: file.file_path,
+            },
           );
         }
 
         // Delete files from storage using attachments
         if (message.attachments && message.attachments.length > 0) {
           for (const attachment of message.attachments) {
-            await deleteFileAndAssociatedData(
-              ctx,
-              attachment.id,
-              attachment.url as Id<'_storage'>,
-              attachment.url,
+            await ctx.runMutation(
+              internal.fileStorage.deleteFileAndAssociatedData,
+              {
+                fileId: attachment.id,
+                storageId: attachment.url as Id<'_storage'>,
+                identifier: attachment.url,
+              },
             );
           }
         }
@@ -469,6 +434,78 @@ export const internalGetMessageAtSequence = internalQuery({
       attachments: message.attachments || [],
       updated_at: message.updated_at,
       created_at: message._creationTime,
+    };
+  },
+});
+
+/**
+ * Search messages across all chats for a user
+ */
+export const internalSearchMessages = internalQuery({
+  args: {
+    userId: v.string(),
+    searchQuery: v.string(),
+    paginationOpts: paginationOptsValidator,
+  },
+  returns: v.object({
+    page: v.array(
+      v.object({
+        id: v.string(),
+        chat_id: v.string(),
+        content: v.string(),
+        created_at: v.number(),
+        updated_at: v.optional(v.number()),
+        chat_name: v.optional(v.string()),
+      }),
+    ),
+    isDone: v.boolean(),
+    continueCursor: v.union(v.string(), v.null()),
+  }),
+  handler: async (ctx, args) => {
+    if (!args.searchQuery.trim()) {
+      return {
+        page: [],
+        isDone: true,
+        continueCursor: null,
+      };
+    }
+
+    // Search messages using the full text search index
+    const searchResults = await ctx.db
+      .query('messages')
+      .withSearchIndex('search_content', (q) =>
+        q.search('content', args.searchQuery).eq('user_id', args.userId),
+      )
+      .paginate(args.paginationOpts);
+
+    // Get chat names for the messages
+    const chatIds = [...new Set(searchResults.page.map((msg) => msg.chat_id))];
+    const chats = await Promise.all(
+      chatIds.map(async (chatId) => {
+        const chat = await ctx.db
+          .query('chats')
+          .withIndex('by_chat_id', (q) => q.eq('id', chatId))
+          .first();
+        return { chatId, name: chat?.name };
+      }),
+    );
+
+    const chatNameMap = new Map(chats.map((chat) => [chat.chatId, chat.name]));
+
+    // Format the results with only essential fields
+    const processedMessages = searchResults.page.map((msg) => ({
+      id: msg.id,
+      chat_id: msg.chat_id,
+      content: msg.content,
+      created_at: msg._creationTime,
+      updated_at: msg.updated_at,
+      chat_name: chatNameMap.get(msg.chat_id),
+    }));
+
+    return {
+      page: processedMessages,
+      isDone: searchResults.isDone,
+      continueCursor: searchResults.continueCursor,
     };
   },
 });

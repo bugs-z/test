@@ -88,7 +88,7 @@ Guidelines:
             rateLimitInfo: rateLimitStatus.info,
           };
         }
-      } catch (error) {
+      } catch (_error) {
         return {
           success: false,
           error: 'Failed to check rate limit for image generation',

@@ -30,7 +30,7 @@ export const ToolsDropdown = ({ onUpgradePrompt }: ToolsDropdownProps) => {
 
   const { selectedPlugin, setSelectedPlugin, isMobile } = useUIContext();
 
-  const hasImageAttached = newMessageImages.length > 0;
+  const _hasImageAttached = newMessageImages.length > 0;
 
   const handlePentestAgentToggle = () => {
     if (!isPremiumSubscription) {

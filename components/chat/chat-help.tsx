@@ -20,6 +20,7 @@ import { useCopyToClipboard } from '@/lib/hooks/use-copy-to-clipboard';
 import { Button } from '../ui/button';
 import { toast } from 'sonner';
 import { PentestGPTContext } from '@/context/context';
+import { useUIContext } from '@/context/ui-context';
 import dynamic from 'next/dynamic';
 
 const DynamicKeyboardShortcutsPopup = dynamic(
@@ -29,9 +30,10 @@ const DynamicKeyboardShortcutsPopup = dynamic(
 
 export const ChatHelp: FC = () => {
   const { userEmail } = useContext(PentestGPTContext);
+  const { isKeyboardShortcutsOpen, setIsKeyboardShortcutsOpen } =
+    useUIContext();
 
   const [isOpen, setIsOpen] = useState(false);
-  const [isKeyboardShortcutsOpen, setIsKeyboardShortcutsOpen] = useState(false);
   const { copyToClipboard } = useCopyToClipboard({ timeout: 2000 });
 
   const socialLinks = [

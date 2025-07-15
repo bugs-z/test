@@ -12,8 +12,8 @@ import { getSystemPrompt } from './prompts';
 import { processMessageContentWithAttachments } from '../build-prompt-backend';
 import { countTokens } from 'gpt-tokenizer';
 import { processMessagesWithImagesUnified } from './image-processing';
-import { PluginID } from '@/types/plugins';
-import { Geo } from '@vercel/functions';
+import type { PluginID } from '@/types/plugins';
+import type { Geo } from '@vercel/functions';
 
 /**
  * Removes the last assistant message if it's empty.

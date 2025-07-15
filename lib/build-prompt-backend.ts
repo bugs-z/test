@@ -264,7 +264,7 @@ export async function processMessageContentWithAttachments(
       if (message.attachments?.length) {
         const messageFileItems =
           allFileItems?.filter((fi) =>
-            message.attachments!.some((a) => a.file_id === fi.file_id),
+            message.attachments?.some((a) => a.file_id === fi.file_id),
           ) ?? [];
 
         const { content, hasPdfAttachments: hasMessagePdfs } =

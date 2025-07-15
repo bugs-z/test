@@ -3,7 +3,6 @@ import { PentestGPTContext } from '@/context/context';
 import { cn } from '@/lib/utils';
 import type { Doc } from '@/convex/_generated/dataModel';
 import type { ChatMessage, LLMID, MessageImage } from '@/types';
-import Image from 'next/image';
 import {
   type FC,
   type RefObject,

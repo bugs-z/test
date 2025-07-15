@@ -17,7 +17,7 @@ function findLastUserMessage(
 
 export async function buildFinalMessages(
   payload: ChatPayload,
-  isPremiumSubscription = false,
+  isPremiumSubscription: boolean,
   selectedPlugin: PluginID,
 ): Promise<BuiltChatMessage[]> {
   const { chatMessages, retrievedFileItems, imagePaths } = payload;

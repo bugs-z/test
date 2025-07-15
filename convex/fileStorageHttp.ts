@@ -5,7 +5,6 @@ import {
   createResponse,
   createErrorResponse,
   validateAuthWithUser,
-  getUrlParams,
 } from './httpUtils';
 import type { Id } from './_generated/dataModel';
 

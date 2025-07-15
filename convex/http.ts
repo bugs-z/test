@@ -1,6 +1,6 @@
 import { httpRouter } from 'convex/server';
 import { handleChatsHttp } from './chatsHttp';
-import { getMessagesWithFilesHttp } from './messagesHttp';
+import { getMessagesWithFilesHttp, searchMessagesHttp } from './messagesHttp';
 import { handleTeamsHttp } from './teamsHttp';
 import { handleSubscriptionsHttp } from './subscriptionsHttp';
 import { handleProfilesHttp } from './profilesHttp';
@@ -58,6 +58,13 @@ http.route({
   handler: getMessagesWithFilesHttp,
 });
 
+// Register search messages endpoint
+http.route({
+  path: '/conversations/search',
+  method: 'GET',
+  handler: searchMessagesHttp,
+});
+
 // Register image upload endpoint
 http.route({
   path: '/api/upload-image',
@@ -96,6 +103,12 @@ http.route({
 // Pre-flight requests using reusable handler
 http.route({
   path: '/messages',
+  method: 'OPTIONS',
+  handler: createOptionsHandler(['GET', 'OPTIONS']),
+});
+
+http.route({
+  path: '/conversations/search',
   method: 'OPTIONS',
   handler: createOptionsHandler(['GET', 'OPTIONS']),
 });

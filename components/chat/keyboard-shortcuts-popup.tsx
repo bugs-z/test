@@ -26,6 +26,10 @@ export default function KeyboardShortcutsPopup({
   const shortcuts: ShortcutItem[] = useMemo(
     () => [
       {
+        key: isMac ? '⌘ + K' : 'Ctrl + K',
+        description: 'Search chats',
+      },
+      {
         key: isMac ? '⌘ + Shift + O' : 'Ctrl + Shift + O',
         description: 'Open new chat',
       },

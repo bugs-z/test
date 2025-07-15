@@ -1,5 +1,53 @@
-import { internalQuery, mutation, query } from './_generated/server';
+import {
+  internalQuery,
+  mutation,
+  query,
+  internalMutation,
+} from './_generated/server';
 import { v } from 'convex/values';
+
+/**
+ * Helper function to delete a file and its associated data
+ * Handles deletion from storage, file_items cleanup, and file record removal
+ */
+export const deleteFileAndAssociatedData = internalMutation({
+  args: {
+    fileId: v.optional(v.id('files')),
+    storageId: v.optional(v.id('_storage')),
+    identifier: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args): Promise<void> => {
+    try {
+      // Delete file from storage if storage ID is provided
+      if (args.storageId) {
+        await ctx.storage.delete(args.storageId);
+      }
+
+      // Delete file record and associated file_items if file ID is provided
+      if (args.fileId) {
+        // Find and delete all file_items that reference this file
+        const fileItems = await ctx.db
+          .query('file_items')
+          .withIndex('by_file_id', (q: any) => q.eq('file_id', args.fileId))
+          .collect();
+
+        for (const fileItem of fileItems) {
+          await ctx.db.delete(fileItem._id);
+        }
+
+        // Delete the file record itself
+        await ctx.db.delete(args.fileId);
+      }
+    } catch (fileError) {
+      console.warn(
+        `Failed to delete file ${args.identifier || args.fileId || args.storageId}:`,
+        fileError,
+      );
+      // Continue with other deletions even if one file fails
+    }
+  },
+});
 
 /**
  * Generate upload URL for admin file uploads

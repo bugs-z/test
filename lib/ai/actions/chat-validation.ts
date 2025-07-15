@@ -4,7 +4,6 @@ import { ConvexHttpClient } from 'convex/browser';
 import type { ChatMetadata } from '@/types';
 import type { BuiltChatMessage } from '@/types/chat-message';
 import { checkRatelimitOnApi } from '@/lib/server/ratelimiter';
-import { PluginID } from '@/types';
 import { checkForImagesInMessages } from '../image-processing';
 
 if (!process.env.NEXT_PUBLIC_CONVEX_URL) {

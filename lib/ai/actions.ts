@@ -149,7 +149,7 @@ export async function generateTitleFromUserMessage({
     });
 
     return title;
-  } catch (error) {
+  } catch (_error) {
     // console.error('[Title Generation] Error:', error);
     // Return a fallback title based on the first message content
     const message =

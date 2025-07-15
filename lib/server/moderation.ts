@@ -53,7 +53,7 @@ export async function getModerationResult(
     // );
 
     return { shouldUncensorResponse };
-  } catch (error: any) {
+  } catch (_error: any) {
     // console.error('Error in getModerationResult:', error);
     return { shouldUncensorResponse: false };
   }

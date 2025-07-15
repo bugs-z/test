@@ -2,7 +2,7 @@
 // This allows static parts of the prompt to be cached more effectively
 // Cached prefixes generally remain active for 5 to 10 minutes of inactivity (up to 1 hour during off-peak)
 
-import { Geo } from '@vercel/functions';
+import type { Geo } from '@vercel/functions';
 import endent from 'endent';
 
 const options: Intl.DateTimeFormatOptions = {

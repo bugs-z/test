@@ -8,7 +8,7 @@ import { useUIContext } from '@/context/ui-context';
 import { UpgradePrompt, UpgradeModal } from './upgrade-modal';
 import { PLUGINS_WITHOUT_IMAGE_SUPPORT } from '@/types/plugins';
 import { ToolsDropdown } from './tools-dropdown';
-import { LucideIcon } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 interface ToolOptionsProps {
   fileInputRef: React.RefObject<HTMLInputElement>;

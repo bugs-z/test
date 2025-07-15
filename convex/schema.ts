@@ -77,7 +77,11 @@ export default defineSchema({
     .index('by_chat_id', ['chat_id'])
     .index('by_chat_and_sequence', ['chat_id', 'sequence_number'])
     .index('by_message_id', ['id'])
-    .index('by_user_id', ['user_id']),
+    .index('by_user_id', ['user_id'])
+    .searchIndex('search_content', {
+      searchField: 'content',
+      filterFields: ['user_id'],
+    }),
 
   files: defineTable({
     user_id: v.string(),

@@ -10,7 +10,6 @@ import { toast } from 'sonner';
 import { PluginID } from '@/types/plugins';
 import type { AgentStatusState } from '@/components/messages/agent-status';
 import type { Dispatch, SetStateAction } from 'react';
-import { fetchChatResponse } from '.';
 
 export const processResponse = async (
   response: Response,
@@ -24,7 +23,7 @@ export const processResponse = async (
   selectedPlugin: PluginID,
   isContinuation: boolean,
   setAgentStatus: Dispatch<SetStateAction<AgentStatusState | null>>,
-  requestBody: any,
+  _requestBody: any,
   setChatImages: Dispatch<SetStateAction<MessageImage[]>>,
 ) => {
   if (!response.ok) {
@@ -69,7 +68,7 @@ export const processResponse = async (
     let isFirstChunkReceived = false;
     let updatedPlugin = selectedPlugin;
     let toolExecuted = false;
-    let citations: string[] = [];
+    const citations: string[] = [];
     let shouldSkipFirstChunk = false;
     let chatTitle: string | null = null;
     let fileAttachments: FileAttachment[] = [];
