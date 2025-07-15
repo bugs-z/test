@@ -5,7 +5,6 @@ import { v4 as uuidv4 } from 'uuid';
 import type { Doc } from '@/convex/_generated/dataModel';
 import OpenAI from 'openai';
 import { checkRatelimitOnApi } from '@/lib/server/ratelimiter';
-import { extractTextContent } from '@/lib/ai/message-utils';
 
 export interface DeepResearchConfig {
   chat: Doc<'chats'> | null;
@@ -19,8 +18,6 @@ export interface DeepResearchConfig {
   originalMessages: any[];
   systemPrompt: string;
   initialChatPromise: Promise<void>;
-  // userCity: string | undefined;
-  // userCountry: string | undefined;
   generatedTitle?: string;
   titleGenerationPromise?: Promise<void> | null;
   assistantMessageId?: string;
@@ -31,33 +28,33 @@ export interface DeepResearchConfig {
  */
 function convertMessagesToDeepResearchFormat(messages: any[]): any[] {
   return messages.map((message) => {
-    // Handle different message formats
-    if (message.role === 'assistant') {
-      return {
-        role: 'assistant',
-        content:
-          typeof message.content === 'string'
-            ? message.content
-            : extractTextContent(message.content),
-      };
-    } else if (message.role === 'user') {
-      return {
-        role: 'user',
-        content:
-          typeof message.content === 'string'
-            ? message.content
-            : extractTextContent(message.content),
-      };
-    }
+    const content = Array.isArray(message.content)
+      ? message.content.map((item: any) => {
+          if (item.type === 'text') {
+            return { type: 'input_text', text: item.text };
+          }
+          if (item.type === 'image_url') {
+            return { type: 'input_image', image_url: item.image_url.url };
+          }
+          if (item.type === 'file') {
+            // Convert file objects to input_file format for deep research
+            // Convert Buffer to base64 data URL
+            const base64Data = Buffer.isBuffer(item.data)
+              ? item.data.toString('base64')
+              : item.data;
+            const dataUrl = `data:${item.mimeType};base64,${base64Data}`;
 
-    // Fallback for other roles
-    return {
-      role: message.role,
-      content:
-        typeof message.content === 'string'
-          ? message.content
-          : extractTextContent(message.content),
-    };
+            return {
+              type: 'input_file',
+              file_data: dataUrl,
+              filename: item.filename,
+            };
+          }
+          return { type: 'input_text', text: String(item.text || item) };
+        })
+      : [{ type: 'input_text', text: String(message.content) }];
+
+    return { role: message.role, content };
   });
 }
 
@@ -77,11 +74,8 @@ export async function executeDeepResearchTool({
     dataStream,
     modelParams,
     chatMetadata,
-    // userCity,
-    // userCountry,
     abortSignal,
     model,
-    // originalMessages,
     systemPrompt,
     initialChatPromise,
     generatedTitle,
