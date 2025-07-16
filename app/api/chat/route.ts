@@ -110,8 +110,8 @@ export async function POST(request: Request) {
       processedMessages,
       systemPrompt,
       pentestFiles,
-      hasImageAttachments,
-      hasPdfAttachments,
+      // hasImageAttachments,
+      // hasPdfAttachments,
     } = await processChatMessages(
       messages,
       config.selectedModel,
@@ -156,13 +156,13 @@ export async function POST(request: Request) {
       });
     }
 
-    if (
-      !hasImageAttachments &&
-      !hasPdfAttachments &&
-      config.selectedModel === 'chat-model-small'
-    ) {
-      config.selectedModel = 'chat-model-small-text';
-    }
+    // if (
+    //   !hasImageAttachments &&
+    //   !hasPdfAttachments &&
+    //   config.selectedModel === 'chat-model-small'
+    // ) {
+    //   config.selectedModel = 'chat-model-small-text';
+    // }
 
     try {
       return createDataStreamResponse({
