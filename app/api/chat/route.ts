@@ -208,7 +208,7 @@ export async function POST(request: Request) {
           }
 
           const result = streamText({
-            model: myProvider.languageModel('chat-model-small-text'),
+            model: myProvider.languageModel(config.selectedModel),
             system: systemPrompt,
             providerOptions: {
               openai: {

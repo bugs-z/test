@@ -112,7 +112,9 @@ Guidelines:
 
         const providerOptions: any = {};
         if (transparent_background) {
-          providerOptions.openai.background = 'transparent';
+          providerOptions.openai = {
+            background: 'transparent',
+          };
         }
 
         const result = await generateImage({

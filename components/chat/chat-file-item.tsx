@@ -35,62 +35,81 @@ export const ChatFileItem: FC<FileItemProps> = ({
 
     switch (fileExtension) {
       case 'pdf':
-        return <IconFileTypePdf />;
+        return <IconFileTypePdf className="h-6 w-6 text-white" />;
       case 'markdown':
-        return <IconMarkdown />;
+        return <IconMarkdown className="h-6 w-6 text-white" />;
       case 'txt':
-        return <IconFileTypeTxt />;
+        return <IconFileTypeTxt className="h-6 w-6 text-white" />;
       case 'json':
-        return <IconJson />;
+        return <IconJson className="h-6 w-6 text-white" />;
       case 'csv':
-        return <IconFileTypeCsv />;
+        return <IconFileTypeCsv className="h-6 w-6 text-white" />;
       case 'docx':
-        return <IconFileTypeDocx />;
+        return <IconFileTypeDocx className="h-6 w-6 text-white" />;
       default:
-        return <IconFileFilled />;
+        return <IconFileFilled className="h-6 w-6 text-white" />;
     }
   };
 
   if (isLoading) {
     return (
-      <div className="bg-secondary relative flex h-[64px] items-center space-x-4 rounded-xl px-4 py-3">
-        <div className="rounded bg-blue-500 p-2">
-          <IconLoader2 className="animate-spin" />
-        </div>
-        <div className="truncate text-sm">
-          <div className="truncate">{file.name}</div>
-          <div className="truncate opacity-50">{file.type}</div>
+      <div className="group relative inline-block text-sm">
+        <div className="cursor-pointer">
+          <div className="bg-secondary relative overflow-hidden border rounded-xl">
+            <div className="p-2 w-60 sm:w-80">
+              <div className="flex flex-row items-center gap-2">
+                <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-blue-500 flex items-center justify-center">
+                  <IconLoader2 className="h-6 w-6 text-white animate-spin" />
+                </div>
+                <div className="overflow-hidden">
+                  <div className="truncate font-semibold">{file.name}</div>
+                  <div className="truncate opacity-50">
+                    {file.type || 'File'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div
-      className="bg-secondary relative flex h-[64px] cursor-pointer items-center space-x-4 rounded-xl px-4 py-3 hover:opacity-50"
-      onClick={onClick}
-    >
-      <div className="rounded bg-blue-500 p-2">{getFileIcon()}</div>
-
-      <div className="truncate text-sm">
-        <div className="truncate">{file.name}</div>
+    <div className="group relative inline-block text-sm">
+      <div className="cursor-pointer" onClick={onClick}>
+        <div className="bg-secondary relative overflow-hidden border rounded-xl hover:opacity-50 transition-opacity">
+          <div className="p-2 w-60 sm:w-80">
+            <div className="flex flex-row items-center gap-2">
+              <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-blue-500 flex items-center justify-center">
+                {getFileIcon()}
+              </div>
+              <div className="overflow-hidden">
+                <div className="truncate font-semibold">{file.name}</div>
+                <div className="truncate opacity-50">File</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {showRemoveButton && (
-        <WithTooltip
-          delayDuration={0}
-          side="top"
-          display={<div>Remove file</div>}
-          trigger={
-            <IconX
-              className="bg-secondary border-primary absolute right-[-6px] top-[-6px] flex size-5 cursor-pointer items-center justify-center rounded-full border text-[10px] hover:border-red-500 hover:bg-white hover:text-red-500"
-              onClick={(e) => {
-                e.stopPropagation();
-                onRemove?.(file._id);
-              }}
-            />
-          }
-        />
+        <div className="absolute end-1.5 top-1.5 inline-flex gap-1">
+          <WithTooltip
+            delayDuration={0}
+            side="top"
+            display={<div>Remove file</div>}
+            trigger={
+              <IconX
+                className="bg-secondary border-primary flex size-5 cursor-pointer items-center justify-center rounded-full border text-[10px] hover:border-red-500 hover:bg-white hover:text-red-500"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemove?.(file._id);
+                }}
+              />
+            }
+          />
+        </div>
       )}
     </div>
   );
