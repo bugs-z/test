@@ -5,6 +5,7 @@ import type { ChatMetadata } from '@/types';
 import type { BuiltChatMessage } from '@/types/chat-message';
 import { checkRatelimitOnApi } from '@/lib/server/ratelimiter';
 import { checkForImagesInMessages } from '../image-processing';
+import { PluginID } from '@/types/plugins';
 
 if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
   throw new Error(
@@ -22,11 +23,13 @@ export async function validateChatAccessWithLimits({
   userId,
   messages,
   model,
+  selectedPlugin,
 }: {
   chatMetadata: ChatMetadata;
   userId: string;
   messages: BuiltChatMessage[];
   model: string;
+  selectedPlugin?: PluginID;
 }): Promise<
   | {
       success: true;
@@ -55,6 +58,21 @@ export async function validateChatAccessWithLimits({
         { status: 429 },
       ),
     };
+  }
+
+  // Check if non-premium user is trying to use premium plugins
+  if (!config.isPremiumUser && selectedPlugin) {
+    if (selectedPlugin === PluginID.IMAGE_GEN) {
+      throw new ChatSDKError('forbidden:auth');
+    }
+
+    if (selectedPlugin === PluginID.TERMINAL) {
+      throw new ChatSDKError('forbidden:auth');
+    }
+
+    if (selectedPlugin === PluginID.DEEP_RESEARCH) {
+      throw new ChatSDKError('forbidden:auth');
+    }
   }
 
   // Check if non-premium user is trying to send attachments or images
