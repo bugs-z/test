@@ -146,7 +146,6 @@ export async function buildFinalMessages(
           type: 'image_url' as const,
           image_url: {
             url: path,
-            isPath: true,
           },
         })),
       ];

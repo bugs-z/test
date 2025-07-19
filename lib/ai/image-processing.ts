@@ -91,7 +91,7 @@ function extractAssistantImages(message: BuiltChatMessage): {
     images.push(
       ...imagePaths.map((path) => ({
         type: 'image_url' as const,
-        image_url: { url: path, isPath: true },
+        image_url: { url: path },
       })),
     );
   }
@@ -182,11 +182,7 @@ function collectStorageIds(messages: BuiltChatMessage[]): {
     if (!Array.isArray(message.content)) return;
 
     message.content.forEach((item) => {
-      if (
-        item.type === 'image_url' &&
-        'isPath' in item.image_url &&
-        item.image_url.isPath
-      ) {
+      if (item.type === 'image_url') {
         storageIds.add(item.image_url.url);
         storageIdToImageContent.set(item.image_url.url, { message, item });
       }
@@ -214,11 +210,9 @@ function processTerminalModeContent(
   message.content.forEach((item) => {
     if (item.type === 'image_url') {
       let processedItem = item;
-      if ('isPath' in item.image_url && item.image_url.isPath) {
-        const url = imageUrls.get(item.image_url.url);
-        if (url) {
-          processedItem = { type: 'image_url' as const, image_url: { url } };
-        }
+      const url = imageUrls.get(item.image_url.url);
+      if (url) {
+        processedItem = { type: 'image_url' as const, image_url: { url } };
       }
       imageContents.push(processedItem);
     } else {
@@ -243,11 +237,7 @@ function processNormalModeContent(
   if (!Array.isArray(message.content)) return message;
 
   const processedContent = message.content.map((item) => {
-    if (
-      item.type === 'image_url' &&
-      'isPath' in item.image_url &&
-      item.image_url.isPath
-    ) {
+    if (item.type === 'image_url') {
       const url = imageUrls.get(item.image_url.url);
       return url ? { type: 'image_url' as const, image_url: { url } } : item;
     }

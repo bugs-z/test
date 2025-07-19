@@ -4,7 +4,7 @@ import { VALID_MODEL_IDS } from '@/types/llms';
 
 const imageUrlSchema = z.object({
   url: z.string(),
-  isPath: z.boolean(),
+  isPath: z.boolean().optional(),
 });
 
 const contentPartSchema = z.discriminatedUnion('type', [
