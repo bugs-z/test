@@ -60,16 +60,26 @@ export const toVercelChatMessages = (
       case 'assistant':
         formattedMessage = {
           role: 'assistant',
-          content: (Array.isArray(message.content)
+          content: Array.isArray(message.content)
             ? message.content
-            : [message.content]
-          ).map((content) => ({
-            type: 'text',
-            text:
-              typeof content === 'object' && content.type === 'text'
-                ? content.text
-                : String(content),
-          })),
+                .map((content) => {
+                  if (typeof content === 'object') {
+                    if (content.type === 'file') {
+                      return content;
+                    } else if (content.type === 'text') {
+                      return {
+                        type: 'text',
+                        text: content.text || String(content),
+                      };
+                    } else {
+                      // Handle other content types like image_url
+                      return { type: 'text', text: String(content) };
+                    }
+                  }
+                  return { type: 'text', text: String(content) };
+                })
+                .filter(Boolean)
+            : [{ type: 'text', text: String(message.content) }],
         } as CoreAssistantMessage;
         break;
       case 'user':
@@ -84,10 +94,21 @@ export const toVercelChatMessages = (
                     content.type === 'image_url'
                   ) {
                     if (!supportsImages) return null;
-                    return {
-                      type: 'image',
-                      image: new URL(content.image_url.url),
-                    };
+                    // Check if it's a base64 data URL or regular URL
+                    const imageUrl = content.image_url.url;
+                    if (imageUrl.startsWith('data:')) {
+                      // Base64 data URL - return as is
+                      return {
+                        type: 'image',
+                        image: imageUrl,
+                      };
+                    } else {
+                      // Regular URL - create URL object
+                      return {
+                        type: 'image',
+                        image: new URL(imageUrl),
+                      };
+                    }
                   }
 
                   // Handle all other content types
