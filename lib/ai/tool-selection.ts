@@ -2,6 +2,7 @@ import { PluginID } from '@/types';
 
 export interface ToolSelectionConfig {
   isPremiumUser: boolean;
+  isLargeModel: boolean;
 }
 
 export interface ToolSelectionModelParams {
@@ -31,13 +32,14 @@ export const getToolsForPlugin = (
     !modelParams.isTemporaryChat &&
     selectedPlugin !== PluginID.WEB_SEARCH
   ) {
-    return [
-      'webSearch',
-      'browser',
-      'run_terminal_cmd',
-      'get_terminal_files',
-      'image_gen',
-    ];
+    const tools = ['webSearch', 'browser', 'image_gen'];
+
+    // Only add terminal tools for large models
+    if (config.isLargeModel) {
+      tools.push('run_terminal_cmd', 'get_terminal_files');
+    }
+
+    return tools;
   }
 
   // Default tools for other cases
