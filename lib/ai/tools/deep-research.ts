@@ -28,10 +28,14 @@ export interface DeepResearchConfig {
  */
 function convertMessagesToDeepResearchFormat(messages: any[]): any[] {
   return messages.map((message) => {
+    // Use output_text for assistant messages, input_text for others
+    const textType =
+      message.role === 'assistant' ? 'output_text' : 'input_text';
+
     const content = Array.isArray(message.content)
       ? message.content.map((item: any) => {
           if (item.type === 'text') {
-            return { type: 'input_text', text: item.text };
+            return { type: textType, text: item.text };
           }
           if (item.type === 'image_url') {
             return { type: 'input_image', image_url: item.image_url.url };
@@ -50,9 +54,9 @@ function convertMessagesToDeepResearchFormat(messages: any[]): any[] {
               filename: item.filename,
             };
           }
-          return { type: 'input_text', text: String(item.text || item) };
+          return { type: textType, text: String(item.text || item) };
         })
-      : [{ type: 'input_text', text: String(message.content) }];
+      : [{ type: textType, text: String(message.content) }];
 
     return { role: message.role, content };
   });
@@ -174,6 +178,7 @@ export async function executeDeepResearchTool({
 
     // Convert messages to the format expected by OpenAI's deep research API
     const convertedMessages = convertMessagesToDeepResearchFormat(messages);
+    console.log('convertedMessages', convertedMessages);
 
     const stream = await openai.responses.create({
       model: 'o4-mini-deep-research',
