@@ -3,6 +3,7 @@ import React, {
   useContext,
   useState,
   type ReactNode,
+  useEffect,
 } from 'react';
 import type { AgentSidebarState } from '@/types/agent';
 
@@ -36,11 +37,22 @@ export const AgentSidebarProvider = ({ children }: { children: ReactNode }) => {
 };
 
 export const useAgentSidebar = () => {
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const context = useContext(AgentSidebarContext);
-  if (!context) {
-    throw new Error(
-      'useAgentSidebar must be used within an AgentSidebarProvider',
-    );
+  
+  // If we're on the server or context is not available, return fallback
+  if (!isClient || !context) {
+    return {
+      agentSidebar: { isOpen: false, item: null },
+      setAgentSidebar: () => {},
+      resetAgentSidebar: () => {},
+    };
   }
+  
   return context;
 };

@@ -9,12 +9,19 @@ import { CopyButton } from '@/components/messages/message-codeblock';
 import stripAnsi from 'strip-ansi';
 import type { InfoSearchWebBlock } from './types';
 import { SearchResultsView } from './info-search-web-block';
+import { useEffect, useState } from 'react';
 
 export const AgentSidebar = () => {
+  const [isClient, setIsClient] = useState(false);
   const { isMobile } = useUIContext();
   const { agentSidebar, resetAgentSidebar } = useAgentSidebar();
 
-  if (!agentSidebar.isOpen || !agentSidebar.item) return null;
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Don't render on server or if sidebar is not open
+  if (!isClient || !agentSidebar.isOpen || !agentSidebar.item) return null;
 
   // Fullscreen on mobile, normal on desktop
   const sidebarClass = isMobile
