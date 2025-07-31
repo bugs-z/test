@@ -38,13 +38,13 @@ export const AgentSidebarProvider = ({ children }: { children: ReactNode }) => {
 
 export const useAgentSidebar = () => {
   const [isClient, setIsClient] = useState(false);
-  
+
   useEffect(() => {
     setIsClient(true);
   }, []);
 
   const context = useContext(AgentSidebarContext);
-  
+
   // If we're on the server or context is not available, return fallback
   if (!isClient || !context) {
     return {
@@ -53,6 +53,6 @@ export const useAgentSidebar = () => {
       resetAgentSidebar: () => {},
     };
   }
-  
+
   return context;
 };
