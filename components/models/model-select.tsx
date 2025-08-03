@@ -5,11 +5,7 @@ import { type FC, useContext, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '../ui/button';
 import { LLM_LIST } from '@/lib/models/llm-list';
-import {
-  LargeModel,
-  ReasoningModel,
-  SmallModel,
-} from '@/lib/models/hackerai-llm-list';
+import { LargeModel, ReasoningModel, SmallModel } from '@/lib/models/llm-list';
 
 interface ModelSelectProps {
   selectedModelId: LLMID;

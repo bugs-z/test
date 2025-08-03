@@ -19,6 +19,7 @@ import type {
   LLMID,
   MessageImage,
   SubscriptionStatus,
+  RateLimitInfo,
 } from '@/types';
 import type { User } from '@supabase/supabase-js';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -100,6 +101,11 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const [userEmail, setUserEmail] = useState('');
+
+  // RATE LIMIT STORE
+  const [rateLimitInfo, setRateLimitInfo] = useState<RateLimitInfo | null>(
+    null,
+  );
 
   useEffect(() => {
     setIsTemporaryChat(searchParams.get('temporary-chat') === 'true');
@@ -441,6 +447,10 @@ export const GlobalState: FC<GlobalStateProps> = ({ children, user }) => {
         // User Email
         userEmail,
         setUserEmail,
+
+        // RATE LIMIT STORE
+        rateLimitInfo,
+        setRateLimitInfo,
       }}
     >
       <AgentSidebarProvider>{children}</AgentSidebarProvider>

@@ -9,6 +9,7 @@ import type {
   LLMID,
   ChatMetadata,
   MessageImage,
+  RateLimitInfo,
 } from '@/types';
 import { PluginID } from '@/types';
 import type { Dispatch, SetStateAction } from 'react';
@@ -38,6 +39,7 @@ export const handleHostedChat = async (
   chatMetadata: ChatMetadata,
   isPremiumSubscription: boolean,
   setChatImages: Dispatch<SetStateAction<MessageImage[]>>,
+  setRateLimitInfo?: Dispatch<SetStateAction<RateLimitInfo | null>>,
 ) => {
   let apiEndpoint = '/api/chat';
 
@@ -93,6 +95,7 @@ export const handleHostedChat = async (
     setAgentStatus,
     requestBody,
     setChatImages,
+    setRateLimitInfo,
   );
 };
 

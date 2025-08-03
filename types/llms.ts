@@ -1,4 +1,3 @@
-import type { ModelProvider } from './models';
 import type { PluginID } from './plugins';
 
 export const VALID_MODEL_IDS = [
@@ -12,7 +11,6 @@ export type LLMID = (typeof VALID_MODEL_IDS)[number];
 export interface LLM {
   modelId: LLMID;
   modelName: string;
-  provider: ModelProvider;
   imageInput: boolean;
   shortModelName?: string;
   description: string;

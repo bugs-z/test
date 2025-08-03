@@ -4,7 +4,7 @@ import { Dashboard } from '@/components/ui/dashboard';
 import { PentestGPTContext } from '@/context/context';
 import { useUIContext } from '@/context/ui-context';
 import { getChatsByUserId } from '@/db/chats';
-import { LargeModel, SmallModel } from '@/lib/models/hackerai-llm-list';
+import { LargeModel, SmallModel } from '@/lib/models/llm-list';
 import { useRouter } from 'next/navigation';
 import { type ReactNode, useContext, useEffect, useState } from 'react';
 import Loading from '../loading';

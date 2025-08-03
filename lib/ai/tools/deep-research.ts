@@ -178,7 +178,6 @@ export async function executeDeepResearchTool({
 
     // Convert messages to the format expected by OpenAI's deep research API
     const convertedMessages = convertMessagesToDeepResearchFormat(messages);
-    console.log('convertedMessages', convertedMessages);
 
     const stream = await openai.responses.create({
       model: 'o4-mini-deep-research',

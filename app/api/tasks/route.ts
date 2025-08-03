@@ -70,7 +70,7 @@ export async function POST(request: Request) {
       execute: async (dataStream) => {
         dataStream.writeData({
           type: 'ratelimit',
-          content: config.rateLimitInfo,
+          content: config.rateLimitInfo as any,
         });
 
         await handleResearchKickoff({

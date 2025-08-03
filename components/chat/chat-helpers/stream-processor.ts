@@ -3,6 +3,7 @@ import type {
   DataPartValue,
   FileAttachment,
   MessageImage,
+  RateLimitInfo,
 } from '@/types';
 import type { AlertAction } from '@/context/alert-context';
 import { processDataStream } from 'ai';
@@ -25,6 +26,7 @@ export const processResponse = async (
   setAgentStatus: Dispatch<SetStateAction<AgentStatusState | null>>,
   _requestBody: any,
   setChatImages: Dispatch<SetStateAction<MessageImage[]>>,
+  setRateLimitInfo?: Dispatch<SetStateAction<RateLimitInfo | null>>,
 ) => {
   if (!response.ok) {
     const result = await response.json();
@@ -196,6 +198,12 @@ export const processResponse = async (
 
               if (firstValue.type === 'agent-status') {
                 setAgentStatus(firstValue.content as AgentStatusState);
+              }
+
+              if (firstValue.type === 'ratelimit' && setRateLimitInfo) {
+                const rateLimitData =
+                  firstValue.content as unknown as RateLimitInfo;
+                setRateLimitInfo(rateLimitData);
               }
 
               if (firstValue.type === 'reasoning') {

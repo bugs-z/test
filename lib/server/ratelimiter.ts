@@ -2,21 +2,35 @@
 import { epochTimeToNaturalLanguage } from '../utils';
 import { getRedis } from './redis';
 import { getSubscriptionInfo } from './subscription-utils';
-import type { RateLimitInfo, SubscriptionStatus } from '@/types';
+import type {
+  RateLimitInfo,
+  SubscriptionStatus,
+  RateLimitedFeature,
+} from '@/types';
 
-export type RateLimitResult =
-  | {
-      allowed: true;
-      remaining: number;
-      timeRemaining: null;
-      subscriptionType?: 'free' | 'premium' | 'team';
-    }
-  | {
-      allowed: false;
-      remaining: 0;
-      timeRemaining: number;
-      subscriptionType?: 'free' | 'premium' | 'team';
-    };
+// Constants
+const TIME_WINDOW = 180 * 60 * 1000; // 180 minutes in milliseconds
+const FALLBACK_MODELS: Record<string, string> = {
+  'pentestgpt-pro': 'pentestgpt',
+  pentestgpt: 'pentestgpt-pro',
+};
+
+const MODEL_DISPLAY_NAMES: Record<string, string> = {
+  pentestgpt: 'Small Model',
+  'pentestgpt-pro': 'Large Model',
+  terminal: 'Terminal',
+  'stt-1': 'speech-to-text',
+  'reasoning-model': 'reasoning model',
+  'image-gen': 'image generation',
+};
+
+export type RateLimitResult = {
+  allowed: boolean;
+  remaining: number;
+  timeRemaining: number | null;
+  subscriptionType?: 'free' | 'premium' | 'team';
+  fallbackModel?: string;
+};
 
 /**
  * rate limiting by sliding window algorithm.
@@ -60,7 +74,30 @@ export async function _ratelimit(
           ? 'premium'
           : 'free';
 
+    const isPremium = isPremiumUser(subscriptionInfo);
+
     if (remaining === 0) {
+      // For premium users, check fallback model
+      if (isPremium) {
+        const fallbackModel = getFallbackModel(model);
+        if (fallbackModel) {
+          const fallbackCheck = await checkFallbackModel(
+            userId,
+            fallbackModel,
+            subscriptionInfo,
+          );
+          if (fallbackCheck.allowed) {
+            return {
+              allowed: false, // Still not allowed for the primary model
+              remaining,
+              timeRemaining: timeRemaining!,
+              subscriptionType,
+              fallbackModel,
+            };
+          }
+        }
+      }
+
       return {
         allowed: false,
         remaining,
@@ -72,7 +109,7 @@ export async function _ratelimit(
     return {
       allowed: true,
       remaining: remaining - 1,
-      timeRemaining: null,
+      timeRemaining: timeRemaining,
       subscriptionType,
     };
   } catch (error) {
@@ -87,7 +124,7 @@ export async function getRemaining(
   subscriptionInfo: { planType: SubscriptionStatus },
 ): Promise<[number, number | null]> {
   const storageKey = _makeStorageKey(userId, model);
-  const timeWindow = getTimeWindow();
+  const timeWindow = TIME_WINDOW;
   const now = Date.now();
   const limit = _getLimit(model, subscriptionInfo);
 
@@ -108,11 +145,39 @@ export async function getRemaining(
   }
 
   const remaining = Math.max(0, limit - count);
-  return [remaining, remaining === 0 ? windowEndTime - now : null];
+  return [remaining, windowEndTime - now];
 }
 
-function getTimeWindow(): number {
-  return 180 * 60 * 1000; // 180 minutes in milliseconds
+/**
+ * Get the fallback model for premium users when the primary model hits rate limit
+ */
+function getFallbackModel(model: string): string | null {
+  return FALLBACK_MODELS[model] || null;
+}
+
+/**
+ * Check if a fallback model is available for premium users
+ */
+async function checkFallbackModel(
+  userId: string,
+  fallbackModel: string,
+  subscriptionInfo: { planType: SubscriptionStatus },
+): Promise<{
+  allowed: boolean;
+  remaining: number;
+  timeRemaining: number | null;
+}> {
+  const [remaining, timeRemaining] = await getRemaining(
+    userId,
+    fallbackModel,
+    subscriptionInfo,
+  );
+
+  return {
+    allowed: remaining > 0,
+    remaining,
+    timeRemaining,
+  };
 }
 
 function _getLimit(
@@ -152,7 +217,7 @@ function getValidatedLimit(
 
 async function _addRequest(key: string) {
   const now = Date.now();
-  const timeWindow = getTimeWindow();
+  const timeWindow = TIME_WINDOW;
 
   const redis = getRedis();
   try {
@@ -190,13 +255,40 @@ function _makeStorageKey(userId: string, model: string): string {
   return `ratelimit:${userId}:${fixedModelName}`;
 }
 
+/**
+ * Get premium user suggestions for alternative models
+ */
+function getPremiumModelSuggestions(model: string): string {
+  if (model === 'pentestgpt' || model === 'pentestgpt-pro') {
+    return `⚠️ You've reached the limits for both Small and Large models.\n\nPlease wait for the reset.`;
+  }
+  if (model === 'reasoning-model') {
+    return `\n\nIn the meantime, you can use Large Model or Small Model`;
+  }
+  return '';
+}
+
+/**
+ * Get upgrade message for free users
+ */
+function getUpgradeMessage(): string {
+  return `\n\n🔓 Want more? Upgrade to Pro or Team and unlock a world of features:
+- Access to smarter models
+- Extended limits on messaging
+- Access to file uploads, vision, web search, and browsing
+- Access to terminal and reasoning model
+- Opportunities to test new features`;
+}
+
 export function getRateLimitErrorMessage(
   timeRemaining: number,
   premium: boolean,
   model: string,
+  fallbackModel?: string,
 ): string {
   const remainingText = epochTimeToNaturalLanguage(timeRemaining);
 
+  // Terminal model special handling
   if (model === 'terminal') {
     const baseMessage = `⚠️ You've reached the limit for Terminal usage.\n\nTo ensure fair usage for all users, please wait ${remainingText} before trying again.`;
     return premium
@@ -204,63 +296,138 @@ export function getRateLimitErrorMessage(
       : `${baseMessage}\n\n🚀 Consider upgrading to Pro or Team for higher Terminal usage limits and more features.`;
   }
 
+  // Premium users with fallback available - no error message needed
+  if (premium && fallbackModel) {
+    return '';
+  }
+
   let message = `⚠️ You've reached the limit for ${getModelName(model)}.\n\nTo ensure fair usage for all users, please wait ${remainingText} before trying again.`;
 
   if (premium) {
-    if (model === 'pentestgpt') {
-      message += `\n\nIn the meantime, you can use Large Model`;
-    } else if (model === 'pentestgpt-pro') {
-      message += `\n\nIn the meantime, you can use Small Model`;
-    } else if (model === 'reasoning-model') {
-      message += `\n\nIn the meantime, you can use Large Model or Small Model`;
-    }
+    const suggestion = getPremiumModelSuggestions(model);
+    message = suggestion.startsWith('⚠️')
+      ? suggestion.replace(
+          'Please wait for the reset.',
+          `Please wait ${remainingText} before trying again.`,
+        )
+      : message + suggestion;
   } else {
-    message += `\n\n🔓 Want more? Upgrade to Pro or Team and unlock a world of features:
-- Access to smarter models
-- Extended limits on messaging
-- Access to file uploads, vision, web search, and browsing
-- Access to terminal and reasoning model
-- Opportunities to test new features`;
+    message += getUpgradeMessage();
   }
 
   return message.trim();
 }
 
 function getModelName(model: string): string {
-  const modelNames: { [key: string]: string } = {
-    pentestgpt: 'Small Model',
-    'pentestgpt-pro': 'Large Model',
-    terminal: 'Terminal',
-    'stt-1': 'speech-to-text',
-    'reasoning-model': 'reasoning model',
-    'image-gen': 'image generation',
+  return MODEL_DISPLAY_NAMES[model] || model;
+}
+
+/**
+ * Check if a user has premium subscription
+ */
+function isPremiumUser(subscriptionInfo: {
+  planType: SubscriptionStatus;
+}): boolean {
+  return (
+    subscriptionInfo.planType === 'pro' || subscriptionInfo.planType === 'team'
+  );
+}
+
+/**
+ * Create rate limit info object
+ */
+function createRateLimitInfo(
+  model: string,
+  remaining: number,
+  max: number,
+  isPremium: boolean,
+  timeRemaining: number | null,
+  message?: string,
+): RateLimitInfo {
+  const info: RateLimitInfo = {
+    remaining,
+    max,
+    isPremiumUser: isPremium,
+    timeRemaining,
+    feature: model as RateLimitedFeature,
   };
-  return modelNames[model] || model;
+
+  if (message) {
+    info.message = message;
+  }
+
+  return info;
+}
+
+/**
+ * Handle fallback model consumption and return updated info
+ */
+async function handleFallbackModel(
+  userId: string,
+  fallbackModel: string,
+  subInfo: { planType: SubscriptionStatus },
+  isPremium: boolean,
+): Promise<RateLimitInfo> {
+  // Consume a request from the fallback model
+  const fallbackStorageKey = _makeStorageKey(userId, fallbackModel);
+  await _addRequest(fallbackStorageKey);
+
+  // Get updated rate limit info for the fallback model (after consuming)
+  const fallbackMax = _getLimit(fallbackModel, subInfo);
+  const [fallbackRemaining, fallbackTimeRemaining] = await getRemaining(
+    userId,
+    fallbackModel,
+    subInfo,
+  );
+
+  return createRateLimitInfo(
+    fallbackModel,
+    fallbackRemaining - 1, // Subtract 1 since we just consumed a request
+    fallbackMax,
+    isPremium,
+    fallbackTimeRemaining,
+  );
 }
 
 export async function checkRatelimitOnApi(
   userId: string,
   model: string,
   subscriptionInfo?: { planType: SubscriptionStatus },
-): Promise<{ allowed: boolean; info: any }> {
+): Promise<{ allowed: boolean; info: RateLimitInfo }> {
   const result = await ratelimit(userId, model, subscriptionInfo);
   const subInfo = subscriptionInfo || (await getSubscriptionInfo(userId));
+  const isPremium = isPremiumUser(subInfo);
   const max = _getLimit(model, subInfo);
-  const used = max - result.remaining;
-  const isPremium = subInfo.planType === 'pro' || subInfo.planType === 'team';
-  const info: RateLimitInfo = {
-    remaining: result.remaining,
-    used,
-    max,
-    isPremiumUser: isPremium,
-  };
-  if (!result.allowed) {
-    info.timeRemaining = result.timeRemaining;
-    info.message = getRateLimitErrorMessage(
-      result.timeRemaining!,
+
+  // Handle fallback for premium users when original model is rate limited
+  if (!result.allowed && isPremium && result.fallbackModel) {
+    const fallbackInfo = await handleFallbackModel(
+      userId,
+      result.fallbackModel,
+      subInfo,
       isPremium,
-      model,
     );
+    return { allowed: true, info: fallbackInfo };
   }
+
+  // Create info for original model (either allowed or rate limited)
+  const message = !result.allowed
+    ? getRateLimitErrorMessage(
+        result.timeRemaining!,
+        isPremium,
+        model,
+        result.fallbackModel,
+      )
+    : undefined;
+
+  const info = createRateLimitInfo(
+    model,
+    result.remaining,
+    max,
+    isPremium,
+    result.timeRemaining,
+    message,
+  );
+
   return { allowed: result.allowed, info };
 }

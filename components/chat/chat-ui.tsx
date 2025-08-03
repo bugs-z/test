@@ -32,6 +32,7 @@ import { useUIContext } from '@/context/ui-context';
 import { ChatContinueButton } from './chat-continue-button';
 import { AgentSidebar } from '../messages/terminal-messages/agent-sidebar';
 import { useAgentSidebar } from '@/components/chat/chat-hooks/use-agent-sidebar';
+import { ChatRateLimitWarning } from './chat-rate-limit-warning';
 
 export const ChatUI: FC = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -270,6 +271,7 @@ export const ChatUI: FC = () => {
               />
             </div>
 
+            <ChatRateLimitWarning />
             <ChatInput />
             <ChatHelp />
           </div>

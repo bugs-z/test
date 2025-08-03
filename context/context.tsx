@@ -6,6 +6,7 @@ import type {
   ContentType,
   MessageImage,
   SubscriptionStatus,
+  RateLimitInfo,
 } from '@/types';
 import type { User } from '@supabase/supabase-js';
 import {
@@ -101,6 +102,10 @@ interface PentestGPTContextType {
   // User Email
   userEmail: string;
   setUserEmail: (email: string) => void;
+
+  // RATE LIMIT STORE
+  rateLimitInfo: RateLimitInfo | null;
+  setRateLimitInfo: Dispatch<SetStateAction<RateLimitInfo | null>>;
 }
 
 export const PentestGPTContext = createContext<PentestGPTContextType>({
@@ -189,6 +194,10 @@ export const PentestGPTContext = createContext<PentestGPTContextType>({
   // User Email
   userEmail: '',
   setUserEmail: () => {},
+
+  // RATE LIMIT STORE
+  rateLimitInfo: null,
+  setRateLimitInfo: () => {},
 });
 
 export const usePentestGPT = () => useContext(PentestGPTContext);

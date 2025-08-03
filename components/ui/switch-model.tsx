@@ -1,11 +1,7 @@
 import React, { type FC, useMemo, useState, useEffect, useRef } from 'react';
 import { ChevronDown, Repeat } from 'lucide-react';
 import { WithTooltip } from './with-tooltip';
-import {
-  SmallModel,
-  LargeModel,
-  ReasoningModel,
-} from '@/lib/models/hackerai-llm-list';
+import { SmallModel, LargeModel, ReasoningModel } from '@/lib/models/llm-list';
 import { PluginID } from '@/types/plugins';
 import { Menu, MenuItems, MenuButton, MenuItem } from '@headlessui/react';
 

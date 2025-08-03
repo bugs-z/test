@@ -147,17 +147,33 @@ async function getProviderConfig(
     throw new Error('Selected model is undefined');
   }
 
-  const isLargeModel = selectedModel.includes('large');
-
   const rateLimitStatus = await checkRatelimitOnApi(
     profile.user_id,
     rateLimitModelMap[model] || model,
   );
 
+  // If we switched to a fallback model, update the selectedModel based on the rate limit info
+  let finalSelectedModel = selectedModel;
+
+  // Check if the rate limit info feature differs from our expected model (indicates fallback)
+  const expectedRateLimitModel = rateLimitModelMap[model] || model;
+  if (rateLimitStatus.info.feature !== expectedRateLimitModel) {
+    // Map fallback rate limit model back to actual model
+    const fallbackModelMap: Record<string, string> = {
+      pentestgpt: 'chat-model-small',
+      'pentestgpt-pro': 'chat-model-large',
+    };
+
+    finalSelectedModel =
+      fallbackModelMap[rateLimitStatus.info.feature] || selectedModel;
+  }
+
+  const finalIsLargeModel = finalSelectedModel.includes('large');
+
   return {
-    selectedModel,
+    selectedModel: finalSelectedModel,
     isRateLimitAllowed: rateLimitStatus.allowed,
-    isLargeModel,
+    isLargeModel: finalIsLargeModel,
     rateLimitInfo: rateLimitStatus.info,
     isPremiumUser: rateLimitStatus.info.isPremiumUser,
   };

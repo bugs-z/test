@@ -13,7 +13,7 @@ import { PluginID } from '@/types/plugins';
 import { useRouter } from 'next/navigation';
 import { useContext, useEffect, useRef } from 'react';
 import { LLM_LIST } from '../../../lib/models/llm-list';
-import { SmallModel } from '@/lib/models/hackerai-llm-list';
+import { SmallModel } from '@/lib/models/llm-list';
 import { v4 as uuidv4 } from 'uuid';
 import { useUIContext } from '@/context/ui-context';
 import {
@@ -57,6 +57,7 @@ export const useChatHandler = () => {
     temporaryChatMessages,
     setTemporaryChatMessages,
     isPremiumSubscription,
+    setRateLimitInfo,
   } = useContext(PentestGPTContext);
 
   const {
@@ -507,6 +508,7 @@ export const useChatHandler = () => {
         chatMetadata,
         isPremiumSubscription,
         setChatImages,
+        setRateLimitInfo,
       );
       generatedText = fullText;
       thinkingText = thinkingTextFromResponse;

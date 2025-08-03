@@ -1,7 +1,7 @@
 'use client';
 
 import { PentestGPTContext } from '@/context/context';
-import { LargeModel } from '@/lib/models/hackerai-llm-list';
+import { LargeModel } from '@/lib/models/llm-list';
 import { useContext, useEffect, useState } from 'react';
 
 const MAX_TITLE_LENGTH = 50;
