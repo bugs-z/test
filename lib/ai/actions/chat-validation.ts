@@ -66,9 +66,9 @@ export async function validateChatAccessWithLimits({
       throw new ChatSDKError('forbidden:auth');
     }
 
-    if (selectedPlugin === PluginID.TERMINAL) {
-      throw new ChatSDKError('forbidden:auth');
-    }
+    // if (selectedPlugin === PluginID.TERMINAL) {
+    //   throw new ChatSDKError('forbidden:auth');
+    // }
 
     if (selectedPlugin === PluginID.DEEP_RESEARCH) {
       throw new ChatSDKError('forbidden:auth');
