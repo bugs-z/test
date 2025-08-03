@@ -157,13 +157,13 @@ export async function POST(request: Request) {
       });
     }
 
-    if (
-      !hasImageAttachments &&
-      !hasPdfAttachments &&
-      config.selectedModel === 'chat-model-small'
-    ) {
-      config.selectedModel = 'chat-model-small-text';
-    }
+    // if (
+    //   !hasImageAttachments &&
+    //   !hasPdfAttachments &&
+    //   config.selectedModel === 'chat-model-small'
+    // ) {
+    //   config.selectedModel = 'chat-model-small-text';
+    // }
 
     try {
       return createDataStreamResponse({
@@ -219,7 +219,7 @@ export async function POST(request: Request) {
             },
             messages: toVercelChatMessages(processedMessages, true),
             maxTokens: 4096,
-            maxSteps: 3,
+            maxSteps: 5,
             tools: toolSchemas.getSelectedSchemas(
               getToolsForPlugin(
                 modelParams.selectedPlugin,

@@ -112,7 +112,7 @@ export const UpgradePlan: FC = () => {
   }
 
   const planPrices = {
-    pro: { monthly: '$25', yearly: '$20' },
+    pro: { monthly: '$30', yearly: '$25' },
     team: { monthly: '$40', yearly: '$32' },
   };
 
