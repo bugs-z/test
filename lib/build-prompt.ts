@@ -22,11 +22,11 @@ export async function buildFinalMessages(
 ): Promise<BuiltChatMessage[]> {
   const { chatMessages, retrievedFileItems, imagePaths } = payload;
 
-  // Context window size: 32k tokens minus 2k for system prompt and overhead (30k effective)
+  // Context window size: 22k tokens minus 2k for system prompt and overhead (20k effective)
   // Deep Research uses 8k context window regardless of subscription tier
   const CONTEXT_WINDOW =
     isPremiumSubscription && selectedPlugin !== PluginID.DEEP_RESEARCH
-      ? 30000
+      ? 20000
       : 8000;
 
   let remainingTokens = CONTEXT_WINDOW;

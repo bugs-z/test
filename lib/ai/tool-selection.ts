@@ -26,19 +26,16 @@ export const getToolsForPlugin = (
     return ['run_terminal_cmd', 'get_terminal_files'];
   }
 
-  // Handle non-temporary chat (excluding web search plugin)
-  if (!modelParams.isTemporaryChat && selectedPlugin !== PluginID.WEB_SEARCH) {
-    const tools = ['webSearch', 'browser'];
+  // Handle premium user with non-temporary chat (excluding web search plugin)
+  if (
+    config.isPremiumUser &&
+    !modelParams.isTemporaryChat &&
+    selectedPlugin !== PluginID.WEB_SEARCH
+  ) {
+    const tools = ['webSearch', 'browser', 'image_gen'];
 
-    // Add image generation for premium users
-    if (config.isPremiumUser) {
-      tools.push('image_gen');
-    }
-
-    // Add terminal tools for large models
-    // if (config.isLargeModel) {
+    // Only add terminal tools for large models
     tools.push('run_terminal_cmd', 'get_terminal_files');
-    // }
 
     return tools;
   }

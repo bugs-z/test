@@ -31,6 +31,11 @@ export const ToolsDropdown = ({ onUpgradePrompt }: ToolsDropdownProps) => {
   const { selectedPlugin, setSelectedPlugin, isMobile } = useUIContext();
 
   const handlePentestAgentToggle = () => {
+    if (!isPremiumSubscription) {
+      onUpgradePrompt('terminal');
+      return;
+    }
+
     setSelectedPlugin(
       selectedPlugin === PluginID.TERMINAL ? PluginID.NONE : PluginID.TERMINAL,
     );
@@ -50,6 +55,11 @@ export const ToolsDropdown = ({ onUpgradePrompt }: ToolsDropdownProps) => {
   };
 
   const handleWebSearchToggle = () => {
+    if (!isPremiumSubscription) {
+      onUpgradePrompt('websearch');
+      return;
+    }
+
     setSelectedPlugin(
       selectedPlugin === PluginID.WEB_SEARCH
         ? PluginID.NONE
@@ -77,6 +87,7 @@ export const ToolsDropdown = ({ onUpgradePrompt }: ToolsDropdownProps) => {
           className={cn(
             'flex items-center rounded-lg transition-colors duration-300 cursor-pointer',
             'hover:bg-black/10 dark:hover:bg-white/10',
+            !isPremiumSubscription && 'opacity-50',
           )}
         >
           {/* Settings Icon */}
@@ -144,7 +155,10 @@ export const ToolsDropdown = ({ onUpgradePrompt }: ToolsDropdownProps) => {
         )}
         <DropdownMenuItem
           onClick={handleWebSearchToggle}
-          className="flex items-center justify-between cursor-pointer py-3"
+          className={cn(
+            'flex items-center justify-between cursor-pointer py-3',
+            !isPremiumSubscription && 'opacity-50',
+          )}
         >
           <div className="flex items-center space-x-3">
             <Globe
@@ -175,7 +189,10 @@ export const ToolsDropdown = ({ onUpgradePrompt }: ToolsDropdownProps) => {
         {!isTemporaryChat && (
           <DropdownMenuItem
             onClick={handlePentestAgentToggle}
-            className="flex items-center justify-between cursor-pointer py-3"
+            className={cn(
+              'flex items-center justify-between cursor-pointer py-3',
+              !isPremiumSubscription && 'opacity-50',
+            )}
           >
             <div className="flex items-center space-x-3">
               <SquareTerminal
