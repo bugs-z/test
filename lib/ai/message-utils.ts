@@ -282,8 +282,10 @@ export async function processChatMessages(
 
   // Handle moderation and uncensoring
   if (isNewConversation) {
-    const { shouldUncensorResponse } =
-      await getModerationResult(processedMessages);
+    const { shouldUncensorResponse } = await getModerationResult(
+      processedMessages,
+      isPremiumSubscription,
+    );
     if (shouldUncensorResponse) {
       addAuthMessage(processedMessages);
     }

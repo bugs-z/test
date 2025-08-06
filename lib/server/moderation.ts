@@ -10,6 +10,7 @@ interface MessageContentItem {
 
 export async function getModerationResult(
   messages: any[],
+  isPremiumSubscription: boolean,
 ): Promise<{ shouldUncensorResponse: boolean }> {
   const openaiApiKey = process.env.OPENAI_API_KEY;
 
@@ -43,14 +44,15 @@ export async function getModerationResult(
     const shouldUncensorResponse = determineShouldUncensorResponse(
       moderationLevel,
       hazardCategories,
+      isPremiumSubscription,
     );
 
-    // console.log(
-    //   JSON.stringify(moderation, null, 2),
-    //   moderationLevel,
-    //   hazardCategories,
-    //   shouldUncensorResponse,
-    // );
+    console.log(
+      JSON.stringify(moderation, null, 2),
+      moderationLevel,
+      hazardCategories,
+      shouldUncensorResponse,
+    );
 
     return { shouldUncensorResponse };
   } catch (_error: any) {
@@ -137,6 +139,7 @@ function calculateModerationLevel(
 function determineShouldUncensorResponse(
   moderationLevel: number,
   hazardCategories: string[],
+  isPremiumSubscription: boolean,
 ): boolean {
   const forbiddenCategories = [
     'sexual',
@@ -157,7 +160,7 @@ function determineShouldUncensorResponse(
 
   // 0.1 is the minimum moderation level for the model to be used
   const minModerationLevel = 0.1;
-  const maxModerationLevel = 0.98;
+  const maxModerationLevel = isPremiumSubscription ? 0.98 : 0.9;
   return (
     moderationLevel >= minModerationLevel &&
     moderationLevel <= maxModerationLevel &&
