@@ -133,6 +133,8 @@ export async function generateTitleFromUserMessage({
       providerOptions: {
         openai: {
           store: false,
+          parallelToolCalls: false,
+          reasoningEffort: 'minimal',
         },
       },
       schema: z.object({

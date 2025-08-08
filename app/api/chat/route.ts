@@ -69,6 +69,9 @@ export async function POST(request: Request) {
     let terminalUsed = false;
     const fileAttachments: FileAttachment[] = [];
     const assistantMessageId = uuidv4();
+    let thinkingStartTime: number | null = null;
+    let isThinking = false;
+    let reasoningText = '';
 
     request.signal.addEventListener('abort', async () => {
       console.log('request aborted');
@@ -96,6 +99,11 @@ export async function POST(request: Request) {
             citations:
               citations.length > 0 ? [...new Set(citations)] : undefined,
             imagePaths: imagePaths.length > 0 ? imagePaths : undefined,
+            thinkingText: reasoningText || undefined,
+            thinkingElapsedSecs:
+              isThinking && thinkingStartTime
+                ? Math.round((Date.now() - thinkingStartTime) / 1000)
+                : undefined,
             fileAttachments,
             assistantMessageId,
           });
@@ -155,6 +163,22 @@ export async function POST(request: Request) {
     try {
       return createDataStreamResponse({
         execute: async (dataStream) => {
+          // Helper function to stop thinking and emit elapsed time
+          const stopThinkingAndEmitTime = (): number | null => {
+            let thinkingElapsedSecs = null;
+            if (isThinking && thinkingStartTime) {
+              isThinking = false;
+              thinkingElapsedSecs = Math.round(
+                (Date.now() - thinkingStartTime) / 1000,
+              );
+              dataStream.writeData({
+                type: 'thinking-time',
+                elapsed_secs: thinkingElapsedSecs,
+              });
+            }
+            return thinkingElapsedSecs;
+          };
+
           dataStream.writeData({
             type: 'ratelimit',
             content: config.rateLimitInfo,
@@ -202,6 +226,8 @@ export async function POST(request: Request) {
               openai: {
                 parallelToolCalls: false,
                 store: false,
+                reasoningEffort: config.isLargeModel ? 'low' : 'minimal',
+                reasoningSummary: 'detailed',
               },
             },
             messages: toVercelChatMessages(processedMessages, true),
@@ -259,8 +285,17 @@ export async function POST(request: Request) {
                   dataStream.writeData({ chatTitle: generatedTitle });
                 })();
               } else if (event.chunk.type === 'text-delta') {
+                // Stop reasoning when we get first text delta
+                stopThinkingAndEmitTime();
+
                 // Note: writeData wrapper only captures dataStream, not AI text chunks from onChunk
                 assistantMessage += event.chunk.textDelta;
+              } else if (event.chunk.type === 'reasoning') {
+                reasoningText += event.chunk.textDelta;
+                if (!isThinking) {
+                  isThinking = true;
+                  thinkingStartTime = Date.now();
+                }
               }
             },
             onError: async (error) => {
@@ -278,17 +313,20 @@ export async function POST(request: Request) {
                 console.error('[Chat] Stream Error:', error);
               }
             },
-            onFinish: async ({ finishReason, text }) => {
+            onFinish: async ({ finishReason, text, reasoning }) => {
+              // Handle case where reasoning finished without any text deltas
+              const thinkingElapsedSecs = stopThinkingAndEmitTime();
+
+              // Deduplicate citations
+              const uniqueCitations =
+                citations.length > 0 ? [...new Set(citations)] : undefined;
+
               // Wait for title generation if it's in progress
               if (titleGenerationPromise) {
                 await titleGenerationPromise;
               }
               // Wait for initial chat handling to complete before final handling
               await initialChatPromise;
-
-              // Deduplicate citations
-              const uniqueCitations =
-                citations.length > 0 ? [...new Set(citations)] : undefined;
 
               await handleFinalChatAndAssistantMessage({
                 modelParams: {
@@ -309,6 +347,8 @@ export async function POST(request: Request) {
                 assistantMessage: terminalUsed ? assistantMessage : text,
                 citations: uniqueCitations,
                 imagePaths: imagePaths.length > 0 ? imagePaths : undefined,
+                thinkingText: reasoning || undefined,
+                thinkingElapsedSecs,
                 fileAttachments,
                 assistantMessageId,
               });
@@ -321,7 +361,7 @@ export async function POST(request: Request) {
             },
           });
 
-          result.mergeIntoDataStream(dataStream);
+          result.mergeIntoDataStream(dataStream, { sendReasoning: true });
 
           // Then ensure title generation completes if it was started
           if (titleGenerationPromise) {

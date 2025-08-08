@@ -96,18 +96,6 @@ export async function executeReasonLLMTool({
         // Wait for initial chat handling to complete if it's in progress
         await initialChatPromise;
 
-        // Calculate thinking elapsed time if we were thinking
-        let thinkingElapsedSecs = null;
-        if (isThinking && thinkingStartTime) {
-          thinkingElapsedSecs = Math.round(
-            (Date.now() - thinkingStartTime) / 1000,
-          );
-        }
-
-        // Deduplicate citations
-        const uniqueCitations =
-          citations.length > 0 ? [...new Set(citations)] : undefined;
-
         await handleFinalChatAndAssistantMessage({
           modelParams,
           chatMetadata,
@@ -117,9 +105,12 @@ export async function executeReasonLLMTool({
           finishReason: 'stop',
           title: generatedTitle,
           assistantMessage,
-          citations: uniqueCitations,
+          citations: citations.length > 0 ? [...new Set(citations)] : undefined,
           thinkingText: reasoningText || undefined,
-          thinkingElapsedSecs,
+          thinkingElapsedSecs:
+            isThinking && thinkingStartTime
+              ? Math.round((Date.now() - thinkingStartTime) / 1000)
+              : undefined,
           assistantMessageId,
         });
 
