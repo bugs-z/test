@@ -36,7 +36,7 @@ export const MessageContentRenderer: FC<MessageContentRendererProps> = ({
   const [expandedOutputs, setExpandedOutputs] = useState(
     () => new Set<number>(),
   );
-  const [thinkingClosed, setThinkingClosed] = useState(false);
+  const [thinkingClosed, setThinkingClosed] = useState(true);
 
   const toggleBlock = useCallback((index: number) => {
     setClosedBlocks((prev) => {

@@ -9,6 +9,7 @@ import { deepseek } from '@ai-sdk/deepseek';
 export const myProvider = customProvider({
   languageModels: {
     'chat-model-small': openai.responses('gpt-5-mini-2025-08-07'),
+    'chat-model-small-text': deepseek('deepseek-chat'),
     'chat-model-large': openai.responses('gpt-5-2025-08-07'),
     'chat-model-reasoning': wrapLanguageModel({
       model: deepseek('deepseek-reasoner'),
