@@ -165,12 +165,12 @@ export async function POST(request: Request) {
       });
     }
 
-    if (
-      !hasImageAttachments &&
-      !hasPdfAttachments &&
-      config.selectedModel === 'chat-model-small'
-    ) {
-      config.selectedModel = 'chat-model-small-text';
+    if (!hasImageAttachments && !hasPdfAttachments) {
+      if (config.isLargeModel) {
+        config.selectedModel = 'chat-model-large-text';
+      } else {
+        config.selectedModel = 'chat-model-small-text';
+      }
     }
 
     try {
