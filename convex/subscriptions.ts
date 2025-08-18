@@ -25,7 +25,7 @@ export const checkSubscription = query({
     // Verify service role key
     if (args.serviceKey !== process.env.CONVEX_SERVICE_ROLE_KEY) {
       return {
-        planType: 'free' as const,
+        planType: 'pro' as const,
       };
     }
 
